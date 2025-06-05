@@ -1,0 +1,924 @@
+// Supply Chain AI Management MVP - Database Schema
+// Based on detailed MVP requirements for manufacturing supply chain management
+// Core Modules: PR (Purchase Request), PO (Purchase Order), GR (Goods Receipt), 
+// RF (Request Form), MR (Material Requisition), ML (Manufacturing List), Formula
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE SYSTEM MODELS - Based on MVP Requirements
+// ============================================================================
+
+// User Management & Authentication - Based on MVP user roles
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String?
+  lastName  String?
+  password  String
+  role      UserRole @default(INVENTORY_CLERK)
+  avatar    String?
+  isActive  Boolean  @default(true)
+
+  // Branch assignment (users are assigned to specific branches)
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  lastLogin DateTime?
+
+  // Relationships - Based on MVP functional requirements
+  purchaseRequests     PurchaseRequest[]     @relation("PRCreator")
+  purchaseOrders       PurchaseOrder[]       @relation("POCreator")
+  requestForms         RequestForm[]         @relation("RFCreator")
+  materialRequisitions MaterialRequisition[] @relation("MRCreator")
+  goodsReceipts        GoodsReceipt[]        @relation("GRReceiver")
+  manufacturingLists   ManufacturingList[]   @relation("MLCreator")
+  formulas             Formula[]             @relation("FormulaCreator")
+  aiSuggestions        AISuggestion[]        @relation("SuggestionReceiver")
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+// MVP User Roles based on requirements
+enum UserRole {
+  SYSTEM_ADMIN // Manages user accounts and company-wide settings
+  BRANCH_MANAGER // Creates and approves PRs, RFs, MRs for their branch
+  INVENTORY_CLERK // Executes GR and updates physical stock counts
+  PROCUREMENT_SPECIALIST // Generates POs based on approved PRs
+  PRODUCTION_PLANNER // Defines formulas and creates ML entries
+}
+
+// Branch Management - Core to MVP (items stored per branch)
+model Branch {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  address  String?
+  phone    String?
+  email    String?
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  users                    User[]
+  stock                    Stock[]
+  purchaseRequests         PurchaseRequest[]
+  purchaseOrders           PurchaseOrder[]
+  requestFormsFrom         RequestForm[]         @relation("FromBranch")
+  requestFormsTo           RequestForm[]         @relation("ToBranch")
+  materialRequisitionsFrom MaterialRequisition[] @relation("FromBranch")
+  materialRequisitionsTo   MaterialRequisition[] @relation("ToBranch")
+  goodsReceipts            GoodsReceipt[]
+  manufacturingLists       ManufacturingList[]
+
+  @@map("branches")
+}
+
+// Item Master - Core to MVP with unit management (FR-1, FR-2, FR-3)
+model Item {
+  id          String  @id @default(cuid())
+  name        String
+  sku         String  @unique
+  description String?
+
+  // Unit Management - MVP Core Feature
+  mainUnit     String // Base unit for storage (e.g., kg, pieces)
+  buyingUnit   String // Unit used for purchasing
+  transferUnit String // Unit used for transfers
+  usingUnit    String // Unit used for production
+
+  // Conversion Rates (all relative to main unit)
+  buyingToMainRate   Decimal @default(1) // 1 buying unit = X main units
+  transferToMainRate Decimal @default(1) // 1 transfer unit = X main units  
+  usingToMainRate    Decimal @default(1) // 1 using unit = X main units
+
+  // Stock Control
+  safetyStockLevel Decimal @default(0) // In main units
+  reorderLevel     Decimal @default(0) // In main units
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  stock           Stock[]
+  suppliers       ItemSupplier[]
+  prItems         PRItem[]
+  poItems         POItem[]
+  rfItems         RFItem[]
+  mrItems         MRItem[]
+  grItems         GRItem[]
+  formulaItems    FormulaItem[]
+  prTemplateItems PRTemplateItem[]
+  rfTemplateItems RFTemplateItem[]
+
+  @@map("items")
+}
+
+// Stock Management - Stores quantities in main units only (FR-3)
+model Stock {
+  id       String @id @default(cuid())
+  itemId   String
+  item     Item   @relation(fields: [itemId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  // All quantities stored in main unit
+  quantity     Decimal @default(0)
+  reservedQty  Decimal @default(0)
+  availableQty Decimal @default(0) // quantity - reservedQty
+
+  // Cost tracking for moving average
+  averageCost Decimal @default(0)
+  lastCost    Decimal @default(0)
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastStockDate DateTime?
+
+  @@unique([itemId, branchId])
+  @@map("stock")
+}
+
+// Supplier Management - Basic supplier info (FR-5)
+model Supplier {
+  id            String  @id @default(cuid())
+  name          String
+  code          String  @unique
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  isActive      Boolean @default(true)
+
+  // Performance tracking
+  averageLeadTime Int? // Days
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items          ItemSupplier[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+// Item-Supplier relationship with pricing
+model ItemSupplier {
+  id         String   @id @default(cuid())
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id])
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Pricing in buying unit
+  unitPrice    Decimal
+  minOrderQty  Decimal @default(1)
+  leadTimeDays Int     @default(7)
+
+  isPreferred Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([itemId, supplierId])
+  @@map("item_suppliers")
+}
+
+// ============================================================================
+// PURCHASE REQUEST (PR) MODULE - FR-6 to FR-9
+// ============================================================================
+
+// Purchase Request - FR-6, FR-8
+model PurchaseRequest {
+  id          String  @id @default(cuid())
+  prNumber    String  @unique
+  title       String?
+  description String?
+
+  // Status workflow: Draft → Submitted → Approved → Converted to PO
+  status PRStatus @default(DRAFT)
+
+  // Dates
+  requestDate  DateTime  @default(now())
+  requiredDate DateTime
+  approvedDate DateTime?
+
+  // Financial
+  totalAmount Decimal @default(0)
+
+  // Branch and Creator
+  branchId    String
+  branch      Branch @relation(fields: [branchId], references: [id])
+  createdById String
+  createdBy   User   @relation("PRCreator", fields: [createdById], references: [id])
+
+  // Template reference - FR-7
+  prTemplateId String?
+  prTemplate   PRTemplate? @relation(fields: [prTemplateId], references: [id])
+
+  // Notes
+  justification String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items          PRItem[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("purchase_requests")
+}
+
+enum PRStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CONVERTED_TO_PO
+}
+
+// Purchase Request Items
+model PRItem {
+  id              String          @id @default(cuid())
+  prId            String
+  purchaseRequest PurchaseRequest @relation(fields: [prId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Quantity in buying unit
+  requestedQty   Decimal
+  estimatedPrice Decimal @default(0)
+  totalAmount    Decimal @default(0)
+
+  requiredDate DateTime
+  remarks      String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("pr_items")
+}
+
+// PR Templates - FR-7
+model PRTemplate {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  // For which branch this template is designed
+  branchId String?
+
+  // Status
+  isActive   Boolean @default(true)
+  usageCount Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items            PRTemplateItem[]
+  purchaseRequests PurchaseRequest[]
+
+  @@map("pr_templates")
+}
+
+// PR Template Items
+model PRTemplateItem {
+  id         String     @id @default(cuid())
+  templateId String
+  template   PRTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Default quantities in buying unit
+  defaultQty Decimal
+  remarks    String?
+
+  @@unique([templateId, itemId])
+  @@map("pr_template_items")
+}
+
+// ============================================================================
+// PURCHASE ORDER (PO) MODULE - FR-10 to FR-12
+// ============================================================================
+
+// Purchase Order - FR-10, FR-11
+model PurchaseOrder {
+  id       String  @id @default(cuid())
+  poNumber String  @unique
+  title    String?
+
+  // Source PR
+  prId            String?
+  purchaseRequest PurchaseRequest? @relation(fields: [prId], references: [id])
+
+  // Supplier
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Status: Draft → Sent to Supplier → Confirmed → Closed
+  status POStatus @default(DRAFT)
+
+  // Dates
+  orderDate            DateTime  @default(now())
+  expectedDeliveryDate DateTime
+  confirmedDate        DateTime?
+
+  // Financial
+  subtotal    Decimal @default(0)
+  taxAmount   Decimal @default(0)
+  totalAmount Decimal @default(0)
+
+  // Terms
+  paymentTerms  String?
+  deliveryTerms String?
+
+  // Branch and Creator
+  branchId    String
+  branch      Branch @relation(fields: [branchId], references: [id])
+  createdById String
+  createdBy   User   @relation("POCreator", fields: [createdById], references: [id])
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items         POItem[]
+  goodsReceipts GoodsReceipt[]
+
+  @@map("purchase_orders")
+}
+
+enum POStatus {
+  DRAFT
+  SENT_TO_SUPPLIER
+  CONFIRMED
+  CLOSED
+  CANCELLED
+}
+
+// Purchase Order Items
+model POItem {
+  id            String        @id @default(cuid())
+  poId          String
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Quantities in buying unit
+  orderedQty  Decimal
+  receivedQty Decimal @default(0)
+
+  // Pricing in buying unit
+  unitPrice   Decimal
+  totalAmount Decimal
+
+  deliveryDate DateTime
+  remarks      String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("po_items")
+}
+
+// ============================================================================
+// REQUEST FORM (RF) MODULE - FR-13 to FR-15
+// ============================================================================
+
+// Request Form - Inter-branch transfer requests - FR-13, FR-15
+model RequestForm {
+  id          String  @id @default(cuid())
+  rfNumber    String  @unique
+  title       String?
+  description String?
+
+  // Status: Draft → Submitted → Approved → Ready for MR
+  status RFStatus @default(DRAFT)
+
+  // Transfer details
+  fromBranchId String
+  fromBranch   Branch @relation("FromBranch", fields: [fromBranchId], references: [id])
+  toBranchId   String
+  toBranch     Branch @relation("ToBranch", fields: [toBranchId], references: [id])
+
+  // Dates
+  requestDate  DateTime  @default(now())
+  requiredDate DateTime
+  approvedDate DateTime?
+
+  // Creator
+  createdById String
+  createdBy   User   @relation("RFCreator", fields: [createdById], references: [id])
+
+  // Template reference - FR-14
+  rfTemplateId String?
+  rfTemplate   RFTemplate? @relation(fields: [rfTemplateId], references: [id])
+
+  // Notes
+  reason String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items                RFItem[]
+  materialRequisitions MaterialRequisition[]
+
+  @@map("request_forms")
+}
+
+enum RFStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  READY_FOR_MR
+}
+
+// Request Form Items
+model RFItem {
+  id          String      @id @default(cuid())
+  rfId        String
+  requestForm RequestForm @relation(fields: [rfId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Quantity in transfer unit
+  requestedQty Decimal
+  remarks      String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("rf_items")
+}
+
+// RF Templates - FR-14
+model RFTemplate {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  // Common transfer patterns
+  fromBranchId String?
+  toBranchId   String?
+
+  // Status
+  isActive   Boolean @default(true)
+  usageCount Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items        RFTemplateItem[]
+  requestForms RequestForm[]
+
+  @@map("rf_templates")
+}
+
+// RF Template Items
+model RFTemplateItem {
+  id         String     @id @default(cuid())
+  templateId String
+  template   RFTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Default quantities in transfer unit
+  defaultQty Decimal
+  remarks    String?
+
+  @@unique([templateId, itemId])
+  @@map("rf_template_items")
+}
+
+// ============================================================================
+// MATERIAL REQUISITION (MR) MODULE - FR-16 to FR-19
+// ============================================================================
+
+// Material Requisition - FR-16, FR-17, FR-18, FR-19
+model MaterialRequisition {
+  id       String  @id @default(cuid())
+  mrNumber String  @unique
+  title    String?
+
+  // Source RF
+  rfId        String?
+  requestForm RequestForm? @relation(fields: [rfId], references: [id])
+
+  // Type of MR
+  type MRType @default(TRANSFER)
+
+  // Transfer details (for TRANSFER type)
+  fromBranchId String?
+  fromBranch   Branch? @relation("FromBranch", fields: [fromBranchId], references: [id])
+  toBranchId   String?
+  toBranch     Branch? @relation("ToBranch", fields: [toBranchId], references: [id])
+
+  // Single branch (for TRIM_WASTE type)
+  branchId String?
+
+  // Status
+  status MRStatus @default(DRAFT)
+
+  // Dates
+  mrDate       DateTime  @default(now())
+  transferDate DateTime?
+
+  // Creator
+  createdById String
+  createdBy   User   @relation("MRCreator", fields: [createdById], references: [id])
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items         MRItem[]
+  goodsReceipts GoodsReceipt[]
+
+  @@map("material_requisitions")
+}
+
+enum MRType {
+  TRANSFER // Transfer between branches
+  TRIM_WASTE // Mark items as trimmed or wasted
+}
+
+enum MRStatus {
+  DRAFT
+  APPROVED
+  COMPLETED
+  CANCELLED
+}
+
+// Material Requisition Items
+model MRItem {
+  id                  String              @id @default(cuid())
+  mrId                String
+  materialRequisition MaterialRequisition @relation(fields: [mrId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Quantity in transfer unit (for transfer) or main unit (for trim/waste)
+  quantity Decimal
+
+  // For trim/waste operations
+  wasteType String? // "TRIM", "WASTE", "DAMAGE"
+
+  remarks String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("mr_items")
+}
+
+// ============================================================================
+// GOODS RECEIPT (GR) MODULE - FR-20 to FR-22
+// ============================================================================
+
+// Goods Receipt - FR-20, FR-21, FR-22
+model GoodsReceipt {
+  id       String @id @default(cuid())
+  grNumber String @unique
+
+  // Source (either PO or MR)
+  poId                String?
+  purchaseOrder       PurchaseOrder?       @relation(fields: [poId], references: [id])
+  mrId                String?
+  materialRequisition MaterialRequisition? @relation(fields: [mrId], references: [id])
+
+  // Receipt details
+  receiptDate    DateTime @default(now())
+  documentNumber String? // Invoice/delivery note number
+
+  // Receiving branch
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  // Receiver
+  receivedById String
+  receivedBy   User   @relation("GRReceiver", fields: [receivedById], references: [id])
+
+  // Status
+  status GRStatus @default(DRAFT)
+
+  // Notes
+  remarks String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items GRItem[]
+
+  @@map("goods_receipts")
+}
+
+enum GRStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+// Goods Receipt Items - implements moving average cost calculation (FR-22)
+model GRItem {
+  id           String       @id @default(cuid())
+  grId         String
+  goodsReceipt GoodsReceipt @relation(fields: [grId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Quantities (in main unit after conversion)
+  orderedQty  Decimal // Expected quantity in main unit
+  receivedQty Decimal // Actually received in main unit
+
+  // Pricing (for PO receipts only, in buying unit)
+  unitPrice Decimal? // Price per buying unit
+  totalCost Decimal? // Total cost for this line
+
+  // Quality notes
+  qualityNotes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("gr_items")
+}
+
+// ============================================================================
+// FORMULA MANAGEMENT - FR-23, FR-24
+// ============================================================================
+
+// Formula - Production recipes - FR-23, FR-24
+model Formula {
+  id          String  @id @default(cuid())
+  name        String
+  code        String  @unique
+  description String?
+  version     String  @default("1.0")
+
+  // Output specification
+  outputItem     String? // If this formula produces a specific item
+  outputQuantity Decimal @default(1) // Standard batch size in using unit
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Creator
+  createdById String
+  createdBy   User   @relation("FormulaCreator", fields: [createdById], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  items              FormulaItem[]
+  manufacturingLists ManufacturingList[]
+
+  @@map("formulas")
+}
+
+// Formula Items - Raw materials needed for production
+model FormulaItem {
+  id        String  @id @default(cuid())
+  formulaId String
+  formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Consumption rate per batch (in using unit)
+  quantity Decimal
+
+  // Optional fields
+  remarks String?
+
+  @@unique([formulaId, itemId])
+  @@map("formula_items")
+}
+
+// ============================================================================
+// MANUFACTURING LIST (ML) MODULE - FR-25 to FR-28
+// ============================================================================
+
+// Manufacturing List - Production execution - FR-25, FR-26, FR-27, FR-28
+model ManufacturingList {
+  id       String  @id @default(cuid())
+  mlNumber String  @unique
+  title    String?
+
+  // Formula and output
+  formulaId      String
+  formula        Formula @relation(fields: [formulaId], references: [id])
+  outputQuantity Decimal // Desired output quantity
+
+  // Status workflow
+  status MLStatus @default(DRAFT)
+
+  // Dates
+  plannedDate   DateTime  @default(now())
+  startedDate   DateTime?
+  completedDate DateTime?
+
+  // Branch and Creator
+  branchId    String
+  branch      Branch @relation(fields: [branchId], references: [id])
+  createdById String
+  createdBy   User   @relation("MLCreator", fields: [createdById], references: [id])
+
+  // Notes
+  remarks String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("manufacturing_lists")
+}
+
+enum MLStatus {
+  DRAFT // Created but not started
+  IN_PROGRESS // Raw materials deducted, production started
+  COMPLETED // Finished goods added to stock
+  CANCELLED // Cancelled before completion
+}
+
+// ============================================================================
+// AI AGENT & MCP INTEGRATION - FR-29 to FR-33
+// ============================================================================
+
+// AI Suggestions - AI-generated recommendations
+model AISuggestion {
+  id          String           @id @default(cuid())
+  type        AISuggestionType
+  title       String
+  description String
+
+  // Target user
+  userId String
+  user   User   @relation("SuggestionReceiver", fields: [userId], references: [id])
+
+  // Suggestion data (JSON format for flexibility)
+  suggestionData Json // Contains specific recommendation details
+
+  // AI reasoning
+  reasoning  String? // Why AI made this suggestion
+  confidence Decimal? // AI confidence level (0-1)
+
+  // Status
+  status       SuggestionStatus @default(PENDING)
+  reviewedDate DateTime?
+  actionTaken  String? // What action user took
+
+  // Context
+  entityType String? // Item, Branch, etc.
+  entityId   String? // Related entity ID
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ai_suggestions")
+}
+
+enum AISuggestionType {
+  STOCK_REORDER // Suggest creating PR for low stock
+  TRANSFER_REQUEST // Suggest RF between branches
+  COST_VARIANCE // Alert on price discrepancies
+  DEMAND_FORECAST // Predict future requirements
+  OVERDUE_DELIVERY // Alert on delayed POs
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  IMPLEMENTED
+}
+
+// ============================================================================
+// NOTIFICATION SYSTEM
+// ============================================================================
+
+// Notifications - System and user notifications
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type    NotificationType
+  title   String
+  message String
+
+  // Reference to related entity
+  entityType String?
+  entityId   String?
+
+  // Status
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  // Priority
+  priority Priority @default(NORMAL)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  STOCK_LOW
+  PR_APPROVAL_NEEDED
+  PO_CONFIRMED
+  GR_PENDING
+  ML_COMPLETED
+  AI_SUGGESTION
+  SYSTEM_ALERT
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// ============================================================================
+// AUDIT TRAIL
+// ============================================================================
+
+// Audit Log - Simple audit trail with timestamps
+model AuditLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  action   String // CREATE, UPDATE, DELETE, APPROVE, etc.
+  entity   String // Table/Model name
+  entityId String // ID of the affected record
+
+  // Simple change tracking
+  oldValue String?
+  newValue String?
+  field    String?
+
+  // Context
+  ipAddress String?
+  userAgent String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
