@@ -1,0 +1,16 @@
+{
+  "title": "Test Purchase Request via API",
+  "description": "Testing purchase request creation with proper authentication",
+  "requiredDate": "2025-06-20T10:00:00Z",
+  "branchId": "29db9233-fbb4-4a68-8807-5d5cae43537d",
+  "justification": "Testing the API functionality",
+  "items": [
+    {
+      "itemId": "33640417-082c-478f-ae93-a14a0ff8456f",
+      "requestedQty": 100,
+      "estimatedPrice": 25.5,
+      "requiredDate": "2025-06-20T10:00:00Z",
+      "remarks": "Test item for API testing"
+    }
+  ]
+}

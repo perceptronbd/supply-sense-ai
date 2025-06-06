@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../generated/prisma"
+  // output   = "../../generated/prisma"
 }
 
 datasource db {
@@ -19,7 +19,7 @@ datasource db {
 
 // User Management & Authentication - Based on MVP user roles
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   username  String   @unique
   firstName String?
@@ -64,7 +64,7 @@ enum UserRole {
 
 // Branch Management - Core to MVP (items stored per branch)
 model Branch {
-  id       String  @id @default(cuid())
+  id       String  @id @default(uuid())
   name     String
   code     String  @unique
   address  String?
@@ -93,7 +93,7 @@ model Branch {
 
 // Item Master - Core to MVP with unit management (FR-1, FR-2, FR-3)
 model Item {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   name        String
   sku         String  @unique
   description String?
@@ -137,7 +137,7 @@ model Item {
 
 // Stock Management - Stores quantities in main units only (FR-3)
 model Stock {
-  id       String @id @default(cuid())
+  id       String @id @default(uuid())
   itemId   String
   item     Item   @relation(fields: [itemId], references: [id])
   branchId String
@@ -163,7 +163,7 @@ model Stock {
 
 // Supplier Management - Basic supplier info (FR-5)
 model Supplier {
-  id            String  @id @default(cuid())
+  id            String  @id @default(uuid())
   name          String
   code          String  @unique
   contactPerson String?
@@ -188,7 +188,7 @@ model Supplier {
 
 // Item-Supplier relationship with pricing
 model ItemSupplier {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   itemId     String
   item       Item     @relation(fields: [itemId], references: [id])
   supplierId String
@@ -216,7 +216,7 @@ model ItemSupplier {
 
 // Purchase Request - FR-6, FR-8
 model PurchaseRequest {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   prNumber    String  @unique
   title       String?
   description String?
@@ -266,7 +266,7 @@ enum PRStatus {
 
 // Purchase Request Items
 model PRItem {
-  id              String          @id @default(cuid())
+  id              String          @id @default(uuid())
   prId            String
   purchaseRequest PurchaseRequest @relation(fields: [prId], references: [id], onDelete: Cascade)
 
@@ -289,7 +289,7 @@ model PRItem {
 
 // PR Templates - FR-7
 model PRTemplate {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
 
@@ -313,7 +313,7 @@ model PRTemplate {
 
 // PR Template Items
 model PRTemplateItem {
-  id         String     @id @default(cuid())
+  id         String     @id @default(uuid())
   templateId String
   template   PRTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -334,7 +334,7 @@ model PRTemplateItem {
 
 // Purchase Order - FR-10, FR-11
 model PurchaseOrder {
-  id       String  @id @default(cuid())
+  id       String  @id @default(uuid())
   poNumber String  @unique
   title    String?
 
@@ -393,7 +393,7 @@ enum POStatus {
 
 // Purchase Order Items
 model POItem {
-  id            String        @id @default(cuid())
+  id            String        @id @default(uuid())
   poId          String
   purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
 
@@ -423,7 +423,7 @@ model POItem {
 
 // Request Form - Inter-branch transfer requests - FR-13, FR-15
 model RequestForm {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   rfNumber    String  @unique
   title       String?
   description String?
@@ -474,7 +474,7 @@ enum RFStatus {
 
 // Request Form Items
 model RFItem {
-  id          String      @id @default(cuid())
+  id          String      @id @default(uuid())
   rfId        String
   requestForm RequestForm @relation(fields: [rfId], references: [id], onDelete: Cascade)
 
@@ -493,7 +493,7 @@ model RFItem {
 
 // RF Templates - FR-14
 model RFTemplate {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
 
@@ -518,7 +518,7 @@ model RFTemplate {
 
 // RF Template Items
 model RFTemplateItem {
-  id         String     @id @default(cuid())
+  id         String     @id @default(uuid())
   templateId String
   template   RFTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -539,7 +539,7 @@ model RFTemplateItem {
 
 // Material Requisition - FR-16, FR-17, FR-18, FR-19
 model MaterialRequisition {
-  id       String  @id @default(cuid())
+  id       String  @id @default(uuid())
   mrNumber String  @unique
   title    String?
 
@@ -598,7 +598,7 @@ enum MRStatus {
 
 // Material Requisition Items
 model MRItem {
-  id                  String              @id @default(cuid())
+  id                  String              @id @default(uuid())
   mrId                String
   materialRequisition MaterialRequisition @relation(fields: [mrId], references: [id], onDelete: Cascade)
 
@@ -625,7 +625,7 @@ model MRItem {
 
 // Goods Receipt - FR-20, FR-21, FR-22
 model GoodsReceipt {
-  id       String @id @default(cuid())
+  id       String @id @default(uuid())
   grNumber String @unique
 
   // Source (either PO or MR)
@@ -670,7 +670,7 @@ enum GRStatus {
 
 // Goods Receipt Items - implements moving average cost calculation (FR-22)
 model GRItem {
-  id           String       @id @default(cuid())
+  id           String       @id @default(uuid())
   grId         String
   goodsReceipt GoodsReceipt @relation(fields: [grId], references: [id], onDelete: Cascade)
 
@@ -700,7 +700,7 @@ model GRItem {
 
 // Formula - Production recipes - FR-23, FR-24
 model Formula {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   name        String
   code        String  @unique
   description String?
@@ -730,7 +730,7 @@ model Formula {
 
 // Formula Items - Raw materials needed for production
 model FormulaItem {
-  id        String  @id @default(cuid())
+  id        String  @id @default(uuid())
   formulaId String
   formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
 
@@ -753,7 +753,7 @@ model FormulaItem {
 
 // Manufacturing List - Production execution - FR-25, FR-26, FR-27, FR-28
 model ManufacturingList {
-  id       String  @id @default(cuid())
+  id       String  @id @default(uuid())
   mlNumber String  @unique
   title    String?
 
@@ -799,7 +799,7 @@ enum MLStatus {
 
 // AI Suggestions - AI-generated recommendations
 model AISuggestion {
-  id          String           @id @default(cuid())
+  id          String           @id @default(uuid())
   type        AISuggestionType
   title       String
   description String
@@ -852,7 +852,7 @@ enum SuggestionStatus {
 
 // Notifications - System and user notifications
 model Notification {
-  id     String @id @default(cuid())
+  id     String @id @default(uuid())
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
@@ -900,7 +900,7 @@ enum Priority {
 
 // Audit Log - Simple audit trail with timestamps
 model AuditLog {
-  id     String @id @default(cuid())
+  id     String @id @default(uuid())
   userId String
   user   User   @relation(fields: [userId], references: [id])
 

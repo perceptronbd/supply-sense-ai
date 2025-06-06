@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
+import { AuthModule } from '../modules/auth/auth.module';
 import { PurchaseRequestModule } from '../modules/purchase-request/purchase-request.module';
 import { PurchaseOrderModule } from '../modules/purchase-order/purchase-order.module';
 import { GoodsReceiptModule } from '../modules/goods-receipt/goods-receipt.module';
@@ -12,6 +13,7 @@ import { FormulaModule } from '../modules/formula/formula.module';
 
 @Module({
   imports: [
+    AuthModule,
     PurchaseRequestModule,
     PurchaseOrderModule,
     GoodsReceiptModule,

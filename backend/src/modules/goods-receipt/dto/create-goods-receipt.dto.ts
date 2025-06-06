@@ -3,7 +3,8 @@ import {
   IsOptional,
   IsUUID,
   IsDateString,
-  IsDecimal,
+  IsNumber,
+  IsPositive,
   IsArray,
   ValidateNested,
 } from 'class-validator';
@@ -13,15 +14,18 @@ export class CreateGRItemDto {
   @IsUUID()
   itemId: string;
 
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @IsPositive()
   @Transform(({ value }) => parseFloat(value))
   orderedQty: number;
 
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @IsPositive()
   @Transform(({ value }) => parseFloat(value))
   receivedQty: number;
 
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsPositive()
   @Transform(({ value }) => parseFloat(value))
   @IsOptional()
   unitPrice?: number;
