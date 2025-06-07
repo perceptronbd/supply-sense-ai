@@ -10,30 +10,30 @@ async function getTestData() {
     // Get some branches
     const branches = await prisma.branch.findMany({ take: 2 });
     console.log('📍 Branches:');
-    branches.forEach((branch) => {
+    for (const branch of branches) {
       console.log(`  - ${branch.name}: ${branch.id}`);
-    });
+    }
 
     // Get some items
     const items = await prisma.item.findMany({ take: 3 });
     console.log('\n📦 Items:');
-    items.forEach((item) => {
+    for (const item of items) {
       console.log(`  - ${item.name}: ${item.id}`);
-    });
+    }
 
     // Get some suppliers
     const suppliers = await prisma.supplier.findMany({ take: 2 });
     console.log('\n🏢 Suppliers:');
-    suppliers.forEach((supplier) => {
+    for (const supplier of suppliers) {
       console.log(`  - ${supplier.name}: ${supplier.id}`);
-    });
+    }
 
     // Get some users
     const users = await prisma.user.findMany({ take: 2 });
     console.log('\n👤 Users:');
-    users.forEach((user) => {
+    for (const user of users) {
       console.log(`  - ${user.username}: ${user.id}`);
-    });
+    }
 
     if (branches.length > 0 && items.length > 0 && suppliers.length > 0 && users.length > 0) {
       console.log('\n✅ Test data structure with real UUIDs:');

@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { PrismaService } from '../../app/prisma.service';
+import type {
+  ItemForDeduction,
+  MRQueryFilter,
+  PrismaTransaction,
+} from '../common/interfaces/prisma.interface';
 import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import type { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 
@@ -79,9 +84,15 @@ export class MaterialRequisitionService {
       },
     });
   }
-
   async findAll(branchId?: string, type?: MRType) {
-    const where: any = {};
+    const where: {
+      OR?: Array<{
+        fromBranchId?: string;
+        toBranchId?: string;
+        branchId?: string;
+      }>;
+      type?: MRType;
+    } = {};
     if (branchId) {
       // For filtering by branch, include both transfer and trim/waste MRs
       where.OR = [{ fromBranchId: branchId }, { toBranchId: branchId }, { branchId: branchId }];
@@ -276,13 +287,14 @@ export class MaterialRequisitionService {
               },
             },
           },
-        });
-
-        // Deduct stock for trim/waste items
+        }); // Deduct stock for trim/waste items
         for (const mrItem of approvedMR.items) {
+          if (!approvedMR.branchId) {
+            throw new Error('Branch ID is required for trim/waste material requisition');
+          }
           await this.deductStockForTrimWaste(tx, {
             itemId: mrItem.itemId,
-            branchId: approvedMR.branchId!,
+            branchId: approvedMR.branchId,
             quantity: mrItem.quantity,
             item: mrItem.item,
           });
@@ -352,13 +364,14 @@ export class MaterialRequisitionService {
               },
             },
           },
-        });
-
-        // Deduct stock from source branch
+        }); // Deduct stock from source branch
         for (const mrItem of completedMR.items) {
+          if (!completedMR.fromBranchId) {
+            throw new Error('From branch ID is required for transfer material requisition');
+          }
           await this.deductStockForTransfer(tx, {
             itemId: mrItem.itemId,
-            fromBranchId: completedMR.fromBranchId!,
+            fromBranchId: completedMR.fromBranchId,
             quantity: mrItem.quantity,
             item: mrItem.item,
           });
@@ -467,15 +480,14 @@ export class MaterialRequisitionService {
 
     return this.create(createDto, userId);
   }
-
   // Helper method to deduct stock for transfer
   private async deductStockForTransfer(
-    tx: any,
+    tx: PrismaTransaction,
     data: {
       itemId: string;
       fromBranchId: string;
       quantity: Decimal;
-      item: any;
+      item: ItemForDeduction;
     }
   ) {
     const { itemId, fromBranchId, quantity, item } = data;
@@ -516,15 +528,14 @@ export class MaterialRequisitionService {
       },
     });
   }
-
   // Helper method to deduct stock for trim/waste
   private async deductStockForTrimWaste(
-    tx: any,
+    tx: PrismaTransaction,
     data: {
       itemId: string;
       branchId: string;
       quantity: Decimal;
-      item: any;
+      item: ItemForDeduction;
     }
   ) {
     const { itemId, branchId, quantity, item } = data;

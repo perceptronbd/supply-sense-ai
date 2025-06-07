@@ -76,9 +76,7 @@
     "webpack-cli": "^5.1.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "nx"
-    ]
+    "onlyBuiltDependencies": ["nx"]
   },
   "dependencies": {
     "@nestjs/common": "^10.0.2",

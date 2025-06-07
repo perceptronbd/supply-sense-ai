@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { PrismaService } from '../../app/prisma.service';
+import type { PrismaTransaction } from '../common/interfaces/prisma.interface';
 import type { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import type { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
@@ -334,8 +335,7 @@ export class GoodsReceiptService {
 
   // Helper method to update stock with moving average cost calculation
   private async updateStockWithMovingAverage(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tx: any,
+    tx: PrismaTransaction,
     data: {
       itemId: string;
       branchId: string;

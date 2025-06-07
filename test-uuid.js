@@ -12,24 +12,24 @@ async function testUUIDs() {
     const items = await prisma.item.findMany({ take: 2 });
 
     console.log('Sample Branch IDs:');
-    branches.forEach((branch) => {
+    for (const branch of branches) {
       console.log(`- ${branch.id} (${branch.name})`);
       console.log(
         `  UUID format check: ${/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
           branch.id
         )}`
       );
-    });
+    }
 
     console.log('\nSample Item IDs:');
-    items.forEach((item) => {
+    for (const item of items) {
       console.log(`- ${item.id} (${item.name})`);
       console.log(
         `  UUID format check: ${/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
           item.id
         )}`
       );
-    });
+    }
 
     console.log('\n✅ UUID test completed!');
   } catch (error) {

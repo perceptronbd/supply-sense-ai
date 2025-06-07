@@ -1,5 +1,6 @@
 import { Controller, Get, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import type { AppService } from './app.service';
 
@@ -31,7 +32,7 @@ export class AppController {
     status: 200,
     description: 'Debug information retrieved successfully',
   })
-  debugToken(@Req() request: any) {
+  debugToken(@Req() request: Request) {
     const token = request.headers.authorization?.split(' ')[1];
     let decoded = null;
 

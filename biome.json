@@ -81,12 +81,7 @@
   },
   "overrides": [
     {
-      "include": [
-        "**/*.test.ts",
-        "**/*.spec.ts",
-        "**/*.e2e-spec.ts",
-        "**/test-helpers.ts"
-      ],
+      "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.e2e-spec.ts", "**/test-helpers.ts"],
       "linter": {
         "rules": {
           "suspicious": {
