@@ -1,12 +1,10 @@
-import type { PrismaClient, MaterialRequisition } from "@prisma/client";
-import type { Decimal } from "@prisma/client/runtime/library";
+import type { MaterialRequisition, PrismaClient } from '@prisma/client';
+import type { Decimal } from '@prisma/client/runtime/library';
 
 /**
  * Prisma transaction type for database operations
  */
-export type PrismaTransaction = Parameters<
-  Parameters<PrismaClient["$transaction"]>[0]
->[0];
+export type PrismaTransaction = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
 
 /**
  * Query filter types for where clauses
