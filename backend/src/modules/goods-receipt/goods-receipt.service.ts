@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { Decimal } from "@prisma/client/runtime/library";
 import { PrismaService } from "../../app/prisma.service";
 import type { PrismaTransaction } from "../common/interfaces/prisma.interface";
@@ -19,16 +23,11 @@ export class GoodsReceiptService {
   async create(createGoodsReceiptDto: CreateGoodsReceiptDto, userId: string) {
     // Generate GR number
     const count = await this.prisma.goodsReceipt.count();
-    const grNumber = `GR${String(count + 1).padStart(6, "0")}`;
+    const grNumber = `GR${String(count + 1).padStart(9, "0")}`;
 
-    // Validate that either PO or MR is provided, but not both
-    if (!createGoodsReceiptDto.poId && !createGoodsReceiptDto.mrId) {
-      throw new Error(
-        "Either Purchase Order ID or Material Requisition ID must be provided"
-      );
-    }
+    // Validate that not both PO and MR are provided (standalone GR is allowed)
     if (createGoodsReceiptDto.poId && createGoodsReceiptDto.mrId) {
-      throw new Error(
+      throw new BadRequestException(
         "Cannot specify both Purchase Order ID and Material Requisition ID"
       );
     }
@@ -170,7 +169,9 @@ export class GoodsReceiptService {
 
     // Only allow updates if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new Error("Can only update Goods Receipts in DRAFT status");
+      throw new BadRequestException(
+        "Can only update Goods Receipts in DRAFT status"
+      );
     }
 
     return this.prisma.goodsReceipt.update({
@@ -233,7 +234,9 @@ export class GoodsReceiptService {
 
     // Only allow deletion if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new Error("Can only delete Goods Receipts in DRAFT status");
+      throw new BadRequestException(
+        "Can only delete Goods Receipts in DRAFT status"
+      );
     }
 
     return this.prisma.goodsReceipt.delete({
@@ -245,7 +248,9 @@ export class GoodsReceiptService {
     const existingGR = await this.findOne(id);
 
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new Error("Can only post Goods Receipts in DRAFT status");
+      throw new BadRequestException(
+        "Can only post Goods Receipts in DRAFT status"
+      );
     }
 
     // Start a transaction to post GR and update stock with moving average cost
@@ -255,6 +260,7 @@ export class GoodsReceiptService {
         where: { id },
         data: {
           status: GRStatus.POSTED,
+          postedAt: new Date(),
         },
         include: {
           items: {
@@ -303,14 +309,15 @@ export class GoodsReceiptService {
   async cancel(id: string) {
     const existingGR = await this.findOne(id);
 
-    if (existingGR.status !== GRStatus.DRAFT) {
-      throw new Error("Can only cancel Goods Receipts in DRAFT status");
+    if (existingGR.status === GRStatus.CANCELLED) {
+      throw new BadRequestException("Goods Receipt is already cancelled");
     }
 
     return this.prisma.goodsReceipt.update({
       where: { id },
       data: {
         status: GRStatus.CANCELLED,
+        cancelledAt: new Date(),
       },
       include: {
         items: {
@@ -427,7 +434,9 @@ export class GoodsReceiptService {
     }
 
     if (po.status !== "CONFIRMED") {
-      throw new Error("Can only create GR from CONFIRMED Purchase Orders");
+      throw new BadRequestException(
+        "Can only create GR from CONFIRMED Purchase Orders"
+      );
     }
 
     // Convert PO items to GR items
@@ -469,7 +478,9 @@ export class GoodsReceiptService {
     }
 
     if (mr.status !== "APPROVED") {
-      throw new Error("Can only create GR from APPROVED Material Requisitions");
+      throw new BadRequestException(
+        "Can only create GR from APPROVED Material Requisitions"
+      );
     }
 
     // Convert MR items to GR items (no pricing for MR receipts)

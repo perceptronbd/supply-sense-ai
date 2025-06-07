@@ -1,69 +1,75 @@
-import { PrismaClient } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaClient, UserRole } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+import * as argon2 from "argon2";
 
 const prisma = new PrismaClient();
 
+// Helper function to hash passwords using argon2
+async function hashPassword(password: string): Promise<string> {
+  return await argon2.hash(password);
+}
+
 async function main() {
-  console.log('Starting database seeding...');
+  console.log("Starting database seeding...");
 
   // Create branches
   const branches = await Promise.all([
     prisma.branch.upsert({
-      where: { code: 'HQ001' },
+      where: { code: "HQ001" },
       update: {},
       create: {
-        name: 'Headquarters',
-        code: 'HQ001',
-        address: '123 Main Street, Business District',
-        phone: '+1-555-0100',
-        email: 'headquarters@supplychain.com',
+        name: "Headquarters",
+        code: "HQ001",
+        address: "123 Main Street, Business District",
+        phone: "+1-555-0100",
+        email: "headquarters@supplychain.com",
         isActive: true,
       },
     }),
     prisma.branch.upsert({
-      where: { code: 'BR001' },
+      where: { code: "BR001" },
       update: {},
       create: {
-        name: 'Manufacturing Branch A',
-        code: 'BR001',
-        address: '456 Industrial Ave, Manufacturing Zone',
-        phone: '+1-555-0101',
-        email: 'branch-a@supplychain.com',
+        name: "Manufacturing Branch A",
+        code: "BR001",
+        address: "456 Industrial Ave, Manufacturing Zone",
+        phone: "+1-555-0101",
+        email: "branch-a@supplychain.com",
         isActive: true,
       },
     }),
     prisma.branch.upsert({
-      where: { code: 'BR002' },
+      where: { code: "BR002" },
       update: {},
       create: {
-        name: 'Manufacturing Branch B',
-        code: 'BR002',
-        address: '789 Factory Road, Production Area',
-        phone: '+1-555-0102',
-        email: 'branch-b@supplychain.com',
+        name: "Manufacturing Branch B",
+        code: "BR002",
+        address: "789 Factory Road, Production Area",
+        phone: "+1-555-0102",
+        email: "branch-b@supplychain.com",
         isActive: true,
       },
     }),
   ]);
 
   console.log(
-    'Created branches:',
+    "Created branches:",
     branches.map((b) => b.name)
   );
 
   // Create items
   const items = await Promise.all([
     prisma.item.upsert({
-      where: { sku: 'RM001' },
+      where: { sku: "RM001" },
       update: {},
       create: {
-        name: 'Raw Material A - Premium Grade',
-        sku: 'RM001',
-        description: 'High-grade raw material for manufacturing processes',
-        mainUnit: 'kg',
-        buyingUnit: 'kg',
-        transferUnit: 'kg',
-        usingUnit: 'g',
+        name: "Raw Material A - Premium Grade",
+        sku: "RM001",
+        description: "High-grade raw material for manufacturing processes",
+        mainUnit: "kg",
+        buyingUnit: "kg",
+        transferUnit: "kg",
+        usingUnit: "g",
         buyingToMainRate: new Decimal(1),
         transferToMainRate: new Decimal(1),
         usingToMainRate: new Decimal(0.001),
@@ -73,16 +79,16 @@ async function main() {
       },
     }),
     prisma.item.upsert({
-      where: { sku: 'RM002' },
+      where: { sku: "RM002" },
       update: {},
       create: {
-        name: 'Raw Material B - Standard Grade',
-        sku: 'RM002',
-        description: 'Standard raw material for general production',
-        mainUnit: 'pieces',
-        buyingUnit: 'pieces',
-        transferUnit: 'pieces',
-        usingUnit: 'pieces',
+        name: "Raw Material B - Standard Grade",
+        sku: "RM002",
+        description: "Standard raw material for general production",
+        mainUnit: "pieces",
+        buyingUnit: "pieces",
+        transferUnit: "pieces",
+        usingUnit: "pieces",
         buyingToMainRate: new Decimal(1),
         transferToMainRate: new Decimal(1),
         usingToMainRate: new Decimal(1),
@@ -92,16 +98,16 @@ async function main() {
       },
     }),
     prisma.item.upsert({
-      where: { sku: 'RM003' },
+      where: { sku: "RM003" },
       update: {},
       create: {
-        name: 'Chemical Component X',
-        sku: 'RM003',
-        description: 'Specialized chemical component for advanced formulations',
-        mainUnit: 'liters',
-        buyingUnit: 'liters',
-        transferUnit: 'ml',
-        usingUnit: 'ml',
+        name: "Chemical Component X",
+        sku: "RM003",
+        description: "Specialized chemical component for advanced formulations",
+        mainUnit: "liters",
+        buyingUnit: "liters",
+        transferUnit: "ml",
+        usingUnit: "ml",
         buyingToMainRate: new Decimal(1),
         transferToMainRate: new Decimal(0.001),
         usingToMainRate: new Decimal(0.001),
@@ -111,16 +117,16 @@ async function main() {
       },
     }),
     prisma.item.upsert({
-      where: { sku: 'FG001' },
+      where: { sku: "FG001" },
       update: {},
       create: {
-        name: 'Finished Product Alpha',
-        sku: 'FG001',
-        description: 'Premium finished product manufactured from raw materials',
-        mainUnit: 'units',
-        buyingUnit: 'units',
-        transferUnit: 'units',
-        usingUnit: 'units',
+        name: "Finished Product Alpha",
+        sku: "FG001",
+        description: "Premium finished product manufactured from raw materials",
+        mainUnit: "units",
+        buyingUnit: "units",
+        transferUnit: "units",
+        usingUnit: "units",
         buyingToMainRate: new Decimal(1),
         transferToMainRate: new Decimal(1),
         usingToMainRate: new Decimal(1),
@@ -130,16 +136,16 @@ async function main() {
       },
     }),
     prisma.item.upsert({
-      where: { sku: 'PKG001' },
+      where: { sku: "PKG001" },
       update: {},
       create: {
-        name: 'Packaging Material - Boxes',
-        sku: 'PKG001',
-        description: 'Standard cardboard boxes for product packaging',
-        mainUnit: 'pieces',
-        buyingUnit: 'pieces',
-        transferUnit: 'pieces',
-        usingUnit: 'pieces',
+        name: "Packaging Material - Boxes",
+        sku: "PKG001",
+        description: "Standard cardboard boxes for product packaging",
+        mainUnit: "pieces",
+        buyingUnit: "pieces",
+        transferUnit: "pieces",
+        usingUnit: "pieces",
         buyingToMainRate: new Decimal(1),
         transferToMainRate: new Decimal(1),
         usingToMainRate: new Decimal(1),
@@ -151,106 +157,146 @@ async function main() {
   ]);
 
   console.log(
-    'Created items:',
+    "Created items:",
     items.map((i) => i.name)
   );
 
   // Create suppliers
   const suppliers = await Promise.all([
     prisma.supplier.upsert({
-      where: { code: 'SUP001' },
+      where: { code: "SUP001" },
       update: {},
       create: {
-        name: 'Premium Materials Inc.',
-        code: 'SUP001',
-        contactPerson: 'John Smith',
-        email: 'orders@premiummaterials.com',
-        phone: '+1-555-2001',
-        address: '100 Supplier Street, Industrial Park',
+        name: "Premium Materials Inc.",
+        code: "SUP001",
+        contactPerson: "John Smith",
+        email: "orders@premiummaterials.com",
+        phone: "+1-555-2001",
+        address: "100 Supplier Street, Industrial Park",
         isActive: true,
       },
     }),
     prisma.supplier.upsert({
-      where: { code: 'SUP002' },
+      where: { code: "SUP002" },
       update: {},
       create: {
-        name: 'Chemical Solutions Ltd.',
-        code: 'SUP002',
-        contactPerson: 'Sarah Johnson',
-        email: 'sales@chemsolutions.com',
-        phone: '+1-555-2002',
-        address: '200 Chemical Lane, Science District',
+        name: "Chemical Solutions Ltd.",
+        code: "SUP002",
+        contactPerson: "Sarah Johnson",
+        email: "sales@chemsolutions.com",
+        phone: "+1-555-2002",
+        address: "200 Chemical Lane, Science District",
         isActive: true,
       },
     }),
     prisma.supplier.upsert({
-      where: { code: 'SUP003' },
+      where: { code: "SUP003" },
       update: {},
       create: {
-        name: 'Packaging World Corp.',
-        code: 'SUP003',
-        contactPerson: 'Mike Wilson',
-        email: 'info@packagingworld.com',
-        phone: '+1-555-2003',
-        address: '300 Packaging Blvd, Commerce Center',
+        name: "Packaging World Corp.",
+        code: "SUP003",
+        contactPerson: "Mike Wilson",
+        email: "info@packagingworld.com",
+        phone: "+1-555-2003",
+        address: "300 Packaging Blvd, Commerce Center",
         isActive: true,
       },
     }),
   ]);
 
   console.log(
-    'Created suppliers:',
+    "Created suppliers:",
     suppliers.map((s) => s.name)
-  );
-
-  // Create users
+  ); // Create users with properly hashed passwords
   const users = await Promise.all([
     prisma.user.upsert({
-      where: { email: 'admin@supplychain.com' },
+      where: { email: "admin@supplychain.com" },
       update: {},
       create: {
-        email: 'admin@supplychain.com',
-        username: 'admin',
-        firstName: 'System',
-        lastName: 'Administrator',
-        password: 'hashed_password_placeholder', // In real app, this would be properly hashed
-        role: 'SYSTEM_ADMIN',
+        email: "admin@supplychain.com",
+        username: "admin",
+        firstName: "System",
+        lastName: "Administrator",
+        password: await hashPassword("admin123"),
+        role: UserRole.SYSTEM_ADMIN,
         branchId: branches[0].id, // Assign to HQ
         isActive: true,
       },
     }),
     prisma.user.upsert({
-      where: { email: 'manager.a@supplychain.com' },
+      where: { email: "manager.a@supplychain.com" },
       update: {},
       create: {
-        email: 'manager.a@supplychain.com',
-        username: 'manager_a',
-        firstName: 'Alice',
-        lastName: 'Manager',
-        password: 'hashed_password_placeholder',
-        role: 'BRANCH_MANAGER',
+        email: "manager.a@supplychain.com",
+        username: "manager_a",
+        firstName: "Alice",
+        lastName: "Manager",
+        password: await hashPassword("manager123"),
+        role: UserRole.BRANCH_MANAGER,
         branchId: branches[1].id, // Assign to Branch A
         isActive: true,
       },
     }),
     prisma.user.upsert({
-      where: { email: 'clerk.b@supplychain.com' },
+      where: { email: "clerk.a@supplychain.com" },
       update: {},
       create: {
-        email: 'clerk.b@supplychain.com',
-        username: 'clerk_b',
-        firstName: 'Bob',
-        lastName: 'Clerk',
-        password: 'hashed_password_placeholder',
-        role: 'INVENTORY_CLERK',
+        email: "clerk.a@supplychain.com",
+        username: "clerk_a",
+        firstName: "Anna",
+        lastName: "Clerk",
+        password: await hashPassword("clerk123"),
+        role: UserRole.INVENTORY_CLERK,
+        branchId: branches[1].id, // Assign to Branch A
+        isActive: true,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "clerk.b@supplychain.com" },
+      update: {},
+      create: {
+        email: "clerk.b@supplychain.com",
+        username: "clerk_b",
+        firstName: "Bob",
+        lastName: "Clerk",
+        password: await hashPassword("clerk123"),
+        role: UserRole.INVENTORY_CLERK,
         branchId: branches[2].id, // Assign to Branch B
+        isActive: true,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "specialist.a@supplychain.com" },
+      update: {},
+      create: {
+        email: "specialist.a@supplychain.com",
+        username: "specialist_a",
+        firstName: "Sam",
+        lastName: "Specialist",
+        password: await hashPassword("specialist123"),
+        role: UserRole.PROCUREMENT_SPECIALIST,
+        branchId: branches[1].id, // Assign to Branch A
+        isActive: true,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "user.a@supplychain.com" },
+      update: {},
+      create: {
+        email: "user.a@supplychain.com",
+        username: "user_a",
+        firstName: "John",
+        lastName: "User",
+        password: await hashPassword("user123"),
+        role: UserRole.PRODUCTION_PLANNER,
+        branchId: branches[1].id, // Assign to Branch A
         isActive: true,
       },
     }),
   ]);
 
   console.log(
-    'Created users:',
+    "Created users:",
     users.map((u) => u.email)
   ); // Create initial stock records
   let stockCount = 0;
@@ -333,10 +379,10 @@ async function main() {
     }),
   ]);
 
-  console.log('Created item-supplier relationships:', itemSuppliers.length);
+  console.log("Created item-supplier relationships:", itemSuppliers.length);
 
-  console.log('Database seeding completed successfully!');
-  console.log('\nSeed data summary:');
+  console.log("Database seeding completed successfully!");
+  console.log("\nSeed data summary:");
   console.log(`- Branches: ${branches.length}`);
   console.log(`- Items: ${items.length}`);
   console.log(`- Suppliers: ${suppliers.length}`);
@@ -347,7 +393,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Error during seeding:', e);
+    console.error("Error during seeding:", e);
     process.exit(1);
   })
   .finally(async () => {

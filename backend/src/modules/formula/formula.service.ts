@@ -1,8 +1,12 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
-import type { CreateFormulaDto } from './dto/create-formula.dto';
-import type { UpdateFormulaDto } from './dto/update-formula.dto';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { Decimal } from "@prisma/client/runtime/library";
+import { PrismaService } from "../../app/prisma.service";
+import type { CreateFormulaDto } from "./dto/create-formula.dto";
+import type { UpdateFormulaDto } from "./dto/update-formula.dto";
 
 @Injectable()
 export class FormulaService {
@@ -15,7 +19,9 @@ export class FormulaService {
     });
 
     if (existingFormula) {
-      throw new ConflictException(`Formula with code ${createFormulaDto.code} already exists`);
+      throw new ConflictException(
+        `Formula with code ${createFormulaDto.code} already exists`
+      );
     }
 
     // Validate all item IDs exist
@@ -34,7 +40,9 @@ export class FormulaService {
         where: { id: createFormulaDto.outputItem },
       });
       if (!outputItemExists) {
-        throw new NotFoundException(`Output item with ID ${createFormulaDto.outputItem} not found`);
+        throw new NotFoundException(
+          `Output item with ID ${createFormulaDto.outputItem} not found`
+        );
       }
     }
 
@@ -43,7 +51,7 @@ export class FormulaService {
         name: createFormulaDto.name,
         code: createFormulaDto.code,
         description: createFormulaDto.description,
-        version: createFormulaDto.version || '1.0',
+        version: createFormulaDto.version || "1.0",
         outputItem: createFormulaDto.outputItem,
         outputQuantity: new Decimal(createFormulaDto.outputQuantity || 1),
         isActive: createFormulaDto.isActive ?? true,
@@ -83,7 +91,7 @@ export class FormulaService {
 
   async findAll(isActive?: boolean) {
     const where: { isActive?: boolean } = {};
-    if (typeof isActive === 'boolean') where.isActive = isActive;
+    if (typeof isActive === "boolean") where.isActive = isActive;
 
     return this.prisma.formula.findMany({
       where,
@@ -110,7 +118,7 @@ export class FormulaService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -137,7 +145,7 @@ export class FormulaService {
             branch: true,
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
         },
       },
@@ -181,12 +189,17 @@ export class FormulaService {
     const existingFormula = await this.findOne(id);
 
     // Check if code is being updated and is unique
-    if (updateFormulaDto.code && updateFormulaDto.code !== existingFormula.code) {
+    if (
+      updateFormulaDto.code &&
+      updateFormulaDto.code !== existingFormula.code
+    ) {
       const codeExists = await this.prisma.formula.findUnique({
         where: { code: updateFormulaDto.code },
       });
       if (codeExists) {
-        throw new ConflictException(`Formula with code ${updateFormulaDto.code} already exists`);
+        throw new ConflictException(
+          `Formula with code ${updateFormulaDto.code} already exists`
+        );
       }
     }
 
@@ -208,7 +221,9 @@ export class FormulaService {
         where: { id: updateFormulaDto.outputItem },
       });
       if (!outputItemExists) {
-        throw new NotFoundException(`Output item with ID ${updateFormulaDto.outputItem} not found`);
+        throw new NotFoundException(
+          `Output item with ID ${updateFormulaDto.outputItem} not found`
+        );
       }
     }
 
@@ -268,13 +283,15 @@ export class FormulaService {
       where: {
         formulaId: id,
         status: {
-          in: ['DRAFT', 'IN_PROGRESS'],
+          in: ["DRAFT", "IN_PROGRESS"],
         },
       },
     });
 
     if (activeMLs.length > 0) {
-      throw new Error('Cannot delete formula that is being used in active Manufacturing Lists');
+      throw new Error(
+        "Cannot delete formula that is being used in active Manufacturing Lists"
+      );
     }
 
     return this.prisma.formula.delete({
@@ -292,13 +309,15 @@ export class FormulaService {
         where: {
           formulaId: id,
           status: {
-            in: ['IN_PROGRESS', 'COMPLETED'],
+            in: ["IN_PROGRESS", "COMPLETED"],
           },
         },
       });
 
       if (activeMls.length > 0) {
-        throw new Error('Cannot deactivate formula that is used in manufacturing lists');
+        throw new Error(
+          "Cannot deactivate formula that is used in manufacturing lists"
+        );
       }
     }
 
@@ -337,7 +356,9 @@ export class FormulaService {
       where: { code: newCode },
     });
     if (codeExists) {
-      throw new ConflictException(`Formula with code ${newCode} already exists`);
+      throw new ConflictException(
+        `Formula with code ${newCode} already exists`
+      );
     }
 
     return this.prisma.formula.create({
@@ -381,7 +402,7 @@ export class FormulaService {
     const originalFormula = await this.findOne(id);
 
     // Generate a new version number
-    const currentVersion = Number.parseFloat(originalFormula.version || '1.0');
+    const currentVersion = Number.parseFloat(originalFormula.version || "1.0");
     let newVersion = (currentVersion + 0.1).toFixed(1);
 
     // Check if this version already exists
@@ -439,7 +460,7 @@ export class FormulaService {
     const formula = await this.findOne(id);
 
     if (!formula.isActive) {
-      throw new Error('Cannot calculate requirements for inactive formula');
+      throw new Error("Cannot calculate requirements for inactive formula");
     }
 
     const scaleFactor = new Decimal(outputQuantity).div(formula.outputQuantity);
@@ -449,7 +470,9 @@ export class FormulaService {
       itemName: item.item.name,
       itemSku: item.item.sku,
       requiredQuantityInUsingUnit: item.quantity.mul(scaleFactor),
-      requiredQuantityInMainUnit: item.quantity.mul(scaleFactor).mul(item.item.usingToMainRate),
+      requiredQuantityInMainUnit: item.quantity
+        .mul(scaleFactor)
+        .mul(item.item.usingToMainRate),
       usingUnit: item.item.usingUnit,
       mainUnit: item.item.mainUnit,
       remarks: item.remarks,

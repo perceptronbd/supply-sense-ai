@@ -1,16 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
-import type { CreateRequestFormDto } from './dto/create-request-form.dto';
-import type { UpdateRequestFormDto } from './dto/update-request-form.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Decimal } from "@prisma/client/runtime/library";
+import { PrismaService } from "../../app/prisma.service";
+import type { CreateRequestFormDto } from "./dto/create-request-form.dto";
+import type { UpdateRequestFormDto } from "./dto/update-request-form.dto";
 
 // Define status enum locally to avoid import issues
 enum RFStatus {
-  DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  READY_FOR_MR = 'READY_FOR_MR',
+  DRAFT = "DRAFT",
+  SUBMITTED = "SUBMITTED",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  READY_FOR_MR = "READY_FOR_MR",
 }
 
 @Injectable()
@@ -20,7 +20,7 @@ export class RequestFormService {
   async create(createRequestFormDto: CreateRequestFormDto, userId: string) {
     // Generate RF number
     const count = await this.prisma.requestForm.count();
-    const rfNumber = `RF${String(count + 1).padStart(6, '0')}`;
+    const rfNumber = `RF${String(count + 1).padStart(6, "0")}`;
 
     return this.prisma.requestForm.create({
       data: {
@@ -96,7 +96,7 @@ export class RequestFormService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -145,7 +145,7 @@ export class RequestFormService {
 
     // Only allow updates if status is DRAFT
     if (existingRF.status !== RFStatus.DRAFT) {
-      throw new Error('Can only update Request Forms in DRAFT status');
+      throw new Error("Can only update Request Forms in DRAFT status");
     }
 
     return this.prisma.requestForm.update({
@@ -197,7 +197,7 @@ export class RequestFormService {
 
     // Only allow deletion if status is DRAFT
     if (existingRF.status !== RFStatus.DRAFT) {
-      throw new Error('Can only delete Request Forms in DRAFT status');
+      throw new Error("Can only delete Request Forms in DRAFT status");
     }
 
     return this.prisma.requestForm.delete({
@@ -209,7 +209,7 @@ export class RequestFormService {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.DRAFT) {
-      throw new Error('Can only submit Request Forms in DRAFT status');
+      throw new Error("Can only submit Request Forms in DRAFT status");
     }
 
     return this.prisma.requestForm.update({
@@ -243,7 +243,7 @@ export class RequestFormService {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
-      throw new Error('Can only approve Request Forms in SUBMITTED status');
+      throw new Error("Can only approve Request Forms in SUBMITTED status");
     }
 
     return this.prisma.requestForm.update({
@@ -278,7 +278,7 @@ export class RequestFormService {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
-      throw new Error('Can only reject Request Forms in SUBMITTED status');
+      throw new Error("Can only reject Request Forms in SUBMITTED status");
     }
 
     return this.prisma.requestForm.update({
@@ -311,7 +311,7 @@ export class RequestFormService {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.APPROVED) {
-      throw new Error('Can only mark APPROVED Request Forms as ready for MR');
+      throw new Error("Can only mark APPROVED Request Forms as ready for MR");
     }
 
     return this.prisma.requestForm.update({
@@ -359,11 +359,13 @@ export class RequestFormService {
     });
 
     if (!template) {
-      throw new NotFoundException(`RF Template with ID ${templateId} not found`);
+      throw new NotFoundException(
+        `RF Template with ID ${templateId} not found`
+      );
     }
 
     if (!template.isActive) {
-      throw new Error('Cannot create RF from inactive template');
+      throw new Error("Cannot create RF from inactive template");
     }
 
     // Convert template items to RF items
@@ -378,7 +380,9 @@ export class RequestFormService {
       description: template.description || undefined,
       fromBranchId,
       toBranchId,
-      requiredDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 days from now
+      requiredDate: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString(), // Default 7 days from now
       rfTemplateId: template.id,
       items: rfItems,
     };

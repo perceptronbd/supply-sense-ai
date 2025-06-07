@@ -241,6 +241,10 @@ model PurchaseRequest {
   // Template reference - FR-7
   prTemplateId String?
   prTemplate   PRTemplate? @relation(fields: [prTemplateId], references: [id])
+  // Workflow timestamps
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  rejectedAt   DateTime?
 
   // Notes
   justification String?
@@ -451,6 +455,10 @@ model RequestForm {
   // Template reference - FR-14
   rfTemplateId String?
   rfTemplate   RFTemplate? @relation(fields: [rfTemplateId], references: [id])
+  // Workflow timestamps
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  rejectedAt   DateTime?
 
   // Notes
   reason String?
@@ -567,10 +575,14 @@ model MaterialRequisition {
   // Dates
   mrDate       DateTime  @default(now())
   transferDate DateTime?
-
   // Creator
-  createdById String
-  createdBy   User   @relation("MRCreator", fields: [createdById], references: [id])
+  createdById  String
+  createdBy    User      @relation("MRCreator", fields: [createdById], references: [id])
+
+  // Workflow timestamps
+  approvedAt  DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
 
   // Notes
   notes String?
@@ -646,10 +658,13 @@ model GoodsReceipt {
 
   // Receiver
   receivedById String
-  receivedBy   User   @relation("GRReceiver", fields: [receivedById], references: [id])
-
+  receivedBy   User     @relation("GRReceiver", fields: [receivedById], references: [id])
   // Status
-  status GRStatus @default(DRAFT)
+  status       GRStatus @default(DRAFT)
+
+  // Workflow timestamps
+  postedAt    DateTime?
+  cancelledAt DateTime?
 
   // Notes
   remarks String?
@@ -765,12 +780,12 @@ model ManufacturingList {
   outputQuantity Decimal // Desired output quantity
 
   // Status workflow
-  status MLStatus @default(DRAFT)
-
+  status        MLStatus  @default(DRAFT)
   // Dates
   plannedDate   DateTime  @default(now())
   startedDate   DateTime?
   completedDate DateTime?
+  cancelledAt   DateTime?
 
   // Branch and Creator
   branchId    String

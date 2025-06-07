@@ -1,42 +1,58 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Decimal } from "@prisma/client/runtime/library";
+import { PrismaService } from "../../app/prisma.service";
 import type {
   ItemForDeduction,
   MRQueryFilter,
   PrismaTransaction,
-} from '../common/interfaces/prisma.interface';
-import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
-import type { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
+} from "../common/interfaces/prisma.interface";
+import {
+  type CreateMaterialRequisitionDto,
+  MRType,
+} from "./dto/create-material-requisition.dto";
+import type { UpdateMaterialRequisitionDto } from "./dto/update-material-requisition.dto";
 
 // Define status enum locally to avoid import issues
 enum MRStatus {
-  DRAFT = 'DRAFT',
-  APPROVED = 'APPROVED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  DRAFT = "DRAFT",
+  APPROVED = "APPROVED",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 
 @Injectable()
 export class MaterialRequisitionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createMaterialRequisitionDto: CreateMaterialRequisitionDto, userId: string) {
+  async create(
+    createMaterialRequisitionDto: CreateMaterialRequisitionDto,
+    userId: string
+  ) {
     // Generate MR number
     const count = await this.prisma.materialRequisition.count();
-    const mrNumber = `MR${String(count + 1).padStart(6, '0')}`;
+    const mrNumber = `MR${String(count + 1).padStart(6, "0")}`;
 
     // Validate branch fields based on type
     if (createMaterialRequisitionDto.type === MRType.TRANSFER) {
-      if (!createMaterialRequisitionDto.fromBranchId || !createMaterialRequisitionDto.toBranchId) {
-        throw new Error('Transfer MR requires both fromBranchId and toBranchId');
+      if (
+        !createMaterialRequisitionDto.fromBranchId ||
+        !createMaterialRequisitionDto.toBranchId
+      ) {
+        throw new Error(
+          "Transfer MR requires both fromBranchId and toBranchId"
+        );
       }
-      if (createMaterialRequisitionDto.fromBranchId === createMaterialRequisitionDto.toBranchId) {
-        throw new Error('Transfer MR cannot have same source and destination branch');
+      if (
+        createMaterialRequisitionDto.fromBranchId ===
+        createMaterialRequisitionDto.toBranchId
+      ) {
+        throw new Error(
+          "Transfer MR cannot have same source and destination branch"
+        );
       }
     } else if (createMaterialRequisitionDto.type === MRType.TRIM_WASTE) {
       if (!createMaterialRequisitionDto.branchId) {
-        throw new Error('Trim/Waste MR requires branchId');
+        throw new Error("Trim/Waste MR requires branchId");
       }
     }
 
@@ -95,7 +111,11 @@ export class MaterialRequisitionService {
     } = {};
     if (branchId) {
       // For filtering by branch, include both transfer and trim/waste MRs
-      where.OR = [{ fromBranchId: branchId }, { toBranchId: branchId }, { branchId: branchId }];
+      where.OR = [
+        { fromBranchId: branchId },
+        { toBranchId: branchId },
+        { branchId: branchId },
+      ];
     }
     if (type) where.type = type;
 
@@ -134,66 +154,72 @@ export class MaterialRequisitionService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
 
   async findOne(id: string) {
-    const materialRequisition = await this.prisma.materialRequisition.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            item: true,
+    const materialRequisition =
+      await this.prisma.materialRequisition.findUnique({
+        where: { id },
+        include: {
+          items: {
+            include: {
+              item: true,
+            },
           },
-        },
-        requestForm: {
-          include: {
-            fromBranch: true,
-            toBranch: true,
-            items: {
-              include: {
-                item: true,
+          requestForm: {
+            include: {
+              fromBranch: true,
+              toBranch: true,
+              items: {
+                include: {
+                  item: true,
+                },
+              },
+            },
+          },
+          fromBranch: true,
+          toBranch: true,
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          goodsReceipts: {
+            include: {
+              items: {
+                include: {
+                  item: true,
+                },
               },
             },
           },
         },
-        fromBranch: true,
-        toBranch: true,
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        goodsReceipts: {
-          include: {
-            items: {
-              include: {
-                item: true,
-              },
-            },
-          },
-        },
-      },
-    });
+      });
 
     if (!materialRequisition) {
-      throw new NotFoundException(`Material Requisition with ID ${id} not found`);
+      throw new NotFoundException(
+        `Material Requisition with ID ${id} not found`
+      );
     }
 
     return materialRequisition;
   }
 
-  async update(id: string, updateMaterialRequisitionDto: UpdateMaterialRequisitionDto) {
+  async update(
+    id: string,
+    updateMaterialRequisitionDto: UpdateMaterialRequisitionDto
+  ) {
     const existingMR = await this.findOne(id);
 
     // Only allow updates if status is DRAFT
     if (existingMR.status !== MRStatus.DRAFT) {
-      throw new Error('Can only update Material Requisitions in DRAFT status');
+      throw new Error("Can only update Material Requisitions in DRAFT status");
     }
 
     return this.prisma.materialRequisition.update({
@@ -245,7 +271,7 @@ export class MaterialRequisitionService {
 
     // Only allow deletion if status is DRAFT
     if (existingMR.status !== MRStatus.DRAFT) {
-      throw new Error('Can only delete Material Requisitions in DRAFT status');
+      throw new Error("Can only delete Material Requisitions in DRAFT status");
     }
 
     return this.prisma.materialRequisition.delete({
@@ -258,7 +284,7 @@ export class MaterialRequisitionService {
     const existingMR = await this.findOne(id);
 
     if (existingMR.status !== MRStatus.DRAFT) {
-      throw new Error('Can only approve Material Requisitions in DRAFT status');
+      throw new Error("Can only approve Material Requisitions in DRAFT status");
     }
 
     // For TRIM_WASTE type, immediately deduct stock when approved
@@ -290,7 +316,9 @@ export class MaterialRequisitionService {
         }); // Deduct stock for trim/waste items
         for (const mrItem of approvedMR.items) {
           if (!approvedMR.branchId) {
-            throw new Error('Branch ID is required for trim/waste material requisition');
+            throw new Error(
+              "Branch ID is required for trim/waste material requisition"
+            );
           }
           await this.deductStockForTrimWaste(tx, {
             itemId: mrItem.itemId,
@@ -334,7 +362,7 @@ export class MaterialRequisitionService {
     const existingMR = await this.findOne(id);
 
     if (existingMR.status !== MRStatus.APPROVED) {
-      throw new Error('Can only complete APPROVED Material Requisitions');
+      throw new Error("Can only complete APPROVED Material Requisitions");
     }
 
     // For TRANSFER type, deduct stock from source branch when completed
@@ -367,7 +395,9 @@ export class MaterialRequisitionService {
         }); // Deduct stock from source branch
         for (const mrItem of completedMR.items) {
           if (!completedMR.fromBranchId) {
-            throw new Error('From branch ID is required for transfer material requisition');
+            throw new Error(
+              "From branch ID is required for transfer material requisition"
+            );
           }
           await this.deductStockForTransfer(tx, {
             itemId: mrItem.itemId,
@@ -410,7 +440,7 @@ export class MaterialRequisitionService {
     const existingMR = await this.findOne(id);
 
     if (existingMR.status === MRStatus.COMPLETED) {
-      throw new Error('Cannot cancel completed Material Requisitions');
+      throw new Error("Cannot cancel completed Material Requisitions");
     }
 
     return this.prisma.materialRequisition.update({
@@ -458,8 +488,10 @@ export class MaterialRequisitionService {
       throw new NotFoundException(`Request Form with ID ${rfId} not found`);
     }
 
-    if (rf.status !== 'APPROVED' && rf.status !== 'READY_FOR_MR') {
-      throw new Error('Can only create MR from APPROVED or READY_FOR_MR Request Forms');
+    if (rf.status !== "APPROVED" && rf.status !== "READY_FOR_MR") {
+      throw new Error(
+        "Can only create MR from APPROVED or READY_FOR_MR Request Forms"
+      );
     }
 
     // Convert RF items to MR items (using transfer unit quantities)
@@ -509,7 +541,9 @@ export class MaterialRequisitionService {
       throw new Error(
         `Insufficient stock for item ${
           item.name
-        } in source branch. Required: ${quantityInMainUnit}, Available: ${stock?.availableQty || 0}`
+        } in source branch. Required: ${quantityInMainUnit}, Available: ${
+          stock?.availableQty || 0
+        }`
       );
     }
 
@@ -555,7 +589,9 @@ export class MaterialRequisitionService {
 
     if (!stock || stock.availableQty.lt(quantityInMainUnit)) {
       throw new Error(
-        `Insufficient stock for item ${item.name}. Required: ${quantityInMainUnit}, Available: ${
+        `Insufficient stock for item ${
+          item.name
+        }. Required: ${quantityInMainUnit}, Available: ${
           stock?.availableQty || 0
         }`
       );
