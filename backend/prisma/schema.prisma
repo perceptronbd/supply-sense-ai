@@ -347,12 +347,14 @@ model PurchaseOrder {
   supplier   Supplier @relation(fields: [supplierId], references: [id])
 
   // Status: Draft → Sent to Supplier → Confirmed → Closed
-  status POStatus @default(DRAFT)
-
+  status               POStatus  @default(DRAFT)
   // Dates
   orderDate            DateTime  @default(now())
   expectedDeliveryDate DateTime
   confirmedDate        DateTime?
+  sentToSupplierAt     DateTime?
+  confirmedAt          DateTime?
+  closedAt             DateTime?
 
   // Financial
   subtotal    Decimal @default(0)

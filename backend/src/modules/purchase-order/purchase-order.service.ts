@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../app/prisma.service';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
@@ -18,9 +22,12 @@ export class PurchaseOrderService {
   constructor(private prisma: PrismaService) {}
 
   async create(createPurchaseOrderDto: CreatePurchaseOrderDto, userId: string) {
-    // Generate PO number
-    const count = await this.prisma.purchaseOrder.count();
-    const poNumber = `PO${String(count + 1).padStart(6, '0')}`;
+    // Generate unique PO number using timestamp and random number
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const poNumber = `PO${timestamp.toString().slice(-6)}${random
+      .toString()
+      .padStart(3, '0')}`;
 
     // Calculate totals
     let subtotal = new Decimal(0);
@@ -149,7 +156,9 @@ export class PurchaseOrderService {
 
     // Only allow updates if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new Error('Can only update Purchase Orders in DRAFT status');
+      throw new BadRequestException(
+        'Can only update Purchase Orders in DRAFT status'
+      );
     }
 
     // Calculate new totals if items are provided
@@ -223,7 +232,9 @@ export class PurchaseOrderService {
 
     // Only allow deletion if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new Error('Can only delete Purchase Orders in DRAFT status');
+      throw new BadRequestException(
+        'Can only delete Purchase Orders in DRAFT status'
+      );
     }
 
     return this.prisma.purchaseOrder.delete({
@@ -235,13 +246,16 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new Error('Can only send Purchase Orders in DRAFT status');
+      throw new BadRequestException(
+        'Can only send Purchase Orders in DRAFT status'
+      );
     }
 
     return this.prisma.purchaseOrder.update({
       where: { id },
       data: {
         status: POStatus.SENT_TO_SUPPLIER,
+        sentToSupplierAt: new Date(),
       },
       include: {
         items: {
@@ -268,7 +282,7 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.SENT_TO_SUPPLIER) {
-      throw new Error(
+      throw new BadRequestException(
         'Can only confirm Purchase Orders in SENT_TO_SUPPLIER status'
       );
     }
@@ -278,6 +292,7 @@ export class PurchaseOrderService {
       data: {
         status: POStatus.CONFIRMED,
         confirmedDate: new Date(),
+        confirmedAt: new Date(),
       },
       include: {
         items: {
@@ -307,7 +322,7 @@ export class PurchaseOrderService {
       existingPO.status === POStatus.CLOSED ||
       existingPO.status === POStatus.CANCELLED
     ) {
-      throw new Error(
+      throw new BadRequestException(
         'Cannot cancel Purchase Orders that are already CLOSED or CANCELLED'
       );
     }
@@ -342,13 +357,16 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.CONFIRMED) {
-      throw new Error('Can only close Purchase Orders in CONFIRMED status');
+      throw new BadRequestException(
+        'Can only close Purchase Orders in CONFIRMED status'
+      );
     }
 
     return this.prisma.purchaseOrder.update({
       where: { id },
       data: {
         status: POStatus.CLOSED,
+        closedAt: new Date(),
       },
       include: {
         items: {
@@ -390,7 +408,9 @@ export class PurchaseOrderService {
     }
 
     if (pr.status !== 'APPROVED') {
-      throw new Error('Can only create PO from APPROVED Purchase Requests');
+      throw new BadRequestException(
+        'Can only create PO from APPROVED Purchase Requests'
+      );
     }
 
     // Convert PR items to PO items (convert units from buying to buying - no conversion needed)
