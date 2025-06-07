@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { ManufacturingListController } from './manufacturing-list.controller';
 import { ManufacturingListService } from './manufacturing-list.service';
 
@@ -11,9 +11,7 @@ describe('ManufacturingListController', () => {
       providers: [ManufacturingListService],
     }).compile();
 
-    controller = module.get<ManufacturingListController>(
-      ManufacturingListController
-    );
+    controller = module.get<ManufacturingListController>(ManufacturingListController);
   });
 
   it('should be defined', () => {

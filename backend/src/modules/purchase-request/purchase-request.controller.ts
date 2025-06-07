@@ -1,44 +1,39 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  HttpStatus,
+  Get,
   HttpException,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBody,
-  ApiBearerAuth,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { PurchaseRequestService } from './purchase-request.service';
-import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
-import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles, UserRole } from '../auth/decorators/roles.decorator';
-import {
-  CurrentUser,
-  AuthenticatedUser,
-} from '../auth/decorators/current-user.decorator';
+import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
+import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
+import type { PurchaseRequestService } from './purchase-request.service';
 
 @ApiTags('purchase-request')
 @Controller('purchase-request')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class PurchaseRequestController {
-  constructor(
-    private readonly purchaseRequestService: PurchaseRequestService
-  ) {}
+  constructor(private readonly purchaseRequestService: PurchaseRequestService) {}
 
   @Get('debug-user')
   @Roles(
@@ -76,10 +71,7 @@ export class PurchaseRequestController {
     @CurrentUser() user: AuthenticatedUser
   ) {
     try {
-      return await this.purchaseRequestService.create(
-        createPurchaseRequestDto,
-        user.id
-      );
+      return await this.purchaseRequestService.create(createPurchaseRequestDto, user.id);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
@@ -167,10 +159,7 @@ export class PurchaseRequestController {
     @Body() updatePurchaseRequestDto: UpdatePurchaseRequestDto
   ) {
     try {
-      return await this.purchaseRequestService.update(
-        id,
-        updatePurchaseRequestDto
-      );
+      return await this.purchaseRequestService.update(id, updatePurchaseRequestDto);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
@@ -246,10 +235,7 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async approve(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser
-  ) {
+  async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     try {
       return await this.purchaseRequestService.approve(id, user.id);
     } catch (error) {
@@ -275,10 +261,7 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async reject(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser
-  ) {
+  async reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     try {
       return await this.purchaseRequestService.reject(id, user.id);
     } catch (error) {

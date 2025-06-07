@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TestUser, PurchaseOrder } from '../../support/test-helpers';
+import type { PurchaseOrder, TestUser } from '../../support/test-helpers';
 
 describe('Purchase Order API (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -44,11 +44,9 @@ describe('Purchase Order API (E2E)', () => {
       ],
     };
 
-    const prResponse = await axios.post(
-      `${API_BASE_URL}/api/purchase-request`,
-      prData,
-      { headers: getAuthHeaders() }
-    );
+    const prResponse = await axios.post(`${API_BASE_URL}/api/purchase-request`, prData, {
+      headers: getAuthHeaders(),
+    });
 
     expect(prResponse.status).toBe(201);
     testPurchaseRequestId = prResponse.data.id;
@@ -154,11 +152,9 @@ describe('Purchase Order API (E2E)', () => {
         ],
       };
 
-      const prResponse = await axios.post(
-        `${API_BASE_URL}/api/purchase-request`,
-        prData,
-        { headers: getAuthHeaders() }
-      );
+      const prResponse = await axios.post(`${API_BASE_URL}/api/purchase-request`, prData, {
+        headers: getAuthHeaders(),
+      });
 
       const nonApprovedPrId = prResponse.data.id;
 
@@ -185,9 +181,7 @@ describe('Purchase Order API (E2E)', () => {
       expect(Array.isArray(response.data)).toBe(true);
       expect(response.data.length).toBeGreaterThan(0);
 
-      const createdPO = response.data.find(
-        (po: PurchaseOrder) => po.id === testPurchaseOrderId
-      );
+      const createdPO = response.data.find((po: PurchaseOrder) => po.id === testPurchaseOrderId);
       expect(createdPO).toBeDefined();
     });
 
@@ -242,11 +236,9 @@ describe('Purchase Order API (E2E)', () => {
         ],
       };
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/purchase-order`,
-        standalonePOData,
-        { headers: getAuthHeaders() }
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/purchase-order`, standalonePOData, {
+        headers: getAuthHeaders(),
+      });
 
       expect(response.status).toBe(201);
       expect(response.data).toMatchObject({

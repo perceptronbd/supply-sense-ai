@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateFormulaDto } from './dto/create-formula.dto';
-import { UpdateFormulaDto } from './dto/update-formula.dto';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import type { CreateFormulaDto } from './dto/create-formula.dto';
+import type { UpdateFormulaDto } from './dto/update-formula.dto';
 
 @Injectable()
 export class FormulaService {
@@ -19,9 +15,7 @@ export class FormulaService {
     });
 
     if (existingFormula) {
-      throw new ConflictException(
-        `Formula with code ${createFormulaDto.code} already exists`
-      );
+      throw new ConflictException(`Formula with code ${createFormulaDto.code} already exists`);
     }
 
     // Validate all item IDs exist
@@ -40,9 +34,7 @@ export class FormulaService {
         where: { id: createFormulaDto.outputItem },
       });
       if (!outputItemExists) {
-        throw new NotFoundException(
-          `Output item with ID ${createFormulaDto.outputItem} not found`
-        );
+        throw new NotFoundException(`Output item with ID ${createFormulaDto.outputItem} not found`);
       }
     }
 
@@ -189,17 +181,12 @@ export class FormulaService {
     const existingFormula = await this.findOne(id);
 
     // Check if code is being updated and is unique
-    if (
-      updateFormulaDto.code &&
-      updateFormulaDto.code !== existingFormula.code
-    ) {
+    if (updateFormulaDto.code && updateFormulaDto.code !== existingFormula.code) {
       const codeExists = await this.prisma.formula.findUnique({
         where: { code: updateFormulaDto.code },
       });
       if (codeExists) {
-        throw new ConflictException(
-          `Formula with code ${updateFormulaDto.code} already exists`
-        );
+        throw new ConflictException(`Formula with code ${updateFormulaDto.code} already exists`);
       }
     }
 
@@ -221,9 +208,7 @@ export class FormulaService {
         where: { id: updateFormulaDto.outputItem },
       });
       if (!outputItemExists) {
-        throw new NotFoundException(
-          `Output item with ID ${updateFormulaDto.outputItem} not found`
-        );
+        throw new NotFoundException(`Output item with ID ${updateFormulaDto.outputItem} not found`);
       }
     }
 
@@ -289,9 +274,7 @@ export class FormulaService {
     });
 
     if (activeMLs.length > 0) {
-      throw new Error(
-        'Cannot delete formula that is being used in active Manufacturing Lists'
-      );
+      throw new Error('Cannot delete formula that is being used in active Manufacturing Lists');
     }
 
     return this.prisma.formula.delete({
@@ -315,9 +298,7 @@ export class FormulaService {
       });
 
       if (activeMls.length > 0) {
-        throw new Error(
-          'Cannot deactivate formula that is used in manufacturing lists'
-        );
+        throw new Error('Cannot deactivate formula that is used in manufacturing lists');
       }
     }
 
@@ -356,9 +337,7 @@ export class FormulaService {
       where: { code: newCode },
     });
     if (codeExists) {
-      throw new ConflictException(
-        `Formula with code ${newCode} already exists`
-      );
+      throw new ConflictException(`Formula with code ${newCode} already exists`);
     }
 
     return this.prisma.formula.create({
@@ -402,7 +381,7 @@ export class FormulaService {
     const originalFormula = await this.findOne(id);
 
     // Generate a new version number
-    const currentVersion = parseFloat(originalFormula.version || '1.0');
+    const currentVersion = Number.parseFloat(originalFormula.version || '1.0');
     let newVersion = (currentVersion + 0.1).toFixed(1);
 
     // Check if this version already exists
@@ -414,7 +393,7 @@ export class FormulaService {
 
     if (versionExists && versionExists.version === newVersion) {
       // Increment version if this one already exists
-      const incrementedVersion = parseFloat(newVersion) + 0.1;
+      const incrementedVersion = Number.parseFloat(newVersion) + 0.1;
       newVersion = incrementedVersion.toFixed(1);
     }
 
@@ -470,9 +449,7 @@ export class FormulaService {
       itemName: item.item.name,
       itemSku: item.item.sku,
       requiredQuantityInUsingUnit: item.quantity.mul(scaleFactor),
-      requiredQuantityInMainUnit: item.quantity
-        .mul(scaleFactor)
-        .mul(item.item.usingToMainRate),
+      requiredQuantityInMainUnit: item.quantity.mul(scaleFactor).mul(item.item.usingToMainRate),
       usingUnit: item.item.usingUnit,
       mainUnit: item.item.mainUnit,
       remarks: item.remarks,

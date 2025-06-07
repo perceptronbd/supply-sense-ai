@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { ManufacturingListService } from './manufacturing-list.service';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateManufacturingListDto } from './dto/create-manufacturing-list.dto';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreateManufacturingListDto } from './dto/create-manufacturing-list.dto';
+import { ManufacturingListService } from './manufacturing-list.service';
 
 describe('ManufacturingListService', () => {
   let service: ManufacturingListService;
@@ -123,17 +123,13 @@ describe('ManufacturingListService', () => {
         status: 'DRAFT',
         branchId: 'branch-123',
       };
-      mockPrismaService.manufacturingList.create.mockResolvedValue(
-        mockCreatedML
-      );
+      mockPrismaService.manufacturingList.create.mockResolvedValue(mockCreatedML);
 
       // Act
       const result = await service.create(mockCreateDto, 'user-123');
 
       // Assert
-      expect(mockPrismaService.manufacturingList.count).toHaveBeenCalledTimes(
-        1
-      );
+      expect(mockPrismaService.manufacturingList.count).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.manufacturingList.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           mlNumber: 'ML000001',
@@ -163,9 +159,7 @@ describe('ManufacturingListService', () => {
       });
 
       // Act & Assert
-      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(NotFoundException);
     });
 
     it('should calculate and validate total material requirements', async () => {
@@ -177,9 +171,7 @@ describe('ManufacturingListService', () => {
       mockPrismaService.stock.findMany.mockReset();
 
       // Return the formula for the query
-      mockPrismaService.formula.findUnique.mockResolvedValue(
-        mockFormulas['formula-cake']
-      );
+      mockPrismaService.formula.findUnique.mockResolvedValue(mockFormulas['formula-cake']);
 
       // Insufficient stock to trigger validation
       mockPrismaService.stock.findMany.mockResolvedValue([
@@ -188,9 +180,7 @@ describe('ManufacturingListService', () => {
       ]);
 
       // Act & Assert
-      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(
-        /Insufficient stock/
-      );
+      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(/Insufficient stock/);
     });
 
     it('should aggregate material requirements correctly', async () => {
@@ -202,9 +192,7 @@ describe('ManufacturingListService', () => {
       mockPrismaService.stock.findMany.mockReset();
 
       // Return the formula for the query
-      mockPrismaService.formula.findUnique.mockResolvedValue(
-        mockFormulas['formula-cake']
-      );
+      mockPrismaService.formula.findUnique.mockResolvedValue(mockFormulas['formula-cake']);
 
       mockPrismaService.stock.findMany.mockResolvedValue([
         { itemId: 'item-flour', availableQty: new Decimal(100) },
@@ -280,9 +268,7 @@ describe('ManufacturingListService', () => {
       const mockTransaction = {
         manufacturingList: {
           findUnique: jest.fn().mockResolvedValue(mockML),
-          update: jest
-            .fn()
-            .mockResolvedValue({ ...mockML, status: 'IN_PROGRESS' }),
+          update: jest.fn().mockResolvedValue({ ...mockML, status: 'IN_PROGRESS' }),
         },
         stock: {
           findUnique: jest
@@ -301,12 +287,10 @@ describe('ManufacturingListService', () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
-      const result = await service.startProduction('ml-123');
+      const _result = await service.startProduction('ml-123');
 
       // Assert
       expect(mockTransaction.manufacturingList.update).toHaveBeenCalledWith({
@@ -346,9 +330,7 @@ describe('ManufacturingListService', () => {
     it('should only allow starting production from DRAFT status', async () => {
       // Arrange
       const inProgressML = { ...mockML, status: 'IN_PROGRESS' };
-      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(
-        inProgressML
-      );
+      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(inProgressML);
 
       // Act & Assert
       await expect(service.startProduction('ml-123')).rejects.toThrow(
@@ -383,9 +365,7 @@ describe('ManufacturingListService', () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act & Assert
       await expect(service.startProduction('ml-123')).rejects.toThrow(
@@ -424,16 +404,12 @@ describe('ManufacturingListService', () => {
 
     it('should complete production and add finished goods to stock', async () => {
       // Arrange
-      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(
-        mockInProgressML
-      );
+      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(mockInProgressML);
 
       const mockTransaction = {
         manufacturingList: {
           findUnique: jest.fn().mockResolvedValue(mockInProgressML),
-          update: jest
-            .fn()
-            .mockResolvedValue({ ...mockInProgressML, status: 'COMPLETED' }),
+          update: jest.fn().mockResolvedValue({ ...mockInProgressML, status: 'COMPLETED' }),
         },
         stock: {
           findUnique: jest
@@ -459,9 +435,7 @@ describe('ManufacturingListService', () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
       await service.completeProduction('ml-123');
@@ -491,16 +465,12 @@ describe('ManufacturingListService', () => {
 
     it('should add to existing finished goods stock', async () => {
       // Arrange
-      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(
-        mockInProgressML
-      );
+      mockPrismaService.manufacturingList.findUnique.mockResolvedValue(mockInProgressML);
 
       const mockTransaction = {
         manufacturingList: {
           findUnique: jest.fn().mockResolvedValue(mockInProgressML),
-          update: jest
-            .fn()
-            .mockResolvedValue({ ...mockInProgressML, status: 'COMPLETED' }),
+          update: jest.fn().mockResolvedValue({ ...mockInProgressML, status: 'COMPLETED' }),
         },
         stock: {
           findUnique: jest
@@ -526,9 +496,7 @@ describe('ManufacturingListService', () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
       await service.completeProduction('ml-123');
@@ -604,17 +572,11 @@ describe('ManufacturingListService', () => {
 
       // Formula 1: 10 cakes need 25kg flour
       const flour1 = new Decimal(25);
-      requirements.set(
-        'flour',
-        (requirements.get('flour') || new Decimal(0)).add(flour1)
-      );
+      requirements.set('flour', (requirements.get('flour') || new Decimal(0)).add(flour1));
 
       // Formula 2: 5 bread need 7.5kg flour
       const flour2 = new Decimal(7.5);
-      requirements.set(
-        'flour',
-        (requirements.get('flour') || new Decimal(0)).add(flour2)
-      );
+      requirements.set('flour', (requirements.get('flour') || new Decimal(0)).add(flour2));
 
       expect(requirements.get('flour')).toEqual(new Decimal(32.5));
     });

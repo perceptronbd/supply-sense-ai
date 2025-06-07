@@ -1,7 +1,7 @@
 import { Controller, Get, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AppService } from './app.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import * as jwt from 'jsonwebtoken';
+import type { AppService } from './app.service';
 
 @ApiTags('app')
 @Controller()
@@ -11,8 +11,7 @@ export class AppController {
   @Get()
   @ApiOperation({
     summary: 'Get application information',
-    description:
-      'Returns basic information about the Supply Chain AI Management API',
+    description: 'Returns basic information about the Supply Chain AI Management API',
   })
   @ApiResponse({
     status: 200,
@@ -39,7 +38,7 @@ export class AppController {
     try {
       // Just decode without verification
       decoded = jwt.decode(token);
-    } catch (error) {
+    } catch (_error) {
       return { error: 'Failed to decode token' };
     }
 

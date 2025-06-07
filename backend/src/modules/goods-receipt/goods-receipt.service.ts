@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
-import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import type { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
+import type { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
 // Define status enum locally to avoid import issues
 enum GRStatus {
@@ -22,14 +22,10 @@ export class GoodsReceiptService {
 
     // Validate that either PO or MR is provided, but not both
     if (!createGoodsReceiptDto.poId && !createGoodsReceiptDto.mrId) {
-      throw new Error(
-        'Either Purchase Order ID or Material Requisition ID must be provided'
-      );
+      throw new Error('Either Purchase Order ID or Material Requisition ID must be provided');
     }
     if (createGoodsReceiptDto.poId && createGoodsReceiptDto.mrId) {
-      throw new Error(
-        'Cannot specify both Purchase Order ID and Material Requisition ID'
-      );
+      throw new Error('Cannot specify both Purchase Order ID and Material Requisition ID');
     }
 
     return this.prisma.goodsReceipt.create({
@@ -385,9 +381,7 @@ export class GoodsReceiptService {
       const newTotalQty = stock.quantity.add(receivedQtyInMainUnit);
       const newTotalValue = currentTotalValue.add(receivedTotalValue);
 
-      const newAverageCost = newTotalQty.gt(0)
-        ? newTotalValue.div(newTotalQty)
-        : new Decimal(0);
+      const newAverageCost = newTotalQty.gt(0) ? newTotalValue.div(newTotalQty) : new Decimal(0);
 
       // Update stock
       await tx.stock.update({
@@ -463,9 +457,7 @@ export class GoodsReceiptService {
     });
 
     if (!mr) {
-      throw new NotFoundException(
-        `Material Requisition with ID ${mrId} not found`
-      );
+      throw new NotFoundException(`Material Requisition with ID ${mrId} not found`);
     }
 
     if (mr.status !== 'APPROVED') {

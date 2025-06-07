@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateRequestFormDto } from './dto/create-request-form.dto';
-import { UpdateRequestFormDto } from './dto/update-request-form.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import type { CreateRequestFormDto } from './dto/create-request-form.dto';
+import type { UpdateRequestFormDto } from './dto/update-request-form.dto';
 
 // Define status enum locally to avoid import issues
 enum RFStatus {
@@ -239,7 +239,7 @@ export class RequestFormService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, userId: string) {
+  async approve(id: string, _userId: string) {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
@@ -274,7 +274,7 @@ export class RequestFormService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async reject(id: string, userId: string) {
+  async reject(id: string, _userId: string) {
     const existingRF = await this.findOne(id);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
@@ -359,9 +359,7 @@ export class RequestFormService {
     });
 
     if (!template) {
-      throw new NotFoundException(
-        `RF Template with ID ${templateId} not found`
-      );
+      throw new NotFoundException(`RF Template with ID ${templateId} not found`);
     }
 
     if (!template.isActive) {
@@ -380,9 +378,7 @@ export class RequestFormService {
       description: template.description || undefined,
       fromBranchId,
       toBranchId,
-      requiredDate: new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString(), // Default 7 days from now
+      requiredDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 days from now
       rfTemplateId: template.id,
       items: rfItems,
     };

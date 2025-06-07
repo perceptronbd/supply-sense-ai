@@ -1,11 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import {
-  CreateMaterialRequisitionDto,
-  MRType,
-} from './dto/create-material-requisition.dto';
-import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
+import type { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 
 // Define status enum locally to avoid import issues
 enum MRStatus {
@@ -19,31 +16,18 @@ enum MRStatus {
 export class MaterialRequisitionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    createMaterialRequisitionDto: CreateMaterialRequisitionDto,
-    userId: string
-  ) {
+  async create(createMaterialRequisitionDto: CreateMaterialRequisitionDto, userId: string) {
     // Generate MR number
     const count = await this.prisma.materialRequisition.count();
     const mrNumber = `MR${String(count + 1).padStart(6, '0')}`;
 
     // Validate branch fields based on type
     if (createMaterialRequisitionDto.type === MRType.TRANSFER) {
-      if (
-        !createMaterialRequisitionDto.fromBranchId ||
-        !createMaterialRequisitionDto.toBranchId
-      ) {
-        throw new Error(
-          'Transfer MR requires both fromBranchId and toBranchId'
-        );
+      if (!createMaterialRequisitionDto.fromBranchId || !createMaterialRequisitionDto.toBranchId) {
+        throw new Error('Transfer MR requires both fromBranchId and toBranchId');
       }
-      if (
-        createMaterialRequisitionDto.fromBranchId ===
-        createMaterialRequisitionDto.toBranchId
-      ) {
-        throw new Error(
-          'Transfer MR cannot have same source and destination branch'
-        );
+      if (createMaterialRequisitionDto.fromBranchId === createMaterialRequisitionDto.toBranchId) {
+        throw new Error('Transfer MR cannot have same source and destination branch');
       }
     } else if (createMaterialRequisitionDto.type === MRType.TRIM_WASTE) {
       if (!createMaterialRequisitionDto.branchId) {
@@ -100,11 +84,7 @@ export class MaterialRequisitionService {
     const where: any = {};
     if (branchId) {
       // For filtering by branch, include both transfer and trim/waste MRs
-      where.OR = [
-        { fromBranchId: branchId },
-        { toBranchId: branchId },
-        { branchId: branchId },
-      ];
+      where.OR = [{ fromBranchId: branchId }, { toBranchId: branchId }, { branchId: branchId }];
     }
     if (type) where.type = type;
 
@@ -149,61 +129,55 @@ export class MaterialRequisitionService {
   }
 
   async findOne(id: string) {
-    const materialRequisition =
-      await this.prisma.materialRequisition.findUnique({
-        where: { id },
-        include: {
-          items: {
-            include: {
-              item: true,
-            },
+    const materialRequisition = await this.prisma.materialRequisition.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            item: true,
           },
-          requestForm: {
-            include: {
-              fromBranch: true,
-              toBranch: true,
-              items: {
-                include: {
-                  item: true,
-                },
-              },
-            },
-          },
-          fromBranch: true,
-          toBranch: true,
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-          goodsReceipts: {
-            include: {
-              items: {
-                include: {
-                  item: true,
-                },
+        },
+        requestForm: {
+          include: {
+            fromBranch: true,
+            toBranch: true,
+            items: {
+              include: {
+                item: true,
               },
             },
           },
         },
-      });
+        fromBranch: true,
+        toBranch: true,
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        goodsReceipts: {
+          include: {
+            items: {
+              include: {
+                item: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!materialRequisition) {
-      throw new NotFoundException(
-        `Material Requisition with ID ${id} not found`
-      );
+      throw new NotFoundException(`Material Requisition with ID ${id} not found`);
     }
 
     return materialRequisition;
   }
 
-  async update(
-    id: string,
-    updateMaterialRequisitionDto: UpdateMaterialRequisitionDto
-  ) {
+  async update(id: string, updateMaterialRequisitionDto: UpdateMaterialRequisitionDto) {
     const existingMR = await this.findOne(id);
 
     // Only allow updates if status is DRAFT
@@ -269,7 +243,7 @@ export class MaterialRequisitionService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, userId: string) {
+  async approve(id: string, _userId: string) {
     const existingMR = await this.findOne(id);
 
     if (existingMR.status !== MRStatus.DRAFT) {
@@ -316,33 +290,32 @@ export class MaterialRequisitionService {
 
         return approvedMR;
       });
-    } else {
-      // For TRANSFER type, just approve - stock will be deducted when transfer is completed
-      return this.prisma.materialRequisition.update({
-        where: { id },
-        data: {
-          status: MRStatus.APPROVED,
-        },
-        include: {
-          items: {
-            include: {
-              item: true,
-            },
-          },
-          requestForm: true,
-          fromBranch: true,
-          toBranch: true,
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
     }
+    // For TRANSFER type, just approve - stock will be deducted when transfer is completed
+    return this.prisma.materialRequisition.update({
+      where: { id },
+      data: {
+        status: MRStatus.APPROVED,
+      },
+      include: {
+        items: {
+          include: {
+            item: true,
+          },
+        },
+        requestForm: true,
+        fromBranch: true,
+        toBranch: true,
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   async complete(id: string) {
@@ -393,32 +366,31 @@ export class MaterialRequisitionService {
 
         return completedMR;
       });
-    } else {
-      // For TRIM_WASTE type, just mark as completed (stock was already deducted on approval)
-      return this.prisma.materialRequisition.update({
-        where: { id },
-        data: {
-          status: MRStatus.COMPLETED,
-        },
-        include: {
-          items: {
-            include: {
-              item: true,
-            },
-          },
-          fromBranch: true,
-          toBranch: true,
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
     }
+    // For TRIM_WASTE type, just mark as completed (stock was already deducted on approval)
+    return this.prisma.materialRequisition.update({
+      where: { id },
+      data: {
+        status: MRStatus.COMPLETED,
+      },
+      include: {
+        items: {
+          include: {
+            item: true,
+          },
+        },
+        fromBranch: true,
+        toBranch: true,
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   async cancel(id: string) {
@@ -474,9 +446,7 @@ export class MaterialRequisitionService {
     }
 
     if (rf.status !== 'APPROVED' && rf.status !== 'READY_FOR_MR') {
-      throw new Error(
-        'Can only create MR from APPROVED or READY_FOR_MR Request Forms'
-      );
+      throw new Error('Can only create MR from APPROVED or READY_FOR_MR Request Forms');
     }
 
     // Convert RF items to MR items (using transfer unit quantities)
@@ -527,9 +497,7 @@ export class MaterialRequisitionService {
       throw new Error(
         `Insufficient stock for item ${
           item.name
-        } in source branch. Required: ${quantityInMainUnit}, Available: ${
-          stock?.availableQty || 0
-        }`
+        } in source branch. Required: ${quantityInMainUnit}, Available: ${stock?.availableQty || 0}`
       );
     }
 
@@ -576,9 +544,7 @@ export class MaterialRequisitionService {
 
     if (!stock || stock.availableQty.lt(quantityInMainUnit)) {
       throw new Error(
-        `Insufficient stock for item ${
-          item.name
-        }. Required: ${quantityInMainUnit}, Available: ${
+        `Insufficient stock for item ${item.name}. Required: ${quantityInMainUnit}, Available: ${
           stock?.availableQty || 0
         }`
       );

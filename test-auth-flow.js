@@ -22,16 +22,12 @@ async function testAuth() {
 
     console.log('Login data:', loginData);
 
-    const loginResponse = await axios.post(
-      'http://localhost:3000/api/auth/login',
-      loginData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      }
-    );
+    const loginResponse = await axios.post('http://localhost:3000/api/auth/login', loginData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000,
+    });
 
     console.log('✅ Login successful:', loginResponse.data);
 
@@ -50,13 +46,10 @@ async function testAuth() {
     console.log('\n🚀 Testing authenticated API calls...');
 
     // Test purchase requests with token
-    const prResponse = await axios.get(
-      'http://localhost:3000/api/purchase-request',
-      {
-        headers: authHeaders,
-        timeout: 10000,
-      }
-    );
+    const prResponse = await axios.get('http://localhost:3000/api/purchase-request', {
+      headers: authHeaders,
+      timeout: 10000,
+    });
 
     console.log('✅ Purchase Requests:', prResponse.data.length, 'records');
   } catch (error) {

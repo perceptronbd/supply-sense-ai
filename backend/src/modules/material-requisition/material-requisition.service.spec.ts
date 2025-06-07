@@ -1,12 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { MaterialRequisitionService } from './material-requisition.service';
-import { PrismaService } from '../../app/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
-import {
-  CreateMaterialRequisitionDto,
-  MRType,
-} from './dto/create-material-requisition.dto';
+import { PrismaService } from '../../app/prisma.service';
+import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
+import { MaterialRequisitionService } from './material-requisition.service';
 
 // Mock data
 const mockUser = {
@@ -95,9 +92,7 @@ describe('MaterialRequisitionService', () => {
       ],
     }).compile();
 
-    service = module.get<MaterialRequisitionService>(
-      MaterialRequisitionService
-    );
+    service = module.get<MaterialRequisitionService>(MaterialRequisitionService);
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -145,41 +140,37 @@ describe('MaterialRequisitionService', () => {
       };
 
       mockPrismaService.materialRequisition.count.mockResolvedValue(0);
-      mockPrismaService.materialRequisition.create.mockResolvedValue(
-        expectedMR
-      );
+      mockPrismaService.materialRequisition.create.mockResolvedValue(expectedMR);
 
       const result = await service.create(createDto, 'user-1');
 
       expect(mockPrismaService.materialRequisition.count).toHaveBeenCalled();
-      expect(mockPrismaService.materialRequisition.create).toHaveBeenCalledWith(
-        {
-          data: {
-            mrNumber: 'MR000001',
-            title: createDto.title,
-            rfId: undefined,
-            type: MRType.TRANSFER,
-            fromBranchId: 'branch-1',
-            toBranchId: 'branch-2',
-            branchId: undefined,
-            transferDate: new Date('2025-06-10'),
-            createdById: 'user-1',
-            notes: 'Urgent transfer',
-            status: 'DRAFT',
-            items: {
-              create: [
-                {
-                  itemId: 'item-1',
-                  quantity: new Decimal('100'),
-                  wasteType: undefined,
-                  remarks: 'For production',
-                },
-              ],
-            },
+      expect(mockPrismaService.materialRequisition.create).toHaveBeenCalledWith({
+        data: {
+          mrNumber: 'MR000001',
+          title: createDto.title,
+          rfId: undefined,
+          type: MRType.TRANSFER,
+          fromBranchId: 'branch-1',
+          toBranchId: 'branch-2',
+          branchId: undefined,
+          transferDate: new Date('2025-06-10'),
+          createdById: 'user-1',
+          notes: 'Urgent transfer',
+          status: 'DRAFT',
+          items: {
+            create: [
+              {
+                itemId: 'item-1',
+                quantity: new Decimal('100'),
+                wasteType: undefined,
+                remarks: 'For production',
+              },
+            ],
           },
-          include: expect.any(Object),
-        }
-      );
+        },
+        include: expect.any(Object),
+      });
       expect(result).toEqual(expectedMR);
     });
 
@@ -217,9 +208,7 @@ describe('MaterialRequisitionService', () => {
       };
 
       mockPrismaService.materialRequisition.count.mockResolvedValue(1);
-      mockPrismaService.materialRequisition.create.mockResolvedValue(
-        expectedMR
-      );
+      mockPrismaService.materialRequisition.create.mockResolvedValue(expectedMR);
 
       const result = await service.create(createDto, 'user-1');
 
@@ -282,15 +271,9 @@ describe('MaterialRequisitionService', () => {
 
       const result = await service.findAll('branch-1');
 
-      expect(
-        mockPrismaService.materialRequisition.findMany
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.materialRequisition.findMany).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { fromBranchId: 'branch-1' },
-            { toBranchId: 'branch-1' },
-            { branchId: 'branch-1' },
-          ],
+          OR: [{ fromBranchId: 'branch-1' }, { toBranchId: 'branch-1' }, { branchId: 'branch-1' }],
         },
         include: expect.any(Object),
         orderBy: { createdAt: 'desc' },
@@ -299,17 +282,13 @@ describe('MaterialRequisitionService', () => {
     });
 
     it('should find all MRs with type filtering', async () => {
-      const mockMRs = [
-        { id: 'mr-1', mrNumber: 'MR000001', type: MRType.TRANSFER },
-      ];
+      const mockMRs = [{ id: 'mr-1', mrNumber: 'MR000001', type: MRType.TRANSFER }];
 
       mockPrismaService.materialRequisition.findMany.mockResolvedValue(mockMRs);
 
       await service.findAll(undefined, MRType.TRANSFER);
 
-      expect(
-        mockPrismaService.materialRequisition.findMany
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.materialRequisition.findMany).toHaveBeenCalledWith({
         where: { type: MRType.TRANSFER },
         include: expect.any(Object),
         orderBy: { createdAt: 'desc' },
@@ -325,15 +304,11 @@ describe('MaterialRequisitionService', () => {
         items: [],
       };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
       const result = await service.findOne('mr-1');
 
-      expect(
-        mockPrismaService.materialRequisition.findUnique
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.materialRequisition.findUnique).toHaveBeenCalledWith({
         where: { id: 'mr-1' },
         include: expect.any(Object),
       });
@@ -344,9 +319,7 @@ describe('MaterialRequisitionService', () => {
       mockPrismaService.materialRequisition.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne('non-existent')).rejects.toThrow(
-        new NotFoundException(
-          'Material Requisition with ID non-existent not found'
-        )
+        new NotFoundException('Material Requisition with ID non-existent not found')
       );
     });
   });
@@ -363,22 +336,16 @@ describe('MaterialRequisitionService', () => {
 
       const approvedMR = { ...mockMR, status: 'APPROVED' };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
-      mockPrismaService.materialRequisition.update.mockResolvedValue(
-        approvedMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
+      mockPrismaService.materialRequisition.update.mockResolvedValue(approvedMR);
 
       const result = await service.approve('mr-1', 'user-1');
 
-      expect(mockPrismaService.materialRequisition.update).toHaveBeenCalledWith(
-        {
-          where: { id: 'mr-1' },
-          data: { status: 'APPROVED' },
-          include: expect.any(Object),
-        }
-      );
+      expect(mockPrismaService.materialRequisition.update).toHaveBeenCalledWith({
+        where: { id: 'mr-1' },
+        data: { status: 'APPROVED' },
+        include: expect.any(Object),
+      });
       expect(result.status).toBe('APPROVED');
     });
 
@@ -405,19 +372,15 @@ describe('MaterialRequisitionService', () => {
           },
           stock: {
             findUnique: jest.fn().mockResolvedValue(mockStock),
-            update: jest
-              .fn()
-              .mockResolvedValue({
-                ...mockStock,
-                quantity: new Decimal('450'),
-              }),
+            update: jest.fn().mockResolvedValue({
+              ...mockStock,
+              quantity: new Decimal('450'),
+            }),
           },
         })
       );
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
       mockPrismaService.$transaction.mockImplementation(mockTransaction);
 
       const result = await service.approve('mr-1', 'user-1');
@@ -433,9 +396,7 @@ describe('MaterialRequisitionService', () => {
         type: MRType.TRANSFER,
       };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
       await expect(service.approve('mr-1', 'user-1')).rejects.toThrow(
         'Can only approve Material Requisitions in DRAFT status'
@@ -467,19 +428,15 @@ describe('MaterialRequisitionService', () => {
           },
           stock: {
             findUnique: jest.fn().mockResolvedValue(mockStock),
-            update: jest
-              .fn()
-              .mockResolvedValue({
-                ...mockStock,
-                quantity: new Decimal('400'),
-              }),
+            update: jest.fn().mockResolvedValue({
+              ...mockStock,
+              quantity: new Decimal('400'),
+            }),
           },
         })
       );
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
       mockPrismaService.$transaction.mockImplementation(mockTransaction);
 
       const result = await service.complete('mr-1');
@@ -498,22 +455,16 @@ describe('MaterialRequisitionService', () => {
 
       const completedMR = { ...mockMR, status: 'COMPLETED' };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
-      mockPrismaService.materialRequisition.update.mockResolvedValue(
-        completedMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
+      mockPrismaService.materialRequisition.update.mockResolvedValue(completedMR);
 
       const result = await service.complete('mr-1');
 
-      expect(mockPrismaService.materialRequisition.update).toHaveBeenCalledWith(
-        {
-          where: { id: 'mr-1' },
-          data: { status: 'COMPLETED' },
-          include: expect.any(Object),
-        }
-      );
+      expect(mockPrismaService.materialRequisition.update).toHaveBeenCalledWith({
+        where: { id: 'mr-1' },
+        data: { status: 'COMPLETED' },
+        include: expect.any(Object),
+      });
       expect(result.status).toBe('COMPLETED');
     });
 
@@ -524,9 +475,7 @@ describe('MaterialRequisitionService', () => {
         type: MRType.TRANSFER,
       };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
       await expect(service.complete('mr-1')).rejects.toThrow(
         'Can only complete APPROVED Material Requisitions'
@@ -546,13 +495,9 @@ describe('MaterialRequisitionService', () => {
         toBranchId: 'branch-2',
       };
 
-      mockPrismaService.requestForm.findUnique.mockResolvedValue(
-        mockRequestForm
-      );
+      mockPrismaService.requestForm.findUnique.mockResolvedValue(mockRequestForm);
       mockPrismaService.materialRequisition.count.mockResolvedValue(0);
-      mockPrismaService.materialRequisition.create.mockResolvedValue(
-        expectedMR
-      );
+      mockPrismaService.materialRequisition.create.mockResolvedValue(expectedMR);
 
       const result = await service.createFromRF('rf-1', 'user-1');
 
@@ -576,9 +521,7 @@ describe('MaterialRequisitionService', () => {
     it('should throw error for non-existent RF', async () => {
       mockPrismaService.requestForm.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.createFromRF('non-existent', 'user-1')
-      ).rejects.toThrow(
+      await expect(service.createFromRF('non-existent', 'user-1')).rejects.toThrow(
         new NotFoundException('Request Form with ID non-existent not found')
       );
     });
@@ -615,9 +558,7 @@ describe('MaterialRequisitionService', () => {
         })
       );
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
       mockPrismaService.$transaction.mockImplementation(mockTransaction);
 
       await expect(service.complete('mr-1')).rejects.toThrow(
@@ -630,13 +571,9 @@ describe('MaterialRequisitionService', () => {
     it('should only allow updates in DRAFT status', async () => {
       const mockMR = { id: 'mr-1', status: 'APPROVED' };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
-      await expect(
-        service.update('mr-1', { title: 'Updated' })
-      ).rejects.toThrow(
+      await expect(service.update('mr-1', { title: 'Updated' })).rejects.toThrow(
         'Can only update Material Requisitions in DRAFT status'
       );
     });
@@ -644,9 +581,7 @@ describe('MaterialRequisitionService', () => {
     it('should only allow deletion in DRAFT status', async () => {
       const mockMR = { id: 'mr-1', status: 'COMPLETED' };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
       await expect(service.remove('mr-1')).rejects.toThrow(
         'Can only delete Material Requisitions in DRAFT status'
@@ -656,9 +591,7 @@ describe('MaterialRequisitionService', () => {
     it('should not cancel completed MR', async () => {
       const mockMR = { id: 'mr-1', status: 'COMPLETED' };
 
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
 
       await expect(service.cancel('mr-1')).rejects.toThrow(
         'Cannot cancel completed Material Requisitions'

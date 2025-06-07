@@ -12,6 +12,27 @@
         "passWithNoTests": true
       },
       "dependsOn": ["backend:build", "backend:serve"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

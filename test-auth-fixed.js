@@ -16,15 +16,11 @@ async function testAuthentication() {
 
     // Test login endpoint
     console.log('\n🚀 Testing login endpoint...');
-    const loginResponse = await axios.post(
-      `${BASE_URL}/auth/login`,
-      testCredentials,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const loginResponse = await axios.post(`${BASE_URL}/auth/login`, testCredentials, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     console.log('✅ Login successful!');
     console.log('Response status:', loginResponse.status);
@@ -33,7 +29,7 @@ async function testAuthentication() {
     // Extract token from response
     const token = loginResponse.data.access_token;
     if (token) {
-      console.log('\n🎫 JWT Token received:', token.substring(0, 50) + '...');
+      console.log('\n🎫 JWT Token received:', `${token.substring(0, 50)}...`);
 
       // Test authenticated endpoint (if any exist)
       console.log('\n🔑 Testing token validation...');

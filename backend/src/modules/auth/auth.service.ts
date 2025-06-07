@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../app/prisma.service';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import type { JwtService } from '@nestjs/jwt';
+import type { PrismaService } from '../../app/prisma.service';
+import type { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -10,10 +10,7 @@ export class AuthService {
     private readonly prisma: PrismaService
   ) {}
 
-  async login(
-    email: string,
-    password: string
-  ): Promise<{ access_token: string; user: any }> {
+  async login(email: string, password: string): Promise<{ access_token: string; user: any }> {
     const user = await this.validateUser(email, password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -64,11 +61,7 @@ export class AuthService {
 
     // For demo purposes, use simple password comparison
     // In production, you'd hash the password with bcrypt
-    if (
-      password === 'admin123' ||
-      password === 'manager123' ||
-      password === 'user123'
-    ) {
+    if (password === 'admin123' || password === 'manager123' || password === 'user123') {
       return user;
     }
 

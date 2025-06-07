@@ -1,36 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  HttpStatus,
+  Get,
   HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
-import { ManufacturingListService } from './manufacturing-list.service';
-import {
-  CreateManufacturingListDto,
-  MLStatus,
-} from './dto/create-manufacturing-list.dto';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
+import type { ManufacturingListService } from './manufacturing-list.service';
 
 @ApiTags('manufacturing-list')
 @Controller('manufacturing-list')
 export class ManufacturingListController {
-  constructor(
-    private readonly manufacturingListService: ManufacturingListService
-  ) {}
+  constructor(private readonly manufacturingListService: ManufacturingListService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -60,17 +48,13 @@ export class ManufacturingListController {
   async create(@Body() createManufacturingListDto: CreateManufacturingListDto) {
     // TODO: Get actual user ID from authentication
     const userId = 'user-1'; // Placeholder
-    return await this.manufacturingListService.create(
-      createManufacturingListDto,
-      userId
-    );
+    return await this.manufacturingListService.create(createManufacturingListDto, userId);
   }
 
   @Get()
   @ApiOperation({
     summary: 'Get all manufacturing lists',
-    description:
-      'Retrieves all manufacturing lists with optional filtering by branch and status',
+    description: 'Retrieves all manufacturing lists with optional filtering by branch and status',
   })
   @ApiQuery({
     name: 'branchId',
@@ -98,10 +82,7 @@ export class ManufacturingListController {
       },
     ],
   })
-  async findAll(
-    @Query('branchId') branchId?: string,
-    @Query('status') status?: MLStatus
-  ) {
+  async findAll(@Query('branchId') branchId?: string, @Query('status') status?: MLStatus) {
     return await this.manufacturingListService.findAll(branchId, status);
   }
 
@@ -172,10 +153,7 @@ export class ManufacturingListController {
     @Param('id') id: string,
     @Body() updateManufacturingListDto: UpdateManufacturingListDto
   ) {
-    return await this.manufacturingListService.update(
-      id,
-      updateManufacturingListDto
-    );
+    return await this.manufacturingListService.update(id, updateManufacturingListDto);
   }
 
   @Delete(':id')
@@ -207,8 +185,7 @@ export class ManufacturingListController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Start production',
-    description:
-      'Starts production for a manufacturing list (changes status to IN_PROGRESS)',
+    description: 'Starts production for a manufacturing list (changes status to IN_PROGRESS)',
   })
   @ApiParam({
     name: 'id',
@@ -332,11 +309,7 @@ export class ManufacturingListController {
   ) {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
-    return await this.manufacturingListService.getProductionSummary(
-      branchId,
-      start,
-      end
-    );
+    return await this.manufacturingListService.getProductionSummary(branchId, start, end);
   }
 
   @Get('branch/:branchId')

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { RequestFormService } from './request-form.service';
-import { RequestFormController } from './request-form.controller';
 import { PrismaService } from '../../app/prisma.service';
+import { RequestFormController } from './request-form.controller';
+import { RequestFormService } from './request-form.service';
 
 @Module({
   controllers: [RequestFormController],

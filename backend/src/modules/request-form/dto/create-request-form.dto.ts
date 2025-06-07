@@ -1,15 +1,15 @@
-import {
-  IsUUID,
-  IsString,
-  IsOptional,
-  IsDateString,
-  IsArray,
-  ValidateNested,
-  IsNumber,
-  IsPositive,
-} from 'class-validator';
-import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateRFItemDto {
   @ApiProperty({
@@ -27,7 +27,7 @@ export class CreateRFItemDto {
   })
   @IsNumber({ maxDecimalPlaces: 3 })
   @IsPositive()
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => Number.parseFloat(value))
   requestedQty: number;
 
   @ApiPropertyOptional({

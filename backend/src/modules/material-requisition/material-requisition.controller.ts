@@ -1,36 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  HttpStatus,
+  Get,
   HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
-import { MaterialRequisitionService } from './material-requisition.service';
-import {
-  CreateMaterialRequisitionDto,
-  MRType,
-} from './dto/create-material-requisition.dto';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
+import type { MaterialRequisitionService } from './material-requisition.service';
 
 @ApiTags('material-requisition')
 @Controller('material-requisition')
 export class MaterialRequisitionController {
-  constructor(
-    private readonly materialRequisitionService: MaterialRequisitionService
-  ) {}
+  constructor(private readonly materialRequisitionService: MaterialRequisitionService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -58,28 +46,21 @@ export class MaterialRequisitionController {
     },
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async create(
-    @Body() createMaterialRequisitionDto: CreateMaterialRequisitionDto
-  ) {
+  async create(@Body() createMaterialRequisitionDto: CreateMaterialRequisitionDto) {
     // TODO: Get actual user ID from authentication
     const userId = 'user-1'; // Placeholder
-    return await this.materialRequisitionService.create(
-      createMaterialRequisitionDto,
-      userId
-    );
+    return await this.materialRequisitionService.create(createMaterialRequisitionDto, userId);
   }
 
   @Get()
   @ApiOperation({
     summary: 'Get all material requisitions',
-    description:
-      'Retrieves all material requisitions with optional filtering by branch and type',
+    description: 'Retrieves all material requisitions with optional filtering by branch and type',
   })
   @ApiQuery({
     name: 'branchId',
     required: false,
-    description:
-      'Filter by branch ID (includes source, destination, or waste branch)',
+    description: 'Filter by branch ID (includes source, destination, or waste branch)',
     example: '550e8400-e29b-41d4-a716-446655440002',
   })
   @ApiQuery({
@@ -102,18 +83,14 @@ export class MaterialRequisitionController {
       },
     ],
   })
-  async findAll(
-    @Query('branchId') branchId?: string,
-    @Query('type') type?: MRType
-  ) {
+  async findAll(@Query('branchId') branchId?: string, @Query('type') type?: MRType) {
     return await this.materialRequisitionService.findAll(branchId, type);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get material requisition by ID',
-    description:
-      'Retrieves a specific material requisition with all related data',
+    description: 'Retrieves a specific material requisition with all related data',
   })
   @ApiParam({
     name: 'id',
@@ -147,8 +124,7 @@ export class MaterialRequisitionController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Update material requisition',
-    description:
-      'Updates a material requisition (only allowed in DRAFT status)',
+    description: 'Updates a material requisition (only allowed in DRAFT status)',
   })
   @ApiParam({
     name: 'id',
@@ -172,18 +148,14 @@ export class MaterialRequisitionController {
     @Param('id') id: string,
     @Body() updateMaterialRequisitionDto: UpdateMaterialRequisitionDto
   ) {
-    return await this.materialRequisitionService.update(
-      id,
-      updateMaterialRequisitionDto
-    );
+    return await this.materialRequisitionService.update(id, updateMaterialRequisitionDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete material requisition',
-    description:
-      'Deletes a material requisition (only allowed in DRAFT status)',
+    description: 'Deletes a material requisition (only allowed in DRAFT status)',
   })
   @ApiParam({
     name: 'id',
@@ -208,8 +180,7 @@ export class MaterialRequisitionController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Approve material requisition',
-    description:
-      'Approves a material requisition. For TRIM_WASTE type, immediately deducts stock.',
+    description: 'Approves a material requisition. For TRIM_WASTE type, immediately deducts stock.',
   })
   @ApiParam({
     name: 'id',
@@ -265,8 +236,7 @@ export class MaterialRequisitionController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Cancel material requisition',
-    description:
-      'Cancels a material requisition (cannot cancel COMPLETED requisitions)',
+    description: 'Cancels a material requisition (cannot cancel COMPLETED requisitions)',
   })
   @ApiParam({
     name: 'id',
@@ -295,8 +265,7 @@ export class MaterialRequisitionController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create material requisition from request form',
-    description:
-      'Creates a new material requisition based on an approved request form',
+    description: 'Creates a new material requisition based on an approved request form',
   })
   @ApiParam({
     name: 'rfId',
@@ -317,8 +286,7 @@ export class MaterialRequisitionController {
   })
   @ApiResponse({
     status: 400,
-    description:
-      'Can only create MR from APPROVED or READY_FOR_MR request forms',
+    description: 'Can only create MR from APPROVED or READY_FOR_MR request forms',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
   async createFromRF(@Param('rfId') rfId: string) {
@@ -330,8 +298,7 @@ export class MaterialRequisitionController {
   @Get('branch/:branchId')
   @ApiOperation({
     summary: 'Get material requisitions by branch',
-    description:
-      'Retrieves all material requisitions associated with a specific branch',
+    description: 'Retrieves all material requisitions associated with a specific branch',
   })
   @ApiParam({
     name: 'branchId',

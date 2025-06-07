@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { FormulaService } from './formula.service';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateFormulaDto } from './dto/create-formula.dto';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreateFormulaDto } from './dto/create-formula.dto';
+import { FormulaService } from './formula.service';
 
 describe('FormulaService', () => {
   let service: FormulaService;
@@ -140,9 +140,7 @@ describe('FormulaService', () => {
       mockPrismaService.formula.findUnique.mockResolvedValue(existingFormula);
 
       // Act & Assert
-      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(
-        ConflictException
-      );
+      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(ConflictException);
       expect(mockPrismaService.formula.findUnique).toHaveBeenCalledWith({
         where: { code: 'CAKE-001' },
       });
@@ -157,9 +155,7 @@ describe('FormulaService', () => {
         .mockResolvedValueOnce({ id: 'item-cocoa', name: 'Cocoa' });
 
       // Act & Assert
-      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.create(mockCreateDto, 'user-123')).rejects.toThrow(NotFoundException);
     });
 
     it('should validate output item exists when specified', async () => {
@@ -186,9 +182,9 @@ describe('FormulaService', () => {
       };
 
       // Act & Assert
-      await expect(
-        service.create(dtoWithNonExistentOutput, 'user-123')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.create(dtoWithNonExistentOutput, 'user-123')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should default version to 1.0 and output quantity to 1', async () => {
@@ -259,9 +255,7 @@ describe('FormulaService', () => {
       mockPrismaService.formula.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findByCode('INVALID-CODE')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.findByCode('INVALID-CODE')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -312,13 +306,9 @@ describe('FormulaService', () => {
       expect(result.formulaName).toBe('Chocolate Cake');
       expect(result.requestedOutputQuantity).toBe(5);
       expect(result.requirements[0].itemId).toBe('item-flour');
-      expect(
-        result.requirements[0].requiredQuantityInUsingUnit.toString()
-      ).toBe('12.5');
+      expect(result.requirements[0].requiredQuantityInUsingUnit.toString()).toBe('12.5');
       expect(result.requirements[1].itemId).toBe('item-sugar');
-      expect(
-        result.requirements[1].requiredQuantityInUsingUnit.toString()
-      ).toBe('5');
+      expect(result.requirements[1].requiredQuantityInUsingUnit.toString()).toBe('5');
     });
 
     it('should handle fractional output quantities', async () => {
@@ -326,18 +316,11 @@ describe('FormulaService', () => {
       mockPrismaService.formula.findUnique.mockResolvedValue(mockFormula);
 
       // Act
-      const result = await service.calculateMaterialRequirements(
-        'CAKE-001',
-        2.5
-      );
+      const result = await service.calculateMaterialRequirements('CAKE-001', 2.5);
 
       // Assert
-      expect(result.requirements[0].requiredQuantityInUsingUnit).toEqual(
-        new Decimal(6.25)
-      ); // 2.5 * 2.5
-      expect(result.requirements[1].requiredQuantityInUsingUnit).toEqual(
-        new Decimal(2.5)
-      ); // 1.0 * 2.5
+      expect(result.requirements[0].requiredQuantityInUsingUnit).toEqual(new Decimal(6.25)); // 2.5 * 2.5
+      expect(result.requirements[1].requiredQuantityInUsingUnit).toEqual(new Decimal(2.5)); // 1.0 * 2.5
     });
 
     it('should convert quantities using unit conversion rates', async () => {
@@ -359,18 +342,14 @@ describe('FormulaService', () => {
           },
         ],
       };
-      mockPrismaService.formula.findUnique.mockResolvedValue(
-        formulaWithConversion
-      );
+      mockPrismaService.formula.findUnique.mockResolvedValue(formulaWithConversion);
 
       // Act
       const result = await service.calculateMaterialRequirements('CAKE-001', 1);
 
       // Assert
       // 500g * 0.001 = 0.5kg required
-      expect(result.requirements[0].requiredQuantityInMainUnit).toEqual(
-        new Decimal(0.5)
-      );
+      expect(result.requirements[0].requiredQuantityInMainUnit).toEqual(new Decimal(0.5));
     });
   });
 
@@ -410,29 +389,23 @@ describe('FormulaService', () => {
       await service.toggleActive('formula-123');
 
       // Assert
-      expect(mockPrismaService.manufacturingList.findMany).toHaveBeenCalledWith(
-        {
-          where: {
-            formulaId: 'formula-123',
-            status: {
-              in: ['IN_PROGRESS', 'COMPLETED'],
-            },
+      expect(mockPrismaService.manufacturingList.findMany).toHaveBeenCalledWith({
+        where: {
+          formulaId: 'formula-123',
+          status: {
+            in: ['IN_PROGRESS', 'COMPLETED'],
           },
-        }
-      );
+        },
+      });
     });
 
     it('should prevent deactivation if formula is used in manufacturing lists', async () => {
       // Arrange
       const activeFormula = { id: 'formula-123', isActive: true };
-      const manufacturingLists = [
-        { id: 'ml-1', status: 'IN_PROGRESS', formulaId: 'formula-123' },
-      ];
+      const manufacturingLists = [{ id: 'ml-1', status: 'IN_PROGRESS', formulaId: 'formula-123' }];
 
       mockPrismaService.formula.findUnique.mockResolvedValue(activeFormula);
-      mockPrismaService.manufacturingList.findMany.mockResolvedValue(
-        manufacturingLists
-      );
+      mockPrismaService.manufacturingList.findMany.mockResolvedValue(manufacturingLists);
 
       // Mock update to throw error if it's called
       mockPrismaService.formula.update.mockImplementation(() => {
@@ -477,7 +450,7 @@ describe('FormulaService', () => {
       });
 
       // Act
-      const result = await service.clone('formula-123', 'user-123');
+      const _result = await service.clone('formula-123', 'user-123');
 
       // Assert
       expect(mockPrismaService.formula.create).toHaveBeenCalledWith({
@@ -509,9 +482,7 @@ describe('FormulaService', () => {
       mockPrismaService.formula.findUnique.mockReset();
 
       // First findUnique gets the original formula by ID
-      mockPrismaService.formula.findUnique.mockResolvedValueOnce(
-        mockSourceFormula
-      );
+      mockPrismaService.formula.findUnique.mockResolvedValueOnce(mockSourceFormula);
       // Second findUnique checks if version 1.1 exists (it does)
       mockPrismaService.formula.findUnique.mockResolvedValueOnce({
         id: 'existing-1.1',
@@ -620,9 +591,7 @@ describe('FormulaService', () => {
       // Assert
       const createCall = mockPrismaService.formula.create.mock.calls[0][0];
       expect(createCall.data.version).toBe('2.0');
-      expect(createCall.data.description).toBe(
-        'Updated recipe with improved ingredients'
-      );
+      expect(createCall.data.description).toBe('Updated recipe with improved ingredients');
     });
 
     it('should enforce data consistency for material calculations', () => {

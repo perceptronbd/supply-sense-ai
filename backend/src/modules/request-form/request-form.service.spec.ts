@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RequestFormService } from './request-form.service';
-import { PrismaService } from '../../app/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
-import { CreateRequestFormDto } from './dto/create-request-form.dto';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreateRequestFormDto } from './dto/create-request-form.dto';
+import { RequestFormService } from './request-form.service';
 
 // Mock data
 const mockUser = {
@@ -325,9 +325,9 @@ describe('RequestFormService', () => {
 
       prismaService.requestForm.findUnique.mockResolvedValue(mockRF);
 
-      await expect(
-        service.update('rf-1', { title: 'Updated' })
-      ).rejects.toThrow('Can only update Request Forms in DRAFT status');
+      await expect(service.update('rf-1', { title: 'Updated' })).rejects.toThrow(
+        'Can only update Request Forms in DRAFT status'
+      );
     });
   });
 
@@ -563,12 +563,7 @@ describe('RequestFormService', () => {
       prismaService.rFTemplate.findUnique.mockResolvedValue(inactiveTemplate);
 
       await expect(
-        service.createFromTemplate(
-          'template-1',
-          'branch-1',
-          'branch-2',
-          'user-1'
-        )
+        service.createFromTemplate('template-1', 'branch-1', 'branch-2', 'user-1')
       ).rejects.toThrow('Cannot create RF from inactive template');
     });
 
@@ -576,15 +571,8 @@ describe('RequestFormService', () => {
       prismaService.rFTemplate.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createFromTemplate(
-          'non-existent',
-          'branch-1',
-          'branch-2',
-          'user-1'
-        )
-      ).rejects.toThrow(
-        new NotFoundException('RF Template with ID non-existent not found')
-      );
+        service.createFromTemplate('non-existent', 'branch-1', 'branch-2', 'user-1')
+      ).rejects.toThrow(new NotFoundException('RF Template with ID non-existent not found'));
     });
   });
 

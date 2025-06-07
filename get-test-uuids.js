@@ -35,12 +35,7 @@ async function getTestData() {
       console.log(`  - ${user.username}: ${user.id}`);
     });
 
-    if (
-      branches.length > 0 &&
-      items.length > 0 &&
-      suppliers.length > 0 &&
-      users.length > 0
-    ) {
+    if (branches.length > 0 && items.length > 0 && suppliers.length > 0 && users.length > 0) {
       console.log('\n✅ Test data structure with real UUIDs:');
       console.log(
         JSON.stringify(

@@ -1,9 +1,5 @@
 import axios from 'axios';
-import {
-  TestHelpers,
-  TestUser,
-  AxiosErrorResponse,
-} from '../support/test-helpers';
+import { type AxiosErrorResponse, TestHelpers, type TestUser } from '../support/test-helpers';
 
 describe('Purchase Workflow Integration (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -23,11 +19,9 @@ describe('Purchase Workflow Integration (E2E)', () => {
   describe('Complete Purchase Workflow Integration', () => {
     it('should complete entire end-to-end purchase workflow', async () => {
       const timestamp = Date.now(); // Step 1: Create Purchase Request
-      const prId = await TestHelpers.createApprovedPurchaseRequest(
-        authToken,
-        testUser.branchId,
-        { title: `Integration Test PR ${timestamp}` }
-      );
+      const prId = await TestHelpers.createApprovedPurchaseRequest(authToken, testUser.branchId, {
+        title: `Integration Test PR ${timestamp}`,
+      });
       expect(prId).toBeDefined(); // Step 2: Create Purchase Order from PR
       const poResponse = await axios.post(
         `${API_BASE_URL}/api/purchase-order/create-from-pr/${prId}`,
@@ -68,17 +62,13 @@ describe('Purchase Workflow Integration (E2E)', () => {
           description: 'Test PR for validation',
           justification: 'Testing workflow validation',
           branchId: testUser.branchId,
-          requiredDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-          ).toISOString(),
+          requiredDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           items: [
             {
               itemId: TEST_ITEM_ID,
               requestedQty: 5,
               estimatedPrice: 100,
-              requiredDate: new Date(
-                Date.now() + 7 * 24 * 60 * 60 * 1000
-              ).toISOString(),
+              requiredDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
               remarks: 'Test item',
             },
           ],

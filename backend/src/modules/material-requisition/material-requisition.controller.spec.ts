@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { MaterialRequisitionController } from './material-requisition.controller';
 import { MaterialRequisitionService } from './material-requisition.service';
 
@@ -11,9 +11,7 @@ describe('MaterialRequisitionController', () => {
       providers: [MaterialRequisitionService],
     }).compile();
 
-    controller = module.get<MaterialRequisitionController>(
-      MaterialRequisitionController
-    );
+    controller = module.get<MaterialRequisitionController>(MaterialRequisitionController);
   });
 
   it('should be defined', () => {

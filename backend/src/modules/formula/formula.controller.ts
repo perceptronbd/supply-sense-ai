@@ -1,27 +1,20 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  HttpStatus,
+  Get,
   HttpCode,
+  HttpStatus,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
-import { FormulaService } from './formula.service';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
+import type { FormulaService } from './formula.service';
 
 @ApiTags('formula')
 @Controller('formula')
@@ -114,10 +107,7 @@ export class FormulaController {
     @Param('id') id: string,
     @Query('outputQuantity', ParseIntPipe) outputQuantity: number
   ) {
-    return await this.formulaService.calculateMaterialRequirements(
-      id,
-      outputQuantity
-    );
+    return await this.formulaService.calculateMaterialRequirements(id, outputQuantity);
   }
 
   @Patch(':id')
@@ -133,10 +123,7 @@ export class FormulaController {
     description: 'Formula updated successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async update(
-    @Param('id') id: string,
-    @Body() updateFormulaDto: UpdateFormulaDto
-  ) {
+  async update(@Param('id') id: string, @Body() updateFormulaDto: UpdateFormulaDto) {
     return await this.formulaService.update(id, updateFormulaDto);
   }
 
@@ -183,10 +170,7 @@ export class FormulaController {
     description: 'Formula cloned successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async cloneFormula(
-    @Param('id') id: string,
-    @Body('newVersion') newVersion: string
-  ) {
+  async cloneFormula(@Param('id') id: string, @Body('newVersion') newVersion: string) {
     // TODO: Replace with actual user ID from JWT token
     const userId = 'user-456';
     return await this.formulaService.cloneFormula(id, newVersion, userId);

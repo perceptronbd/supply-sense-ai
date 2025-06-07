@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { UnauthorizedException } from '@nestjs/common';
+import type { LoginDto } from './dto/login.dto';
 
 // Mock the Prisma client import
 jest.mock('../../../generated/prisma', () => ({
@@ -23,7 +23,7 @@ const { UserRole } = require('../../../generated/prisma');
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: AuthService;
+  let _authService: AuthService;
 
   const mockAuthService = {
     validateUser: jest.fn(),
@@ -68,7 +68,7 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    authService = module.get<AuthService>(AuthService);
+    _authService = module.get<AuthService>(AuthService);
   });
 
   afterEach(() => {
@@ -91,10 +91,7 @@ describe('AuthController', () => {
 
       const result = await controller.login(loginDto);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
-        loginDto.email,
-        loginDto.password
-      );
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
       expect(mockAuthService.login).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
@@ -102,14 +99,9 @@ describe('AuthController', () => {
     it('should throw UnauthorizedException for invalid credentials', async () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        UnauthorizedException
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
-        loginDto.email,
-        loginDto.password
-      );
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
 
@@ -117,30 +109,18 @@ describe('AuthController', () => {
       const inactiveUser = { ...mockUser, isActive: false };
       mockAuthService.validateUser.mockResolvedValue(inactiveUser);
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        UnauthorizedException
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
-        loginDto.email,
-        loginDto.password
-      );
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
 
     it('should handle service errors gracefully', async () => {
-      mockAuthService.validateUser.mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      mockAuthService.validateUser.mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        'Database connection failed'
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow('Database connection failed');
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
-        loginDto.email,
-        loginDto.password
-      );
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
 
@@ -187,9 +167,7 @@ describe('AuthController', () => {
         throw new Error('Unexpected error');
       });
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        'Unexpected error'
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow('Unexpected error');
     });
   });
 
@@ -202,9 +180,7 @@ describe('AuthController', () => {
 
       mockAuthService.validateUser.mockResolvedValue(null);
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        UnauthorizedException
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should handle empty password gracefully', async () => {
@@ -215,9 +191,7 @@ describe('AuthController', () => {
 
       mockAuthService.validateUser.mockResolvedValue(null);
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        UnauthorizedException
-      );
+      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 });

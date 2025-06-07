@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { FormulaService } from './formula.service';
-import { FormulaController } from './formula.controller';
 import { PrismaService } from '../../app/prisma.service';
+import { FormulaController } from './formula.controller';
+import { FormulaService } from './formula.service';
 
 @Module({
   controllers: [FormulaController],

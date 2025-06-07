@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { PurchaseRequestController } from './purchase-request.controller';
 import { PurchaseRequestService } from './purchase-request.service';
 
@@ -11,9 +11,7 @@ describe('PurchaseRequestController', () => {
       providers: [PurchaseRequestService],
     }).compile();
 
-    controller = module.get<PurchaseRequestController>(
-      PurchaseRequestController
-    );
+    controller = module.get<PurchaseRequestController>(PurchaseRequestController);
   });
 
   it('should be defined', () => {

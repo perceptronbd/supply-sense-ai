@@ -1,9 +1,5 @@
 import axios from 'axios';
-import {
-  TestHelpers,
-  TestUser,
-  AxiosErrorResponse,
-} from '../../support/test-helpers';
+import { type AxiosErrorResponse, TestHelpers, type TestUser } from '../../support/test-helpers';
 
 describe('Purchase Order Workflow (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -19,11 +15,9 @@ describe('Purchase Order Workflow (E2E)', () => {
   describe('Complete Purchase Order Workflow', () => {
     it('should complete entire workflow: PR creation → PO creation → workflow steps', async () => {
       // Step 1: Create and approve purchase request
-      const prId = await TestHelpers.createApprovedPurchaseRequest(
-        authToken,
-        testUser.branchId,
-        { title: 'E2E Workflow Test PR' }
-      );
+      const prId = await TestHelpers.createApprovedPurchaseRequest(authToken, testUser.branchId, {
+        title: 'E2E Workflow Test PR',
+      });
 
       // Step 2: Create PO from PR
       const poResponse = await axios.post(
@@ -51,19 +45,14 @@ describe('Purchase Order Workflow (E2E)', () => {
 
     it('should handle standalone purchase order creation and workflow', async () => {
       // Create standalone PO
-      const po = await TestHelpers.createPurchaseOrder(
-        authToken,
-        testUser.branchId,
-        { title: 'Standalone E2E Workflow Test' }
-      );
+      const po = await TestHelpers.createPurchaseOrder(authToken, testUser.branchId, {
+        title: 'Standalone E2E Workflow Test',
+      });
 
       expect(po.status).toBe('DRAFT');
 
       // Execute partial workflow
-      const sentPO = await TestHelpers.executePOWorkflow(authToken, po.id, [
-        'send',
-        'confirm',
-      ]);
+      const sentPO = await TestHelpers.executePOWorkflow(authToken, po.id, ['send', 'confirm']);
 
       expect(sentPO.status).toBe('CONFIRMED');
     });

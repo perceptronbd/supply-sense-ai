@@ -23,22 +23,19 @@ async function testPurchaseRequest() {
     const token = loginData.access_token;
     const userId = loginData.user.id;
 
-    console.log(`✅ Login successful`);
+    console.log('✅ Login successful');
     console.log(`   User ID: ${userId}`);
     console.log(`   Token: ${token.substring(0, 30)}...`);
 
     // 2. Test GET request
     console.log('\nGetting purchase requests...');
-    const getResponse = await fetch(
-      'http://localhost:3000/api/purchase-request',
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const getResponse = await fetch('http://localhost:3000/api/purchase-request', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     const getResult = await getResponse.json();
 
@@ -46,17 +43,14 @@ async function testPurchaseRequest() {
       throw new Error(`GET failed: ${JSON.stringify(getResult)}`);
     }
 
-    console.log(
-      `✅ GET successful - found ${getResult.length} purchase requests`
-    );
+    console.log(`✅ GET successful - found ${getResult.length} purchase requests`);
 
     // 3. Test POST request to create a purchase request
     console.log('\nCreating purchase request...');
 
     const requestData = {
       title: 'Test Purchase Request via API',
-      description:
-        'Testing purchase request creation with proper authentication',
+      description: 'Testing purchase request creation with proper authentication',
       requiredDate: '2025-06-20T10:00:00Z',
       branchId: '29db9233-fbb4-4a68-8807-5d5cae43537d',
       justification: 'Testing the API functionality',
@@ -73,37 +67,32 @@ async function testPurchaseRequest() {
 
     console.log('Request data:', JSON.stringify(requestData, null, 2));
 
-    const postResponse = await fetch(
-      'http://localhost:3000/api/purchase-request',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      }
-    );
+    const postResponse = await fetch('http://localhost:3000/api/purchase-request', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
 
     const result = await postResponse.text();
 
     if (!postResponse.ok) {
-      console.error(
-        `❌ Failed to create purchase request: ${postResponse.status}`
-      );
+      console.error(`❌ Failed to create purchase request: ${postResponse.status}`);
       try {
         console.error(`   Error: ${JSON.parse(result).message}`);
-      } catch (e) {
+      } catch (_e) {
         console.error(`   Response: ${result}`);
       }
     } else {
-      console.log(`✅ Purchase request created successfully`);
+      console.log('✅ Purchase request created successfully');
       try {
         const data = JSON.parse(result);
         console.log(`   ID: ${data.id}`);
         console.log(`   PR Number: ${data.prNumber}`);
         console.log(`   Created By: ${data.createdById}`);
-      } catch (e) {
+      } catch (_e) {
         console.log(`   Response: ${result}`);
       }
     }

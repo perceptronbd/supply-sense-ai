@@ -48,59 +48,29 @@ async function testAPI() {
     console.log('✅ API is responding:', healthResponse.data);
 
     // Test 2: Create Purchase Request with UUID validation
-    console.log(
-      '\n2. Testing Purchase Request creation with UUID validation...'
-    );
+    console.log('\n2. Testing Purchase Request creation with UUID validation...');
     try {
-      const prResponse = await axios.post(
-        `${API_BASE}/purchase-request`,
-        testData.purchaseRequest
-      );
-      console.log(
-        '✅ Purchase Request created successfully:',
-        prResponse.data.id
-      );
+      const prResponse = await axios.post(`${API_BASE}/purchase-request`, testData.purchaseRequest);
+      console.log('✅ Purchase Request created successfully:', prResponse.data.id);
 
       // Test getting the created PR
-      const getPRResponse = await axios.get(
-        `${API_BASE}/purchase-request/${prResponse.data.id}`
-      );
-      console.log(
-        '✅ Purchase Request retrieved successfully:',
-        getPRResponse.data.description
-      );
+      const getPRResponse = await axios.get(`${API_BASE}/purchase-request/${prResponse.data.id}`);
+      console.log('✅ Purchase Request retrieved successfully:', getPRResponse.data.description);
     } catch (error) {
-      console.log(
-        '❌ Purchase Request creation failed:',
-        error.response?.data || error.message
-      );
+      console.log('❌ Purchase Request creation failed:', error.response?.data || error.message);
     }
 
     // Test 3: Create Purchase Order with UUID validation
     console.log('\n3. Testing Purchase Order creation with UUID validation...');
     try {
-      const poResponse = await axios.post(
-        `${API_BASE}/purchase-order`,
-        testData.purchaseOrder
-      );
-      console.log(
-        '✅ Purchase Order created successfully:',
-        poResponse.data.id
-      );
+      const poResponse = await axios.post(`${API_BASE}/purchase-order`, testData.purchaseOrder);
+      console.log('✅ Purchase Order created successfully:', poResponse.data.id);
 
       // Test getting the created PO
-      const getPOResponse = await axios.get(
-        `${API_BASE}/purchase-order/${poResponse.data.id}`
-      );
-      console.log(
-        '✅ Purchase Order retrieved successfully:',
-        getPOResponse.data.status
-      );
+      const getPOResponse = await axios.get(`${API_BASE}/purchase-order/${poResponse.data.id}`);
+      console.log('✅ Purchase Order retrieved successfully:', getPOResponse.data.status);
     } catch (error) {
-      console.log(
-        '❌ Purchase Order creation failed:',
-        error.response?.data || error.message
-      );
+      console.log('❌ Purchase Order creation failed:', error.response?.data || error.message);
     }
 
     // Test 4: Test UUID validation with invalid UUID
@@ -114,14 +84,9 @@ async function testAPI() {
       console.log("❌ Should have failed validation but didn't");
     } catch (error) {
       if (error.response?.status === 400) {
-        console.log(
-          '✅ UUID validation working correctly - rejected invalid UUID'
-        );
+        console.log('✅ UUID validation working correctly - rejected invalid UUID');
       } else {
-        console.log(
-          '❌ Unexpected error:',
-          error.response?.data || error.message
-        );
+        console.log('❌ Unexpected error:', error.response?.data || error.message);
       }
     }
 
@@ -134,10 +99,7 @@ async function testAPI() {
       const allPOs = await axios.get(`${API_BASE}/purchase-order`);
       console.log(`✅ Retrieved ${allPOs.data.length} Purchase Orders`);
     } catch (error) {
-      console.log(
-        '❌ GET all endpoints failed:',
-        error.response?.data || error.message
-      );
+      console.log('❌ GET all endpoints failed:', error.response?.data || error.message);
     }
 
     console.log('\n🎉 API testing completed!');

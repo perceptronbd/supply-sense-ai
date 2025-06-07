@@ -88,8 +88,7 @@ export interface PurchaseOrderResponse {
 }
 
 export class TestHelpers {
-  private static readonly API_BASE_URL =
-    process.env.API_BASE_URL || 'http://localhost:3000';
+  private static readonly API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
   // Test data constants from seed files - updated with actual supplier IDs
   static readonly TEST_ITEM_ID = 'b32dd8ee-475e-47da-8bc8-990b7f8aada6';
   static readonly TEST_SUPPLIERS = {
@@ -99,14 +98,13 @@ export class TestHelpers {
     'Industrial Supplies Co': 'f2e8d9c5-b4a1-3c7f-9e6d-8b2a5c4e7f1g',
     'TechComponents Pro': 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
   };
-  static readonly TEST_SUPPLIER_ID =
-    TestHelpers.TEST_SUPPLIERS['Chemical Solutions Ltd'];
+  static readonly TEST_SUPPLIER_ID = TestHelpers.TEST_SUPPLIERS['Chemical Solutions Ltd'];
 
   /**
    * Login as branch manager for testing
    */
   static async loginAsBranchManager(): Promise<AuthTokens> {
-    const response = await axios.post(`${this.API_BASE_URL}/api/auth/login`, {
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
       email: 'manager.a@supplychain.com',
       password: 'manager123',
     });
@@ -121,7 +119,7 @@ export class TestHelpers {
    * Login as procurement specialist for testing
    */
   static async loginAsProcurementSpecialist(): Promise<AuthTokens> {
-    const response = await axios.post(`${this.API_BASE_URL}/api/auth/login`, {
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
       email: 'specialist.a@supplychain.com',
       password: 'specialist123',
     });
@@ -157,7 +155,7 @@ export class TestHelpers {
       justification: 'Required for E2E testing',
       items: [
         {
-          itemId: this.TEST_ITEM_ID,
+          itemId: TestHelpers.TEST_ITEM_ID,
           requestedQty: 50,
           estimatedPrice: 15.0,
           requiredDate: '2025-06-20T10:00:00Z',
@@ -169,25 +167,27 @@ export class TestHelpers {
 
     // Create PR
     const prResponse = await axios.post(
-      `${this.API_BASE_URL}/api/purchase-request`,
+      `${TestHelpers.API_BASE_URL}/api/purchase-request`,
       prData,
-      { headers: this.getAuthHeaders(authToken) }
+      {
+        headers: TestHelpers.getAuthHeaders(authToken),
+      }
     );
 
     const prId = prResponse.data.id;
 
     // Submit PR
     await axios.post(
-      `${this.API_BASE_URL}/api/purchase-request/${prId}/submit`,
+      `${TestHelpers.API_BASE_URL}/api/purchase-request/${prId}/submit`,
       {},
-      { headers: this.getAuthHeaders(authToken) }
+      { headers: TestHelpers.getAuthHeaders(authToken) }
     );
 
     // Approve PR
     await axios.post(
-      `${this.API_BASE_URL}/api/purchase-request/${prId}/approve`,
+      `${TestHelpers.API_BASE_URL}/api/purchase-request/${prId}/approve`,
       {},
-      { headers: this.getAuthHeaders(authToken) }
+      { headers: TestHelpers.getAuthHeaders(authToken) }
     );
 
     return prId;
@@ -202,7 +202,7 @@ export class TestHelpers {
     const timestamp = Date.now();
     const poData = {
       title: `Test Purchase Order E2E ${timestamp}`,
-      supplierId: this.TEST_SUPPLIER_ID,
+      supplierId: TestHelpers.TEST_SUPPLIER_ID,
       expectedDeliveryDate: '2025-07-01T10:00:00Z',
       paymentTerms: 'Net 30 days',
       deliveryTerms: 'FOB Origin',
@@ -210,7 +210,7 @@ export class TestHelpers {
       notes: 'Testing PO creation in E2E',
       items: [
         {
-          itemId: this.TEST_ITEM_ID,
+          itemId: TestHelpers.TEST_ITEM_ID,
           orderedQty: 25,
           unitPrice: 18.5,
           deliveryDate: '2025-07-01T10:00:00Z',
@@ -220,11 +220,9 @@ export class TestHelpers {
       ...overrides,
     };
 
-    const response = await axios.post(
-      `${this.API_BASE_URL}/api/purchase-order`,
-      poData,
-      { headers: this.getAuthHeaders(authToken) }
-    );
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/purchase-order`, poData, {
+      headers: TestHelpers.getAuthHeaders(authToken),
+    });
 
     return response.data;
   }
@@ -239,33 +237,32 @@ export class TestHelpers {
       switch (step) {
         case 'send':
           await axios.post(
-            `${this.API_BASE_URL}/api/purchase-order/${poId}/send-to-supplier`,
+            `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/send-to-supplier`,
             {},
-            { headers: this.getAuthHeaders(authToken) }
+            { headers: TestHelpers.getAuthHeaders(authToken) }
           );
           break;
         case 'confirm':
           await axios.post(
-            `${this.API_BASE_URL}/api/purchase-order/${poId}/confirm`,
+            `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/confirm`,
             {},
-            { headers: this.getAuthHeaders(authToken) }
+            { headers: TestHelpers.getAuthHeaders(authToken) }
           );
           break;
         case 'close':
           await axios.post(
-            `${this.API_BASE_URL}/api/purchase-order/${poId}/close`,
+            `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/close`,
             {},
-            { headers: this.getAuthHeaders(authToken) }
+            { headers: TestHelpers.getAuthHeaders(authToken) }
           );
           break;
       }
     }
 
     // Get the updated purchase order after all workflow steps
-    const response = await axios.get(
-      `${this.API_BASE_URL}/api/purchase-order/${poId}`,
-      { headers: this.getAuthHeaders(authToken) }
-    );
+    const response = await axios.get(`${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}`, {
+      headers: TestHelpers.getAuthHeaders(authToken),
+    });
 
     return response.data;
   }

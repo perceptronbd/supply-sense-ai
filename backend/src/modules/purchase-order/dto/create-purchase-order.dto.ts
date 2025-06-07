@@ -1,15 +1,15 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import {
-  IsString,
-  IsOptional,
-  IsUUID,
+  IsArray,
   IsDateString,
   IsNumber,
+  IsOptional,
   IsPositive,
-  IsArray,
+  IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePOItemDto {
   @ApiProperty({
@@ -26,7 +26,7 @@ export class CreatePOItemDto {
   })
   @IsNumber({ maxDecimalPlaces: 3 })
   @IsPositive()
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => Number.parseFloat(value))
   orderedQty: number;
 
   @ApiProperty({
@@ -36,7 +36,7 @@ export class CreatePOItemDto {
   })
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => Number.parseFloat(value))
   unitPrice: number;
 
   @ApiProperty({

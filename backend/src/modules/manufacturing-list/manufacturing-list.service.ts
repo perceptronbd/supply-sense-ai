@@ -1,20 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import {
-  CreateManufacturingListDto,
-  MLStatus,
-} from './dto/create-manufacturing-list.dto';
-import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import { type CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
+import type { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 
 @Injectable()
 export class ManufacturingListService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    createManufacturingListDto: CreateManufacturingListDto,
-    userId: string
-  ) {
+  async create(createManufacturingListDto: CreateManufacturingListDto, userId: string) {
     // Generate ML number
     const count = await this.prisma.manufacturingList.count();
     const mlNumber = `ML${String(count + 1).padStart(6, '0')}`;
@@ -42,9 +36,9 @@ export class ManufacturingListService {
     }
 
     // Calculate material requirements and validate stock availability
-    const scaleFactor = new Decimal(
-      createManufacturingListDto.outputQuantity
-    ).div(formula.outputQuantity);
+    const scaleFactor = new Decimal(createManufacturingListDto.outputQuantity).div(
+      formula.outputQuantity
+    );
 
     // Get all required item IDs
     const requiredItemIds = formula.items.map((item) => item.itemId);
@@ -63,24 +57,15 @@ export class ManufacturingListService {
       // Validate stock availability
       for (const formulaItem of formula.items) {
         const requiredQty = formulaItem.quantity.mul(scaleFactor);
-        const requiredQtyInMainUnit = requiredQty.mul(
-          formulaItem.item.usingToMainRate
-        );
+        const requiredQtyInMainUnit = requiredQty.mul(formulaItem.item.usingToMainRate);
 
-        const stockRecord = stockRecords.find(
-          (s) => s.itemId === formulaItem.itemId
-        );
+        const stockRecord = stockRecords.find((s) => s.itemId === formulaItem.itemId);
 
-        if (
-          !stockRecord ||
-          stockRecord.availableQty.lt(requiredQtyInMainUnit)
-        ) {
+        if (!stockRecord || stockRecord.availableQty.lt(requiredQtyInMainUnit)) {
           throw new Error(
             `Insufficient stock for item ${
               formulaItem.item.name
-            }. Required: ${requiredQtyInMainUnit}, Available: ${
-              stockRecord?.availableQty || 0
-            }`
+            }. Required: ${requiredQtyInMainUnit}, Available: ${stockRecord?.availableQty || 0}`
           );
         }
       }
@@ -188,10 +173,7 @@ export class ManufacturingListService {
     return manufacturingList;
   }
 
-  async update(
-    id: string,
-    updateManufacturingListDto: UpdateManufacturingListDto
-  ) {
+  async update(id: string, updateManufacturingListDto: UpdateManufacturingListDto) {
     const existingML = await this.findOne(id);
 
     // Only allow updates if status is DRAFT
@@ -253,25 +235,19 @@ export class ManufacturingListService {
     const existingML = await this.findOne(id);
 
     if (existingML.status !== MLStatus.DRAFT) {
-      throw new Error(
-        'Can only start production for DRAFT Manufacturing Lists'
-      );
+      throw new Error('Can only start production for DRAFT Manufacturing Lists');
     }
 
     return this.prisma.$transaction(async (tx) => {
       // Calculate required materials based on formula and output quantity
-      const scaleFactor = existingML.outputQuantity.div(
-        existingML.formula.outputQuantity
-      );
+      const scaleFactor = existingML.outputQuantity.div(existingML.formula.outputQuantity);
 
       // Check and deduct stock for each formula item
       for (const formulaItem of existingML.formula.items) {
         const requiredQty = formulaItem.quantity.mul(scaleFactor);
 
         // Convert from using unit to main unit
-        const requiredQtyInMainUnit = requiredQty.mul(
-          formulaItem.item.usingToMainRate
-        );
+        const requiredQtyInMainUnit = requiredQty.mul(formulaItem.item.usingToMainRate);
 
         // Get current stock
         const stock = await tx.stock.findUnique({
@@ -287,9 +263,7 @@ export class ManufacturingListService {
           throw new Error(
             `Insufficient stock for item ${
               formulaItem.item.name
-            }. Required: ${requiredQtyInMainUnit}, Available: ${
-              stock?.availableQty || 0
-            }`
+            }. Required: ${requiredQtyInMainUnit}, Available: ${stock?.availableQty || 0}`
           );
         }
 
@@ -466,10 +440,7 @@ export class ManufacturingListService {
   }
 
   // Helper method to get item's using to main rate
-  private async getItemUsingToMainRate(
-    tx: any,
-    itemId: string
-  ): Promise<Decimal> {
+  private async getItemUsingToMainRate(tx: any, itemId: string): Promise<Decimal> {
     const item = await tx.item.findUnique({
       where: { id: itemId },
       select: { usingToMainRate: true },
@@ -478,11 +449,7 @@ export class ManufacturingListService {
   }
 
   // Get production summary for a branch
-  async getProductionSummary(
-    branchId: string,
-    startDate?: Date,
-    endDate?: Date
-  ) {
+  async getProductionSummary(branchId: string, startDate?: Date, endDate?: Date) {
     const where: any = { branchId };
 
     if (startDate || endDate) {

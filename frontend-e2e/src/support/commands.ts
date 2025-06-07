@@ -12,7 +12,7 @@
 
 declare global {
   namespace Cypress {
-    interface Chainable<Subject> {
+    interface Chainable<_Subject> {
       login(email: string, password: string): void;
     }
   }

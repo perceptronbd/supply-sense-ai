@@ -1,26 +1,19 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
-import { GoodsReceiptService } from './goods-receipt.service';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
+import type { GoodsReceiptService } from './goods-receipt.service';
 
 @ApiTags('goods-receipt')
 @Controller('goods-receipt')
@@ -86,10 +79,7 @@ export class GoodsReceiptController {
     description: 'Goods receipt updated successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async update(
-    @Param('id') id: string,
-    @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto
-  ) {
+  async update(@Param('id') id: string, @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto) {
     return await this.goodsReceiptService.update(id, updateGoodsReceiptDto);
   }
 

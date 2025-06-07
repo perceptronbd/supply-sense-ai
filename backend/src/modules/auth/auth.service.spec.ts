@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Test, type TestingModule } from '@nestjs/testing';
 import * as argon2 from 'argon2';
-import { AuthService } from './auth.service';
 import { PrismaService } from '../../app/prisma.service';
+import { AuthService } from './auth.service';
 
 // Mock the Prisma client import
 jest.mock('../../../generated/prisma', () => ({
@@ -24,8 +24,8 @@ const { UserRole } = require('../../../generated/prisma');
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prismaService: PrismaService;
-  let jwtService: JwtService;
+  let _prismaService: PrismaService;
+  let _jwtService: JwtService;
 
   const mockUser = {
     id: 'test-user-id',
@@ -78,8 +78,8 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    jwtService = module.get<JwtService>(JwtService);
+    _prismaService = module.get<PrismaService>(PrismaService);
+    _jwtService = module.get<JwtService>(JwtService);
   });
 
   afterEach(() => {
@@ -98,9 +98,7 @@ describe('AuthService', () => {
         password: hashedPassword,
       };
 
-      mockPrismaService.user.findUnique.mockResolvedValue(
-        userWithHashedPassword
-      );
+      mockPrismaService.user.findUnique.mockResolvedValue(userWithHashedPassword);
 
       // Act
       const result = await service.validateUser(email, password);
@@ -172,9 +170,7 @@ describe('AuthService', () => {
         password: hashedPassword,
       };
 
-      mockPrismaService.user.findUnique.mockResolvedValue(
-        userWithHashedPassword
-      );
+      mockPrismaService.user.findUnique.mockResolvedValue(userWithHashedPassword);
 
       // Act
       const result = await service.validateUser(email, password);

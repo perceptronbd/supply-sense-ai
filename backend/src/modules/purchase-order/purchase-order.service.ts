@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../../app/prisma.service';
-import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
-import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import type { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
+import type { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 // Define status enum locally to avoid import issues
 enum POStatus {
@@ -25,9 +21,7 @@ export class PurchaseOrderService {
     // Generate unique PO number using timestamp and random number
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
-    const poNumber = `PO${timestamp.toString().slice(-6)}${random
-      .toString()
-      .padStart(3, '0')}`;
+    const poNumber = `PO${timestamp.toString().slice(-6)}${random.toString().padStart(3, '0')}`;
 
     // Calculate totals
     let subtotal = new Decimal(0);
@@ -45,9 +39,7 @@ export class PurchaseOrderService {
         title: createPurchaseOrderDto.title,
         prId: createPurchaseOrderDto.prId,
         supplierId: createPurchaseOrderDto.supplierId,
-        expectedDeliveryDate: new Date(
-          createPurchaseOrderDto.expectedDeliveryDate
-        ),
+        expectedDeliveryDate: new Date(createPurchaseOrderDto.expectedDeliveryDate),
         paymentTerms: createPurchaseOrderDto.paymentTerms,
         deliveryTerms: createPurchaseOrderDto.deliveryTerms,
         branchId: createPurchaseOrderDto.branchId,
@@ -156,9 +148,7 @@ export class PurchaseOrderService {
 
     // Only allow updates if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new BadRequestException(
-        'Can only update Purchase Orders in DRAFT status'
-      );
+      throw new BadRequestException('Can only update Purchase Orders in DRAFT status');
     }
 
     // Calculate new totals if items are provided
@@ -232,9 +222,7 @@ export class PurchaseOrderService {
 
     // Only allow deletion if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new BadRequestException(
-        'Can only delete Purchase Orders in DRAFT status'
-      );
+      throw new BadRequestException('Can only delete Purchase Orders in DRAFT status');
     }
 
     return this.prisma.purchaseOrder.delete({
@@ -246,9 +234,7 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.DRAFT) {
-      throw new BadRequestException(
-        'Can only send Purchase Orders in DRAFT status'
-      );
+      throw new BadRequestException('Can only send Purchase Orders in DRAFT status');
     }
 
     return this.prisma.purchaseOrder.update({
@@ -282,9 +268,7 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.SENT_TO_SUPPLIER) {
-      throw new BadRequestException(
-        'Can only confirm Purchase Orders in SENT_TO_SUPPLIER status'
-      );
+      throw new BadRequestException('Can only confirm Purchase Orders in SENT_TO_SUPPLIER status');
     }
 
     return this.prisma.purchaseOrder.update({
@@ -318,10 +302,7 @@ export class PurchaseOrderService {
   async cancel(id: string) {
     const existingPO = await this.findOne(id);
 
-    if (
-      existingPO.status === POStatus.CLOSED ||
-      existingPO.status === POStatus.CANCELLED
-    ) {
+    if (existingPO.status === POStatus.CLOSED || existingPO.status === POStatus.CANCELLED) {
       throw new BadRequestException(
         'Cannot cancel Purchase Orders that are already CLOSED or CANCELLED'
       );
@@ -357,9 +338,7 @@ export class PurchaseOrderService {
     const existingPO = await this.findOne(id);
 
     if (existingPO.status !== POStatus.CONFIRMED) {
-      throw new BadRequestException(
-        'Can only close Purchase Orders in CONFIRMED status'
-      );
+      throw new BadRequestException('Can only close Purchase Orders in CONFIRMED status');
     }
 
     return this.prisma.purchaseOrder.update({
@@ -408,9 +387,7 @@ export class PurchaseOrderService {
     }
 
     if (pr.status !== 'APPROVED') {
-      throw new BadRequestException(
-        'Can only create PO from APPROVED Purchase Requests'
-      );
+      throw new BadRequestException('Can only create PO from APPROVED Purchase Requests');
     }
 
     // Convert PR items to PO items (convert units from buying to buying - no conversion needed)

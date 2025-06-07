@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { GoodsReceiptService } from './goods-receipt.service';
-import { PrismaService } from '../../app/prisma.service';
-import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
+import { GoodsReceiptService } from './goods-receipt.service';
 
 describe('GoodsReceiptService', () => {
   let service: GoodsReceiptService;
@@ -136,7 +136,7 @@ describe('GoodsReceiptService', () => {
     it('should require either PO or MR ID', async () => {
       // Arrange
       const invalidDto = { ...mockCreateDto };
-      delete invalidDto.poId;
+      invalidDto.poId = undefined;
 
       // Act & Assert
       await expect(service.create(invalidDto, 'user-123')).rejects.toThrow(
@@ -185,9 +185,7 @@ describe('GoodsReceiptService', () => {
       };
 
       mockPrismaService.goodsReceipt.findUnique.mockResolvedValue(mockGR);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
       await service.post('gr-123');
@@ -232,9 +230,7 @@ describe('GoodsReceiptService', () => {
       };
 
       mockPrismaService.goodsReceipt.findUnique.mockResolvedValue(mockGR);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
       await service.post('gr-123');
@@ -293,9 +289,7 @@ describe('GoodsReceiptService', () => {
       };
 
       mockPrismaService.goodsReceipt.findUnique.mockResolvedValue(mockGR);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockTransaction)
-      );
+      mockPrismaService.$transaction.mockImplementation((callback) => callback(mockTransaction));
 
       // Act
       await service.post('gr-123');
@@ -334,7 +328,7 @@ describe('GoodsReceiptService', () => {
       mockPrismaService.goodsReceipt.create.mockResolvedValue({ id: 'gr-123' });
 
       // Act
-      const result = await service.createFromPO('po-123', 'user-123');
+      const _result = await service.createFromPO('po-123', 'user-123');
 
       // Assert
       const createCall = mockPrismaService.goodsReceipt.create.mock.calls[0][0];
@@ -348,9 +342,7 @@ describe('GoodsReceiptService', () => {
 
       expect(createCall.data.items.create[0].itemId).toBe('item-123');
       expect(createCall.data.items.create[0].orderedQty.toString()).toBe('100');
-      expect(createCall.data.items.create[0].receivedQty.toString()).toBe(
-        '100'
-      );
+      expect(createCall.data.items.create[0].receivedQty.toString()).toBe('100');
       expect(createCall.data.items.create[0].unitPrice.toString()).toBe('10.5');
       expect(createCall.data.items.create[0].totalCost.toString()).toBe('1050');
 
@@ -373,9 +365,9 @@ describe('GoodsReceiptService', () => {
       mockPrismaService.purchaseOrder.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.createFromPO('invalid-id', 'user-123')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.createFromPO('invalid-id', 'user-123')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -396,9 +388,7 @@ describe('GoodsReceiptService', () => {
 
     it('should create GR from approved MR without pricing', async () => {
       // Arrange
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        mockMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(mockMR);
       mockPrismaService.goodsReceipt.count.mockResolvedValue(0);
       mockPrismaService.goodsReceipt.create.mockResolvedValue({ id: 'gr-123' });
 
@@ -427,9 +417,7 @@ describe('GoodsReceiptService', () => {
     it('should throw error for non-approved MR', async () => {
       // Arrange
       const draftMR = { ...mockMR, status: 'DRAFT' };
-      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(
-        draftMR
-      );
+      mockPrismaService.materialRequisition.findUnique.mockResolvedValue(draftMR);
 
       // Act & Assert
       await expect(service.createFromMR('mr-123', 'user-123')).rejects.toThrow(
@@ -451,9 +439,7 @@ describe('GoodsReceiptService', () => {
       const currentTotalValue = oldStock.mul(oldCost); // 100 * 15 = 1500
       const receivedTotalValue = receivedQty.mul(receivedPrice); // 50 * 18 = 900
       const newTotalQty = oldStock.add(receivedQty); // 150
-      const newAverageCost = currentTotalValue
-        .add(receivedTotalValue)
-        .div(newTotalQty); // 2400 / 150 = 16
+      const newAverageCost = currentTotalValue.add(receivedTotalValue).div(newTotalQty); // 2400 / 150 = 16
 
       expect(newAverageCost).toEqual(new Decimal(16.0));
     });
@@ -463,8 +449,7 @@ describe('GoodsReceiptService', () => {
       const receivedQtyInBuyingUnit = new Decimal(1000); // 1000 grams
       const buyingToMainRate = new Decimal(0.001); // 1000 grams = 1 kg
 
-      const receivedQtyInMainUnit =
-        receivedQtyInBuyingUnit.mul(buyingToMainRate);
+      const receivedQtyInMainUnit = receivedQtyInBuyingUnit.mul(buyingToMainRate);
 
       expect(receivedQtyInMainUnit).toEqual(new Decimal(1)); // 1 kg
     });

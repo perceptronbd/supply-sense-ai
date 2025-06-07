@@ -1,16 +1,16 @@
-import {
-  IsUUID,
-  IsString,
-  IsOptional,
-  IsDateString,
-  IsArray,
-  ValidateNested,
-  IsNumber,
-  IsPositive,
-  IsEnum,
-} from 'class-validator';
-import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export enum MRType {
   TRANSFER = 'TRANSFER',
@@ -34,7 +34,7 @@ export class CreateMRItemDto {
   })
   @IsNumber({ maxDecimalPlaces: 3 })
   @IsPositive()
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => Number.parseFloat(value))
   quantity: number;
 
   @ApiPropertyOptional({
@@ -65,8 +65,7 @@ export class CreateMaterialRequisitionDto {
   title?: string;
 
   @ApiPropertyOptional({
-    description:
-      'Reference to the source Request Form ID (when creating MR from RF)',
+    description: 'Reference to the source Request Form ID (when creating MR from RF)',
     example: '550e8400-e29b-41d4-a716-446655440001',
     format: 'uuid',
   })

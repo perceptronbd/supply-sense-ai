@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
-import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
+import type { PrismaService } from '../../app/prisma.service';
+import type { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
+import type { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 
 // Define status enum locally to avoid import issues
 enum PRStatus {
@@ -17,10 +17,7 @@ enum PRStatus {
 export class PurchaseRequestService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    createPurchaseRequestDto: CreatePurchaseRequestDto,
-    userId: string
-  ) {
+  async create(createPurchaseRequestDto: CreatePurchaseRequestDto, userId: string) {
     // Generate PR number
     const count = await this.prisma.purchaseRequest.count();
     const prNumber = `PR${String(count + 1).padStart(6, '0')}`;
@@ -28,9 +25,7 @@ export class PurchaseRequestService {
     // Calculate total amount
     let totalAmount = new Decimal(0);
     for (const item of createPurchaseRequestDto.items) {
-      const itemTotal = new Decimal(item.requestedQty).mul(
-        item.estimatedPrice || 0
-      );
+      const itemTotal = new Decimal(item.requestedQty).mul(item.estimatedPrice || 0);
       totalAmount = totalAmount.add(itemTotal);
     }
 
@@ -51,9 +46,7 @@ export class PurchaseRequestService {
             itemId: item.itemId,
             requestedQty: new Decimal(item.requestedQty),
             estimatedPrice: new Decimal(item.estimatedPrice || 0),
-            totalAmount: new Decimal(item.requestedQty).mul(
-              item.estimatedPrice || 0
-            ),
+            totalAmount: new Decimal(item.requestedQty).mul(item.estimatedPrice || 0),
             requiredDate: new Date(item.requiredDate),
             remarks: item.remarks,
           })),
@@ -147,9 +140,7 @@ export class PurchaseRequestService {
     if (updatePurchaseRequestDto.items) {
       totalAmount = new Decimal(0);
       for (const item of updatePurchaseRequestDto.items) {
-        const itemTotal = new Decimal(item.requestedQty).mul(
-          item.estimatedPrice || 0
-        );
+        const itemTotal = new Decimal(item.requestedQty).mul(item.estimatedPrice || 0);
         totalAmount = totalAmount.add(itemTotal);
       }
     }
@@ -173,9 +164,7 @@ export class PurchaseRequestService {
               itemId: item.itemId,
               requestedQty: new Decimal(item.requestedQty),
               estimatedPrice: new Decimal(item.estimatedPrice || 0),
-              totalAmount: new Decimal(item.requestedQty).mul(
-                item.estimatedPrice || 0
-              ),
+              totalAmount: new Decimal(item.requestedQty).mul(item.estimatedPrice || 0),
               requiredDate: new Date(item.requiredDate),
               remarks: item.remarks,
             })),
@@ -216,7 +205,7 @@ export class PurchaseRequestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, userId: string) {
+  async approve(id: string, _userId: string) {
     const existingPR = await this.findOne(id);
 
     if (existingPR.status !== PRStatus.SUBMITTED) {
@@ -280,7 +269,7 @@ export class PurchaseRequestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async reject(id: string, userId: string) {
+  async reject(id: string, _userId: string) {
     const existingPR = await this.findOne(id);
 
     if (existingPR.status !== PRStatus.SUBMITTED) {

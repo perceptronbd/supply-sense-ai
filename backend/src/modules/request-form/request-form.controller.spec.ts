@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { RequestFormController } from './request-form.controller';
 import { RequestFormService } from './request-form.service';
 

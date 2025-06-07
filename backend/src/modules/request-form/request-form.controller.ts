@@ -1,26 +1,19 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
-import { RequestFormService } from './request-form.service';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
+import type { RequestFormService } from './request-form.service';
 
 @ApiTags('request-form')
 @Controller('request-form')
@@ -30,8 +23,7 @@ export class RequestFormController {
   @Post()
   @ApiOperation({
     summary: 'Create a new request form',
-    description:
-      'Creates a new request form for requesting materials from another branch',
+    description: 'Creates a new request form for requesting materials from another branch',
   })
   @ApiBody({
     type: CreateRequestFormDto,
@@ -152,10 +144,7 @@ export class RequestFormController {
     description: 'Cannot update non-draft request form',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async update(
-    @Param('id') id: string,
-    @Body() updateRequestFormDto: UpdateRequestFormDto
-  ) {
+  async update(@Param('id') id: string, @Body() updateRequestFormDto: UpdateRequestFormDto) {
     return await this.requestFormService.update(id, updateRequestFormDto);
   }
 
@@ -186,8 +175,7 @@ export class RequestFormController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Submit request form',
-    description:
-      'Submits a request form for approval (changes status from DRAFT to SUBMITTED)',
+    description: 'Submits a request form for approval (changes status from DRAFT to SUBMITTED)',
   })
   @ApiParam({
     name: 'id',
@@ -269,8 +257,7 @@ export class RequestFormController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mark request form as ready for material requisition',
-    description:
-      'Marks an approved request form as ready for material requisition creation',
+    description: 'Marks an approved request form as ready for material requisition creation',
   })
   @ApiParam({
     name: 'id',

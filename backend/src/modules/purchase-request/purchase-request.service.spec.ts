@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { PurchaseRequestService } from './purchase-request.service';
-import { PrismaService } from '../../app/prisma.service';
-import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
+import { PurchaseRequestService } from './purchase-request.service';
 
 describe('PurchaseRequestService', () => {
   let service: PurchaseRequestService;
@@ -114,11 +114,8 @@ describe('PurchaseRequestService', () => {
       await service.create(mockCreateDto, 'user-123');
 
       // Assert
-      const createCall =
-        mockPrismaService.purchaseRequest.create.mock.calls[0][0];
-      const expectedTotal = new Decimal(100)
-        .mul(10.5)
-        .add(new Decimal(50).mul(25.0));
+      const createCall = mockPrismaService.purchaseRequest.create.mock.calls[0][0];
+      const expectedTotal = new Decimal(100).mul(10.5).add(new Decimal(50).mul(25.0));
       expect(createCall.data.totalAmount).toEqual(expectedTotal);
     });
 
@@ -134,8 +131,7 @@ describe('PurchaseRequestService', () => {
       await service.create(mockCreateDto, 'user-123');
 
       // Assert
-      const createCall =
-        mockPrismaService.purchaseRequest.create.mock.calls[0][0];
+      const createCall = mockPrismaService.purchaseRequest.create.mock.calls[0][0];
       expect(createCall.data.prNumber).toBe('PR000026');
     });
 
@@ -158,8 +154,7 @@ describe('PurchaseRequestService', () => {
       await service.create(dtoWithoutPrices, 'user-123');
 
       // Assert
-      const createCall =
-        mockPrismaService.purchaseRequest.create.mock.calls[0][0];
+      const createCall = mockPrismaService.purchaseRequest.create.mock.calls[0][0];
       expect(createCall.data.totalAmount).toEqual(new Decimal(0));
     });
   });
@@ -188,8 +183,7 @@ describe('PurchaseRequestService', () => {
       const result = await service.findAll();
 
       // Assert
-      const findManyCall =
-        mockPrismaService.purchaseRequest.findMany.mock.calls[0][0];
+      const findManyCall = mockPrismaService.purchaseRequest.findMany.mock.calls[0][0];
       expect(findManyCall.where).toBeUndefined();
       expect(findManyCall).toHaveProperty('include');
       expect(findManyCall).toHaveProperty('orderBy');
@@ -205,8 +199,7 @@ describe('PurchaseRequestService', () => {
       const result = await service.findAll('branch-123');
 
       // Assert
-      const findManyCall =
-        mockPrismaService.purchaseRequest.findMany.mock.calls[0][0];
+      const findManyCall = mockPrismaService.purchaseRequest.findMany.mock.calls[0][0];
       expect(findManyCall.where).toEqual({ branchId: 'branch-123' });
       expect(findManyCall).toHaveProperty('include');
       expect(findManyCall).toHaveProperty('orderBy');
@@ -234,8 +227,7 @@ describe('PurchaseRequestService', () => {
       const result = await service.approve('pr-123', 'user-123');
 
       // Assert
-      const updateCall =
-        mockPrismaService.purchaseRequest.update.mock.calls[0][0];
+      const updateCall = mockPrismaService.purchaseRequest.update.mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 'pr-123' });
       expect(updateCall.data.status).toBe('APPROVED');
       expect(updateCall.data).toHaveProperty('approvedDate');
@@ -259,9 +251,7 @@ describe('PurchaseRequestService', () => {
       mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.approve('invalid-id', 'user-123')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.approve('invalid-id', 'user-123')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -285,8 +275,7 @@ describe('PurchaseRequestService', () => {
       const result = await service.submit('pr-123');
 
       // Assert
-      const updateCall =
-        mockPrismaService.purchaseRequest.update.mock.calls[0][0];
+      const updateCall = mockPrismaService.purchaseRequest.update.mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 'pr-123' });
       expect(updateCall.data.status).toBe('SUBMITTED');
       // service doesn't set submittedAt
@@ -296,9 +285,7 @@ describe('PurchaseRequestService', () => {
     it('should throw error when trying to submit non-draft PR', async () => {
       // Arrange
       const submittedPR = { ...mockPR, status: 'SUBMITTED' };
-      mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(
-        submittedPR
-      );
+      mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(submittedPR);
 
       // Act & Assert
       await expect(service.submit('pr-123')).rejects.toThrow(
@@ -323,16 +310,14 @@ describe('PurchaseRequestService', () => {
       const result = await service.findOne('pr-123');
 
       // Assert
-      expect(mockPrismaService.purchaseRequest.findUnique).toHaveBeenCalledWith(
-        {
-          where: { id: 'pr-123' },
-          include: expect.objectContaining({
-            items: expect.any(Object),
-            branch: expect.any(Boolean),
-            createdBy: expect.any(Object),
-          }),
-        }
-      );
+      expect(mockPrismaService.purchaseRequest.findUnique).toHaveBeenCalledWith({
+        where: { id: 'pr-123' },
+        include: expect.objectContaining({
+          items: expect.any(Object),
+          branch: expect.any(Boolean),
+          createdBy: expect.any(Object),
+        }),
+      });
       expect(result).toEqual(mockPR);
     });
 
@@ -341,9 +326,7 @@ describe('PurchaseRequestService', () => {
       mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.findOne('invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -369,8 +352,7 @@ describe('PurchaseRequestService', () => {
 
       await service.create(precisePriceDto, 'user-123');
 
-      const createCall =
-        mockPrismaService.purchaseRequest.create.mock.calls[0][0];
+      const createCall = mockPrismaService.purchaseRequest.create.mock.calls[0][0];
       const expectedTotal = new Decimal(33.333).mul(1.567);
       expect(createCall.data.totalAmount).toEqual(expectedTotal);
     });

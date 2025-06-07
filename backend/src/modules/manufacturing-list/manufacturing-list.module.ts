@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ManufacturingListService } from './manufacturing-list.service';
-import { ManufacturingListController } from './manufacturing-list.controller';
 import { PrismaService } from '../../app/prisma.service';
+import { ManufacturingListController } from './manufacturing-list.controller';
+import { ManufacturingListService } from './manufacturing-list.service';
 
 @Module({
   controllers: [ManufacturingListController],

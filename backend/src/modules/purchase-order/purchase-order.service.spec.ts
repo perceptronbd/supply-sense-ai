@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PurchaseOrderService } from './purchase-order.service';
-import { PrismaService } from '../../app/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
-import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
+import { PrismaService } from '../../app/prisma.service';
+import type { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
+import { PurchaseOrderService } from './purchase-order.service';
 
 // Mock data
 const mockUser = {
@@ -119,9 +119,7 @@ describe('PurchaseOrderService', () => {
         ],
       };
 
-      const expectedSubtotal = new Decimal('100')
-        .mul('25.50')
-        .add(new Decimal('50').mul('15.75'));
+      const expectedSubtotal = new Decimal('100').mul('25.50').add(new Decimal('50').mul('15.75'));
       const expectedTotal = expectedSubtotal; // No tax calculation implemented yet
 
       const expectedPO = {
@@ -370,9 +368,9 @@ describe('PurchaseOrderService', () => {
 
       mockPrismaService.purchaseOrder.findUnique.mockResolvedValue(mockPO);
 
-      await expect(
-        service.update('po-1', { title: 'Updated' })
-      ).rejects.toThrow('Can only update Purchase Orders in DRAFT status');
+      await expect(service.update('po-1', { title: 'Updated' })).rejects.toThrow(
+        'Can only update Purchase Orders in DRAFT status'
+      );
     });
   });
 
@@ -564,21 +562,17 @@ describe('PurchaseOrderService', () => {
         status: 'CONVERTED_TO_PO',
       };
 
-      mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(
-        mockPurchaseRequest
-      );
+      mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(mockPurchaseRequest);
       mockPrismaService.purchaseOrder.count.mockResolvedValue(0);
       mockPrismaService.purchaseOrder.create.mockResolvedValue(expectedPO);
       mockPrismaService.purchaseRequest.update.mockResolvedValue(updatedPR);
 
       const result = await service.createFromPR('pr-1', 'supplier-1', 'user-1');
 
-      expect(mockPrismaService.purchaseRequest.findUnique).toHaveBeenCalledWith(
-        {
-          where: { id: 'pr-1' },
-          include: expect.any(Object),
-        }
-      );
+      expect(mockPrismaService.purchaseRequest.findUnique).toHaveBeenCalledWith({
+        where: { id: 'pr-1' },
+        include: expect.any(Object),
+      });
       expect(mockPrismaService.purchaseRequest.update).toHaveBeenCalledWith({
         where: { id: 'pr-1' },
         data: { status: 'CONVERTED_TO_PO' },
@@ -591,17 +585,15 @@ describe('PurchaseOrderService', () => {
 
       mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(draftPR);
 
-      await expect(
-        service.createFromPR('pr-1', 'supplier-1', 'user-1')
-      ).rejects.toThrow('Can only create PO from APPROVED Purchase Requests');
+      await expect(service.createFromPR('pr-1', 'supplier-1', 'user-1')).rejects.toThrow(
+        'Can only create PO from APPROVED Purchase Requests'
+      );
     });
 
     it('should throw error for non-existent PR', async () => {
       mockPrismaService.purchaseRequest.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.createFromPR('non-existent', 'supplier-1', 'user-1')
-      ).rejects.toThrow(
+      await expect(service.createFromPR('non-existent', 'supplier-1', 'user-1')).rejects.toThrow(
         new NotFoundException('Purchase Request with ID non-existent not found')
       );
     });
