@@ -1,6 +1,77 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
+import { Injectable, Logger } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import type { EquipmentData, SupplierRequirements } from '../interfaces/ai-service.interface';
+
+// Interfaces for typed data
+export interface HistoricalDemandData {
+  itemId: string;
+  branchId: string;
+  salesHistory: Array<{
+    date: string;
+    quantity: number;
+    revenue: number;
+  }>;
+  seasonalFactors?: Record<string, number>;
+  marketTrends?: string[];
+}
+
+export interface QualityAnalysisData {
+  goodsReceiptId: string;
+  items: Array<{
+    itemId: string;
+    quantityReceived: number;
+    qualityScore: number;
+    defectCount: number;
+  }>;
+  supplierData: {
+    supplierId: string;
+    performanceHistory: Array<{
+      date: string;
+      qualityRating: number;
+      deliveryTime: number;
+    }>;
+  };
+}
+
+export interface OptimizationData {
+  purchaseOrders: Array<{
+    id: string;
+    items: Array<{
+      itemId: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+  }>;
+  constraints: {
+    budgetLimit?: number;
+    minOrderQuantity?: Record<string, number>;
+  };
+}
+
+export interface RiskAssessmentData {
+  suppliers: Array<{
+    id: string;
+    reliabilityScore: number;
+    geopoliticalRisk: number;
+  }>;
+  inventory: Array<{
+    itemId: string;
+    currentStock: number;
+    leadTime: number;
+  }>;
+  marketConditions: {
+    volatility: number;
+    priceInflation: number;
+  };
+}
+
+export interface AIAnalysisResult {
+  analysis: string;
+  recommendations: string[];
+  confidence: number;
+  metadata: Record<string, unknown>;
+}
 
 @Injectable()
 export class GeminiService {
@@ -13,31 +84,26 @@ export class GeminiService {
   }
 
   private initializeGemini() {
-    const apiKey = this.configService.get<string>("GEMINI_API_KEY");
-    const modelName = this.configService.get<string>(
-      "GEMINI_MODEL",
-      "gemini-1.5-flash"
-    );
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    const modelName = this.configService.get<string>('GEMINI_MODEL', 'gemini-1.5-flash');
 
     if (!apiKey) {
-      this.logger.warn(
-        "Gemini API key not found. AI features will be limited."
-      );
+      this.logger.warn('Gemini API key not found. AI features will be limited.');
       return;
     }
 
     try {
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: modelName });
-      this.logger.log("Gemini AI service initialized successfully");
+      this.logger.log('Gemini AI service initialized successfully');
     } catch (error) {
-      this.logger.error("Failed to initialize Gemini AI:", error);
+      this.logger.error('Failed to initialize Gemini AI:', error);
     }
   }
 
   async generateText(prompt: string): Promise<string> {
     if (!this.model) {
-      throw new Error("Gemini AI not properly initialized");
+      throw new Error('Gemini AI not properly initialized');
     }
 
     try {
@@ -45,19 +111,15 @@ export class GeminiService {
       const response = await result.response;
       return response.text();
     } catch (error) {
-      this.logger.error("Error generating text with Gemini:", error);
-      throw new Error("Failed to generate AI response");
+      this.logger.error('Error generating text with Gemini:', error);
+      throw new Error('Failed to generate AI response');
     }
   }
 
   async analyzeSupplyChainData(
-    data: any,
-    analysisType:
-      | "demand_forecast"
-      | "quality_analysis"
-      | "optimization"
-      | "risk_assessment"
-  ): Promise<any> {
+    data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData,
+    analysisType: 'demand_forecast' | 'quality_analysis' | 'optimization' | 'risk_assessment'
+  ): Promise<AIAnalysisResult> {
     const prompts = {
       demand_forecast: this.buildDemandForecastPrompt(data),
       quality_analysis: this.buildQualityAnalysisPrompt(data),
@@ -70,13 +132,20 @@ export class GeminiService {
 
     try {
       return JSON.parse(aiResponse);
-    } catch (error) {
-      this.logger.warn("AI response was not valid JSON, returning as text");
-      return { analysis: aiResponse, type: analysisType };
+    } catch (_error) {
+      this.logger.warn('AI response was not valid JSON, returning as text');
+      return {
+        analysis: aiResponse,
+        recommendations: [],
+        confidence: 0.5,
+        metadata: { analysisType, responseType: 'text' },
+      };
     }
   }
 
-  private buildDemandForecastPrompt(data: any): string {
+  private buildDemandForecastPrompt(
+    data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
+  ): string {
     return `
 You are an AI supply chain analyst. Analyze the following historical data and provide a demand forecast.
 
@@ -114,7 +183,9 @@ Focus on:
 `;
   }
 
-  private buildQualityAnalysisPrompt(data: any): string {
+  private buildQualityAnalysisPrompt(
+    data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
+  ): string {
     return `
 You are an AI quality control analyst. Analyze the following goods receipt and supplier data.
 
@@ -152,7 +223,9 @@ Analyze:
 `;
   }
 
-  private buildOptimizationPrompt(data: any): string {
+  private buildOptimizationPrompt(
+    data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
+  ): string {
     return `
 You are an AI procurement optimization specialist. Analyze the purchase requirements and provide optimization recommendations.
 
@@ -197,7 +270,9 @@ Consider:
 `;
   }
 
-  private buildRiskAssessmentPrompt(data: any): string {
+  private buildRiskAssessmentPrompt(
+    data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
+  ): string {
     return `
 You are an AI risk assessment specialist for supply chains. Analyze the following data for potential risks.
 
@@ -249,8 +324,8 @@ Assess:
 `;
   }
 
-  async getSupplierRecommendation(requirements: any): Promise<any> {
-    const prompt = `
+  async getSupplierRecommendation(requirements: SupplierRequirements): Promise<unknown> {
+    const _prompt = `
 Analyze the following purchase requirements and recommend the best supplier strategy:
 
 Requirements: ${JSON.stringify(requirements, null, 2)}
@@ -265,10 +340,13 @@ Consider factors like:
 Provide recommendations in JSON format with supplier rankings and reasoning.
 `;
 
-    return await this.analyzeSupplyChainData(requirements, "optimization");
+    return await this.analyzeSupplyChainData(
+      requirements as unknown as OptimizationData,
+      'optimization'
+    );
   }
 
-  async predictMaintenanceNeeds(equipmentData: any): Promise<any> {
+  async predictMaintenanceNeeds(equipmentData: EquipmentData): Promise<unknown> {
     const prompt = `
 Based on the following equipment and usage data, predict maintenance needs:
 
@@ -285,7 +363,7 @@ Provide JSON response with:
     try {
       return JSON.parse(response);
     } catch {
-      return { prediction: response, type: "maintenance_forecast" };
+      return { prediction: response, type: 'maintenance_forecast' };
     }
   }
 

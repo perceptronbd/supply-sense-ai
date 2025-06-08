@@ -1,17 +1,51 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  Tool,
-} from "@modelcontextprotocol/sdk/types.js";
+  type Tool,
+} from '@modelcontextprotocol/sdk/types.js';
+import { Injectable, Logger } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 
 export interface MCPServerConfig {
   name: string;
   version: string;
   tools: Tool[];
+}
+
+export interface DemandForecastArgs {
+  itemId: string;
+  branchId: string;
+  period: 'weekly' | 'monthly' | 'quarterly';
+  periods?: number;
+}
+
+export interface PurchaseOptimizationArgs {
+  itemIds: string[];
+  branchId: string;
+  budgetLimit?: number;
+}
+
+export interface QualityAnalysisArgs {
+  goodsReceiptId: string;
+  includeSupplierAnalysis?: boolean;
+}
+
+export interface StockoutPredictionArgs {
+  branchId: string;
+  daysAhead?: number;
+  itemIds?: string[];
+}
+
+export interface AutoApprovalArgs {
+  documentId: string;
+  documentType: 'PR' | 'PO';
+}
+
+export interface SmartPRGenerationArgs {
+  branchId: string;
+  urgency?: 'low' | 'medium' | 'high';
 }
 
 @Injectable()
@@ -26,8 +60,8 @@ export class McpConfigService {
   private async initializeServer() {
     this.server = new Server(
       {
-        name: "supply-chain-ai-mcp",
-        version: "1.0.0",
+        name: 'supply-chain-ai-mcp',
+        version: '1.0.0',
       },
       {
         capabilities: {
@@ -43,7 +77,7 @@ export class McpConfigService {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    this.logger.log("MCP Server initialized and connected");
+    this.logger.log('MCP Server initialized and connected');
   }
 
   private registerSupplyChainTools() {
@@ -52,112 +86,111 @@ export class McpConfigService {
       return {
         tools: [
           {
-            name: "forecast_demand",
-            description: "Forecast demand for items using AI analysis",
+            name: 'forecast_demand',
+            description: 'Forecast demand for items using AI analysis',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
-                itemId: { type: "string", description: "Item ID to forecast" },
-                branchId: { type: "string", description: "Branch ID" },
+                itemId: { type: 'string', description: 'Item ID to forecast' },
+                branchId: { type: 'string', description: 'Branch ID' },
                 period: {
-                  type: "string",
-                  enum: ["weekly", "monthly", "quarterly"],
-                  description: "Forecast period",
+                  type: 'string',
+                  enum: ['weekly', 'monthly', 'quarterly'],
+                  description: 'Forecast period',
                 },
-                periods: { type: "number", description: "Number of periods" },
+                periods: { type: 'number', description: 'Number of periods' },
               },
-              required: ["itemId", "branchId", "period"],
+              required: ['itemId', 'branchId', 'period'],
             },
           },
           {
-            name: "optimize_purchase",
-            description: "Optimize purchase orders using AI recommendations",
+            name: 'optimize_purchase',
+            description: 'Optimize purchase orders using AI recommendations',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 itemIds: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Array of item IDs",
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Array of item IDs',
                 },
-                branchId: { type: "string", description: "Branch ID" },
+                branchId: { type: 'string', description: 'Branch ID' },
                 budgetLimit: {
-                  type: "number",
-                  description: "Budget constraint",
+                  type: 'number',
+                  description: 'Budget constraint',
                 },
               },
-              required: ["itemIds", "branchId"],
+              required: ['itemIds', 'branchId'],
             },
           },
           {
-            name: "analyze_quality",
-            description: "Analyze quality issues and supplier performance",
+            name: 'analyze_quality',
+            description: 'Analyze quality issues and supplier performance',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 goodsReceiptId: {
-                  type: "string",
-                  description: "Goods Receipt ID",
+                  type: 'string',
+                  description: 'Goods Receipt ID',
                 },
                 includeSupplierAnalysis: {
-                  type: "boolean",
-                  description: "Include supplier analysis",
+                  type: 'boolean',
+                  description: 'Include supplier analysis',
                 },
               },
-              required: ["goodsReceiptId"],
+              required: ['goodsReceiptId'],
             },
           },
           {
-            name: "predict_stockout",
-            description: "Predict potential stockouts using AI",
+            name: 'predict_stockout',
+            description: 'Predict potential stockouts using AI',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
-                branchId: { type: "string", description: "Branch ID" },
+                branchId: { type: 'string', description: 'Branch ID' },
                 daysAhead: {
-                  type: "number",
-                  description: "Days to predict ahead",
+                  type: 'number',
+                  description: 'Days to predict ahead',
                 },
                 itemIds: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific items to analyze",
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Specific items to analyze',
                 },
               },
-              required: ["branchId"],
+              required: ['branchId'],
             },
           },
           {
-            name: "auto_approve_document",
-            description: "Automatically approve PR/PO using AI evaluation",
+            name: 'auto_approve_document',
+            description: 'Automatically approve PR/PO using AI evaluation',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
-                documentId: { type: "string", description: "Document ID" },
+                documentId: { type: 'string', description: 'Document ID' },
                 documentType: {
-                  type: "string",
-                  enum: ["PR", "PO"],
-                  description: "Document type",
+                  type: 'string',
+                  enum: ['PR', 'PO'],
+                  description: 'Document type',
                 },
               },
-              required: ["documentId", "documentType"],
+              required: ['documentId', 'documentType'],
             },
           },
           {
-            name: "generate_smart_pr",
-            description:
-              "Generate intelligent purchase requests based on AI analysis",
+            name: 'generate_smart_pr',
+            description: 'Generate intelligent purchase requests based on AI analysis',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
-                branchId: { type: "string", description: "Branch ID" },
+                branchId: { type: 'string', description: 'Branch ID' },
                 urgency: {
-                  type: "string",
-                  enum: ["low", "medium", "high"],
-                  description: "Urgency level",
+                  type: 'string',
+                  enum: ['low', 'medium', 'high'],
+                  description: 'Urgency level',
                 },
               },
-              required: ["branchId"],
+              required: ['branchId'],
             },
           },
         ],
@@ -170,18 +203,20 @@ export class McpConfigService {
 
       try {
         switch (name) {
-          case "forecast_demand":
-            return await this.handleDemandForecast(args);
-          case "optimize_purchase":
-            return await this.handlePurchaseOptimization(args);
-          case "analyze_quality":
-            return await this.handleQualityAnalysis(args);
-          case "predict_stockout":
-            return await this.handleStockoutPrediction(args);
-          case "auto_approve_document":
-            return await this.handleAutoApproval(args);
-          case "generate_smart_pr":
-            return await this.handleSmartPRGeneration(args);
+          case 'forecast_demand':
+            return await this.handleDemandForecast(args as unknown as DemandForecastArgs);
+          case 'optimize_purchase':
+            return await this.handlePurchaseOptimization(
+              args as unknown as PurchaseOptimizationArgs
+            );
+          case 'analyze_quality':
+            return await this.handleQualityAnalysis(args as unknown as QualityAnalysisArgs);
+          case 'predict_stockout':
+            return await this.handleStockoutPrediction(args as unknown as StockoutPredictionArgs);
+          case 'auto_approve_document':
+            return await this.handleAutoApproval(args as unknown as AutoApprovalArgs);
+          case 'generate_smart_pr':
+            return await this.handleSmartPRGeneration(args as unknown as SmartPRGenerationArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -190,7 +225,7 @@ export class McpConfigService {
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Error executing ${name}: ${error.message}`,
             },
           ],
@@ -199,67 +234,67 @@ export class McpConfigService {
     });
   }
 
-  private async handleDemandForecast(args: any) {
+  private async handleDemandForecast(args: DemandForecastArgs) {
     // This will be implemented when we create the actual service methods
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Demand forecast for item ${args.itemId} in branch ${args.branchId} - MCP tool called successfully`,
         },
       ],
     };
   }
 
-  private async handlePurchaseOptimization(args: any) {
+  private async handlePurchaseOptimization(args: PurchaseOptimizationArgs) {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Purchase optimization for ${args.itemIds.length} items in branch ${args.branchId} - MCP tool called successfully`,
         },
       ],
     };
   }
 
-  private async handleQualityAnalysis(args: any) {
+  private async handleQualityAnalysis(args: QualityAnalysisArgs) {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Quality analysis for goods receipt ${args.goodsReceiptId} - MCP tool called successfully`,
         },
       ],
     };
   }
 
-  private async handleStockoutPrediction(args: any) {
+  private async handleStockoutPrediction(args: StockoutPredictionArgs) {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Stockout prediction for branch ${args.branchId} - MCP tool called successfully`,
         },
       ],
     };
   }
 
-  private async handleAutoApproval(args: any) {
+  private async handleAutoApproval(args: AutoApprovalArgs) {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Auto-approval evaluation for ${args.documentType} ${args.documentId} - MCP tool called successfully`,
         },
       ],
     };
   }
 
-  private async handleSmartPRGeneration(args: any) {
+  private async handleSmartPRGeneration(args: SmartPRGenerationArgs) {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `Smart PR generation for branch ${args.branchId} - MCP tool called successfully`,
         },
       ],

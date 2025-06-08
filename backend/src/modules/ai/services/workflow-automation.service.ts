@@ -1,6 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "../../../app/prisma.service";
-import { GeminiService } from "./gemini.service";
+import { Injectable, Logger } from '@nestjs/common';
+import type { PrismaService } from '../../../app/prisma.service';
+import type {
+  AutoApprovalArgs,
+  PurchaseRequestData,
+  WorkflowData,
+} from '../interfaces/ai-service.interface';
+import type { GeminiService } from './gemini.service';
 
 interface AutoApprovalDecision {
   shouldAutoApprove: boolean;
@@ -15,14 +20,14 @@ interface WorkflowOptimization {
   bottlenecks: string[];
   optimizations: string[];
   estimatedTimeSaving: number;
-  implementationComplexity: "low" | "medium" | "high";
+  implementationComplexity: 'low' | 'medium' | 'high';
 }
 
 interface SmartRouting {
-  documentType: "PR" | "PO" | "GR";
+  documentType: 'PR' | 'PO' | 'GR';
   documentId: string;
   recommendedApprovers: string[];
-  priorityLevel: "low" | "medium" | "high";
+  priorityLevel: 'low' | 'medium' | 'high';
   estimatedApprovalTime: number;
   escalationRules: string[];
 }
@@ -52,29 +57,24 @@ export class WorkflowAutomationService {
       });
 
       if (!purchaseRequest) {
-        throw new Error("Purchase request not found");
+        throw new Error('Purchase request not found');
       }
 
       return this.analyzePRForAutoApproval(purchaseRequest);
     } catch (error) {
-      this.logger.error("Error evaluating PR for auto-approval:", error);
-      throw new Error("Failed to evaluate PR for auto-approval");
+      this.logger.error('Error evaluating PR for auto-approval:', error);
+      throw new Error('Failed to evaluate PR for auto-approval');
     }
   }
 
-  private async analyzePRForAutoApproval(
-    pr: any
-  ): Promise<AutoApprovalDecision> {
+  private async analyzePRForAutoApproval(pr: unknown): Promise<AutoApprovalDecision> {
+    const typedPR = pr as PurchaseRequestData;
     // Get historical data for analysis
-    const historicalPRs = await this.getHistoricalPRData(
-      pr.requestedById,
-      pr.branchId
-    );
-    const budgetData = await this.getBudgetData(pr.branchId);
+    const historicalPRs = await this.getHistoricalPRData(typedPR.requestedById, typedPR.branchId);
+    const budgetData = await this.getBudgetData(typedPR.branchId);
 
-    const totalValue = pr.items.reduce(
-      (sum, item) =>
-        sum + Number(item.estimatedUnitPrice) * Number(item.requestedQty),
+    const totalValue = typedPR.items.reduce(
+      (sum, item) => sum + Number(item.estimatedPrice) * Number(item.requestedQty),
       0
     );
 
@@ -83,18 +83,18 @@ export class WorkflowAutomationService {
       
       PR Details:
       - Total Value: $${totalValue}
-      - Items: ${pr.items.length}
-      - Requested by: ${pr.requestedBy.firstName} ${pr.requestedBy.lastName}
-      - Department: ${pr.department}
-      - Justification: ${pr.justification}
-      - Priority: ${pr.priority}
+      - Items: ${typedPR.items.length}
+      - Requested by: ${typedPR.requestedById}
+      - Branch: ${typedPR.branchId}
+      - Title: ${typedPR.title}
+      - Status: ${typedPR.status}
       
       Items:
       ${JSON.stringify(
-        pr.items.map((item) => ({
+        typedPR.items.map((item) => ({
           name: item.item.name,
           quantity: item.requestedQty,
-          estimatedPrice: item.estimatedUnitPrice,
+          estimatedPrice: item.estimatedPrice,
         }))
       )}
       
@@ -131,23 +131,21 @@ export class WorkflowAutomationService {
       return {
         shouldAutoApprove: decision.shouldAutoApprove || false,
         confidence: decision.confidence || 50,
-        reasoning: decision.reasoning || ["AI analysis completed"],
-        requiredApprovers: decision.requiredApprovers || ["Manager"],
+        reasoning: decision.reasoning || ['AI analysis completed'],
+        requiredApprovers: decision.requiredApprovers || ['Manager'],
         estimatedProcessingTime: decision.estimatedProcessingTime || 24,
       };
     } catch (error) {
-      this.logger.error("Error in AI auto-approval analysis:", error);
+      this.logger.error('Error in AI auto-approval analysis:', error);
 
       // Fallback logic
-      const shouldAutoApprove =
-        totalValue < 500 && historicalPRs.rejectionRate < 10;
+      const shouldAutoApprove = totalValue < 500 && historicalPRs.rejectionRate < 10;
 
       return {
         shouldAutoApprove,
         confidence: 60,
-        reasoning: ["Fallback evaluation based on value and history"],
-        requiredApprovers:
-          totalValue > 1000 ? ["Manager", "Senior Manager"] : ["Manager"],
+        reasoning: ['Fallback evaluation based on value and history'],
+        requiredApprovers: totalValue > 1000 ? ['Manager', 'Senior Manager'] : ['Manager'],
         estimatedProcessingTime: 24,
       };
     }
@@ -166,8 +164,8 @@ export class WorkflowAutomationService {
       },
     });
 
-    const approvedPRs = historicalPRs.filter((pr) => pr.status === "APPROVED");
-    const rejectedPRs = historicalPRs.filter((pr) => pr.status === "REJECTED");
+    const approvedPRs = historicalPRs.filter((pr) => pr.status === 'APPROVED');
+    const rejectedPRs = historicalPRs.filter((pr) => pr.status === 'REJECTED');
 
     const avgApprovalTime =
       approvedPRs.length > 0
@@ -175,8 +173,7 @@ export class WorkflowAutomationService {
             if (pr.approvedAt && pr.createdAt) {
               return (
                 sum +
-                Math.abs(pr.approvedAt.getTime() - pr.createdAt.getTime()) /
-                  (1000 * 60 * 60 * 24)
+                Math.abs(pr.approvedAt.getTime() - pr.createdAt.getTime()) / (1000 * 60 * 60 * 24)
               );
             }
             return sum;
@@ -188,14 +185,12 @@ export class WorkflowAutomationService {
       approvedPRs: approvedPRs.length,
       rejectedPRs: rejectedPRs.length,
       rejectionRate:
-        historicalPRs.length > 0
-          ? (rejectedPRs.length / historicalPRs.length) * 100
-          : 0,
+        historicalPRs.length > 0 ? (rejectedPRs.length / historicalPRs.length) * 100 : 0,
       avgApprovalTime,
     };
   }
 
-  private async getBudgetData(branchId: string) {
+  private async getBudgetData(_branchId: string) {
     // This would integrate with your budget system
     // For now, returning mock data
     return {
@@ -206,15 +201,13 @@ export class WorkflowAutomationService {
     };
   }
 
-  async optimizeWorkflow(
-    workflowType: "PR" | "PO" | "GR"
-  ): Promise<WorkflowOptimization> {
+  async optimizeWorkflow(workflowType: 'PR' | 'PO' | 'GR'): Promise<WorkflowOptimization> {
     try {
       const workflowData = await this.getWorkflowAnalysisData(workflowType);
       return this.analyzeWorkflowWithAI(workflowType, workflowData);
     } catch (error) {
-      this.logger.error("Error optimizing workflow:", error);
-      throw new Error("Failed to optimize workflow");
+      this.logger.error('Error optimizing workflow:', error);
+      throw new Error('Failed to optimize workflow');
     }
   }
 
@@ -222,10 +215,10 @@ export class WorkflowAutomationService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    let data;
+    let data: unknown[];
 
     switch (workflowType) {
-      case "PR":
+      case 'PR':
         data = await this.prisma.purchaseRequest.findMany({
           where: {
             createdAt: { gte: thirtyDaysAgo },
@@ -235,7 +228,7 @@ export class WorkflowAutomationService {
           },
         });
         break;
-      case "PO":
+      case 'PO':
         data = await this.prisma.purchaseOrder.findMany({
           where: {
             createdAt: { gte: thirtyDaysAgo },
@@ -246,7 +239,7 @@ export class WorkflowAutomationService {
           },
         });
         break;
-      case "GR":
+      case 'GR':
         data = await this.prisma.goodsReceipt.findMany({
           where: {
             createdAt: { gte: thirtyDaysAgo },
@@ -263,33 +256,38 @@ export class WorkflowAutomationService {
     return this.analyzeWorkflowTimings(data, workflowType);
   }
 
-  private analyzeWorkflowTimings(data: any[], workflowType: string) {
+  private analyzeWorkflowTimings(data: unknown[], workflowType: string) {
     const timings = data
       .map((item) => {
-        const created = new Date(item.createdAt);
+        const typedItem = item as WorkflowData & {
+          approvedAt?: Date;
+          rejectedAt?: Date;
+          sentAt?: Date;
+          postedAt?: Date;
+        };
+        const created = new Date(typedItem.createdAt);
         let processed = null;
 
         switch (workflowType) {
-          case "PR":
-            processed = item.approvedAt || item.rejectedAt;
+          case 'PR':
+            processed = typedItem.approvedAt || typedItem.rejectedAt;
             break;
-          case "PO":
-            processed = item.sentAt;
+          case 'PO':
+            processed = typedItem.sentAt;
             break;
-          case "GR":
-            processed = item.postedAt;
+          case 'GR':
+            processed = typedItem.postedAt;
             break;
         }
 
         if (processed) {
           const processingTime =
-            Math.abs(new Date(processed).getTime() - created.getTime()) /
-            (1000 * 60 * 60);
+            Math.abs(new Date(processed).getTime() - created.getTime()) / (1000 * 60 * 60);
           return {
-            id: item.id,
+            id: typedItem.id,
             processingTimeHours: processingTime,
-            status: item.status,
-            itemCount: item.items?.length || 0,
+            status: typedItem.status,
+            itemCount: typedItem.items?.length || 0,
           };
         }
 
@@ -299,8 +297,7 @@ export class WorkflowAutomationService {
 
     const avgProcessingTime =
       timings.length > 0
-        ? timings.reduce((sum, t) => sum + t.processingTimeHours, 0) /
-          timings.length
+        ? timings.reduce((sum, t) => sum + t.processingTimeHours, 0) / timings.length
         : 0;
 
     return {
@@ -313,20 +310,25 @@ export class WorkflowAutomationService {
 
   private async analyzeWorkflowWithAI(
     workflowType: string,
-    workflowData: any
+    workflowData: unknown
   ): Promise<WorkflowOptimization> {
+    const typedData = workflowData as {
+      totalDocuments: number;
+      processedDocuments: number;
+      avgProcessingTimeHours: number;
+      timings: unknown[];
+    };
+
     const prompt = `
       Analyze this ${workflowType} workflow and recommend optimizations:
       
       Current Performance:
-      - Total documents (30 days): ${workflowData.totalDocuments}
-      - Processed documents: ${workflowData.processedDocuments}
-      - Average processing time: ${workflowData.avgProcessingTimeHours.toFixed(
-        2
-      )} hours
+      - Total documents (30 days): ${typedData.totalDocuments}
+      - Processed documents: ${typedData.processedDocuments}
+      - Average processing time: ${typedData.avgProcessingTimeHours.toFixed(2)} hours
       
       Processing Details:
-      ${JSON.stringify(workflowData.timings.slice(0, 10))}
+      ${JSON.stringify(typedData.timings.slice(0, 10))}
       
       Identify:
       1. Current workflow bottlenecks
@@ -349,52 +351,45 @@ export class WorkflowAutomationService {
 
       return {
         currentWorkflow: `${workflowType} Processing`,
-        bottlenecks: analysis.bottlenecks || [
-          "No specific bottlenecks identified",
-        ],
-        optimizations: analysis.optimizations || [
-          "No specific optimizations identified",
-        ],
+        bottlenecks: analysis.bottlenecks || ['No specific bottlenecks identified'],
+        optimizations: analysis.optimizations || ['No specific optimizations identified'],
         estimatedTimeSaving: analysis.estimatedTimeSaving || 0,
-        implementationComplexity: analysis.implementationComplexity || "medium",
+        implementationComplexity: analysis.implementationComplexity || 'medium',
       };
     } catch (error) {
-      this.logger.error("Error in AI workflow analysis:", error);
+      this.logger.error('Error in AI workflow analysis:', error);
 
       return {
         currentWorkflow: `${workflowType} Processing`,
-        bottlenecks: ["AI analysis error - manual review needed"],
-        optimizations: [
-          "Implement automated approval thresholds",
-          "Add parallel processing",
-        ],
+        bottlenecks: ['AI analysis error - manual review needed'],
+        optimizations: ['Implement automated approval thresholds', 'Add parallel processing'],
         estimatedTimeSaving: 15,
-        implementationComplexity: "medium",
+        implementationComplexity: 'medium',
       };
     }
   }
 
   async routeDocumentIntelligently(
-    documentType: "PR" | "PO" | "GR",
+    documentType: 'PR' | 'PO' | 'GR',
     documentId: string
   ): Promise<SmartRouting> {
     try {
-      let document;
+      let document: unknown;
 
       switch (documentType) {
-        case "PR":
+        case 'PR':
           document = await this.prisma.purchaseRequest.findUnique({
             where: { id: documentId },
             include: { items: true, createdBy: true },
           });
           break;
-        case "PO":
+        case 'PO':
           document = await this.prisma.purchaseOrder.findUnique({
             where: { id: documentId },
             include: { items: true, createdBy: true },
           });
           break;
-        case "GR":
+        case 'GR':
           document = await this.prisma.goodsReceipt.findUnique({
             where: { id: documentId },
             include: { items: true, receivedBy: true },
@@ -408,21 +403,25 @@ export class WorkflowAutomationService {
 
       return this.generateSmartRouting(documentType, document);
     } catch (error) {
-      this.logger.error("Error in intelligent document routing:", error);
-      throw new Error("Failed to route document intelligently");
+      this.logger.error('Error in intelligent document routing:', error);
+      throw new Error('Failed to route document intelligently');
     }
   }
 
   private async generateSmartRouting(
     documentType: string,
-    document: any
+    document: unknown
   ): Promise<SmartRouting> {
+    const typedDocument = document as WorkflowData & {
+      requestedBy?: { firstName: string };
+      createdBy?: { firstName: string };
+      priority?: string;
+      department?: string;
+    };
+
     const totalValue =
-      document.items?.reduce(
-        (sum, item) =>
-          sum +
-          Number(item.estimatedUnitPrice || item.unitPrice || 0) *
-            Number(item.requestedQty || item.quantity || 0),
+      typedDocument.items?.reduce(
+        (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.quantity || 0),
         0
       ) || 0;
 
@@ -430,14 +429,12 @@ export class WorkflowAutomationService {
       Determine intelligent routing for this ${documentType}:
       
       Document Value: $${totalValue}
-      Items Count: ${document.items?.length || 0}
+      Items Count: ${typedDocument.items?.length || 0}
       Creator: ${
-        document.requestedBy?.firstName ||
-        document.createdBy?.firstName ||
-        "Unknown"
+        typedDocument.requestedBy?.firstName || typedDocument.createdBy?.firstName || 'Unknown'
       }
-      Priority: ${document.priority || "MEDIUM"}
-      Department: ${document.department || "Unknown"}
+      Priority: ${typedDocument.priority || 'MEDIUM'}
+      Department: ${typedDocument.department || 'Unknown'}
       
       Business Rules:
       - <$500: Auto-approve or supervisor
@@ -465,51 +462,51 @@ export class WorkflowAutomationService {
       const routing = JSON.parse(aiResponse);
 
       return {
-        documentType: documentType as "PR" | "PO" | "GR",
-        documentId: document.id,
-        recommendedApprovers: routing.recommendedApprovers || ["Manager"],
-        priorityLevel: routing.priorityLevel || "medium",
+        documentType: documentType as 'PR' | 'PO' | 'GR',
+        documentId: typedDocument.id,
+        recommendedApprovers: routing.recommendedApprovers || ['Manager'],
+        priorityLevel: routing.priorityLevel || 'medium',
         estimatedApprovalTime: routing.estimatedApprovalTime || 24,
-        escalationRules: routing.escalationRules || ["Escalate after 48 hours"],
+        escalationRules: routing.escalationRules || ['Escalate after 48 hours'],
       };
     } catch (error) {
-      this.logger.error("Error in AI smart routing:", error);
+      this.logger.error('Error in AI smart routing:', error);
 
       // Fallback routing logic
-      let approvers = ["Manager"];
-      let priority: "low" | "medium" | "high" = "medium";
+      let approvers = ['Manager'];
+      let priority: 'low' | 'medium' | 'high' = 'medium';
 
       if (totalValue > 10000) {
-        approvers = ["Senior Manager", "Finance Director", "Executive"];
-        priority = "high";
+        approvers = ['Senior Manager', 'Finance Director', 'Executive'];
+        priority = 'high';
       } else if (totalValue > 2000) {
-        approvers = ["Senior Manager", "Finance Manager"];
-        priority = "medium";
+        approvers = ['Senior Manager', 'Finance Manager'];
+        priority = 'medium';
       }
 
       return {
-        documentType: documentType as "PR" | "PO" | "GR",
+        documentType: documentType as 'PR' | 'PO' | 'GR',
         documentId: document.id,
         recommendedApprovers: approvers,
         priorityLevel: priority,
         estimatedApprovalTime: 24,
-        escalationRules: ["Escalate after 48 hours if no response"],
+        escalationRules: ['Escalate after 48 hours if no response'],
       };
     }
   }
 
   async evaluateForAutoApproval(
     documentId: string,
-    documentType: string
-  ): Promise<any> {
+    _documentType: string
+  ): Promise<AutoApprovalDecision> {
     return this.evaluatePRForAutoApproval(documentId);
   }
 
   async generateIntelligentPR(
     branchId: string,
-    urgency?: string,
-    category?: string
-  ): Promise<any[]> {
+    _urgency?: string,
+    _category?: string
+  ): Promise<unknown[]> {
     try {
       // Get low stock items
       const lowStockItems = await this.prisma.stock.findMany({
@@ -549,7 +546,7 @@ export class WorkflowAutomationService {
           itemName: stock.item.name,
           currentStock: Number(stock.quantity),
           suggestedQuantity: Math.max(suggestedQty, 10),
-          urgency: Number(stock.quantity) <= 5 ? "high" : "medium",
+          urgency: Number(stock.quantity) <= 5 ? 'high' : 'medium',
           reasoning: `Current stock: ${
             stock.quantity
           }, Average monthly usage: ${avgMonthlyConsumption.toFixed(1)}`,
@@ -561,8 +558,8 @@ export class WorkflowAutomationService {
         return urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
       });
     } catch (error) {
-      this.logger.error("Error generating intelligent PR suggestions:", error);
-      throw new Error("Failed to generate intelligent PR suggestions");
+      this.logger.error('Error generating intelligent PR suggestions:', error);
+      throw new Error('Failed to generate intelligent PR suggestions');
     }
   }
 }

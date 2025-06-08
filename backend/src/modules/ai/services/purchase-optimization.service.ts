@@ -1,7 +1,17 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "../../../app/prisma.service";
-import { GeminiService } from "./gemini.service";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Injectable, Logger } from '@nestjs/common';
+import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../../app/prisma.service';
+import type {
+  OrderOptimization,
+  OrderOptimizationResult,
+  POItem,
+  PRItemForOptimization,
+  PriceHistoryItem,
+  QualityMetrics,
+  SupplierPerformanceData,
+  SupplierWithOrders,
+} from '../interfaces/ai-service.interface';
+import type { GeminiService } from './gemini.service';
 
 interface SupplierRecommendation {
   supplierId: string;
@@ -13,16 +23,7 @@ interface SupplierRecommendation {
   recommendations: string[];
 }
 
-export { SupplierRecommendation };
-
-interface OrderOptimization {
-  itemId: string;
-  itemName: string;
-  currentOrderQty: number;
-  optimizedOrderQty: number;
-  potentialSavings: number;
-  reasoning: string[];
-}
+export type { SupplierRecommendation };
 
 @Injectable()
 export class PurchaseOptimizationService {
@@ -33,9 +34,7 @@ export class PurchaseOptimizationService {
     private geminiService: GeminiService
   ) {}
 
-  async recommendOptimalSupplier(
-    itemIds: string[]
-  ): Promise<SupplierRecommendation[]> {
+  async recommendOptimalSupplier(itemIds: string[]): Promise<SupplierRecommendation[]> {
     try {
       const supplierData = await this.getSupplierPerformanceData(itemIds);
       const recommendations: SupplierRecommendation[] = [];
@@ -48,8 +47,8 @@ export class PurchaseOptimizationService {
       // Sort by score (highest first)
       return recommendations.sort((a, b) => b.score - a.score);
     } catch (error) {
-      this.logger.error("Error recommending optimal supplier:", error);
-      throw new Error("Failed to recommend optimal supplier");
+      this.logger.error('Error recommending optimal supplier:', error);
+      throw new Error('Failed to recommend optimal supplier');
     }
   }
 
@@ -59,7 +58,7 @@ export class PurchaseOptimizationService {
       include: {
         purchaseOrders: {
           where: {
-            status: "CONFIRMED",
+            status: 'CONFIRMED',
             items: {
               some: {
                 itemId: { in: itemIds },
@@ -77,7 +76,7 @@ export class PurchaseOptimizationService {
             },
             goodsReceipts: {
               where: {
-                status: "POSTED",
+                status: 'POSTED',
               },
               include: {
                 items: {
@@ -113,59 +112,73 @@ export class PurchaseOptimizationService {
     });
   }
 
-  private calculateAverageDeliveryTime(orders: any[]): number {
+  private calculateAverageDeliveryTime(orders: unknown[]): number {
     const deliveryTimes = orders
-      .filter((order) => order.goodsReceipts.length > 0)
+      .filter((order) => {
+        const typedOrder = order as { goodsReceipts: unknown[] };
+        return typedOrder.goodsReceipts.length > 0;
+      })
       .map((order) => {
-        const orderDate = new Date(order.orderDate);
-        const receiptDate = new Date(order.goodsReceipts[0].receiptDate);
-        return (
-          Math.abs(receiptDate.getTime() - orderDate.getTime()) /
-          (1000 * 60 * 60 * 24)
-        );
+        const typedOrder = order as {
+          orderDate: Date;
+          goodsReceipts: Array<{ receiptDate: Date }>;
+        };
+        const orderDate = new Date(typedOrder.orderDate);
+        const receiptDate = new Date(typedOrder.goodsReceipts[0].receiptDate);
+        return Math.abs(receiptDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
       });
 
     return deliveryTimes.length > 0
-      ? deliveryTimes.reduce((sum, time) => sum + time, 0) /
-          deliveryTimes.length
+      ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length
       : 0;
   }
 
-  private extractPriceHistory(orders: any[]): any[] {
-    return orders.flatMap((order) =>
-      order.items.map((item) => ({
+  private extractPriceHistory(orders: unknown[]): PriceHistoryItem[] {
+    return orders.flatMap((order) => {
+      const typedOrder = order as {
+        orderDate: Date;
+        items: Array<{
+          itemId: string;
+          item: { name: string };
+          unitPrice: number;
+          quantity: number;
+        }>;
+      };
+      return typedOrder.items.map((item) => ({
         itemId: item.itemId,
         itemName: item.item.name,
         unitPrice: Number(item.unitPrice),
-        orderDate: order.orderDate,
+        orderDate: typedOrder.orderDate,
         quantity: Number(item.quantity),
-      }))
-    );
+      }));
+    });
   }
 
-  private calculateQualityMetrics(orders: any[]): any {
-    const grItems = orders.flatMap((order) =>
-      order.goodsReceipts.flatMap((gr) => gr.items)
-    );
+  private calculateQualityMetrics(orders: unknown[]): QualityMetrics {
+    const typedOrders = orders as Array<{
+      goodsReceipts: Array<{
+        items: Array<{
+          qualityNotes?: string;
+        }>;
+      }>;
+    }>;
+    const grItems = typedOrders.flatMap((order) => order.goodsReceipts.flatMap((gr) => gr.items));
 
     const totalItems = grItems.length;
-    const itemsWithIssues = grItems.filter(
-      (item) =>
-        item.qualityNotes && item.qualityNotes.toLowerCase().includes("issue")
+    const itemsWithIssues = grItems.filter((item) =>
+      item.qualityNotes?.toLowerCase().includes('issue')
     ).length;
 
     return {
-      totalItemsReceived: totalItems,
-      qualityIssues: itemsWithIssues,
-      qualityScore:
-        totalItems > 0
-          ? ((totalItems - itemsWithIssues) / totalItems) * 100
-          : 100,
+      averageQuality: totalItems > 0 ? ((totalItems - itemsWithIssues) / totalItems) * 100 : 100,
+      defectRate: totalItems > 0 ? (itemsWithIssues / totalItems) * 100 : 0,
+      onTimeDeliveryRate: 95, // Placeholder - would need delivery data
+      supplierRating: totalItems > 0 ? ((totalItems - itemsWithIssues) / totalItems) * 5 : 5,
     };
   }
 
   private async analyzeSupplierWithAI(
-    supplierData: any
+    supplierData: SupplierPerformanceData
   ): Promise<SupplierRecommendation> {
     const prompt = `
       Analyze this supplier's performance data and provide a comprehensive recommendation:
@@ -203,18 +216,15 @@ export class PurchaseOptimizationService {
         score: analysis.score || 50,
         averagePrice: analysis.averagePrice || 0,
         deliveryPerformance: analysis.deliveryPerformance || 50,
-        qualityRating:
-          analysis.qualityRating || supplierData.qualityMetrics.qualityScore,
-        recommendations: analysis.recommendations || [
-          "No specific recommendations available",
-        ],
+        qualityRating: analysis.qualityRating || supplierData.qualityMetrics.supplierRating,
+        recommendations: analysis.recommendations || ['No specific recommendations available'],
       };
     } catch (error) {
-      this.logger.error("Error in AI supplier analysis:", error);
+      this.logger.error('Error in AI supplier analysis:', error);
 
       // Fallback calculation
       const deliveryScore = Math.max(0, 100 - supplierData.avgDeliveryTime * 2);
-      const qualityScore = supplierData.qualityMetrics.qualityScore;
+      const qualityScore = supplierData.qualityMetrics.supplierRating;
       const overallScore = (deliveryScore + qualityScore) / 2;
 
       return {
@@ -224,21 +234,18 @@ export class PurchaseOptimizationService {
         averagePrice: this.calculateAveragePrice(supplierData.priceHistory),
         deliveryPerformance: deliveryScore,
         qualityRating: qualityScore,
-        recommendations: ["Fallback analysis - recommend reviewing manually"],
+        recommendations: ['Fallback analysis - recommend reviewing manually'],
       };
     }
   }
 
-  private calculateAveragePrice(priceHistory: any[]): number {
+  private calculateAveragePrice(priceHistory: PriceHistoryItem[]): number {
     if (priceHistory.length === 0) return 0;
-    const totalPrice = priceHistory.reduce(
-      (sum, item) => sum + item.unitPrice,
-      0
-    );
+    const totalPrice = priceHistory.reduce((sum, item) => sum + item.unitPrice, 0);
     return totalPrice / priceHistory.length;
   }
 
-  async optimizeOrderQuantities(poItems: any[]): Promise<OrderOptimization[]> {
+  async optimizeOrderQuantities(poItems: POItem[]): Promise<OrderOptimization[]> {
     try {
       const optimizations: OrderOptimization[] = [];
 
@@ -249,23 +256,26 @@ export class PurchaseOptimizationService {
 
       return optimizations;
     } catch (error) {
-      this.logger.error("Error optimizing order quantities:", error);
-      throw new Error("Failed to optimize order quantities");
+      this.logger.error('Error optimizing order quantities:', error);
+      throw new Error('Failed to optimize order quantities');
     }
   }
 
-  private async optimizeItemOrderQuantity(
-    item: any
-  ): Promise<OrderOptimization> {
+  private async optimizeItemOrderQuantity(item: unknown): Promise<OrderOptimization> {
+    const typedItem = item as POItem & {
+      item: { name: string };
+      estimatedPrice?: number;
+    };
+
     // Get historical consumption and pricing data
-    const historicalData = await this.getItemHistoricalData(item.itemId);
+    const historicalData = await this.getItemHistoricalData(typedItem.itemId);
 
     const prompt = `
       Optimize the order quantity for this item using Economic Order Quantity (EOQ) principles:
       
-      Item: ${item.item?.name || "Unknown"}
-      Current Order Quantity: ${item.quantity}
-      Unit Price: ${item.unitPrice}
+      Item: ${typedItem.item?.name || 'Unknown'}
+      Current Order Quantity: ${typedItem.quantity}
+      Unit Price: ${typedItem.unitPrice || typedItem.estimatedPrice || 0}
       Historical Data: ${JSON.stringify(historicalData)}
       
       Consider:
@@ -291,31 +301,27 @@ export class PurchaseOptimizationService {
       const optimization = JSON.parse(aiResponse);
 
       return {
-        itemId: item.itemId,
-        itemName: item.item?.name || "Unknown",
-        currentOrderQty: Number(item.quantity),
-        optimizedOrderQty:
-          optimization.optimizedOrderQty || Number(item.quantity),
+        itemId: typedItem.itemId,
+        itemName: typedItem.item?.name || 'Unknown',
+        currentOrderQty: Number(typedItem.quantity),
+        optimizedOrderQty: optimization.optimizedOrderQty || Number(typedItem.quantity),
         potentialSavings: optimization.potentialSavings || 0,
-        reasoning: optimization.reasoning || ["AI optimization completed"],
+        reasoning: optimization.reasoning || ['AI optimization completed'],
       };
     } catch (error) {
-      this.logger.error("Error in AI quantity optimization:", error);
+      this.logger.error('Error in AI quantity optimization:', error);
 
       // Simple EOQ fallback
-      const eoq = this.calculateSimpleEOQ(
-        historicalData.annualDemand,
-        50,
-        Number(item.unitPrice) * 0.2
-      );
+      const unitPrice = Number(typedItem.unitPrice || typedItem.estimatedPrice || 0);
+      const eoq = this.calculateSimpleEOQ(historicalData.annualDemand, 50, unitPrice * 0.2);
 
       return {
-        itemId: item.itemId,
-        itemName: item.item?.name || "Unknown",
-        currentOrderQty: Number(item.quantity),
+        itemId: typedItem.itemId,
+        itemName: typedItem.item?.name || 'Unknown',
+        currentOrderQty: Number(typedItem.quantity),
         optimizedOrderQty: eoq,
         potentialSavings: 0,
-        reasoning: ["Fallback EOQ calculation used"],
+        reasoning: ['Fallback EOQ calculation used'],
       };
     }
   }
@@ -328,7 +334,7 @@ export class PurchaseOptimizationService {
       where: {
         itemId,
         goodsReceipt: {
-          status: "POSTED",
+          status: 'POSTED',
           postedAt: {
             gte: sixMonthsAgo,
           },
@@ -339,18 +345,14 @@ export class PurchaseOptimizationService {
       },
     });
 
-    const totalConsumption = grItems.reduce(
-      (sum, item) => sum + Number(item.receivedQty),
-      0
-    );
+    const totalConsumption = grItems.reduce((sum, item) => sum + Number(item.receivedQty), 0);
     const annualDemand = totalConsumption * 2; // Extrapolate to annual
 
     return {
       annualDemand,
       totalConsumption,
       orderFrequency: grItems.length,
-      averageOrderSize:
-        grItems.length > 0 ? totalConsumption / grItems.length : 0,
+      averageOrderSize: grItems.length > 0 ? totalConsumption / grItems.length : 0,
     };
   }
 
@@ -362,35 +364,31 @@ export class PurchaseOptimizationService {
     if (annualDemand <= 0 || holdingCost <= 0) return annualDemand;
     return Math.sqrt((2 * annualDemand * orderingCost) / holdingCost);
   }
-
-  async getSupplierRecommendations(itemIds: string[]): Promise<any[]> {
+  async getSupplierRecommendations(itemIds: string[]): Promise<SupplierRecommendation[]> {
     return this.recommendOptimalSupplier(itemIds);
   }
-
-  async adjustOrderQuantities(poItems: any[]): Promise<any[]> {
-    const optimizedItems = [];
+  async adjustOrderQuantities(poItems: POItem[]): Promise<OrderOptimization[]> {
+    const optimizedItems: OrderOptimization[] = [];
     for (const item of poItems) {
       try {
-        const demandData = await this.calculateOptimalQuantity(
-          item.itemId,
-          item.orderedQty
-        );
+        const demandData = await this.calculateOptimalQuantity(item.itemId, item.quantity);
         optimizedItems.push({
-          ...item,
-          optimizedQty: demandData.optimalQuantity,
-          estimatedSavings: demandData.savings,
-          reasoning: demandData.reasoning,
+          itemId: item.itemId,
+          itemName: item.item?.name || 'Unknown Item',
+          currentOrderQty: item.quantity,
+          optimizedOrderQty: demandData.optimalQuantity,
+          potentialSavings: demandData.savings,
+          reasoning: [demandData.reasoning],
         });
       } catch (error) {
-        this.logger.error(
-          `Failed to optimize quantity for item ${item.itemId}:`,
-          error
-        );
+        this.logger.error(`Failed to optimize quantity for item ${item.itemId}:`, error);
         optimizedItems.push({
-          ...item,
-          optimizedQty: item.orderedQty,
-          estimatedSavings: 0,
-          reasoning: "Optimization failed",
+          itemId: item.itemId,
+          itemName: item.item?.name || 'Unknown Item',
+          currentOrderQty: item.quantity,
+          optimizedOrderQty: item.quantity,
+          potentialSavings: 0,
+          reasoning: ['Optimization failed'],
         });
       }
     }
@@ -415,7 +413,7 @@ export class PurchaseOptimizationService {
         where: {
           itemId,
           goodsReceipt: {
-            status: "POSTED",
+            status: 'POSTED',
             postedAt: {
               gte: sixMonthsAgo,
             },
@@ -426,10 +424,7 @@ export class PurchaseOptimizationService {
         },
       });
 
-      const totalConsumption = grItems.reduce(
-        (sum, item) => sum + Number(item.receivedQty),
-        0
-      );
+      const totalConsumption = grItems.reduce((sum, item) => sum + Number(item.receivedQty), 0);
 
       // Calculate average monthly consumption
       const avgMonthlyConsumption = totalConsumption / 6;
@@ -442,8 +437,8 @@ export class PurchaseOptimizationService {
 
       const reasoning =
         currentQty > optimalQuantity
-          ? "Reduce quantity to avoid overstocking"
-          : "Increase quantity for better price breaks";
+          ? 'Reduce quantity to avoid overstocking'
+          : 'Increase quantity for better price breaks';
 
       return {
         optimalQuantity,
@@ -451,14 +446,11 @@ export class PurchaseOptimizationService {
         reasoning,
       };
     } catch (error) {
-      this.logger.error(
-        `Error calculating optimal quantity for item ${itemId}:`,
-        error
-      );
+      this.logger.error(`Error calculating optimal quantity for item ${itemId}:`, error);
       return {
         optimalQuantity: currentQty,
         savings: 0,
-        reasoning: "Unable to optimize due to insufficient data",
+        reasoning: 'Unable to optimize due to insufficient data',
       };
     }
   }
@@ -467,7 +459,7 @@ export class PurchaseOptimizationService {
     itemIds: string[],
     branchId: string,
     budgetLimit?: number
-  ): Promise<any> {
+  ): Promise<OrderOptimizationResult> {
     try {
       // Get current purchase request items for the specified items
       const items = await this.prisma.pRItem.findMany({
@@ -484,7 +476,7 @@ export class PurchaseOptimizationService {
       });
 
       if (items.length === 0) {
-        throw new Error("No items found for optimization");
+        throw new Error('No items found for optimization');
       }
 
       // Optimize quantities for each item
@@ -496,19 +488,14 @@ export class PurchaseOptimizationService {
       );
 
       // Calculate total optimization savings
-      const totalSavings = optimizations.reduce(
-        (sum, opt) => sum + opt.potentialSavings,
-        0
-      ); // Apply budget constraints if specified
+      const totalSavings = optimizations.reduce((sum, opt) => sum + opt.potentialSavings, 0); // Apply budget constraints if specified
       let finalOptimizations = optimizations;
       if (budgetLimit) {
         const currentTotal = optimizations.reduce(
           (sum, opt) =>
             sum +
             opt.optimizedOrderQty *
-              Number(
-                items.find((i) => i.itemId === opt.itemId)?.estimatedPrice || 0
-              ),
+              Number(items.find((i) => i.itemId === opt.itemId)?.estimatedPrice || 0),
           0
         );
         if (currentTotal > budgetLimit) {
@@ -519,9 +506,7 @@ export class PurchaseOptimizationService {
             optimizedOrderQty: Math.floor(opt.optimizedOrderQty * scaleFactor),
             reasoning: [
               ...opt.reasoning,
-              `Adjusted for budget constraint (scale factor: ${scaleFactor.toFixed(
-                2
-              )})`,
+              `Adjusted for budget constraint (scale factor: ${scaleFactor.toFixed(2)})`,
             ],
           }));
         }
@@ -536,10 +521,7 @@ export class PurchaseOptimizationService {
             (sum, opt) =>
               sum +
               opt.optimizedOrderQty *
-                Number(
-                  items.find((i) => i.itemId === opt.itemId)?.estimatedPrice ||
-                    0
-                ),
+                Number(items.find((i) => i.itemId === opt.itemId)?.estimatedPrice || 0),
             0
           ) <= budgetLimit,
         summary: {
@@ -549,8 +531,8 @@ export class PurchaseOptimizationService {
         },
       };
     } catch (error) {
-      this.logger.error("Error optimizing order:", error);
-      throw new Error("Failed to optimize order");
+      this.logger.error('Error optimizing order:', error);
+      throw new Error('Failed to optimize order');
     }
   }
 }

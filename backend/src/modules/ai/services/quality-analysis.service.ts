@@ -1,6 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "../../../app/prisma.service";
-import { GeminiService } from "./gemini.service";
+import { Injectable, Logger } from '@nestjs/common';
+import type { PrismaService } from '../../../app/prisma.service';
+import type {
+  GRItemWithReceiptAccess,
+  GoodsReceiptData,
+  QualityWhereClause,
+  SupplierData,
+  SupplierWithQualityData,
+} from '../interfaces/ai-service.interface';
+import type { GeminiService } from './gemini.service';
 
 interface QualityAnalysis {
   supplierId: string;
@@ -10,14 +17,14 @@ interface QualityAnalysis {
   issueCount: number;
   issueTypes: string[];
   recommendations: string[];
-  trend: "improving" | "declining" | "stable";
+  trend: 'improving' | 'declining' | 'stable';
 }
 
 interface AnomalyDetection {
   grId: string;
   grNumber: string;
   anomalies: string[];
-  severity: "low" | "medium" | "high";
+  severity: 'low' | 'medium' | 'high';
   recommendations: string[];
 }
 
@@ -30,9 +37,7 @@ export class QualityAnalysisService {
     private geminiService: GeminiService
   ) {}
 
-  async analyzeSupplierQuality(
-    supplierId?: string
-  ): Promise<QualityAnalysis[]> {
+  async analyzeSupplierQuality(supplierId?: string): Promise<QualityAnalysis[]> {
     try {
       const suppliers = await this.getSupplierQualityData(supplierId);
       const analyses: QualityAnalysis[] = [];
@@ -44,8 +49,8 @@ export class QualityAnalysisService {
 
       return analyses.sort((a, b) => b.qualityScore - a.qualityScore);
     } catch (error) {
-      this.logger.error("Error analyzing supplier quality:", error);
-      throw new Error("Failed to analyze supplier quality");
+      this.logger.error('Error analyzing supplier quality:', error);
+      throw new Error('Failed to analyze supplier quality');
     }
   }
 
@@ -57,12 +62,12 @@ export class QualityAnalysisService {
       include: {
         purchaseOrders: {
           where: {
-            status: "CONFIRMED",
+            status: 'CONFIRMED',
           },
           include: {
             goodsReceipts: {
               where: {
-                status: "POSTED",
+                status: 'POSTED',
               },
               include: {
                 items: {
@@ -78,32 +83,38 @@ export class QualityAnalysisService {
     });
   }
 
-  private async analyzeSupplierWithAI(
-    supplierData: any
-  ): Promise<QualityAnalysis> {
-    const grItems = supplierData.purchaseOrders.flatMap((po) =>
-      po.goodsReceipts.flatMap((gr) => gr.items)
+  private async analyzeSupplierWithAI(supplierData: unknown): Promise<QualityAnalysis> {
+    const typedSupplierData = supplierData as SupplierWithQualityData;
+
+    // Flatten items while preserving receipt date
+    const grItemsWithDates = typedSupplierData.purchaseOrders.flatMap((po) =>
+      po.goodsReceipts.flatMap((gr) =>
+        gr.items.map((item) => ({
+          ...item,
+          receiptDate: gr.receiptDate,
+        }))
+      )
     );
 
-    const qualityIssues = grItems.filter(
+    const qualityIssues = grItemsWithDates.filter(
       (item) =>
         item.qualityNotes &&
-        (item.qualityNotes.toLowerCase().includes("issue") ||
-          item.qualityNotes.toLowerCase().includes("defect") ||
-          item.qualityNotes.toLowerCase().includes("damage"))
+        (item.qualityNotes.toLowerCase().includes('issue') ||
+          item.qualityNotes.toLowerCase().includes('defect') ||
+          item.qualityNotes.toLowerCase().includes('damage'))
     );
 
-    const recentData = grItems.filter((item) => {
+    const recentData = grItemsWithDates.filter((item) => {
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      return new Date(item.gr.receiptDate) >= threeMonthsAgo;
+      return new Date(item.receiptDate) >= threeMonthsAgo;
     });
 
     const prompt = `
       Analyze supplier quality performance:
       
-      Supplier: ${supplierData.name}
-      Total Receipts: ${grItems.length}
+      Supplier: ${typedSupplierData.name}
+      Total Receipts: ${grItemsWithDates.length}
       Quality Issues: ${qualityIssues.length}
       Recent Quality Notes: ${JSON.stringify(
         qualityIssues.map((item) => item.qualityNotes).slice(0, 10)
@@ -130,64 +141,56 @@ export class QualityAnalysisService {
       const analysis = JSON.parse(aiResponse);
 
       return {
-        supplierId: supplierData.id,
-        supplierName: supplierData.name,
+        supplierId: typedSupplierData.id,
+        supplierName: typedSupplierData.name,
         qualityScore:
           analysis.qualityScore ||
-          this.calculateFallbackQualityScore(
-            grItems.length,
-            qualityIssues.length
-          ),
-        totalReceipts: grItems.length,
+          this.calculateFallbackQualityScore(grItemsWithDates.length, qualityIssues.length),
+        totalReceipts: grItemsWithDates.length,
         issueCount: qualityIssues.length,
-        issueTypes:
-          analysis.issueTypes || this.extractIssueTypes(qualityIssues),
-        recommendations: analysis.recommendations || [
-          "Review quality control procedures",
-        ],
-        trend: analysis.trend || "stable",
+        issueTypes: analysis.issueTypes || this.extractIssueTypes(qualityIssues),
+        recommendations: analysis.recommendations || ['Review quality control procedures'],
+        trend: analysis.trend || 'stable',
       };
     } catch (error) {
-      this.logger.error("Error in AI quality analysis:", error);
+      this.logger.error('Error in AI quality analysis:', error);
 
       return {
-        supplierId: supplierData.id,
-        supplierName: supplierData.name,
+        supplierId: typedSupplierData.id,
+        supplierName: typedSupplierData.name,
         qualityScore: this.calculateFallbackQualityScore(
-          grItems.length,
+          grItemsWithDates.length,
           qualityIssues.length
         ),
-        totalReceipts: grItems.length,
+        totalReceipts: grItemsWithDates.length,
         issueCount: qualityIssues.length,
         issueTypes: this.extractIssueTypes(qualityIssues),
-        recommendations: ["Manual quality review recommended"],
-        trend: "stable",
+        recommendations: ['Manual quality review recommended'],
+        trend: 'stable',
       };
     }
   }
 
-  private calculateFallbackQualityScore(
-    totalReceipts: number,
-    issueCount: number
-  ): number {
+  private calculateFallbackQualityScore(totalReceipts: number, issueCount: number): number {
     if (totalReceipts === 0) return 100;
-    return Math.max(
-      0,
-      Math.round(((totalReceipts - issueCount) / totalReceipts) * 100)
-    );
+    return Math.max(0, Math.round(((totalReceipts - issueCount) / totalReceipts) * 100));
   }
 
-  private extractIssueTypes(qualityIssues: any[]): string[] {
+  private extractIssueTypes(qualityIssues: unknown[]): string[] {
+    interface QualityIssueItem {
+      qualityNotes?: string;
+    }
+    const typedIssues = qualityIssues as QualityIssueItem[];
     const issueTypes = new Set<string>();
 
-    qualityIssues.forEach((item) => {
-      const notes = item.qualityNotes?.toLowerCase() || "";
-      if (notes.includes("damage")) issueTypes.add("Physical Damage");
-      if (notes.includes("defect")) issueTypes.add("Manufacturing Defect");
-      if (notes.includes("quantity")) issueTypes.add("Quantity Discrepancy");
-      if (notes.includes("delay")) issueTypes.add("Delivery Delay");
-      if (notes.includes("packaging")) issueTypes.add("Packaging Issue");
-    });
+    for (const item of typedIssues) {
+      const notes = item.qualityNotes?.toLowerCase() || '';
+      if (notes.includes('damage')) issueTypes.add('Physical Damage');
+      if (notes.includes('defect')) issueTypes.add('Manufacturing Defect');
+      if (notes.includes('quantity')) issueTypes.add('Quantity Discrepancy');
+      if (notes.includes('delay')) issueTypes.add('Delivery Delay');
+      if (notes.includes('packaging')) issueTypes.add('Packaging Issue');
+    }
 
     return Array.from(issueTypes);
   }
@@ -212,24 +215,46 @@ export class QualityAnalysisService {
       });
 
       if (!goodsReceipt) {
-        throw new Error("Goods receipt not found");
+        throw new Error('Goods receipt not found');
       }
 
       return this.analyzeGRForAnomalies(goodsReceipt);
     } catch (error) {
-      this.logger.error("Error detecting goods receipt anomalies:", error);
-      throw new Error("Failed to detect anomalies");
+      this.logger.error('Error detecting goods receipt anomalies:', error);
+      throw new Error('Failed to detect anomalies');
     }
   }
 
-  private async analyzeGRForAnomalies(
-    goodsReceipt: any
-  ): Promise<AnomalyDetection> {
+  private async analyzeGRForAnomalies(goodsReceipt: unknown): Promise<AnomalyDetection> {
+    interface GoodsReceiptForAnalysis {
+      id: string;
+      grNumber?: string;
+      receiptDate: Date;
+      items: Array<{
+        id: string;
+        itemId: string;
+        receivedQty: number;
+        orderedQty: number;
+        qualityNotes?: string;
+        unitPrice?: number;
+        item: {
+          name: string;
+        };
+      }>;
+      purchaseOrder: {
+        expectedDeliveryDate: Date;
+        items: Array<{ quantity: number }>;
+        supplier?: {
+          name: string;
+        };
+      };
+    }
+    const typedGR = goodsReceipt as GoodsReceiptForAnalysis;
     const anomalies: string[] = [];
-    let severity: "low" | "medium" | "high" = "low";
+    let severity: 'low' | 'medium' | 'high' = 'low';
 
     // Basic anomaly checks
-    for (const grItem of goodsReceipt.items) {
+    for (const grItem of typedGR.items) {
       const orderedQty = Number(grItem.orderedQty);
       const receivedQty = Number(grItem.receivedQty);
 
@@ -237,24 +262,19 @@ export class QualityAnalysisService {
         anomalies.push(
           `Received quantity (${receivedQty}) significantly exceeds ordered quantity (${orderedQty}) for ${grItem.item.name}`
         );
-        severity = "medium";
+        severity = 'medium';
       }
 
       if (receivedQty < orderedQty * 0.8) {
         anomalies.push(
           `Received quantity (${receivedQty}) significantly less than ordered quantity (${orderedQty}) for ${grItem.item.name}`
         );
-        severity = "medium";
+        severity = 'medium';
       }
 
-      if (
-        grItem.qualityNotes &&
-        grItem.qualityNotes.toLowerCase().includes("issue")
-      ) {
-        anomalies.push(
-          `Quality issue noted for ${grItem.item.name}: ${grItem.qualityNotes}`
-        );
-        severity = "high";
+      if (grItem.qualityNotes?.toLowerCase().includes('issue')) {
+        anomalies.push(`Quality issue noted for ${grItem.item.name}: ${grItem.qualityNotes}`);
+        severity = 'high';
       }
     }
 
@@ -262,10 +282,10 @@ export class QualityAnalysisService {
     const prompt = `
       Analyze this goods receipt for anomalies and patterns:
       
-      GR Number: ${goodsReceipt.grNumber}
-      Supplier: ${goodsReceipt.purchaseOrder?.supplier?.name || "Unknown"}
+      GR Number: ${typedGR.grNumber}
+      Supplier: ${typedGR.purchaseOrder?.supplier?.name || 'Unknown'}
       Items: ${JSON.stringify(
-        goodsReceipt.items.map((item) => ({
+        typedGR.items.map((item) => ({
           name: item.item.name,
           ordered: item.orderedQty,
           received: item.receivedQty,
@@ -298,31 +318,27 @@ export class QualityAnalysisService {
 
       if (
         analysis.severityAssessment &&
-        ["low", "medium", "high"].includes(analysis.severityAssessment)
+        ['low', 'medium', 'high'].includes(analysis.severityAssessment)
       ) {
         severity = analysis.severityAssessment;
       }
 
       return {
-        grId: goodsReceipt.id,
-        grNumber: goodsReceipt.grNumber,
+        grId: typedGR.id,
+        grNumber: typedGR.grNumber,
         anomalies,
         severity,
-        recommendations: analysis.recommendations || [
-          "No specific recommendations",
-        ],
+        recommendations: analysis.recommendations || ['No specific recommendations'],
       };
     } catch (error) {
-      this.logger.error("Error in AI anomaly detection:", error);
+      this.logger.error('Error in AI anomaly detection:', error);
 
       return {
-        grId: goodsReceipt.id,
-        grNumber: goodsReceipt.grNumber,
+        grId: typedGR.id,
+        grNumber: typedGR.grNumber,
         anomalies,
         severity,
-        recommendations: [
-          "Manual review recommended due to AI processing error",
-        ],
+        recommendations: ['Manual review recommended due to AI processing error'],
       };
     }
   }
@@ -331,9 +347,9 @@ export class QualityAnalysisService {
     branchId?: string,
     startDate?: Date,
     endDate?: Date
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
-      const whereClause: any = {};
+      const whereClause: QualityWhereClause = {};
       if (branchId) whereClause.branchId = branchId;
       if (startDate && endDate) {
         whereClause.receiptDate = {
@@ -344,7 +360,7 @@ export class QualityAnalysisService {
 
       const goodsReceipts = await this.prisma.goodsReceipt.findMany({
         where: {
-          status: "POSTED",
+          status: 'POSTED',
           ...whereClause,
         },
         include: {
@@ -382,40 +398,45 @@ export class QualityAnalysisService {
 
       return {
         period: {
-          startDate: startDate || "All time",
-          endDate: endDate || "Current",
+          startDate: startDate || 'All time',
+          endDate: endDate || 'Current',
         },
         metrics: qualityMetrics,
         report: reportText,
         generatedAt: new Date(),
       };
     } catch (error) {
-      this.logger.error("Error generating quality report:", error);
-      throw new Error("Failed to generate quality report");
+      this.logger.error('Error generating quality report:', error);
+      throw new Error('Failed to generate quality report');
     }
   }
 
-  private calculateQualityMetrics(goodsReceipts: any[]) {
-    const totalReceipts = goodsReceipts.length;
-    const totalItems = goodsReceipts.reduce(
-      (sum, gr) => sum + gr.items.length,
-      0
-    );
+  private calculateQualityMetrics(goodsReceipts: unknown[]) {
+    interface GoodsReceiptForMetrics {
+      id: string;
+      items: Array<{
+        qualityNotes?: string;
+      }>;
+      purchaseOrder?: {
+        supplier?: {
+          id: string;
+          name: string;
+        };
+      };
+    }
+    const typedReceipts = goodsReceipts as GoodsReceiptForMetrics[];
+    const totalReceipts = typedReceipts.length;
+    const totalItems = typedReceipts.reduce((sum, gr) => sum + gr.items.length, 0);
 
-    const itemsWithIssues = goodsReceipts.reduce(
+    const itemsWithIssues = typedReceipts.reduce(
       (sum, gr) =>
-        sum +
-        gr.items.filter(
-          (item) =>
-            item.qualityNotes &&
-            item.qualityNotes.toLowerCase().includes("issue")
-        ).length,
+        sum + gr.items.filter((item) => item.qualityNotes?.toLowerCase().includes('issue')).length,
       0
     );
 
     const supplierMetrics = new Map();
 
-    goodsReceipts.forEach((gr) => {
+    for (const gr of typedReceipts) {
       if (gr.purchaseOrder?.supplier) {
         const supplierId = gr.purchaseOrder.supplier.id;
         if (!supplierMetrics.has(supplierId)) {
@@ -428,13 +449,11 @@ export class QualityAnalysisService {
 
         const metrics = supplierMetrics.get(supplierId);
         metrics.totalReceipts++;
-        metrics.itemsWithIssues += gr.items.filter(
-          (item) =>
-            item.qualityNotes &&
-            item.qualityNotes.toLowerCase().includes("issue")
+        metrics.itemsWithIssues += gr.items.filter((item) =>
+          item.qualityNotes?.toLowerCase().includes('issue')
         ).length;
       }
-    });
+    }
 
     return {
       summary: {
@@ -444,27 +463,24 @@ export class QualityAnalysisService {
         qualityRate:
           totalItems > 0
             ? (((totalItems - itemsWithIssues) / totalItems) * 100).toFixed(2)
-            : "100.00",
+            : '100.00',
       },
-      supplierPerformance: Array.from(supplierMetrics.values()).map(
-        (supplier) => ({
-          ...supplier,
-          qualityRate:
-            supplier.totalReceipts > 0
-              ? (
-                  ((supplier.totalReceipts - supplier.itemsWithIssues) /
-                    supplier.totalReceipts) *
-                  100
-                ).toFixed(2)
-              : "100.00",
-        })
-      ),
+      supplierPerformance: Array.from(supplierMetrics.values()).map((supplier) => ({
+        ...supplier,
+        qualityRate:
+          supplier.totalReceipts > 0
+            ? (
+                ((supplier.totalReceipts - supplier.itemsWithIssues) / supplier.totalReceipts) *
+                100
+              ).toFixed(2)
+            : '100.00',
+      })),
     };
   }
 
-  async analyzeItemQuality(itemId: string, branchId?: string): Promise<any> {
+  async analyzeItemQuality(itemId: string, branchId?: string): Promise<unknown> {
     try {
-      const whereClause: any = { itemId };
+      const whereClause: QualityWhereClause = { itemId };
       if (branchId) {
         whereClause.goodsReceipt = { branchId };
       }
@@ -485,36 +501,34 @@ export class QualityAnalysisService {
         },
         orderBy: {
           goodsReceipt: {
-            receiptDate: "desc",
+            receiptDate: 'desc',
           },
         },
         take: 50,
       });
 
-      const qualityIssues = grItems.filter(
-        (item) =>
-          item.qualityNotes && item.qualityNotes.toLowerCase().includes("issue")
+      const qualityIssues = grItems.filter((item) =>
+        item.qualityNotes?.toLowerCase().includes('issue')
       );
 
       return {
         itemId,
-        itemName: grItems[0]?.item.name || "Unknown",
+        itemName: grItems[0]?.item.name || 'Unknown',
         totalReceipts: grItems.length,
         qualityIssues: qualityIssues.length,
         qualityRate:
           grItems.length > 0
             ? ((grItems.length - qualityIssues.length) / grItems.length) * 100
-            : "100.00",
+            : '100.00',
         recentIssues: qualityIssues.slice(0, 5).map((item) => ({
           grNumber: item.goodsReceipt.grNumber,
-          supplier:
-            item.goodsReceipt.purchaseOrder?.supplier?.name || "Unknown",
+          supplier: item.goodsReceipt.purchaseOrder?.supplier?.name || 'Unknown',
           notes: item.qualityNotes,
         })),
       };
     } catch (error) {
       this.logger.error(`Error analyzing item quality for ${itemId}:`, error);
-      throw new Error("Failed to analyze item quality");
+      throw new Error('Failed to analyze item quality');
     }
   }
 }

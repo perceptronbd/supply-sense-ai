@@ -1,16 +1,22 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { DemandForecastingService } from "./demand-forecasting.service";
-import { PurchaseOptimizationService } from "./purchase-optimization.service";
-import { QualityAnalysisService } from "./quality-analysis.service";
-import { StockPredictionService } from "./stock-prediction.service";
-import { WorkflowAutomationService } from "./workflow-automation.service";
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import type {
+  AutoApprovalArgs,
+  DemandForecastArgs,
+  IntelligentPRGenerationArgs,
+  PurchaseOptimizationArgs,
+  QualityAnalysisArgs,
+  ReorderPointCalculationArgs,
+  StockPredictionArgs,
+} from '../interfaces/ai-service.interface';
+import type { DemandForecastingService } from './demand-forecasting.service';
+import type { PurchaseOptimizationService } from './purchase-optimization.service';
+import type { QualityAnalysisService } from './quality-analysis.service';
+import type { StockPredictionService } from './stock-prediction.service';
+import type { WorkflowAutomationService } from './workflow-automation.service';
 
 @Injectable()
 export class McpServerService implements OnModuleInit {
@@ -34,8 +40,8 @@ export class McpServerService implements OnModuleInit {
     try {
       this.server = new Server(
         {
-          name: "supply-chain-ai-mcp",
-          version: "1.0.0",
+          name: 'supply-chain-ai-mcp',
+          version: '1.0.0',
         },
         {
           capabilities: {
@@ -47,9 +53,9 @@ export class McpServerService implements OnModuleInit {
       // Register MCP tools
       this.registerMCPTools();
 
-      this.logger.log("MCP Server initialized successfully");
+      this.logger.log('MCP Server initialized successfully');
     } catch (error) {
-      this.logger.error("Failed to initialize MCP Server:", error);
+      this.logger.error('Failed to initialize MCP Server:', error);
     }
   }
 
@@ -59,172 +65,168 @@ export class McpServerService implements OnModuleInit {
       return {
         tools: [
           {
-            name: "forecast_demand",
-            description: "AI-powered demand forecasting for supply chain items",
+            name: 'forecast_demand',
+            description: 'AI-powered demand forecasting for supply chain items',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 itemId: {
-                  type: "string",
-                  description: "Item ID to forecast demand for",
+                  type: 'string',
+                  description: 'Item ID to forecast demand for',
                 },
                 branchId: {
-                  type: "string",
-                  description: "Branch ID for location-specific forecast",
+                  type: 'string',
+                  description: 'Branch ID for location-specific forecast',
                 },
                 period: {
-                  type: "string",
-                  enum: ["weekly", "monthly", "quarterly"],
-                  description: "Forecast period",
+                  type: 'string',
+                  enum: ['weekly', 'monthly', 'quarterly'],
+                  description: 'Forecast period',
                 },
                 periods: {
-                  type: "number",
-                  description: "Number of periods to forecast",
+                  type: 'number',
+                  description: 'Number of periods to forecast',
                   default: 12,
                 },
               },
-              required: ["itemId", "branchId", "period"],
+              required: ['itemId', 'branchId', 'period'],
             },
           },
           {
-            name: "optimize_purchase",
+            name: 'optimize_purchase',
             description:
-              "Optimize purchase orders using AI recommendations for cost and efficiency",
+              'Optimize purchase orders using AI recommendations for cost and efficiency',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 itemIds: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Array of item IDs to optimize",
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Array of item IDs to optimize',
                 },
                 branchId: {
-                  type: "string",
-                  description: "Branch ID for optimization context",
+                  type: 'string',
+                  description: 'Branch ID for optimization context',
                 },
                 budgetLimit: {
-                  type: "number",
-                  description: "Optional budget constraint",
+                  type: 'number',
+                  description: 'Optional budget constraint',
                 },
               },
-              required: ["itemIds", "branchId"],
+              required: ['itemIds', 'branchId'],
             },
           },
           {
-            name: "analyze_quality",
-            description:
-              "Analyze quality issues and supplier performance using AI",
+            name: 'analyze_quality',
+            description: 'Analyze quality issues and supplier performance using AI',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 goodsReceiptId: {
-                  type: "string",
-                  description: "Goods Receipt ID to analyze",
+                  type: 'string',
+                  description: 'Goods Receipt ID to analyze',
                 },
                 includeSupplierAnalysis: {
-                  type: "boolean",
-                  description:
-                    "Include comprehensive supplier performance analysis",
+                  type: 'boolean',
+                  description: 'Include comprehensive supplier performance analysis',
                   default: true,
                 },
               },
-              required: ["goodsReceiptId"],
+              required: ['goodsReceiptId'],
             },
           },
           {
-            name: "predict_stockout",
-            description:
-              "Predict potential stockouts using AI analysis of consumption patterns",
+            name: 'predict_stockout',
+            description: 'Predict potential stockouts using AI analysis of consumption patterns',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 branchId: {
-                  type: "string",
-                  description: "Branch ID for stockout prediction",
+                  type: 'string',
+                  description: 'Branch ID for stockout prediction',
                 },
                 daysAhead: {
-                  type: "number",
-                  description: "Number of days to predict ahead",
+                  type: 'number',
+                  description: 'Number of days to predict ahead',
                   default: 30,
                 },
                 itemIds: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Optional specific items to analyze",
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Optional specific items to analyze',
                 },
               },
-              required: ["branchId"],
+              required: ['branchId'],
             },
           },
           {
-            name: "auto_approve_document",
+            name: 'auto_approve_document',
             description:
-              "Automatically evaluate and approve PR/PO documents using AI decision making",
+              'Automatically evaluate and approve PR/PO documents using AI decision making',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 documentId: {
-                  type: "string",
-                  description: "Document ID (PR or PO)",
+                  type: 'string',
+                  description: 'Document ID (PR or PO)',
                 },
                 documentType: {
-                  type: "string",
-                  enum: ["PR", "PO"],
-                  description: "Document type to evaluate",
+                  type: 'string',
+                  enum: ['PR', 'PO'],
+                  description: 'Document type to evaluate',
                 },
               },
-              required: ["documentId", "documentType"],
+              required: ['documentId', 'documentType'],
             },
           },
           {
-            name: "generate_intelligent_pr",
+            name: 'generate_intelligent_pr',
             description:
-              "Generate intelligent purchase requests based on AI analysis of stock levels and demand",
+              'Generate intelligent purchase requests based on AI analysis of stock levels and demand',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 branchId: {
-                  type: "string",
-                  description: "Branch ID for PR generation",
+                  type: 'string',
+                  description: 'Branch ID for PR generation',
                 },
                 urgency: {
-                  type: "string",
-                  enum: ["low", "medium", "high", "critical"],
-                  description: "Urgency level for the purchase request",
-                  default: "medium",
+                  type: 'string',
+                  enum: ['low', 'medium', 'high', 'critical'],
+                  description: 'Urgency level for the purchase request',
+                  default: 'medium',
                 },
                 category: {
-                  type: "string",
-                  description: "Optional item category filter",
+                  type: 'string',
+                  description: 'Optional item category filter',
                 },
               },
-              required: ["branchId"],
+              required: ['branchId'],
             },
           },
           {
-            name: "calculate_optimal_reorder_points",
-            description:
-              "Calculate optimal reorder points for items using AI analysis",
+            name: 'calculate_optimal_reorder_points',
+            description: 'Calculate optimal reorder points for items using AI analysis',
             inputSchema: {
-              type: "object",
+              type: 'object',
               properties: {
                 itemId: {
-                  type: "string",
-                  description: "Item ID to calculate reorder point for",
+                  type: 'string',
+                  description: 'Item ID to calculate reorder point for',
                 },
                 branchId: {
-                  type: "string",
-                  description: "Branch ID for calculation context",
+                  type: 'string',
+                  description: 'Branch ID for calculation context',
                 },
                 serviceLevel: {
-                  type: "number",
-                  description: "Desired service level (0.0-1.0)",
+                  type: 'number',
+                  description: 'Desired service level (0.0-1.0)',
                   minimum: 0,
                   maximum: 1,
                   default: 0.95,
                 },
               },
-              required: ["itemId", "branchId"],
+              required: ['itemId', 'branchId'],
             },
           },
         ],
@@ -237,19 +239,19 @@ export class McpServerService implements OnModuleInit {
 
       try {
         switch (name) {
-          case "forecast_demand":
+          case 'forecast_demand':
             return await this.handleDemandForecast(args);
-          case "optimize_purchase":
+          case 'optimize_purchase':
             return await this.handlePurchaseOptimization(args);
-          case "analyze_quality":
+          case 'analyze_quality':
             return await this.handleQualityAnalysis(args);
-          case "predict_stockout":
+          case 'predict_stockout':
             return await this.handleStockoutPrediction(args);
-          case "auto_approve_document":
+          case 'auto_approve_document':
             return await this.handleAutoApproval(args);
-          case "generate_intelligent_pr":
+          case 'generate_intelligent_pr':
             return await this.handleIntelligentPRGeneration(args);
-          case "calculate_optimal_reorder_points":
+          case 'calculate_optimal_reorder_points':
             return await this.handleReorderPointCalculation(args);
           default:
             throw new Error(`Unknown tool: ${name}`);
@@ -259,7 +261,7 @@ export class McpServerService implements OnModuleInit {
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Error executing ${name}: ${error.message}`,
             },
           ],
@@ -268,25 +270,26 @@ export class McpServerService implements OnModuleInit {
     });
   }
 
-  private async handleDemandForecast(args: any) {
+  private async handleDemandForecast(args: unknown) {
+    const demandArgs = args as DemandForecastArgs;
     try {
       const forecast = await this.demandForecastingService.predictDemand(
-        args.itemId,
-        args.branchId,
-        args.period,
-        args.periods
+        demandArgs.itemId,
+        demandArgs.branchId,
+        demandArgs.period,
+        demandArgs.periods
       );
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "forecast_demand",
+                tool: 'forecast_demand',
                 data: forecast,
-                message: `Demand forecast generated for item ${args.itemId} in branch ${args.branchId}`,
+                message: `Demand forecast generated for item ${demandArgs.itemId} in branch ${demandArgs.branchId}`,
               },
               null,
               2
@@ -298,11 +301,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "forecast_demand",
+                tool: 'forecast_demand',
                 error: error.message,
               },
               null,
@@ -314,24 +317,25 @@ export class McpServerService implements OnModuleInit {
     }
   }
 
-  private async handlePurchaseOptimization(args: any) {
+  private async handlePurchaseOptimization(args: unknown) {
+    const optimizationArgs = args as PurchaseOptimizationArgs;
     try {
       const optimization = await this.purchaseOptimizationService.optimizeOrder(
-        args.itemIds,
-        args.branchId,
-        args.budgetLimit
+        optimizationArgs.itemIds,
+        optimizationArgs.branchId,
+        optimizationArgs.budgetLimit
       );
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "optimize_purchase",
+                tool: 'optimize_purchase',
                 data: optimization,
-                message: `Purchase optimization completed for ${args.itemIds.length} items`,
+                message: `Purchase optimization completed for ${optimizationArgs.itemIds.length} items`,
               },
               null,
               2
@@ -343,11 +347,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "optimize_purchase",
+                tool: 'optimize_purchase',
                 error: error.message,
               },
               null,
@@ -358,23 +362,24 @@ export class McpServerService implements OnModuleInit {
       };
     }
   }
-  private async handleQualityAnalysis(args: any) {
+  private async handleQualityAnalysis(args: unknown) {
+    const qualityArgs = args as QualityAnalysisArgs;
     try {
       const analysis = await this.qualityAnalysisService.analyzeItemQuality(
-        args.goodsReceiptId,
-        args.includeSupplierAnalysis
+        qualityArgs.goodsReceiptId,
+        qualityArgs.includeSupplierAnalysis
       );
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "analyze_quality",
+                tool: 'analyze_quality',
                 data: analysis,
-                message: `Quality analysis completed for goods receipt ${args.goodsReceiptId}`,
+                message: `Quality analysis completed for goods receipt ${qualityArgs.goodsReceiptId}`,
               },
               null,
               2
@@ -386,11 +391,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "analyze_quality",
+                tool: 'analyze_quality',
                 error: error.message,
               },
               null,
@@ -402,7 +407,7 @@ export class McpServerService implements OnModuleInit {
     }
   }
 
-  private async handleStockoutPrediction(args: any) {
+  private async handleStockoutPrediction(args: StockPredictionArgs) {
     try {
       const prediction = await this.stockPredictionService.predictStockouts(
         args.branchId,
@@ -413,11 +418,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "predict_stockout",
+                tool: 'predict_stockout',
                 data: prediction,
                 message: `Stockout prediction completed for branch ${args.branchId}`,
               },
@@ -431,11 +436,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "predict_stockout",
+                tool: 'predict_stockout',
                 error: error.message,
               },
               null,
@@ -447,24 +452,24 @@ export class McpServerService implements OnModuleInit {
     }
   }
 
-  private async handleAutoApproval(args: any) {
+  private async handleAutoApproval(args: unknown) {
+    const autoApprovalArgs = args as AutoApprovalArgs;
     try {
-      const evaluation =
-        await this.workflowAutomationService.evaluateForAutoApproval(
-          args.documentId,
-          args.documentType
-        );
+      const evaluation = await this.workflowAutomationService.evaluateForAutoApproval(
+        autoApprovalArgs.documentId,
+        autoApprovalArgs.documentType
+      );
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "auto_approve_document",
+                tool: 'auto_approve_document',
                 data: evaluation,
-                message: `Auto-approval evaluation completed for ${args.documentType} ${args.documentId}`,
+                message: `Auto-approval evaluation completed for ${autoApprovalArgs.documentType} ${autoApprovalArgs.documentId}`,
               },
               null,
               2
@@ -476,11 +481,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "auto_approve_document",
+                tool: 'auto_approve_document',
                 error: error.message,
               },
               null,
@@ -492,23 +497,23 @@ export class McpServerService implements OnModuleInit {
     }
   }
 
-  private async handleIntelligentPRGeneration(args: any) {
+  private async handleIntelligentPRGeneration(args: unknown) {
+    const prGenerationArgs = args as IntelligentPRGenerationArgs;
     try {
-      const prRecommendations =
-        await this.workflowAutomationService.generateIntelligentPR(
-          args.branchId,
-          args.urgency,
-          args.category
-        );
+      const prRecommendations = await this.workflowAutomationService.generateIntelligentPR(
+        prGenerationArgs.branchId,
+        prGenerationArgs.urgency,
+        prGenerationArgs.category
+      );
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "generate_intelligent_pr",
+                tool: 'generate_intelligent_pr',
                 data: prRecommendations,
                 message: `Intelligent PR generation completed for branch ${args.branchId}`,
               },
@@ -522,11 +527,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "generate_intelligent_pr",
+                tool: 'generate_intelligent_pr',
                 error: error.message,
               },
               null,
@@ -537,30 +542,30 @@ export class McpServerService implements OnModuleInit {
       };
     }
   }
-  private async handleReorderPointCalculation(args: any) {
+  private async handleReorderPointCalculation(args: unknown) {
+    const typedArgs = args as ReorderPointCalculationArgs;
     try {
-      const reorderPoints =
-        await this.stockPredictionService.calculateOptimalReorderPoints(
-          args.branchId
-        );
+      const reorderPoints = await this.stockPredictionService.calculateOptimalReorderPoints(
+        typedArgs.branchId
+      );
 
       // If itemId is specified, filter for that specific item
-      const reorderPoint = args.itemId
-        ? reorderPoints.find((rp) => rp.itemId === args.itemId)
+      const reorderPoint = typedArgs.itemId
+        ? reorderPoints.find((rp) => rp.itemId === typedArgs.itemId)
         : reorderPoints;
 
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: true,
-                tool: "calculate_optimal_reorder_points",
+                tool: 'calculate_optimal_reorder_points',
                 data: reorderPoint,
-                message: args.itemId
-                  ? `Optimal reorder point calculated for item ${args.itemId}`
-                  : `Optimal reorder points calculated for branch ${args.branchId}`,
+                message: typedArgs.itemId
+                  ? `Optimal reorder point calculated for item ${typedArgs.itemId}`
+                  : `Optimal reorder points calculated for branch ${typedArgs.branchId}`,
               },
               null,
               2
@@ -572,11 +577,11 @@ export class McpServerService implements OnModuleInit {
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(
               {
                 success: false,
-                tool: "calculate_optimal_reorder_points",
+                tool: 'calculate_optimal_reorder_points',
                 error: error.message,
               },
               null,
@@ -592,9 +597,9 @@ export class McpServerService implements OnModuleInit {
     try {
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
-      this.logger.log("MCP Server connected and ready for automation");
+      this.logger.log('MCP Server connected and ready for automation');
     } catch (error) {
-      this.logger.error("Failed to connect MCP Server:", error);
+      this.logger.error('Failed to connect MCP Server:', error);
       throw error;
     }
   }

@@ -1,14 +1,19 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "../../../app/prisma.service";
-import { GeminiService } from "./gemini.service";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Injectable, Logger } from '@nestjs/common';
+import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../../app/prisma.service';
+import type {
+  ConsumptionRecord,
+  StockData,
+  StockWhereClause,
+} from '../interfaces/ai-service.interface';
+import type { GeminiService } from './gemini.service';
 
 interface StockPrediction {
   itemId: string;
   itemName: string;
   currentStock: number;
   predictedStock: number[];
-  stockoutRisk: "low" | "medium" | "high";
+  stockoutRisk: 'low' | 'medium' | 'high';
   stockoutDate: Date | null;
   recommendedAction: string;
   confidence: number;
@@ -20,7 +25,7 @@ interface ReorderRecommendation {
   currentStock: number;
   reorderPoint: number;
   recommendedOrderQty: number;
-  urgency: "low" | "medium" | "high";
+  urgency: 'low' | 'medium' | 'high';
   daysUntilStockout: number;
   estimatedCost: number;
 }
@@ -37,7 +42,7 @@ export class StockPredictionService {
   async predictStockLevels(
     branchId: string,
     itemId?: string,
-    daysAhead: number = 30
+    daysAhead = 30
   ): Promise<StockPrediction[]> {
     try {
       const stockData = await this.getCurrentStockData(branchId, itemId);
@@ -53,13 +58,13 @@ export class StockPredictionService {
         return riskOrder[b.stockoutRisk] - riskOrder[a.stockoutRisk];
       });
     } catch (error) {
-      this.logger.error("Error predicting stock levels:", error);
-      throw new Error("Failed to predict stock levels");
+      this.logger.error('Error predicting stock levels:', error);
+      throw new Error('Failed to predict stock levels');
     }
   }
 
   private async getCurrentStockData(branchId: string, itemId?: string) {
-    const where: any = { branchId };
+    const where: StockWhereClause = { branchId };
     if (itemId) where.itemId = itemId;
 
     return this.prisma.stock.findMany({
@@ -71,22 +76,20 @@ export class StockPredictionService {
     });
   }
 
-  private async predictItemStock(
-    stockData: any,
-    daysAhead: number
-  ): Promise<StockPrediction> {
+  private async predictItemStock(stockData: unknown, daysAhead: number): Promise<StockPrediction> {
+    const typedStockData = stockData as StockData;
     // Get historical consumption data
     const consumptionHistory = await this.getConsumptionHistory(
-      stockData.itemId,
-      stockData.branchId
+      typedStockData.itemId,
+      typedStockData.branchId
     );
 
     const prompt = `
       Predict stock levels for the next ${daysAhead} days:
       
-      Item: ${stockData.item.name}
-      Current Stock: ${stockData.quantity}
-      Branch: ${stockData.branch.name}
+      Item: ${typedStockData.item.name}
+      Current Stock: ${typedStockData.currentQuantity}
+      Branch: ${typedStockData.branch.name}
       
       Historical Consumption (last 90 days):
       ${JSON.stringify(consumptionHistory)}
@@ -118,39 +121,32 @@ export class StockPredictionService {
       const prediction = JSON.parse(aiResponse);
 
       return {
-        itemId: stockData.itemId,
-        itemName: stockData.item.name,
-        currentStock: Number(stockData.quantity),
+        itemId: typedStockData.itemId,
+        itemName: typedStockData.item.name,
+        currentStock: Number(typedStockData.currentQuantity),
         predictedStock:
           prediction.predictedStock ||
-          this.calculateFallbackPrediction(
-            stockData,
-            consumptionHistory,
-            daysAhead
-          ),
-        stockoutRisk: prediction.stockoutRisk || "medium",
-        stockoutDate: prediction.stockoutDate
-          ? new Date(prediction.stockoutDate)
-          : null,
-        recommendedAction:
-          prediction.recommendedAction || "Monitor stock levels",
+          this.calculateFallbackPrediction(typedStockData, consumptionHistory, daysAhead),
+        stockoutRisk: prediction.stockoutRisk || 'medium',
+        stockoutDate: prediction.stockoutDate ? new Date(prediction.stockoutDate) : null,
+        recommendedAction: prediction.recommendedAction || 'Monitor stock levels',
         confidence: prediction.confidence || 70,
       };
     } catch (error) {
-      this.logger.error("Error in AI stock prediction:", error);
+      this.logger.error('Error in AI stock prediction:', error);
 
       return {
-        itemId: stockData.itemId,
-        itemName: stockData.item.name,
-        currentStock: Number(stockData.quantity),
+        itemId: typedStockData.itemId,
+        itemName: typedStockData.item.name,
+        currentStock: Number(typedStockData.currentQuantity),
         predictedStock: this.calculateFallbackPrediction(
-          stockData,
+          typedStockData,
           consumptionHistory,
           daysAhead
         ),
-        stockoutRisk: "medium",
+        stockoutRisk: 'medium',
         stockoutDate: null,
-        recommendedAction: "Manual review recommended",
+        recommendedAction: 'Manual review recommended',
         confidence: 50,
       };
     }
@@ -164,7 +160,7 @@ export class StockPredictionService {
         itemId,
         goodsReceipt: {
           branchId,
-          status: "POSTED",
+          status: 'POSTED',
           postedAt: {
             gte: ninetyDaysAgo,
           },
@@ -175,7 +171,7 @@ export class StockPredictionService {
       },
       orderBy: {
         goodsReceipt: {
-          postedAt: "asc",
+          postedAt: 'asc',
         },
       },
     });
@@ -187,17 +183,19 @@ export class StockPredictionService {
   }
 
   private calculateFallbackPrediction(
-    stockData: any,
-    consumptionHistory: any[],
+    stockData: unknown,
+    consumptionHistory: unknown[],
     daysAhead: number
   ): number[] {
+    const typedStockData = stockData as StockData;
+    const typedConsumptionHistory = consumptionHistory as ConsumptionRecord[];
     const avgDailyConsumption =
-      consumptionHistory.length > 0
-        ? consumptionHistory.reduce((sum, item) => sum + item.quantity, 0) / 90
+      typedConsumptionHistory.length > 0
+        ? typedConsumptionHistory.reduce((sum, item) => sum + item.quantity, 0) / 90
         : 1;
 
     const prediction = [];
-    let currentStock = Number(stockData.quantity);
+    let currentStock = Number(typedStockData.currentQuantity);
 
     for (let day = 1; day <= daysAhead; day++) {
       currentStock = Math.max(0, currentStock - avgDailyConsumption);
@@ -207,25 +205,14 @@ export class StockPredictionService {
     return prediction;
   }
 
-  async generateReorderRecommendations(
-    branchId: string
-  ): Promise<ReorderRecommendation[]> {
+  async generateReorderRecommendations(branchId: string): Promise<ReorderRecommendation[]> {
     try {
-      const stockPredictions = await this.predictStockLevels(
-        branchId,
-        undefined,
-        30
-      );
+      const stockPredictions = await this.predictStockLevels(branchId, undefined, 30);
       const recommendations: ReorderRecommendation[] = [];
 
       for (const prediction of stockPredictions) {
-        if (
-          prediction.stockoutRisk === "medium" ||
-          prediction.stockoutRisk === "high"
-        ) {
-          const recommendation = await this.generateReorderRecommendation(
-            prediction
-          );
+        if (prediction.stockoutRisk === 'medium' || prediction.stockoutRisk === 'high') {
+          const recommendation = await this.generateReorderRecommendation(prediction);
           recommendations.push(recommendation);
         }
       }
@@ -235,8 +222,8 @@ export class StockPredictionService {
         return urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
       });
     } catch (error) {
-      this.logger.error("Error generating reorder recommendations:", error);
-      throw new Error("Failed to generate reorder recommendations");
+      this.logger.error('Error generating reorder recommendations:', error);
+      throw new Error('Failed to generate reorder recommendations');
     }
   }
 
@@ -286,12 +273,11 @@ export class StockPredictionService {
         recommendedOrderQty: recommendation.recommendedOrderQty || 100,
         urgency: recommendation.urgency || prediction.stockoutRisk,
         daysUntilStockout:
-          recommendation.daysUntilStockout ||
-          this.calculateDaysUntilStockout(prediction),
+          recommendation.daysUntilStockout || this.calculateDaysUntilStockout(prediction),
         estimatedCost: recommendation.estimatedCost || 0,
       };
     } catch (error) {
-      this.logger.error("Error in AI reorder recommendation:", error);
+      this.logger.error('Error in AI reorder recommendation:', error);
 
       return {
         itemId: prediction.itemId,
@@ -313,7 +299,7 @@ export class StockPredictionService {
       where: {
         itemId,
         goodsReceipt: {
-          status: "POSTED",
+          status: 'POSTED',
           postedAt: {
             gte: thirtyDaysAgo,
           },
@@ -335,7 +321,7 @@ export class StockPredictionService {
       },
       orderBy: {
         goodsReceipt: {
-          postedAt: "desc",
+          postedAt: 'desc',
         },
       },
       take: 10,
@@ -344,37 +330,26 @@ export class StockPredictionService {
     return recentPricing.map((item) => ({
       date: item.goodsReceipt.postedAt,
       unitPrice: Number(item.unitPrice),
-      supplier: item.goodsReceipt.purchaseOrder?.supplier?.name || "Unknown",
+      supplier: item.goodsReceipt.purchaseOrder?.supplier?.name || 'Unknown',
       quantity: Number(item.receivedQty),
     }));
   }
 
   private calculateDaysUntilStockout(prediction: StockPrediction): number {
-    const stockoutIndex = prediction.predictedStock.findIndex(
-      (stock) => stock <= 0
-    );
+    const stockoutIndex = prediction.predictedStock.findIndex((stock) => stock <= 0);
     return stockoutIndex === -1 ? 30 : stockoutIndex + 1;
   }
 
-  async generateStockReport(branchId: string): Promise<any> {
+  async generateStockReport(branchId: string): Promise<unknown> {
     try {
-      const predictions = await this.predictStockLevels(
-        branchId,
-        undefined,
-        30
-      );
-      const reorderRecommendations = await this.generateReorderRecommendations(
-        branchId
-      );
+      const predictions = await this.predictStockLevels(branchId, undefined, 30);
+      const reorderRecommendations = await this.generateReorderRecommendations(branchId);
 
       const summary = {
         totalItems: predictions.length,
-        highRiskItems: predictions.filter((p) => p.stockoutRisk === "high")
-          .length,
-        mediumRiskItems: predictions.filter((p) => p.stockoutRisk === "medium")
-          .length,
-        lowRiskItems: predictions.filter((p) => p.stockoutRisk === "low")
-          .length,
+        highRiskItems: predictions.filter((p) => p.stockoutRisk === 'high').length,
+        mediumRiskItems: predictions.filter((p) => p.stockoutRisk === 'medium').length,
+        lowRiskItems: predictions.filter((p) => p.stockoutRisk === 'low').length,
         itemsNeedingReorder: reorderRecommendations.length,
       };
 
@@ -382,9 +357,7 @@ export class StockPredictionService {
         Generate a comprehensive stock management report:
         
         Summary: ${JSON.stringify(summary)}
-        High-risk items: ${
-          predictions.filter((p) => p.stockoutRisk === "high").length
-        }
+        High-risk items: ${predictions.filter((p) => p.stockoutRisk === 'high').length}
         Reorder recommendations: ${reorderRecommendations.length}
         
         Create an executive summary highlighting:
@@ -407,15 +380,12 @@ export class StockPredictionService {
         executiveSummary: reportText,
       };
     } catch (error) {
-      this.logger.error("Error generating stock report:", error);
-      throw new Error("Failed to generate stock report");
+      this.logger.error('Error generating stock report:', error);
+      throw new Error('Failed to generate stock report');
     }
   }
 
-  async identifyStockoutRisks(
-    branchId: string,
-    daysAhead: number = 30
-  ): Promise<any[]> {
+  async identifyStockoutRisks(branchId: string, daysAhead = 30): Promise<unknown[]> {
     try {
       const stocks = await this.prisma.stock.findMany({
         where: { branchId },
@@ -426,14 +396,11 @@ export class StockPredictionService {
       for (const stock of stocks) {
         try {
           const prediction = await this.predictItemStock(stock, daysAhead);
-          if (prediction.stockoutRisk !== "low") {
+          if (prediction.stockoutRisk !== 'low') {
             risks.push(prediction);
           }
         } catch (error) {
-          this.logger.warn(
-            `Failed to predict stockout risk for item ${stock.itemId}:`,
-            error
-          );
+          this.logger.warn(`Failed to predict stockout risk for item ${stock.itemId}:`, error);
         }
       }
 
@@ -442,18 +409,18 @@ export class StockPredictionService {
         return urgencyOrder[b.stockoutRisk] - urgencyOrder[a.stockoutRisk];
       });
     } catch (error) {
-      this.logger.error("Error identifying stockout risks:", error);
-      throw new Error("Failed to identify stockout risks");
+      this.logger.error('Error identifying stockout risks:', error);
+      throw new Error('Failed to identify stockout risks');
     }
   }
 
   async predictStockouts(
     branchId: string,
-    daysAhead: number = 30,
+    daysAhead = 30,
     itemIds?: string[]
   ): Promise<StockPrediction[]> {
     try {
-      const whereClause: any = { branchId };
+      const whereClause: StockWhereClause = { branchId };
       if (itemIds && itemIds.length > 0) {
         whereClause.itemId = { in: itemIds };
       }
@@ -468,14 +435,11 @@ export class StockPredictionService {
         try {
           const prediction = await this.predictItemStock(stock, daysAhead);
           // Only include items with medium or high stockout risk
-          if (prediction.stockoutRisk !== "low") {
+          if (prediction.stockoutRisk !== 'low') {
             predictions.push(prediction);
           }
         } catch (error) {
-          this.logger.warn(
-            `Failed to predict stockout for item ${stock.itemId}:`,
-            error
-          );
+          this.logger.warn(`Failed to predict stockout for item ${stock.itemId}:`, error);
         }
       }
 
@@ -484,14 +448,12 @@ export class StockPredictionService {
         return urgencyOrder[b.stockoutRisk] - urgencyOrder[a.stockoutRisk];
       });
     } catch (error) {
-      this.logger.error("Error predicting stockouts:", error);
-      throw new Error("Failed to predict stockouts");
+      this.logger.error('Error predicting stockouts:', error);
+      throw new Error('Failed to predict stockouts');
     }
   }
 
-  async calculateOptimalReorderPoints(
-    branchId: string
-  ): Promise<ReorderRecommendation[]> {
+  async calculateOptimalReorderPoints(branchId: string): Promise<ReorderRecommendation[]> {
     try {
       const stocks = await this.prisma.stock.findMany({
         where: { branchId },
@@ -501,10 +463,7 @@ export class StockPredictionService {
       const recommendations = [];
       for (const stock of stocks) {
         try {
-          const consumptionHistory = await this.getConsumptionHistory(
-            stock.itemId,
-            stock.branchId
-          );
+          const consumptionHistory = await this.getConsumptionHistory(stock.itemId, stock.branchId);
           const avgDemand = this.calculateAverageDemand(consumptionHistory);
           const leadTime = 7; // Default 7 days lead time
 
@@ -517,32 +476,27 @@ export class StockPredictionService {
             currentStock: Number(stock.quantity),
             reorderPoint,
             recommendedOrderQty,
-            urgency: Number(stock.quantity) <= reorderPoint ? "high" : "low",
+            urgency: Number(stock.quantity) <= reorderPoint ? 'high' : 'low',
             daysUntilStockout: Number(stock.quantity) / Math.max(avgDemand, 1),
             estimatedCost: recommendedOrderQty * 10, // Placeholder cost calculation
           });
         } catch (error) {
-          this.logger.warn(
-            `Failed to calculate reorder point for item ${stock.itemId}:`,
-            error
-          );
+          this.logger.warn(`Failed to calculate reorder point for item ${stock.itemId}:`, error);
         }
       }
 
       return recommendations;
     } catch (error) {
-      this.logger.error("Error calculating optimal reorder points:", error);
-      throw new Error("Failed to calculate optimal reorder points");
+      this.logger.error('Error calculating optimal reorder points:', error);
+      throw new Error('Failed to calculate optimal reorder points');
     }
   }
 
-  private calculateAverageDemand(consumptionHistory: any[]): number {
-    if (consumptionHistory.length === 0) return 1;
+  private calculateAverageDemand(consumptionHistory: unknown[]): number {
+    const typedHistory = consumptionHistory as ConsumptionRecord[];
+    if (typedHistory.length === 0) return 1;
 
-    const totalConsumption = consumptionHistory.reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-    return totalConsumption / consumptionHistory.length;
+    const totalConsumption = typedHistory.reduce((sum, item) => sum + item.quantity, 0);
+    return totalConsumption / typedHistory.length;
   }
 }

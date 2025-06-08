@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { OptimizeQuantitiesDto } from './dto/ai.dto';
 import type { DemandForecastingService } from './services/demand-forecasting.service';
 import type { PurchaseOptimizationService } from './services/purchase-optimization.service';
 import type { QualityAnalysisService } from './services/quality-analysis.service';
@@ -64,7 +65,7 @@ export class AiController {
     status: 200,
     description: 'Order quantities optimized successfully',
   })
-  async optimizeQuantities(@Body() body: { poItems: any[] }) {
+  async optimizeQuantities(@Body() body: OptimizeQuantitiesDto) {
     return this.purchaseOptimizationService.optimizeOrderQuantities(body.poItems);
   }
 

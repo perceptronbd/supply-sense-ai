@@ -1,13 +1,13 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { ConfigService } from "@nestjs/config";
-import { GeminiService } from "./gemini.service";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ConfigService } from '@nestjs/config';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { GeminiService } from './gemini.service';
 
-jest.mock("@google/generative-ai");
+jest.mock('@google/generative-ai');
 
-describe("GeminiService", () => {
+describe('GeminiService', () => {
   let service: GeminiService;
-  let configService: ConfigService;
+  let _configService: ConfigService;
   let mockGenerateContent: jest.Mock;
 
   beforeEach(async () => {
@@ -28,8 +28,8 @@ describe("GeminiService", () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string) => {
-              if (key === "GEMINI_API_KEY") return "test-api-key";
-              if (key === "GEMINI_MODEL") return "gemini-pro";
+              if (key === 'GEMINI_API_KEY') return 'test-api-key';
+              if (key === 'GEMINI_MODEL') return 'gemini-pro';
               return null;
             }),
           },
@@ -38,79 +38,77 @@ describe("GeminiService", () => {
     }).compile();
 
     service = module.get<GeminiService>(GeminiService);
-    configService = module.get<ConfigService>(ConfigService);
+    _configService = module.get<ConfigService>(ConfigService);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe("generateText", () => {
-    it("should generate text successfully", async () => {
+  describe('generateText', () => {
+    it('should generate text successfully', async () => {
       const mockResponse = {
         response: {
-          text: jest.fn().mockReturnValue("Generated text response"),
+          text: jest.fn().mockReturnValue('Generated text response'),
         },
       };
       mockGenerateContent.mockResolvedValue(mockResponse);
 
-      const result = await service.generateText("Test prompt");
+      const result = await service.generateText('Test prompt');
 
-      expect(result).toBe("Generated text response");
-      expect(mockGenerateContent).toHaveBeenCalledWith("Test prompt");
+      expect(result).toBe('Generated text response');
+      expect(mockGenerateContent).toHaveBeenCalledWith('Test prompt');
     });
-    it("should handle API errors gracefully", async () => {
-      mockGenerateContent.mockRejectedValue(new Error("API Error"));
+    it('should handle API errors gracefully', async () => {
+      mockGenerateContent.mockRejectedValue(new Error('API Error'));
 
-      await expect(service.generateText("Test prompt")).rejects.toThrow(
-        "Failed to generate AI response"
+      await expect(service.generateText('Test prompt')).rejects.toThrow(
+        'Failed to generate AI response'
       );
     });
 
-    it("should handle empty response", async () => {
+    it('should handle empty response', async () => {
       const mockResponse = {
         response: {
-          text: jest.fn().mockReturnValue(""),
+          text: jest.fn().mockReturnValue(''),
         },
       };
       mockGenerateContent.mockResolvedValue(mockResponse);
 
-      const result = await service.generateText("Test prompt");
+      const result = await service.generateText('Test prompt');
 
-      expect(result).toBe("");
+      expect(result).toBe('');
     });
   });
 
-  describe("analyzeContent", () => {
-    it("should analyze content and return structured response", async () => {
+  describe('analyzeContent', () => {
+    it('should analyze content and return structured response', async () => {
       const mockResponse = {
         response: {
-          text: jest
-            .fn()
-            .mockReturnValue('{"analysis": "positive", "confidence": 0.8}'),
+          text: jest.fn().mockReturnValue('{"analysis": "positive", "confidence": 0.8}'),
         },
       };
       mockGenerateContent.mockResolvedValue(mockResponse);
-      const result = await service.generateText("Sample content to analyze");
+      const result = await service.generateText('Sample content to analyze');
 
       expect(result).toBe('{"analysis": "positive", "confidence": 0.8}');
     });
 
-    it("should handle invalid JSON in response", async () => {
+    it('should handle invalid JSON in response', async () => {
       const mockResponse = {
         response: {
-          text: jest.fn().mockReturnValue("Invalid JSON response"),
+          text: jest.fn().mockReturnValue('Invalid JSON response'),
         },
       };
       mockGenerateContent.mockResolvedValue(mockResponse);
 
-      const result = await service.generateText("Sample content");
-      expect(result).toBe("Invalid JSON response");
+      const result = await service.generateText('Sample content');
+      expect(result).toBe('Invalid JSON response');
     });
   });
 
-  describe("initialization", () => {
-    it("should throw error when generateText is called without API key", async () => {
+  describe('initialization', () => {
+    it('should throw error when generateText is called without API key', async () => {
       const moduleWithoutKey: TestingModule = await Test.createTestingModule({
         providers: [
           GeminiService,
@@ -118,8 +116,8 @@ describe("GeminiService", () => {
             provide: ConfigService,
             useValue: {
               get: jest.fn((key: string) => {
-                if (key === "GEMINI_API_KEY") return null;
-                if (key === "GEMINI_MODEL") return "gemini-pro";
+                if (key === 'GEMINI_API_KEY') return null;
+                if (key === 'GEMINI_MODEL') return 'gemini-pro';
                 return null;
               }),
             },
@@ -127,11 +125,10 @@ describe("GeminiService", () => {
         ],
       }).compile();
 
-      const serviceWithoutKey =
-        moduleWithoutKey.get<GeminiService>(GeminiService);
+      const serviceWithoutKey = moduleWithoutKey.get<GeminiService>(GeminiService);
 
-      await expect(serviceWithoutKey.generateText("test")).rejects.toThrow(
-        "Gemini AI not properly initialized"
+      await expect(serviceWithoutKey.generateText('test')).rejects.toThrow(
+        'Gemini AI not properly initialized'
       );
     });
   });

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { FormulaModule } from '../modules/formula/formula.module';
 import { GoodsReceiptModule } from '../modules/goods-receipt/goods-receipt.module';
@@ -22,6 +23,7 @@ import { PrismaService } from './prisma.service';
     MaterialRequisitionModule,
     ManufacturingListModule,
     FormulaModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, Reflector],
