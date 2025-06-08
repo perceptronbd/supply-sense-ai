@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 
 export interface TestUser {

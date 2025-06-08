@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { PrismaService } from '../../../app/prisma.service';
+import { PrismaService } from '../../../app/prisma.service';
 import {
   GRItemWithReceiptAccess,
   GoodsReceiptData,
@@ -7,7 +7,7 @@ import {
   SupplierData,
   type SupplierWithQualityData,
 } from '../interfaces/ai-service.interface';
-import type { GeminiService } from './gemini.service';
+import { GeminiService } from './gemini.service';
 
 interface QualityAnalysis {
   supplierId: string;

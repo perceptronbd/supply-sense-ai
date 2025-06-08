@@ -1,12 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../../app/prisma.service';
-import type {
-  ConsumptionRecord,
-  StockData,
-  StockWhereClause,
-} from '../interfaces/ai-service.interface';
-import type { GeminiService } from './gemini.service';
+import { PrismaService } from '../../../app/prisma.service';
+import { ConsumptionRecord, StockData, StockWhereClause } from '../interfaces/ai-service.interface';
+import { GeminiService } from './gemini.service';
 
 interface StockPrediction {
   itemId: string;

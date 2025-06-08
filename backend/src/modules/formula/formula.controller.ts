@@ -14,7 +14,7 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
-import type { FormulaService } from './formula.service';
+import { FormulaService } from './formula.service';
 
 @ApiTags('formula')
 @Controller('formula')

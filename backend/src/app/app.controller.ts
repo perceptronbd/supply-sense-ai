@@ -1,8 +1,8 @@
 import { Controller, Get, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
-import type { AppService } from './app.service';
+import { AppService } from './app.service';
 
 @ApiTags('app')
 @Controller()

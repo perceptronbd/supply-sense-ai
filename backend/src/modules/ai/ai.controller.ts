@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import type { OptimizeQuantitiesDto } from './dto/ai.dto';
-import type { DemandForecastingService } from './services/demand-forecasting.service';
-import type { PurchaseOptimizationService } from './services/purchase-optimization.service';
-import type { QualityAnalysisService } from './services/quality-analysis.service';
-import type { StockPredictionService } from './services/stock-prediction.service';
-import type { WorkflowAutomationService } from './services/workflow-automation.service';
+import { OptimizeQuantitiesDto } from './dto/ai.dto';
+import { DemandForecastingService } from './services/demand-forecasting.service';
+import { PurchaseOptimizationService } from './services/purchase-optimization.service';
+import { QualityAnalysisService } from './services/quality-analysis.service';
+import { StockPredictionService } from './services/stock-prediction.service';
+import { WorkflowAutomationService } from './services/workflow-automation.service';
 
 @ApiTags('ai')
 @Controller('ai')

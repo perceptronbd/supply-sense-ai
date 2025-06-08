@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
-import type { CreateRequestFormDto } from './dto/create-request-form.dto';
-import type { UpdateRequestFormDto } from './dto/update-request-form.dto';
+import { PrismaService } from '../../app/prisma.service';
+import { CreateRequestFormDto } from './dto/create-request-form.dto';
+import { UpdateRequestFormDto } from './dto/update-request-form.dto';
 
 // Define status enum locally to avoid import issues
 enum RFStatus {

@@ -26,7 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
-import type { GoodsReceiptService } from './goods-receipt.service';
+import { GoodsReceiptService } from './goods-receipt.service';
 
 @ApiTags('goods-receipt')
 @Controller('goods-receipt')

@@ -1,7 +1,7 @@
 import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import { Injectable, Logger } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
-import type { EquipmentData, SupplierRequirements } from '../interfaces/ai-service.interface';
+import { ConfigService } from '@nestjs/config';
+import { EquipmentData, SupplierRequirements } from '../interfaces/ai-service.interface';
 
 // Interfaces for typed data
 export interface HistoricalDemandData {

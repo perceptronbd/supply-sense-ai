@@ -13,7 +13,7 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
-import type { ManufacturingListService } from './manufacturing-list.service';
+import { ManufacturingListService } from './manufacturing-list.service';
 
 @ApiTags('manufacturing-list')
 @Controller('manufacturing-list')

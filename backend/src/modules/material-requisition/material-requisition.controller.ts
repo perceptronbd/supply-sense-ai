@@ -13,7 +13,7 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
-import type { MaterialRequisitionService } from './material-requisition.service';
+import { MaterialRequisitionService } from './material-requisition.service';
 
 @ApiTags('material-requisition')
 @Controller('material-requisition')

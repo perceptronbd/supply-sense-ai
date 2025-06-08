@@ -2,8 +2,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
-import type {
+import { ConfigService } from '@nestjs/config';
+import {
   AutoApprovalArgs,
   DemandForecastArgs,
   IntelligentPRGenerationArgs,
@@ -12,11 +12,11 @@ import type {
   ReorderPointCalculationArgs,
   StockPredictionArgs,
 } from '../interfaces/ai-service.interface';
-import type { DemandForecastingService } from './demand-forecasting.service';
-import type { PurchaseOptimizationService } from './purchase-optimization.service';
-import type { QualityAnalysisService } from './quality-analysis.service';
-import type { StockPredictionService } from './stock-prediction.service';
-import type { WorkflowAutomationService } from './workflow-automation.service';
+import { DemandForecastingService } from './demand-forecasting.service';
+import { PurchaseOptimizationService } from './purchase-optimization.service';
+import { QualityAnalysisService } from './quality-analysis.service';
+import { StockPredictionService } from './stock-prediction.service';
+import { WorkflowAutomationService } from './workflow-automation.service';
 
 @Injectable()
 export class McpServerService implements OnModuleInit {

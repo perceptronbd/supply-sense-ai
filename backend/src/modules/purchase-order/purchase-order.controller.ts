@@ -26,7 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
-import type { PurchaseOrderService } from './purchase-order.service';
+import { PurchaseOrderService } from './purchase-order.service';
 
 @ApiTags('purchase-order')
 @Controller('purchase-order')

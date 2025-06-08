@@ -1,5 +1,5 @@
-import type { Request } from 'express';
-import type { AuthenticatedUser } from '../decorators/current-user.decorator';
+import { Request } from 'express';
+import { AuthenticatedUser } from '../decorators/current-user.decorator';
 
 /**
  * Extended Express Request interface that includes the authenticated user

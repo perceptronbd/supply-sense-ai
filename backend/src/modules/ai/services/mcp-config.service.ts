@@ -6,7 +6,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { Injectable, Logger } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 
 export interface MCPServerConfig {
   name: string;

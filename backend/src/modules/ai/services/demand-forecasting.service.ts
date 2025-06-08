@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../../app/prisma.service';
-import type { AutomaticPRResult } from '../interfaces/ai-service.interface';
-import type { GeminiService } from './gemini.service';
+import { PrismaService } from '../../../app/prisma.service';
+import { AutomaticPRResult } from '../interfaces/ai-service.interface';
+import { GeminiService } from './gemini.service';
 
 export interface DemandForecast {
   itemId: string;

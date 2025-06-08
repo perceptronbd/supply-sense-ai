@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../app/prisma.service';
-import type { CreateFormulaDto } from './dto/create-formula.dto';
+import { CreateFormulaDto } from './dto/create-formula.dto';
 import { FormulaService } from './formula.service';
 
 describe('FormulaService', () => {

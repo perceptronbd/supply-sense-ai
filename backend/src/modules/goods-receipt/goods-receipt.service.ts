@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
-import type { PrismaTransaction } from '../common/interfaces/prisma.interface';
-import type { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
-import type { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
+import { PrismaService } from '../../app/prisma.service';
+import { PrismaTransaction } from '../common/interfaces/prisma.interface';
+import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
+import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
 // Define status enum locally to avoid import issues
 enum GRStatus {

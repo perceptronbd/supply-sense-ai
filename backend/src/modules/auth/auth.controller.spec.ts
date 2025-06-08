@@ -2,7 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import type { LoginDto } from './dto/login.dto';
+import { LoginDto } from './dto/login.dto';
 
 // Mock the Prisma client import
 jest.mock('../../../generated/prisma', () => ({

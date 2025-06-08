@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../app/prisma.service';
-import type { CreateRequestFormDto } from './dto/create-request-form.dto';
+import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { RequestFormService } from './request-form.service';
 
 // Mock data

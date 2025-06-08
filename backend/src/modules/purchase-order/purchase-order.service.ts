@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../../app/prisma.service';
-import type { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
-import type { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
+import { PrismaService } from '../../app/prisma.service';
+import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
+import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 // Define status enum locally to avoid import issues
 enum POStatus {

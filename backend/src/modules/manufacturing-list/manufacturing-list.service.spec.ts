@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../app/prisma.service';
-import type { CreateManufacturingListDto } from './dto/create-manufacturing-list.dto';
+import { CreateManufacturingListDto } from './dto/create-manufacturing-list.dto';
 import { ManufacturingListService } from './manufacturing-list.service';
 
 describe('ManufacturingListService', () => {

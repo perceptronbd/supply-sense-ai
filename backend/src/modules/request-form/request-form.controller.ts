@@ -13,7 +13,7 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
-import type { RequestFormService } from './request-form.service';
+import { RequestFormService } from './request-form.service';
 
 @ApiTags('request-form')
 @Controller('request-form')

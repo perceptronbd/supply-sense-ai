@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../app/prisma.service';
-import type { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
+import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderService } from './purchase-order.service';
 
 // Mock data
