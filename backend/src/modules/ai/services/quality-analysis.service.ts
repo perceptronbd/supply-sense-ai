@@ -138,7 +138,8 @@ export class QualityAnalysisService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const analysis = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const analysis = JSON.parse(cleanedResponse);
 
       return {
         supplierId: typedSupplierData.id,
@@ -310,7 +311,8 @@ export class QualityAnalysisService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const analysis = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const analysis = JSON.parse(cleanedResponse);
 
       if (analysis.additionalAnomalies) {
         anomalies.push(...analysis.additionalAnomalies);
@@ -530,5 +532,23 @@ export class QualityAnalysisService {
       this.logger.error(`Error analyzing item quality for ${itemId}:`, error);
       throw new Error('Failed to analyze item quality');
     }
+  }
+
+  private cleanJsonResponse(response: string): string {
+    // Remove markdown code blocks and any extra whitespace
+    let cleaned = response.trim();
+
+    // Remove ```json at the beginning and ``` at the end
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+
+    return cleaned.trim();
   }
 }

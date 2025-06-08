@@ -196,7 +196,7 @@ export class PurchaseOptimizationService {
       4. Quality rating (0-100)
       5. Specific recommendations for working with this supplier
       
-      Return JSON format:
+      Return JSON format (return only valid JSON, no markdown):
       {
         "score": number,
         "averagePrice": number,
@@ -208,7 +208,9 @@ export class PurchaseOptimizationService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const analysis = JSON.parse(aiResponse);
+      // Clean the response to remove markdown code blocks if present
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const analysis = JSON.parse(cleanedResponse);
 
       return {
         supplierId: supplierData.supplierId,
@@ -288,7 +290,7 @@ export class PurchaseOptimizationService {
       
       Calculate optimal order quantity and potential savings.
       
-      Return JSON:
+      Return JSON (return only valid JSON, no markdown):
       {
         "optimizedOrderQty": number,
         "potentialSavings": number,
@@ -298,7 +300,8 @@ export class PurchaseOptimizationService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const optimization = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const optimization = JSON.parse(cleanedResponse);
 
       return {
         itemId: typedItem.itemId,
@@ -534,5 +537,23 @@ export class PurchaseOptimizationService {
       this.logger.error('Error optimizing order:', error);
       throw new Error('Failed to optimize order');
     }
+  }
+
+  private cleanJsonResponse(response: string): string {
+    // Remove markdown code blocks and any extra whitespace
+    let cleaned = response.trim();
+
+    // Remove ```json at the beginning and ``` at the end
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+
+    return cleaned.trim();
   }
 }

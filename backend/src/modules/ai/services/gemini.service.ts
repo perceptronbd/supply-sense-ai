@@ -131,7 +131,9 @@ export class GeminiService {
     const aiResponse = await this.generateText(prompt);
 
     try {
-      return JSON.parse(aiResponse);
+      // Clean the response to remove markdown code blocks if present
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      return JSON.parse(cleanedResponse);
     } catch (_error) {
       this.logger.warn('AI response was not valid JSON, returning as text');
       return {
@@ -152,7 +154,7 @@ You are an AI supply chain analyst. Analyze the following historical data and pr
 Historical Data:
 ${JSON.stringify(data, null, 2)}
 
-Please provide a JSON response with the following structure:
+Please provide a JSON response with the following structure (return only valid JSON, no markdown):
 {
   "forecastedDemand": [
     {
@@ -192,7 +194,7 @@ You are an AI quality control analyst. Analyze the following goods receipt and s
 Data to Analyze:
 ${JSON.stringify(data, null, 2)}
 
-Please provide a JSON response with:
+Please provide a JSON response with (return only valid JSON, no markdown):
 {
   "qualityScore": 0.85,
   "issues": [
@@ -232,7 +234,7 @@ You are an AI procurement optimization specialist. Analyze the purchase requirem
 Purchase Data:
 ${JSON.stringify(data, null, 2)}
 
-Provide a JSON response with:
+Provide a JSON response with (return only valid JSON, no markdown):
 {
   "optimizedOrders": [
     {
@@ -279,7 +281,7 @@ You are an AI risk assessment specialist for supply chains. Analyze the followin
 Supply Chain Data:
 ${JSON.stringify(data, null, 2)}
 
-Provide a JSON response with:
+Provide a JSON response with (return only valid JSON, no markdown):
 {
   "riskAssessment": {
     "overallRiskLevel": "medium",
@@ -352,7 +354,7 @@ Based on the following equipment and usage data, predict maintenance needs:
 
 Equipment Data: ${JSON.stringify(equipmentData, null, 2)}
 
-Provide JSON response with:
+Provide JSON response with (return only valid JSON, no markdown):
 - Predicted maintenance schedule
 - Risk of equipment failure
 - Recommended spare parts inventory
@@ -361,10 +363,29 @@ Provide JSON response with:
 
     const response = await this.generateText(prompt);
     try {
-      return JSON.parse(response);
+      const cleanedResponse = this.cleanJsonResponse(response);
+      return JSON.parse(cleanedResponse);
     } catch {
       return { prediction: response, type: 'maintenance_forecast' };
     }
+  }
+
+  private cleanJsonResponse(response: string): string {
+    // Remove markdown code blocks and any extra whitespace
+    let cleaned = response.trim();
+
+    // Remove ```json at the beginning and ``` at the end
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+
+    return cleaned.trim();
   }
 
   isAvailable(): boolean {

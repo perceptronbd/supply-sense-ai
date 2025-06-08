@@ -126,7 +126,8 @@ export class WorkflowAutomationService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const decision = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const decision = JSON.parse(cleanedResponse);
 
       return {
         shouldAutoApprove: decision.shouldAutoApprove || false,
@@ -347,7 +348,8 @@ export class WorkflowAutomationService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const analysis = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const analysis = JSON.parse(cleanedResponse);
 
       return {
         currentWorkflow: `${workflowType} Processing`,
@@ -459,7 +461,8 @@ export class WorkflowAutomationService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const routing = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const routing = JSON.parse(cleanedResponse);
 
       return {
         documentType: documentType as 'PR' | 'PO' | 'GR',
@@ -561,5 +564,23 @@ export class WorkflowAutomationService {
       this.logger.error('Error generating intelligent PR suggestions:', error);
       throw new Error('Failed to generate intelligent PR suggestions');
     }
+  }
+
+  private cleanJsonResponse(response: string): string {
+    // Remove markdown code blocks and any extra whitespace
+    let cleaned = response.trim();
+
+    // Remove ```json at the beginning and ``` at the end
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+
+    return cleaned.trim();
   }
 }

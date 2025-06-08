@@ -114,7 +114,8 @@ export class StockPredictionService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const prediction = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const prediction = JSON.parse(cleanedResponse);
 
       return {
         itemId: typedStockData.itemId,
@@ -259,7 +260,8 @@ export class StockPredictionService {
 
     try {
       const aiResponse = await this.geminiService.generateText(prompt);
-      const recommendation = JSON.parse(aiResponse);
+      const cleanedResponse = this.cleanJsonResponse(aiResponse);
+      const recommendation = JSON.parse(cleanedResponse);
 
       return {
         itemId: prediction.itemId,
@@ -494,5 +496,23 @@ export class StockPredictionService {
 
     const totalConsumption = typedHistory.reduce((sum, item) => sum + item.quantity, 0);
     return totalConsumption / typedHistory.length;
+  }
+
+  private cleanJsonResponse(response: string): string {
+    // Remove markdown code blocks and any extra whitespace
+    let cleaned = response.trim();
+
+    // Remove ```json at the beginning and ``` at the end
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+
+    return cleaned.trim();
   }
 }
