@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { TestUser } from "../../support/test-helpers";
+import { TestHelpers, type TestUser } from "../../support/test-helpers";
 
 describe("Goods Receipt API (E2E)", () => {
   const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3000";
@@ -7,11 +7,16 @@ describe("Goods Receipt API (E2E)", () => {
   let testUser: TestUser;
   let testPurchaseOrderId: string;
   let testGoodsReceiptId: string;
-  // Test data from seed files - Updated with actual UUIDs from database
-  const TEST_ITEM_ID = "7079a616-6e53-4141-ba85-a26d26dc7502";
-  const TEST_SUPPLIER_ID = "e22e74e9-c6a1-4d0f-8417-9aff6f84a473";
+
+  // Dynamic test data - will be fetched from database
+  let TEST_ITEM_ID: string;
+  let TEST_SUPPLIER_ID: string;
 
   beforeAll(async () => {
+    // Fetch dynamic test data from database
+    TEST_ITEM_ID = await TestHelpers.getTestItemId();
+    TEST_SUPPLIER_ID = await TestHelpers.getTestSupplierId();
+
     // Login as branch manager for testing
     const loginResponse = await axios.post(`${API_BASE_URL}/api/auth/login`, {
       email: "manager.a@supplychain.com",

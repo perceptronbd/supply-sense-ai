@@ -1,4 +1,5 @@
 import axios from "axios";
+import { PrismaClient } from "@prisma/client";
 
 export interface TestUser {
   id: string;
@@ -130,10 +131,113 @@ export interface GoodsReceiptData {
   }[];
 }
 
+interface TestUUIDs {
+  itemId: string;
+  supplierId: string;
+  branchId: string;
+  users: {
+    branchManager: string;
+    procurementSpecialist: string;
+    inventoryClerk: string;
+  };
+}
+
+// Cache for UUIDs to avoid repeated database calls
+let cachedUUIDs: TestUUIDs | null = null;
+
 export class TestHelpers {
   private static readonly API_BASE_URL =
     process.env.API_BASE_URL || "http://localhost:3000";
-  // Test data constants from seed files - updated with actual supplier IDs
+
+  // Cache for UUIDs to avoid repeated database calls
+  private static cachedUUIDs: {
+    itemId?: string;
+    supplierId?: string;
+    branchId?: string;
+  } = {};
+
+  /**
+   * Dynamically fetch a valid item ID from the database
+   */
+  static async getTestItemId(): Promise<string> {
+    if (this.cachedUUIDs.itemId) {
+      return this.cachedUUIDs.itemId;
+    }
+
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
+
+    try {
+      const item = await prisma.item.findFirst({
+        select: { id: true },
+      });
+
+      if (!item) {
+        throw new Error("No items found in database for testing");
+      }
+
+      this.cachedUUIDs.itemId = item.id;
+      return item.id;
+    } finally {
+      await prisma.$disconnect();
+    }
+  }
+
+  /**
+   * Dynamically fetch a valid supplier ID from the database
+   */
+  static async getTestSupplierId(): Promise<string> {
+    if (this.cachedUUIDs.supplierId) {
+      return this.cachedUUIDs.supplierId;
+    }
+
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
+
+    try {
+      const supplier = await prisma.supplier.findFirst({
+        select: { id: true },
+      });
+
+      if (!supplier) {
+        throw new Error("No suppliers found in database for testing");
+      }
+
+      this.cachedUUIDs.supplierId = supplier.id;
+      return supplier.id;
+    } finally {
+      await prisma.$disconnect();
+    }
+  }
+
+  /**
+   * Dynamically fetch a valid branch ID from the database
+   */
+  static async getTestBranchId(): Promise<string> {
+    if (this.cachedUUIDs.branchId) {
+      return this.cachedUUIDs.branchId;
+    }
+
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
+
+    try {
+      const branch = await prisma.branch.findFirst({
+        select: { id: true },
+      });
+
+      if (!branch) {
+        throw new Error("No branches found in database for testing");
+      }
+
+      this.cachedUUIDs.branchId = branch.id;
+      return branch.id;
+    } finally {
+      await prisma.$disconnect();
+    }
+  }
+
+  // Legacy constants for backwards compatibility - will be deprecated
   static readonly TEST_ITEM_ID = "b32dd8ee-475e-47da-8bc8-990b7f8aada6";
   static readonly TEST_SUPPLIERS = {
     "ACME Corp": "8f5c1e3a-2b9d-4c7f-8e1a-3f4c5b6d7e8f",
@@ -192,12 +296,15 @@ export class TestHelpers {
   }
   /**
    * Create a complete purchase request workflow (create, submit, approve)
-   */ static async createApprovedPurchaseRequest(
+   */
+  static async createApprovedPurchaseRequest(
     authToken: string,
     branchId: string,
     overrides: Partial<PurchaseRequestData> = {}
   ): Promise<string> {
     const timestamp = Date.now();
+    const itemId = await this.getTestItemId();
+
     const prData = {
       title: `Test PR for E2E Testing ${timestamp}`,
       description: "Testing PR workflow in E2E tests",
@@ -206,7 +313,7 @@ export class TestHelpers {
       justification: "Required for E2E testing",
       items: [
         {
-          itemId: TestHelpers.TEST_ITEM_ID,
+          itemId,
           requestedQty: 50,
           estimatedPrice: 15.0,
           requiredDate: "2025-06-20T10:00:00Z",
@@ -245,15 +352,19 @@ export class TestHelpers {
   }
   /**
    * Create a basic purchase order
-   */ static async createPurchaseOrder(
+   */
+  static async createPurchaseOrder(
     authToken: string,
     branchId: string,
     overrides: Partial<PurchaseOrderData> = {}
   ): Promise<PurchaseOrderResponse> {
     const timestamp = Date.now();
+    const itemId = await this.getTestItemId();
+    const supplierId = await this.getTestSupplierId();
+
     const poData = {
       title: `Test Purchase Order E2E ${timestamp}`,
-      supplierId: TestHelpers.TEST_SUPPLIER_ID,
+      supplierId,
       expectedDeliveryDate: "2025-07-01T10:00:00Z",
       paymentTerms: "Net 30 days",
       deliveryTerms: "FOB Origin",
@@ -261,7 +372,7 @@ export class TestHelpers {
       notes: "Testing PO creation in E2E",
       items: [
         {
-          itemId: TestHelpers.TEST_ITEM_ID,
+          itemId,
           orderedQty: 25,
           unitPrice: 18.5,
           deliveryDate: "2025-07-01T10:00:00Z",
@@ -283,7 +394,8 @@ export class TestHelpers {
   }
   /**
    * Execute purchase order workflow steps
-   */ static async executePOWorkflow(
+   */
+  static async executePOWorkflow(
     authToken: string,
     poId: string,
     steps: ("send" | "confirm" | "close")[]
@@ -350,5 +462,96 @@ export class TestHelpers {
       description: `Generated test data for E2E testing - ${suffix}`,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Fetch dynamic UUIDs from the database
+   */
+  static async fetchDynamicUUIDs(prisma: PrismaClient): Promise<TestUUIDs> {
+    if (cachedUUIDs) {
+      return cachedUUIDs;
+    }
+
+    const item = await prisma.item.create({
+      data: {
+        name: "Test Item",
+        sku: "TST001",
+        description: "Item created for testing",
+        mainUnit: "kg",
+        buyingUnit: "kg",
+        transferUnit: "kg",
+        usingUnit: "kg",
+      },
+    });
+
+    const supplier = await prisma.supplier.create({
+      data: {
+        name: "Test Supplier",
+        code: "TSUP001",
+        contactPerson: "Test Contact",
+        email: "supplier@test.com",
+        phone: "123-456-7890",
+        address: "123 Supplier St",
+      },
+    });
+
+    const branch = await prisma.branch.create({
+      data: {
+        name: "Test Branch",
+        code: "TBR001",
+        address: "123 Test St, Test City",
+        phone: "123-456-7890",
+        email: "branch@test.com",
+      },
+    });
+
+    const userManager = await prisma.user.create({
+      data: {
+        email: "manager.test@supplychain.com",
+        username: "manager.test",
+        password: "securePassword",
+        firstName: "Test",
+        lastName: "Manager",
+        role: "BRANCH_MANAGER",
+        branchId: branch.id,
+      },
+    });
+
+    const userSpecialist = await prisma.user.create({
+      data: {
+        email: "specialist.test@supplychain.com",
+        username: "specialist.test",
+        password: "securePassword",
+        firstName: "Test",
+        lastName: "Specialist",
+        role: "PROCUREMENT_SPECIALIST",
+        branchId: branch.id,
+      },
+    });
+
+    const userClerk = await prisma.user.create({
+      data: {
+        email: "clerk.test@supplychain.com",
+        username: "clerk.test",
+        password: "securePassword",
+        firstName: "Test",
+        lastName: "Clerk",
+        role: "INVENTORY_CLERK",
+        branchId: branch.id,
+      },
+    });
+
+    cachedUUIDs = {
+      itemId: item.id,
+      supplierId: supplier.id,
+      branchId: branch.id,
+      users: {
+        branchManager: userManager.id,
+        procurementSpecialist: userSpecialist.id,
+        inventoryClerk: userClerk.id,
+      },
+    };
+
+    return cachedUUIDs;
   }
 }
