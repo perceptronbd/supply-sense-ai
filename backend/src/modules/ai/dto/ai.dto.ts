@@ -81,6 +81,10 @@ export class AutoApprovalDto {
 }
 
 export class POItemDto {
+  @ApiProperty({ description: 'Purchase order item ID' })
+  @IsString()
+  id: string;
+
   @ApiProperty({ description: 'Item ID' })
   @IsString()
   itemId: string;

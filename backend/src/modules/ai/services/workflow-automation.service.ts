@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { PrismaService } from '../../../app/prisma.service';
-import type {
+import {
   AutoApprovalArgs,
-  PurchaseRequestData,
-  WorkflowData,
+  type PurchaseRequestData,
+  type WorkflowData,
 } from '../interfaces/ai-service.interface';
 import type { GeminiService } from './gemini.service';
 
@@ -486,7 +486,7 @@ export class WorkflowAutomationService {
 
       return {
         documentType: documentType as 'PR' | 'PO' | 'GR',
-        documentId: document.id,
+        documentId: typedDocument.id,
         recommendedApprovers: approvers,
         priorityLevel: priority,
         estimatedApprovalTime: 24,

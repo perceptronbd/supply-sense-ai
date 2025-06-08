@@ -8,7 +8,7 @@ import type { QualityAnalysisService } from './services/quality-analysis.service
 import type { StockPredictionService } from './services/stock-prediction.service';
 import type { WorkflowAutomationService } from './services/workflow-automation.service';
 
-@ApiTags('AI Analytics')
+@ApiTags('ai')
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()

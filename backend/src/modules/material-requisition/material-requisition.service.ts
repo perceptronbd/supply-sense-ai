@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { PrismaService } from '../../app/prisma.service';
-import type {
-  ItemForDeduction,
+import {
+  type ItemForDeduction,
   MRQueryFilter,
-  PrismaTransaction,
+  type PrismaTransaction,
 } from '../common/interfaces/prisma.interface';
 import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import type { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';

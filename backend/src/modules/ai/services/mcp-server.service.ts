@@ -246,7 +246,7 @@ export class McpServerService implements OnModuleInit {
           case 'analyze_quality':
             return await this.handleQualityAnalysis(args);
           case 'predict_stockout':
-            return await this.handleStockoutPrediction(args);
+            return await this.handleStockoutPrediction(args as unknown as StockPredictionArgs);
           case 'auto_approve_document':
             return await this.handleAutoApproval(args);
           case 'generate_intelligent_pr':
@@ -367,7 +367,7 @@ export class McpServerService implements OnModuleInit {
     try {
       const analysis = await this.qualityAnalysisService.analyzeItemQuality(
         qualityArgs.goodsReceiptId,
-        qualityArgs.includeSupplierAnalysis
+        qualityArgs.includeSupplierAnalysis ? 'supplier' : undefined
       );
 
       return {
@@ -515,7 +515,7 @@ export class McpServerService implements OnModuleInit {
                 success: true,
                 tool: 'generate_intelligent_pr',
                 data: prRecommendations,
-                message: `Intelligent PR generation completed for branch ${args.branchId}`,
+                message: `Intelligent PR generation completed for branch ${prGenerationArgs.branchId}`,
               },
               null,
               2

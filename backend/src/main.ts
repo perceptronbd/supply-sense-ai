@@ -26,9 +26,12 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Supply Chain AI Management API')
     .setDescription(
-      'Comprehensive API for managing supply chain operations including purchase requests, purchase orders, goods receipts, material requisitions, request forms, manufacturing lists, and formulas.'
+      'Comprehensive API for managing supply chain operations including authentication, purchase requests, purchase orders, goods receipts, material requisitions, request forms, manufacturing lists, formulas, and AI services.'
     )
     .setVersion('1.0')
+    .addTag('auth', 'Authentication operations')
+    .addTag('ai', 'AI services and automation')
+    .addTag('app', 'Application information')
     .addTag('purchase-request', 'Purchase Request operations')
     .addTag('purchase-order', 'Purchase Order operations')
     .addTag('goods-receipt', 'Goods Receipt operations')
@@ -36,6 +39,7 @@ async function bootstrap() {
     .addTag('request-form', 'Request Form operations')
     .addTag('manufacturing-list', 'Manufacturing List operations')
     .addTag('formula', 'Formula operations')
+    .addBearerAuth()
     .addServer(`http://localhost:${process.env.PORT || 3000}/`, 'Development server')
     .build();
 

@@ -1,4 +1,4 @@
-import type { MaterialRequisition, PrismaClient } from '@prisma/client';
+import { MaterialRequisition, type PrismaClient } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
 
 /**

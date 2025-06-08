@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { PrismaService } from '../../../app/prisma.service';
-import type {
-  OrderOptimization,
-  OrderOptimizationResult,
-  POItem,
+import {
+  type OrderOptimization,
+  type OrderOptimizationResult,
+  type POItem,
   PRItemForOptimization,
-  PriceHistoryItem,
-  QualityMetrics,
-  SupplierPerformanceData,
+  type PriceHistoryItem,
+  type QualityMetrics,
+  type SupplierPerformanceData,
   SupplierWithOrders,
 } from '../interfaces/ai-service.interface';
 import type { GeminiService } from './gemini.service';
