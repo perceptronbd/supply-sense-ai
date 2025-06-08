@@ -1,12 +1,12 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { Reflector } from "@nestjs/core";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
-import { PrismaService } from "../../app/prisma.service";
-import { GoodsReceiptController } from "./goods-receipt.controller";
-import { GoodsReceiptService } from "./goods-receipt.service";
+import { Reflector } from '@nestjs/core';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../app/prisma.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { GoodsReceiptController } from './goods-receipt.controller';
+import { GoodsReceiptService } from './goods-receipt.service';
 
-describe("GoodsReceiptController", () => {
+describe('GoodsReceiptController', () => {
   let controller: GoodsReceiptController;
   let service: GoodsReceiptService;
 
@@ -83,11 +83,11 @@ describe("GoodsReceiptController", () => {
     service = module.get<GoodsReceiptService>(GoodsReceiptService);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  it("should have service defined", () => {
+  it('should have service defined', () => {
     expect(service).toBeDefined();
   });
 });

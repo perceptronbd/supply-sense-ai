@@ -1,5 +1,5 @@
-import axios from "axios";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from '@prisma/client';
+import axios from 'axios';
 
 export interface TestUser {
   id: string;
@@ -146,8 +146,7 @@ interface TestUUIDs {
 let cachedUUIDs: TestUUIDs | null = null;
 
 export class TestHelpers {
-  private static readonly API_BASE_URL =
-    process.env.API_BASE_URL || "http://localhost:3000";
+  private static readonly API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 
   // Cache for UUIDs to avoid repeated database calls
   private static cachedUUIDs: {
@@ -160,11 +159,11 @@ export class TestHelpers {
    * Dynamically fetch a valid item ID from the database
    */
   static async getTestItemId(): Promise<string> {
-    if (this.cachedUUIDs.itemId) {
-      return this.cachedUUIDs.itemId;
+    if (TestHelpers.cachedUUIDs.itemId) {
+      return TestHelpers.cachedUUIDs.itemId;
     }
 
-    const { PrismaClient } = require("@prisma/client");
+    const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
 
     try {
@@ -173,10 +172,10 @@ export class TestHelpers {
       });
 
       if (!item) {
-        throw new Error("No items found in database for testing");
+        throw new Error('No items found in database for testing');
       }
 
-      this.cachedUUIDs.itemId = item.id;
+      TestHelpers.cachedUUIDs.itemId = item.id;
       return item.id;
     } finally {
       await prisma.$disconnect();
@@ -187,11 +186,11 @@ export class TestHelpers {
    * Dynamically fetch a valid supplier ID from the database
    */
   static async getTestSupplierId(): Promise<string> {
-    if (this.cachedUUIDs.supplierId) {
-      return this.cachedUUIDs.supplierId;
+    if (TestHelpers.cachedUUIDs.supplierId) {
+      return TestHelpers.cachedUUIDs.supplierId;
     }
 
-    const { PrismaClient } = require("@prisma/client");
+    const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
 
     try {
@@ -200,10 +199,10 @@ export class TestHelpers {
       });
 
       if (!supplier) {
-        throw new Error("No suppliers found in database for testing");
+        throw new Error('No suppliers found in database for testing');
       }
 
-      this.cachedUUIDs.supplierId = supplier.id;
+      TestHelpers.cachedUUIDs.supplierId = supplier.id;
       return supplier.id;
     } finally {
       await prisma.$disconnect();
@@ -214,11 +213,11 @@ export class TestHelpers {
    * Dynamically fetch a valid branch ID from the database
    */
   static async getTestBranchId(): Promise<string> {
-    if (this.cachedUUIDs.branchId) {
-      return this.cachedUUIDs.branchId;
+    if (TestHelpers.cachedUUIDs.branchId) {
+      return TestHelpers.cachedUUIDs.branchId;
     }
 
-    const { PrismaClient } = require("@prisma/client");
+    const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
 
     try {
@@ -227,10 +226,10 @@ export class TestHelpers {
       });
 
       if (!branch) {
-        throw new Error("No branches found in database for testing");
+        throw new Error('No branches found in database for testing');
       }
 
-      this.cachedUUIDs.branchId = branch.id;
+      TestHelpers.cachedUUIDs.branchId = branch.id;
       return branch.id;
     } finally {
       await prisma.$disconnect();
@@ -238,28 +237,24 @@ export class TestHelpers {
   }
 
   // Legacy constants for backwards compatibility - will be deprecated
-  static readonly TEST_ITEM_ID = "b32dd8ee-475e-47da-8bc8-990b7f8aada6";
+  static readonly TEST_ITEM_ID = 'b32dd8ee-475e-47da-8bc8-990b7f8aada6';
   static readonly TEST_SUPPLIERS = {
-    "ACME Corp": "8f5c1e3a-2b9d-4c7f-8e1a-3f4c5b6d7e8f",
-    "Global Materials Inc": "2a1b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
-    "Chemical Solutions Ltd": "5bcd37fa-1b10-4ae0-accc-44c7b5760c7f",
-    "Industrial Supplies Co": "f2e8d9c5-b4a1-3c7f-9e6d-8b2a5c4e7f1g",
-    "TechComponents Pro": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+    'ACME Corp': '8f5c1e3a-2b9d-4c7f-8e1a-3f4c5b6d7e8f',
+    'Global Materials Inc': '2a1b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p',
+    'Chemical Solutions Ltd': '5bcd37fa-1b10-4ae0-accc-44c7b5760c7f',
+    'Industrial Supplies Co': 'f2e8d9c5-b4a1-3c7f-9e6d-8b2a5c4e7f1g',
+    'TechComponents Pro': 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
   };
-  static readonly TEST_SUPPLIER_ID =
-    TestHelpers.TEST_SUPPLIERS["Chemical Solutions Ltd"];
+  static readonly TEST_SUPPLIER_ID = TestHelpers.TEST_SUPPLIERS['Chemical Solutions Ltd'];
 
   /**
    * Login as branch manager for testing
    */
   static async loginAsBranchManager(): Promise<AuthTokens> {
-    const response = await axios.post(
-      `${TestHelpers.API_BASE_URL}/api/auth/login`,
-      {
-        email: "manager.a@supplychain.com",
-        password: "manager123",
-      }
-    );
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
+      email: 'manager.a@supplychain.com',
+      password: 'manager123',
+    });
 
     return {
       accessToken: response.data.access_token,
@@ -271,13 +266,10 @@ export class TestHelpers {
    * Login as procurement specialist for testing
    */
   static async loginAsProcurementSpecialist(): Promise<AuthTokens> {
-    const response = await axios.post(
-      `${TestHelpers.API_BASE_URL}/api/auth/login`,
-      {
-        email: "specialist.a@supplychain.com",
-        password: "specialist123",
-      }
-    );
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
+      email: 'specialist.a@supplychain.com',
+      password: 'specialist123',
+    });
 
     return {
       accessToken: response.data.access_token,
@@ -291,7 +283,7 @@ export class TestHelpers {
   static getAuthHeaders(token: string) {
     return {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     };
   }
   /**
@@ -303,21 +295,21 @@ export class TestHelpers {
     overrides: Partial<PurchaseRequestData> = {}
   ): Promise<string> {
     const timestamp = Date.now();
-    const itemId = await this.getTestItemId();
+    const itemId = await TestHelpers.getTestItemId();
 
     const prData = {
       title: `Test PR for E2E Testing ${timestamp}`,
-      description: "Testing PR workflow in E2E tests",
-      requiredDate: "2025-06-20T10:00:00Z",
+      description: 'Testing PR workflow in E2E tests',
+      requiredDate: '2025-06-20T10:00:00Z',
       branchId,
-      justification: "Required for E2E testing",
+      justification: 'Required for E2E testing',
       items: [
         {
           itemId,
           requestedQty: 50,
           estimatedPrice: 15.0,
-          requiredDate: "2025-06-20T10:00:00Z",
-          remarks: "Test item for E2E",
+          requiredDate: '2025-06-20T10:00:00Z',
+          remarks: 'Test item for E2E',
         },
       ],
       ...overrides,
@@ -359,36 +351,32 @@ export class TestHelpers {
     overrides: Partial<PurchaseOrderData> = {}
   ): Promise<PurchaseOrderResponse> {
     const timestamp = Date.now();
-    const itemId = await this.getTestItemId();
-    const supplierId = await this.getTestSupplierId();
+    const itemId = await TestHelpers.getTestItemId();
+    const supplierId = await TestHelpers.getTestSupplierId();
 
     const poData = {
       title: `Test Purchase Order E2E ${timestamp}`,
       supplierId,
-      expectedDeliveryDate: "2025-07-01T10:00:00Z",
-      paymentTerms: "Net 30 days",
-      deliveryTerms: "FOB Origin",
+      expectedDeliveryDate: '2025-07-01T10:00:00Z',
+      paymentTerms: 'Net 30 days',
+      deliveryTerms: 'FOB Origin',
       branchId,
-      notes: "Testing PO creation in E2E",
+      notes: 'Testing PO creation in E2E',
       items: [
         {
           itemId,
           orderedQty: 25,
           unitPrice: 18.5,
-          deliveryDate: "2025-07-01T10:00:00Z",
-          remarks: "E2E test item",
+          deliveryDate: '2025-07-01T10:00:00Z',
+          remarks: 'E2E test item',
         },
       ],
       ...overrides,
     };
 
-    const response = await axios.post(
-      `${TestHelpers.API_BASE_URL}/api/purchase-order`,
-      poData,
-      {
-        headers: TestHelpers.getAuthHeaders(authToken),
-      }
-    );
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/purchase-order`, poData, {
+      headers: TestHelpers.getAuthHeaders(authToken),
+    });
 
     return response.data;
   }
@@ -398,25 +386,25 @@ export class TestHelpers {
   static async executePOWorkflow(
     authToken: string,
     poId: string,
-    steps: ("send" | "confirm" | "close")[]
+    steps: ('send' | 'confirm' | 'close')[]
   ): Promise<PurchaseOrderResponse | undefined> {
     for (const step of steps) {
       switch (step) {
-        case "send":
+        case 'send':
           await axios.post(
             `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/send-to-supplier`,
             {},
             { headers: TestHelpers.getAuthHeaders(authToken) }
           );
           break;
-        case "confirm":
+        case 'confirm':
           await axios.post(
             `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/confirm`,
             {},
             { headers: TestHelpers.getAuthHeaders(authToken) }
           );
           break;
-        case "close":
+        case 'close':
           await axios.post(
             `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}/close`,
             {},
@@ -427,12 +415,9 @@ export class TestHelpers {
     }
 
     // Get the updated purchase order after all workflow steps
-    const response = await axios.get(
-      `${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}`,
-      {
-        headers: TestHelpers.getAuthHeaders(authToken),
-      }
-    );
+    const response = await axios.get(`${TestHelpers.API_BASE_URL}/api/purchase-order/${poId}`, {
+      headers: TestHelpers.getAuthHeaders(authToken),
+    });
 
     return response.data;
   }
@@ -474,69 +459,69 @@ export class TestHelpers {
 
     const item = await prisma.item.create({
       data: {
-        name: "Test Item",
-        sku: "TST001",
-        description: "Item created for testing",
-        mainUnit: "kg",
-        buyingUnit: "kg",
-        transferUnit: "kg",
-        usingUnit: "kg",
+        name: 'Test Item',
+        sku: 'TST001',
+        description: 'Item created for testing',
+        mainUnit: 'kg',
+        buyingUnit: 'kg',
+        transferUnit: 'kg',
+        usingUnit: 'kg',
       },
     });
 
     const supplier = await prisma.supplier.create({
       data: {
-        name: "Test Supplier",
-        code: "TSUP001",
-        contactPerson: "Test Contact",
-        email: "supplier@test.com",
-        phone: "123-456-7890",
-        address: "123 Supplier St",
+        name: 'Test Supplier',
+        code: 'TSUP001',
+        contactPerson: 'Test Contact',
+        email: 'supplier@test.com',
+        phone: '123-456-7890',
+        address: '123 Supplier St',
       },
     });
 
     const branch = await prisma.branch.create({
       data: {
-        name: "Test Branch",
-        code: "TBR001",
-        address: "123 Test St, Test City",
-        phone: "123-456-7890",
-        email: "branch@test.com",
+        name: 'Test Branch',
+        code: 'TBR001',
+        address: '123 Test St, Test City',
+        phone: '123-456-7890',
+        email: 'branch@test.com',
       },
     });
 
     const userManager = await prisma.user.create({
       data: {
-        email: "manager.test@supplychain.com",
-        username: "manager.test",
-        password: "securePassword",
-        firstName: "Test",
-        lastName: "Manager",
-        role: "BRANCH_MANAGER",
+        email: 'manager.test@supplychain.com',
+        username: 'manager.test',
+        password: 'securePassword',
+        firstName: 'Test',
+        lastName: 'Manager',
+        role: 'BRANCH_MANAGER',
         branchId: branch.id,
       },
     });
 
     const userSpecialist = await prisma.user.create({
       data: {
-        email: "specialist.test@supplychain.com",
-        username: "specialist.test",
-        password: "securePassword",
-        firstName: "Test",
-        lastName: "Specialist",
-        role: "PROCUREMENT_SPECIALIST",
+        email: 'specialist.test@supplychain.com',
+        username: 'specialist.test',
+        password: 'securePassword',
+        firstName: 'Test',
+        lastName: 'Specialist',
+        role: 'PROCUREMENT_SPECIALIST',
         branchId: branch.id,
       },
     });
 
     const userClerk = await prisma.user.create({
       data: {
-        email: "clerk.test@supplychain.com",
-        username: "clerk.test",
-        password: "securePassword",
-        firstName: "Test",
-        lastName: "Clerk",
-        role: "INVENTORY_CLERK",
+        email: 'clerk.test@supplychain.com',
+        username: 'clerk.test',
+        password: 'securePassword',
+        firstName: 'Test',
+        lastName: 'Clerk',
+        role: 'INVENTORY_CLERK',
         branchId: branch.id,
       },
     });

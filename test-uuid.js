@@ -1,18 +1,18 @@
 // Quick script to test UUID generation and get sample IDs
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
 async function testUUIDs() {
   try {
-    console.log("Testing UUID generation...\n");
+    console.log('Testing UUID generation...\n');
 
     // Get sample branch, item, and supplier IDs
     const branches = await prisma.branch.findMany({ take: 2 });
     const items = await prisma.item.findMany({ take: 2 });
     const suppliers = await prisma.supplier.findMany({ take: 3 });
 
-    console.log("Sample Branch IDs:");
+    console.log('Sample Branch IDs:');
     for (const branch of branches) {
       console.log(`- ${branch.id} (${branch.name})`);
       console.log(
@@ -22,7 +22,7 @@ async function testUUIDs() {
       );
     }
 
-    console.log("\nSample Item IDs:");
+    console.log('\nSample Item IDs:');
     for (const item of items) {
       console.log(`- ${item.id} (${item.name})`);
       console.log(
@@ -32,7 +32,7 @@ async function testUUIDs() {
       );
     }
 
-    console.log("\nSample Supplier IDs:");
+    console.log('\nSample Supplier IDs:');
     for (const supplier of suppliers) {
       console.log(`- ${supplier.id} (${supplier.name})`);
       console.log(
@@ -42,9 +42,9 @@ async function testUUIDs() {
       );
     }
 
-    console.log("\n✅ UUID test completed!");
+    console.log('\n✅ UUID test completed!');
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.error('❌ Error:', error.message);
   } finally {
     await prisma.$disconnect();
   }

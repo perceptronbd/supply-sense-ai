@@ -1,19 +1,15 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from "@nestjs/common";
-import { Decimal } from "@prisma/client/runtime/library";
-import { PrismaService } from "../../app/prisma.service";
-import type { PrismaTransaction } from "../common/interfaces/prisma.interface";
-import type { CreateGoodsReceiptDto } from "./dto/create-goods-receipt.dto";
-import type { UpdateGoodsReceiptDto } from "./dto/update-goods-receipt.dto";
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../../app/prisma.service';
+import type { PrismaTransaction } from '../common/interfaces/prisma.interface';
+import type { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
+import type { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
 // Define status enum locally to avoid import issues
 enum GRStatus {
-  DRAFT = "DRAFT",
-  POSTED = "POSTED",
-  CANCELLED = "CANCELLED",
+  DRAFT = 'DRAFT',
+  POSTED = 'POSTED',
+  CANCELLED = 'CANCELLED',
 }
 
 @Injectable()
@@ -23,12 +19,12 @@ export class GoodsReceiptService {
   async create(createGoodsReceiptDto: CreateGoodsReceiptDto, userId: string) {
     // Generate GR number
     const count = await this.prisma.goodsReceipt.count();
-    const grNumber = `GR${String(count + 1).padStart(9, "0")}`;
+    const grNumber = `GR${String(count + 1).padStart(9, '0')}`;
 
     // Validate that not both PO and MR are provided (standalone GR is allowed)
     if (createGoodsReceiptDto.poId && createGoodsReceiptDto.mrId) {
       throw new BadRequestException(
-        "Cannot specify both Purchase Order ID and Material Requisition ID"
+        'Cannot specify both Purchase Order ID and Material Requisition ID'
       );
     }
 
@@ -112,7 +108,7 @@ export class GoodsReceiptService {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
   }
@@ -169,9 +165,7 @@ export class GoodsReceiptService {
 
     // Only allow updates if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new BadRequestException(
-        "Can only update Goods Receipts in DRAFT status"
-      );
+      throw new BadRequestException('Can only update Goods Receipts in DRAFT status');
     }
 
     return this.prisma.goodsReceipt.update({
@@ -234,9 +228,7 @@ export class GoodsReceiptService {
 
     // Only allow deletion if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new BadRequestException(
-        "Can only delete Goods Receipts in DRAFT status"
-      );
+      throw new BadRequestException('Can only delete Goods Receipts in DRAFT status');
     }
 
     return this.prisma.goodsReceipt.delete({
@@ -248,9 +240,7 @@ export class GoodsReceiptService {
     const existingGR = await this.findOne(id);
 
     if (existingGR.status !== GRStatus.DRAFT) {
-      throw new BadRequestException(
-        "Can only post Goods Receipts in DRAFT status"
-      );
+      throw new BadRequestException('Can only post Goods Receipts in DRAFT status');
     }
 
     // Start a transaction to post GR and update stock with moving average cost
@@ -310,7 +300,7 @@ export class GoodsReceiptService {
     const existingGR = await this.findOne(id);
 
     if (existingGR.status === GRStatus.CANCELLED) {
-      throw new BadRequestException("Goods Receipt is already cancelled");
+      throw new BadRequestException('Goods Receipt is already cancelled');
     }
 
     return this.prisma.goodsReceipt.update({
@@ -392,9 +382,7 @@ export class GoodsReceiptService {
       const newTotalQty = stock.quantity.add(receivedQtyInMainUnit);
       const newTotalValue = currentTotalValue.add(receivedTotalValue);
 
-      const newAverageCost = newTotalQty.gt(0)
-        ? newTotalValue.div(newTotalQty)
-        : new Decimal(0);
+      const newAverageCost = newTotalQty.gt(0) ? newTotalValue.div(newTotalQty) : new Decimal(0);
 
       // Update stock
       await tx.stock.update({
@@ -433,10 +421,8 @@ export class GoodsReceiptService {
       throw new NotFoundException(`Purchase Order with ID ${poId} not found`);
     }
 
-    if (po.status !== "CONFIRMED") {
-      throw new BadRequestException(
-        "Can only create GR from CONFIRMED Purchase Orders"
-      );
+    if (po.status !== 'CONFIRMED') {
+      throw new BadRequestException('Can only create GR from CONFIRMED Purchase Orders');
     }
 
     // Convert PO items to GR items
@@ -472,15 +458,11 @@ export class GoodsReceiptService {
     });
 
     if (!mr) {
-      throw new NotFoundException(
-        `Material Requisition with ID ${mrId} not found`
-      );
+      throw new NotFoundException(`Material Requisition with ID ${mrId} not found`);
     }
 
-    if (mr.status !== "APPROVED") {
-      throw new BadRequestException(
-        "Can only create GR from APPROVED Material Requisitions"
-      );
+    if (mr.status !== 'APPROVED') {
+      throw new BadRequestException('Can only create GR from APPROVED Material Requisitions');
     }
 
     // Convert MR items to GR items (no pricing for MR receipts)
@@ -494,7 +476,7 @@ export class GoodsReceiptService {
     const createDto: CreateGoodsReceiptDto = {
       mrId: mr.id,
       documentNumber: `Receipt for ${mr.mrNumber}`,
-      branchId: mr.toBranchId || mr.branchId || "", // Use appropriate branch
+      branchId: mr.toBranchId || mr.branchId || '', // Use appropriate branch
       items: grItems,
     };
 
