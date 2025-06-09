@@ -413,8 +413,6 @@ export class DemandForecastingService {
       for (const stock of lowStockItems) {
         const forecast = await this.predictDemand(stock.itemId, branchId, 'monthly', 3);
 
-        console.log('Forecast for item', stock.item.name, ':', forecast);
-
         if (forecast.confidence > 0.3) {
           // Lowered threshold to accommodate limited historical data
           const suggestedQty = Math.ceil(forecast.predictedDemand * 2); // 2 months safety stock
@@ -449,10 +447,6 @@ export class DemandForecastingService {
           .map((r) => r.itemId)
           .concat(recommendations.filter((r) => r.urgency !== 'high').map((r) => r.itemId)),
       };
-      console.log('Generated recommendations:', recommendations);
-      console.log('Total estimated cost:', totalEstimatedCost);
-      console.log('Priority order:', result.priorityOrder);
-      console.log('result', result);
 
       // If createActualPRs is true and userId is provided, create actual purchase requests
       if (createActualPRs && userId && recommendations.length > 0) {
@@ -525,8 +519,7 @@ export class DemandForecastingService {
 
   /**
    * Creates a single purchase request for a group of items
-   */
-  private async createSinglePurchaseRequest(
+   */ private async createSinglePurchaseRequest(
     items: import('../interfaces/ai-service.interface').PurchaseRecommendation[],
     branchId: string,
     userId: string,
@@ -538,6 +531,52 @@ export class DemandForecastingService {
     itemCount: number;
     totalAmount: number;
   }> {
+    // Validate that the user exists, if not, find a system admin or branch manager as fallback
+    let validUserId = userId;
+    const userExists = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userExists) {
+      this.logger.warn(`User with ID ${userId} not found, looking for fallback user`);
+
+      // Try to find a system admin first
+      let fallbackUser = await this.prisma.user.findFirst({
+        where: {
+          role: 'SYSTEM_ADMIN',
+          isActive: true,
+        },
+      });
+
+      // If no system admin, find a branch manager from the same branch
+      if (!fallbackUser) {
+        fallbackUser = await this.prisma.user.findFirst({
+          where: {
+            branchId,
+            role: 'BRANCH_MANAGER',
+            isActive: true,
+          },
+        });
+      }
+
+      // If still no user, find any active user from the branch
+      if (!fallbackUser) {
+        fallbackUser = await this.prisma.user.findFirst({
+          where: {
+            branchId,
+            isActive: true,
+          },
+        });
+      }
+
+      if (!fallbackUser) {
+        throw new Error(`No valid user found to create purchase request for branch ${branchId}`);
+      }
+
+      validUserId = fallbackUser.id;
+      this.logger.log(`Using fallback user: ${fallbackUser.email} (${fallbackUser.id})`);
+    }
+
     // Calculate required date (7 days from now for high priority, 14 days for medium)
     const isHighPriority = title.includes('HIGH PRIORITY');
     const requiredDate = new Date();
@@ -558,7 +597,7 @@ export class DemandForecastingService {
       })),
     };
 
-    const createdPR = await this.purchaseRequestService.create(createPRDto, userId);
+    const createdPR = await this.purchaseRequestService.create(createPRDto, validUserId);
 
     return {
       id: createdPR.id,

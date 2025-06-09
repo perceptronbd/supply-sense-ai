@@ -378,8 +378,320 @@ async function main() {
       },
     }),
   ]);
-
   console.log("Created item-supplier relationships:", itemSuppliers.length);
+
+  // Create historical purchase requests (past 12 months) for AI demand forecasting
+  console.log("Creating historical purchase requests...");
+  const purchaseRequests: any[] = [];
+  const currentDate = new Date();
+
+  for (let monthsBack = 12; monthsBack >= 1; monthsBack--) {
+    const requestDate = new Date(currentDate);
+    requestDate.setMonth(requestDate.getMonth() - monthsBack);
+
+    // Create 2-4 purchase requests per month per branch
+    for (const branch of branches) {
+      const requestsThisMonth = Math.floor(Math.random() * 3) + 2; // 2-4 requests
+
+      for (let i = 0; i < requestsThisMonth; i++) {
+        const prDate = new Date(requestDate);
+        prDate.setDate(Math.floor(Math.random() * 28) + 1); // Random day in month
+
+        const pr = await prisma.purchaseRequest.create({
+          data: {
+            prNumber: `PR${branch.code}-${prDate.getFullYear()}${String(
+              prDate.getMonth() + 1
+            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
+            requestDate: prDate,
+            requiredDate: prDate, // Set required date same as request date for historical data
+            branchId: branch.id,
+            createdById: users[Math.floor(Math.random() * users.length)].id,
+            totalAmount: new Decimal(0), // Will be updated after items
+            status: "APPROVED",
+            createdAt: prDate,
+            updatedAt: prDate,
+          },
+        });
+
+        purchaseRequests.push(pr);
+
+        // Add 1-3 items per purchase request
+        const itemsInPR = Math.floor(Math.random() * 3) + 1;
+        let totalAmount = new Decimal(0);
+
+        for (let j = 0; j < itemsInPR; j++) {
+          const randomItem = items[Math.floor(Math.random() * items.length)];
+          const quantity = Math.floor(Math.random() * 100) + 20; // 20-120 units
+          const unitPrice = new Decimal(Math.floor(Math.random() * 50) + 10);
+          const itemTotal = unitPrice.mul(quantity);
+          totalAmount = totalAmount.add(itemTotal);
+
+          await prisma.pRItem.create({
+            data: {
+              prId: pr.id,
+              itemId: randomItem.id,
+              requestedQty: new Decimal(quantity),
+              estimatedPrice: unitPrice,
+              totalAmount: itemTotal,
+              requiredDate: prDate,
+              createdAt: prDate,
+            },
+          });
+        }
+
+        // Update total amount
+        await prisma.purchaseRequest.update({
+          where: { id: pr.id },
+          data: { totalAmount },
+        });
+      }
+    }
+  }
+
+  console.log(
+    `Created ${purchaseRequests.length} historical purchase requests`
+  );
+
+  // Create historical goods receipts for demand analysis
+  console.log("Creating historical goods receipts...");
+  const goodsReceipts: any[] = [];
+
+  for (let monthsBack = 11; monthsBack >= 0; monthsBack--) {
+    const receiptDate = new Date(currentDate);
+    receiptDate.setMonth(receiptDate.getMonth() - monthsBack);
+
+    for (const branch of branches) {
+      const receiptsThisMonth = Math.floor(Math.random() * 4) + 2; // 2-5 receipts
+
+      for (let i = 0; i < receiptsThisMonth; i++) {
+        const grDate = new Date(receiptDate);
+        grDate.setDate(Math.floor(Math.random() * 28) + 1);
+
+        const gr = await prisma.goodsReceipt.create({
+          data: {
+            grNumber: `GR${branch.code}-${grDate.getFullYear()}${String(
+              grDate.getMonth() + 1
+            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
+            receiptDate: grDate,
+            branchId: branch.id,
+            receivedById: users[Math.floor(Math.random() * users.length)].id,
+            status: "POSTED",
+            remarks: `Historical receipt - Month ${monthsBack} back`,
+            createdAt: grDate,
+            updatedAt: grDate,
+          },
+        });
+
+        goodsReceipts.push(gr);
+
+        // Add items to goods receipt
+        const itemsInGR = Math.floor(Math.random() * 3) + 1;
+
+        for (let j = 0; j < itemsInGR; j++) {
+          const randomItem = items[Math.floor(Math.random() * items.length)];
+          const quantity = Math.floor(Math.random() * 80) + 15; // 15-95 units
+          const unitPrice = new Decimal(Math.floor(Math.random() * 45) + 8);
+          const itemTotal = unitPrice.mul(quantity);
+
+          await prisma.gRItem.create({
+            data: {
+              grId: gr.id,
+              itemId: randomItem.id,
+              orderedQty: new Decimal(quantity),
+              receivedQty: new Decimal(quantity),
+              unitPrice: unitPrice,
+              totalCost: itemTotal,
+              createdAt: grDate,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  console.log(`Created ${goodsReceipts.length} historical goods receipts`);
+
+  // Create historical material requisitions for consumption tracking
+  console.log("Creating historical material requisitions...");
+  const materialRequisitions: any[] = [];
+
+  for (let monthsBack = 10; monthsBack >= 0; monthsBack--) {
+    const reqDate = new Date(currentDate);
+    reqDate.setMonth(reqDate.getMonth() - monthsBack);
+
+    for (const branch of branches) {
+      const reqsThisMonth = Math.floor(Math.random() * 6) + 3; // 3-8 requisitions
+
+      for (let i = 0; i < reqsThisMonth; i++) {
+        const mrDate = new Date(reqDate);
+        mrDate.setDate(Math.floor(Math.random() * 28) + 1);
+
+        const mr = await prisma.materialRequisition.create({
+          data: {
+            mrNumber: `MR${branch.code}-${mrDate.getFullYear()}${String(
+              mrDate.getMonth() + 1
+            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
+            type: "TRIM_WASTE",
+            branchId: branch.id,
+            createdById: users[Math.floor(Math.random() * users.length)].id,
+            status: "COMPLETED",
+            notes: `Historical consumption - Month ${monthsBack} back`,
+            createdAt: mrDate,
+            updatedAt: mrDate,
+          },
+        });
+
+        materialRequisitions.push(mr);
+
+        // Add items to material requisition
+        const itemsInMR = Math.floor(Math.random() * 4) + 2;
+
+        for (let j = 0; j < itemsInMR; j++) {
+          const randomItem = items[Math.floor(Math.random() * items.length)];
+          const quantity = Math.floor(Math.random() * 50) + 10; // 10-60 units
+
+          await prisma.mRItem.create({
+            data: {
+              mrId: mr.id,
+              itemId: randomItem.id,
+              quantity: new Decimal(quantity),
+              wasteType: "TRIM",
+              createdAt: mrDate,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  console.log(
+    `Created ${materialRequisitions.length} historical material requisitions`
+  );
+
+  // Update stock quantities to reflect low stock for some items (for AI testing)
+  console.log("Updating stock levels for AI testing scenarios...");
+  const lowStockUpdates: string[] = [];
+
+  for (const branch of branches) {
+    // Make 2-3 items have low stock in each branch
+    const itemsToMakeLowStock = items.slice(0, 3);
+
+    for (const item of itemsToMakeLowStock) {
+      const lowQuantity = Math.floor(Math.random() * 8) + 2; // 2-9 units (below reorder level)
+
+      await prisma.stock.update({
+        where: {
+          itemId_branchId: {
+            itemId: item.id,
+            branchId: branch.id,
+          },
+        },
+        data: {
+          quantity: new Decimal(lowQuantity),
+          availableQty: new Decimal(lowQuantity),
+          lastStockDate: new Date(),
+        },
+      });
+
+      lowStockUpdates.push(
+        `${item.name} in ${branch.name}: ${lowQuantity} units`
+      );
+    }
+  }
+
+  console.log(`Updated ${lowStockUpdates.length} items to low stock levels`);
+
+  // Create some AI suggestions for testing
+  console.log("Creating AI suggestions for testing...");
+  const aiSuggestions: any[] = [];
+
+  for (const branch of branches) {
+    // Create a few AI suggestions per branch
+    for (let i = 0; i < 3; i++) {
+      const suggestion = await prisma.aISuggestion.create({
+        data: {
+          type:
+            i === 0
+              ? "STOCK_REORDER"
+              : i === 1
+              ? "TRANSFER_REQUEST"
+              : "COST_VARIANCE",
+          title: `AI Suggestion ${i + 1} for ${branch.name}`,
+          description: `This is an AI-generated suggestion for optimizing operations in ${branch.name}`,
+          status: "PENDING",
+          confidence: new Decimal(0.85 + Math.random() * 0.1), // 0.85-0.95
+          reasoning: `AI analysis indicates optimization opportunity for ${branch.name}`,
+          suggestionData: JSON.stringify({
+            branchId: branch.id,
+            itemIds: items.slice(0, 2).map((item) => item.id),
+            analysisDate: new Date().toISOString(),
+          }),
+          entityType: "Branch",
+          entityId: branch.id,
+          userId: users[0].id, // System admin
+        },
+      });
+
+      aiSuggestions.push(suggestion);
+    }
+  }
+
+  console.log(`Created ${aiSuggestions.length} AI suggestions`);
+
+  // Create additional specific low stock scenarios for AI module testing
+  console.log("Creating specific low stock scenarios for AI module testing...");
+
+  // Find the "Finished Product Alpha" item and make it very low stock in one branch
+  const finishedProductAlpha = items.find((item) => item.sku === "FG001");
+  if (finishedProductAlpha) {
+    const testBranch = branches[1]; // Manufacturing Branch A
+
+    await prisma.stock.update({
+      where: {
+        itemId_branchId: {
+          itemId: finishedProductAlpha.id,
+          branchId: testBranch.id,
+        },
+      },
+      data: {
+        quantity: new Decimal(3), // Very low stock - should trigger high urgency
+        availableQty: new Decimal(3),
+        averageCost: new Decimal(45.5), // Set a reasonable cost for testing
+        lastCost: new Decimal(47.25),
+        lastStockDate: new Date(),
+      },
+    });
+
+    console.log(
+      `Set ${finishedProductAlpha.name} to 3 units in ${testBranch.name} for high-priority AI testing`
+    );
+  }
+
+  // Make Raw Material A medium priority (6-10 units)
+  const rawMaterialA = items.find((item) => item.sku === "RM001");
+  if (rawMaterialA) {
+    const testBranch = branches[1];
+
+    await prisma.stock.update({
+      where: {
+        itemId_branchId: {
+          itemId: rawMaterialA.id,
+          branchId: testBranch.id,
+        },
+      },
+      data: {
+        quantity: new Decimal(8), // Medium stock - should trigger medium urgency
+        availableQty: new Decimal(8),
+        averageCost: new Decimal(25.75),
+        lastCost: new Decimal(26.0),
+        lastStockDate: new Date(),
+      },
+    });
+
+    console.log(
+      `Set ${rawMaterialA.name} to 8 units in ${testBranch.name} for medium-priority AI testing`
+    );
+  }
 
   console.log("Database seeding completed successfully!");
   console.log("\nSeed data summary:");
@@ -389,6 +701,15 @@ async function main() {
   console.log(`- Users: ${users.length}`);
   console.log(`- Stock records: ${stockCount}`);
   console.log(`- Item-supplier relationships: ${itemSuppliers.length}`);
+  console.log(`- Historical purchase requests: ${purchaseRequests.length}`);
+  console.log(`- Historical goods receipts: ${goodsReceipts.length}`);
+  console.log(
+    `- Historical material requisitions: ${materialRequisitions.length}`
+  );
+  console.log(`- Low stock items updated: ${lowStockUpdates.length}`);
+  console.log(`- AI suggestions: ${aiSuggestions.length}`);
+  console.log("\nLow stock items for AI testing:");
+  lowStockUpdates.forEach((update) => console.log(`  - ${update}`));
 }
 
 main()
