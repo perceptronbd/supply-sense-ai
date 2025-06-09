@@ -401,6 +401,12 @@ export interface AutomaticPRResult {
   recommendations: PurchaseRecommendation[];
   totalEstimatedCost: number;
   priorityOrder: string[];
+  createdPurchaseRequests?: Array<{
+    id: string;
+    prNumber: string;
+    itemCount: number;
+    totalAmount: number;
+  }>;
 }
 
 // Extended supplier interface for quality analysis with full nested structure

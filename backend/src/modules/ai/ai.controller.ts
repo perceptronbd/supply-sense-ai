@@ -55,8 +55,18 @@ export class AiController {
     status: 200,
     description: 'Auto PR recommendations generated successfully',
   })
-  async getAutoPurchaseRequests(@Param('branchId') branchId: string) {
-    return this.demandForecastingService.generateAutomaticPurchaseRequests(branchId);
+  async getAutoPurchaseRequests(
+    @Param('branchId') branchId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('createActualPRs') createActualPRs?: string
+  ) {
+    const shouldCreatePRs = createActualPRs === 'true';
+
+    return this.demandForecastingService.generateAutomaticPurchaseRequests(
+      branchId,
+      user.id,
+      shouldCreatePRs
+    );
   }
 
   // Purchase Optimization Endpoints

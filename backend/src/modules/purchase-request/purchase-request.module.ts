@@ -6,5 +6,6 @@ import { PurchaseRequestService } from './purchase-request.service';
 @Module({
   controllers: [PurchaseRequestController],
   providers: [PurchaseRequestService, PrismaService],
+  exports: [PurchaseRequestService],
 })
 export class PurchaseRequestModule {}

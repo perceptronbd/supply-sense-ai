@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../../app/prisma.service';
+import { CreatePurchaseRequestDto } from '../../purchase-request/dto/create-purchase-request.dto';
+import { PurchaseRequestService } from '../../purchase-request/purchase-request.service';
 import { AutomaticPRResult } from '../interfaces/ai-service.interface';
 import { GeminiService } from './gemini.service';
 
@@ -29,7 +31,8 @@ export class DemandForecastingService {
 
   constructor(
     private prisma: PrismaService,
-    private geminiService: GeminiService
+    private geminiService: GeminiService,
+    private purchaseRequestService: PurchaseRequestService
   ) {}
 
   async predictDemand(
@@ -388,7 +391,9 @@ export class DemandForecastingService {
     }
   }
   async generateAutomaticPR(
-    branchId: string
+    branchId: string,
+    userId?: string,
+    createActualPRs = false
   ): Promise<import('../interfaces/ai-service.interface').AutomaticPRResult> {
     try {
       // Get all items with low stock in the branch
@@ -408,7 +413,10 @@ export class DemandForecastingService {
       for (const stock of lowStockItems) {
         const forecast = await this.predictDemand(stock.itemId, branchId, 'monthly', 3);
 
-        if (forecast.confidence > 0.5) {
+        console.log('Forecast for item', stock.item.name, ':', forecast);
+
+        if (forecast.confidence > 0.3) {
+          // Lowered threshold to accommodate limited historical data
           const suggestedQty = Math.ceil(forecast.predictedDemand * 2); // 2 months safety stock
           const estimatedCost = suggestedQty * Number(stock.averageCost || 0);
           totalEstimatedCost += estimatedCost;
@@ -433,7 +441,7 @@ export class DemandForecastingService {
         }
       }
 
-      return {
+      const result: AutomaticPRResult = {
         recommendations,
         totalEstimatedCost,
         priorityOrder: recommendations
@@ -441,10 +449,123 @@ export class DemandForecastingService {
           .map((r) => r.itemId)
           .concat(recommendations.filter((r) => r.urgency !== 'high').map((r) => r.itemId)),
       };
+      console.log('Generated recommendations:', recommendations);
+      console.log('Total estimated cost:', totalEstimatedCost);
+      console.log('Priority order:', result.priorityOrder);
+      console.log('result', result);
+
+      // If createActualPRs is true and userId is provided, create actual purchase requests
+      if (createActualPRs && userId && recommendations.length > 0) {
+        try {
+          result.createdPurchaseRequests = await this.createPurchaseRequestsFromRecommendations(
+            recommendations,
+            branchId,
+            userId
+          );
+        } catch (error) {
+          this.logger.error('Failed to create purchase requests:', error);
+          // Continue returning recommendations even if PR creation fails
+        }
+      }
+
+      return result;
     } catch (error) {
       this.logger.error('Error generating automatic PR:', error);
       throw new Error('Failed to generate automatic purchase recommendations');
     }
+  }
+
+  /**
+   * Creates actual purchase requests from recommendations
+   */
+  private async createPurchaseRequestsFromRecommendations(
+    recommendations: import('../interfaces/ai-service.interface').PurchaseRecommendation[],
+    branchId: string,
+    userId: string
+  ): Promise<
+    Array<{
+      id: string;
+      prNumber: string;
+      itemCount: number;
+      totalAmount: number;
+    }>
+  > {
+    const createdPRs = [];
+
+    // Group recommendations by urgency to create separate PRs for high/medium priority
+    const highPriorityItems = recommendations.filter((r) => r.urgency === 'high');
+    const mediumPriorityItems = recommendations.filter((r) => r.urgency === 'medium');
+
+    // Create high priority PR if there are high priority items
+    if (highPriorityItems.length > 0) {
+      const highPriorityPR = await this.createSinglePurchaseRequest(
+        highPriorityItems,
+        branchId,
+        userId,
+        'HIGH PRIORITY - Automatic Restock Request',
+        'Automatically generated purchase request for high priority low stock items based on AI demand forecasting.'
+      );
+      createdPRs.push(highPriorityPR);
+    }
+
+    // Create medium priority PR if there are medium priority items
+    if (mediumPriorityItems.length > 0) {
+      const mediumPriorityPR = await this.createSinglePurchaseRequest(
+        mediumPriorityItems,
+        branchId,
+        userId,
+        'MEDIUM PRIORITY - Automatic Restock Request',
+        'Automatically generated purchase request for medium priority low stock items based on AI demand forecasting.'
+      );
+      createdPRs.push(mediumPriorityPR);
+    }
+
+    return createdPRs;
+  }
+
+  /**
+   * Creates a single purchase request for a group of items
+   */
+  private async createSinglePurchaseRequest(
+    items: import('../interfaces/ai-service.interface').PurchaseRecommendation[],
+    branchId: string,
+    userId: string,
+    title: string,
+    description: string
+  ): Promise<{
+    id: string;
+    prNumber: string;
+    itemCount: number;
+    totalAmount: number;
+  }> {
+    // Calculate required date (7 days from now for high priority, 14 days for medium)
+    const isHighPriority = title.includes('HIGH PRIORITY');
+    const requiredDate = new Date();
+    requiredDate.setDate(requiredDate.getDate() + (isHighPriority ? 7 : 14));
+
+    const createPRDto: CreatePurchaseRequestDto = {
+      title,
+      description,
+      requiredDate: requiredDate.toISOString(),
+      branchId,
+      justification: 'Automatic restock based on AI demand forecasting to prevent stockouts.',
+      items: items.map((item) => ({
+        itemId: item.itemId,
+        requestedQty: item.recommendedQuantity,
+        estimatedPrice: item.estimatedCost / item.recommendedQuantity, // Price per unit
+        requiredDate: requiredDate.toISOString(),
+        remarks: `AI Confidence: ${Math.round(item.confidence * 100)}%. ${item.reasoning}`,
+      })),
+    };
+
+    const createdPR = await this.purchaseRequestService.create(createPRDto, userId);
+
+    return {
+      id: createdPR.id,
+      prNumber: createdPR.prNumber,
+      itemCount: items.length,
+      totalAmount: Number(createdPR.totalAmount),
+    };
   }
 
   async generateDemandForecast(
@@ -492,8 +613,12 @@ export class DemandForecastingService {
     }
   }
 
-  async generateAutomaticPurchaseRequests(branchId: string): Promise<AutomaticPRResult> {
-    return this.generateAutomaticPR(branchId);
+  async generateAutomaticPurchaseRequests(
+    branchId: string,
+    userId?: string,
+    createActualPRs = false
+  ): Promise<AutomaticPRResult> {
+    return this.generateAutomaticPR(branchId, userId, createActualPRs);
   }
 
   async analyzeTrends(days = 30): Promise<{
