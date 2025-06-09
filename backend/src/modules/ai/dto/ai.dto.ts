@@ -113,3 +113,20 @@ export class OptimizeQuantitiesDto {
   @Type(() => POItemDto)
   poItems: POItemDto[];
 }
+
+export class SmartRoutingDto {
+  @ApiProperty({
+    description: 'Type of document to route',
+    enum: ['PR', 'PO', 'GR'],
+    example: 'PR',
+  })
+  @IsEnum(['PR', 'PO', 'GR'])
+  documentType: 'PR' | 'PO' | 'GR';
+
+  @ApiProperty({
+    description: 'ID of the document to route',
+    example: 'uuid-string',
+  })
+  @IsString()
+  documentId: string;
+}

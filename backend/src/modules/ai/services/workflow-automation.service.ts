@@ -376,6 +376,14 @@ export class WorkflowAutomationService {
     documentId: string
   ): Promise<SmartRouting> {
     try {
+      // Validate inputs
+      if (!documentType) {
+        throw new Error('Document type is required');
+      }
+      if (!documentId) {
+        throw new Error('Document ID is required');
+      }
+
       let document: unknown;
 
       switch (documentType) {
@@ -397,16 +405,18 @@ export class WorkflowAutomationService {
             include: { items: true, receivedBy: true },
           });
           break;
+        default:
+          throw new Error(`Invalid document type: ${documentType}. Must be PR, PO, or GR`);
       }
 
       if (!document) {
-        throw new Error(`${documentType} not found`);
+        throw new Error(`${documentType} with ID ${documentId} not found`);
       }
 
       return this.generateSmartRouting(documentType, document);
     } catch (error) {
       this.logger.error('Error in intelligent document routing:', error);
-      throw new Error('Failed to route document intelligently');
+      throw new Error(`Failed to route document intelligently: ${error.message}`);
     }
   }
 
@@ -581,6 +591,23 @@ export class WorkflowAutomationService {
       cleaned = cleaned.substring(0, cleaned.length - 3);
     }
 
-    return cleaned.trim();
+    cleaned = cleaned.trim();
+
+    // Extract the first complete JSON object
+    const firstBraceIndex = cleaned.indexOf('{');
+    if (firstBraceIndex === -1) return cleaned;
+
+    // Find the matching closing brace
+    let braceCount = 0;
+    for (let i = firstBraceIndex; i < cleaned.length; i++) {
+      if (cleaned[i] === '{') braceCount++;
+      else if (cleaned[i] === '}') braceCount--;
+
+      if (braceCount === 0) {
+        return cleaned.substring(firstBraceIndex, i + 1);
+      }
+    }
+
+    return cleaned;
   }
 }

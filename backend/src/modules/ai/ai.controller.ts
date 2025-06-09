@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { OptimizeQuantitiesDto } from './dto/ai.dto';
+import {
+  AISuggestionFiltersDto,
+  AcceptSuggestionDto,
+  CreateAISuggestionDto,
+  GenerateSuggestionsDto,
+  RejectSuggestionDto,
+  UpdateAISuggestionDto,
+} from './dto/ai-suggestions.dto';
+import { OptimizeQuantitiesDto, SmartRoutingDto } from './dto/ai.dto';
+import { AISuggestionsService } from './services/ai-suggestions.service';
 import { DemandForecastingService } from './services/demand-forecasting.service';
 import { PurchaseOptimizationService } from './services/purchase-optimization.service';
 import { QualityAnalysisService } from './services/quality-analysis.service';
@@ -18,7 +28,8 @@ export class AiController {
     private purchaseOptimizationService: PurchaseOptimizationService,
     private qualityAnalysisService: QualityAnalysisService,
     private stockPredictionService: StockPredictionService,
-    private workflowAutomationService: WorkflowAutomationService
+    private workflowAutomationService: WorkflowAutomationService,
+    private aiSuggestionsService: AISuggestionsService
   ) {}
 
   // Demand Forecasting Endpoints
@@ -168,11 +179,112 @@ export class AiController {
     status: 200,
     description: 'Smart routing completed successfully',
   })
-  async smartRouting(@Body() body: { documentType: 'PR' | 'PO' | 'GR'; documentId: string }) {
+  async smartRouting(@Body() body: SmartRoutingDto) {
     return this.workflowAutomationService.routeDocumentIntelligently(
       body.documentType,
       body.documentId
     );
+  }
+
+  // ============================================================================
+  // AI SUGGESTIONS CRUD ENDPOINTS
+  // ============================================================================
+
+  @Post('suggestions')
+  @ApiOperation({ summary: 'Create a new AI suggestion' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI suggestion created successfully',
+  })
+  async createSuggestion(@Body() body: CreateAISuggestionDto) {
+    return this.aiSuggestionsService.createSuggestion(body);
+  }
+
+  @Get('suggestions')
+  @ApiOperation({ summary: 'Get all AI suggestions with optional filters' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestions retrieved successfully',
+  })
+  async getAllSuggestions(@Query() filters: AISuggestionFiltersDto) {
+    return this.aiSuggestionsService.getAllSuggestions(filters);
+  }
+
+  @Get('suggestions/stats')
+  @ApiOperation({ summary: 'Get AI suggestions statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestions statistics retrieved successfully',
+  })
+  async getSuggestionsStats(@Query('userId') userId?: string) {
+    return this.aiSuggestionsService.getSuggestionsStats(userId);
+  }
+
+  @Get('suggestions/:id')
+  @ApiOperation({ summary: 'Get AI suggestion by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestion retrieved successfully',
+  })
+  async getSuggestionById(@Param('id') id: string) {
+    return this.aiSuggestionsService.getSuggestionById(id);
+  }
+
+  @Put('suggestions/:id')
+  @ApiOperation({ summary: 'Update AI suggestion status and action' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestion updated successfully',
+  })
+  async updateSuggestion(@Param('id') id: string, @Body() body: UpdateAISuggestionDto) {
+    return this.aiSuggestionsService.updateSuggestion(id, body);
+  }
+
+  @Delete('suggestions/:id')
+  @ApiOperation({ summary: 'Delete AI suggestion' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestion deleted successfully',
+  })
+  async deleteSuggestion(@Param('id') id: string) {
+    return this.aiSuggestionsService.deleteSuggestion(id);
+  }
+
+  @Post('suggestions/:id/accept')
+  @ApiOperation({ summary: 'Accept and implement AI suggestion' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestion accepted and implemented successfully',
+  })
+  async acceptSuggestion(
+    @Param('id') id: string,
+    @Body() _body: AcceptSuggestionDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.aiSuggestionsService.acceptSuggestion(id, user.id);
+  }
+
+  @Post('suggestions/:id/reject')
+  @ApiOperation({ summary: 'Reject AI suggestion' })
+  @ApiResponse({
+    status: 200,
+    description: 'AI suggestion rejected successfully',
+  })
+  async rejectSuggestion(@Param('id') id: string, @Body() body: RejectSuggestionDto) {
+    return this.aiSuggestionsService.rejectSuggestion(id, body.reason);
+  }
+
+  @Post('suggestions/generate')
+  @ApiOperation({ summary: 'Generate new AI suggestions for a branch' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI suggestions generated successfully',
+  })
+  async generateSuggestions(
+    @Body() body: GenerateSuggestionsDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.aiSuggestionsService.generateSuggestions(body.branchId, user.id);
   }
 
   // AI Insights Dashboard
@@ -242,6 +354,7 @@ export class AiController {
         qualityAnalysis: 'operational',
         stockPrediction: 'operational',
         workflowAutomation: 'operational',
+        aiSuggestions: 'operational',
       },
       timestamp: new Date(),
       version: '1.0.0',

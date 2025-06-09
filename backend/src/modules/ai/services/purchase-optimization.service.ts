@@ -554,6 +554,23 @@ export class PurchaseOptimizationService {
       cleaned = cleaned.substring(0, cleaned.length - 3);
     }
 
-    return cleaned.trim();
+    cleaned = cleaned.trim();
+
+    // Extract the first complete JSON object
+    const firstBraceIndex = cleaned.indexOf('{');
+    if (firstBraceIndex === -1) return cleaned;
+
+    // Find the matching closing brace
+    let braceCount = 0;
+    for (let i = firstBraceIndex; i < cleaned.length; i++) {
+      if (cleaned[i] === '{') braceCount++;
+      else if (cleaned[i] === '}') braceCount--;
+
+      if (braceCount === 0) {
+        return cleaned.substring(firstBraceIndex, i + 1);
+      }
+    }
+
+    return cleaned;
   }
 }

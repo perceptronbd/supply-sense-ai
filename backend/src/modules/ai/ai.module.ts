@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from '../../app/prisma.service';
 import { AiController } from './ai.controller';
+import { AISuggestionsService } from './services/ai-suggestions.service';
 import { DemandForecastingService } from './services/demand-forecasting.service';
 import { GeminiService } from './services/gemini.service';
 import { McpConfigService } from './services/mcp-config.service';
@@ -23,6 +24,7 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
     QualityAnalysisService,
     StockPredictionService,
     WorkflowAutomationService,
+    AISuggestionsService,
     PrismaService,
   ],
   exports: [
@@ -33,6 +35,7 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
     QualityAnalysisService,
     StockPredictionService,
     WorkflowAutomationService,
+    AISuggestionsService,
   ],
 })
 export class AiModule {}
