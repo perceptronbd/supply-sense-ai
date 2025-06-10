@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthGuard from '../../components/AuthGuard';
 import { PurchaseRequestForm } from '../../components/purchase-request/PurchaseRequestForm';
+import { Text } from '../../components/ui/Text';
 import {
   type PurchaseRequest,
   useApprovePurchaseRequestMutation,
@@ -79,7 +80,7 @@ export default function PurchaseRequestsPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Loading...</div>
+              <Text variant="bodyLarge">Loading...</Text>
             </div>
           </div>
         </div>
@@ -147,7 +148,7 @@ export default function PurchaseRequestsPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Loading purchase requests...</div>
+              <Text variant="bodyLarge">Loading purchase requests...</Text>
             </div>
           </div>
         </div>
@@ -161,7 +162,9 @@ export default function PurchaseRequestsPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <div className="text-lg text-red-600">Error loading purchase requests</div>
+              <Text variant="bodyLarge" className="text-red-600">
+                Error loading purchase requests
+              </Text>
             </div>
           </div>
         </div>
@@ -175,8 +178,12 @@ export default function PurchaseRequestsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Purchase Requests</h1>
-              <p className="text-gray-600 mt-2">Manage and track all purchase requests</p>
+              <Text variant="headerSmall" weight="bold" className="text-gray-900">
+                Purchase Requests
+              </Text>
+              <Text variant="bodyBase" className="text-gray-600 mt-2">
+                Manage and track all purchase requests
+              </Text>
             </div>
             <Button color="primary" onPress={handleCreateRequest}>
               Create New Request
@@ -186,12 +193,14 @@ export default function PurchaseRequestsPage() {
           <Card>
             <CardHeader className="pb-3 flex flex-col gap-4">
               <div className="flex justify-between items-center w-full">
-                <h3 className="text-xl font-semibold">All Purchase Requests</h3>
+                <Text variant="titleSmall" weight="semiBold">
+                  All Purchase Requests
+                </Text>
                 <div className="flex items-center gap-4">
-                  <div className="text-sm text-gray-500">
+                  <Text variant="bodySmall" className="text-gray-500">
                     Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
                     {purchaseRequests.length} requests
-                  </div>
+                  </Text>
                   <Select
                     size="sm"
                     placeholder="Items per page"
