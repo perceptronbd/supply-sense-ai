@@ -184,29 +184,75 @@ export default function PurchaseRequestsPage() {
           </div>
 
           <Card>
-            <CardHeader className="pb-3 flex justify-between items-center">
-              <h3 className="text-xl font-semibold">All Purchase Requests</h3>
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
-                  {purchaseRequests.length} requests
+            <CardHeader className="pb-3 flex flex-col gap-4">
+              <div className="flex justify-between items-center w-full">
+                <h3 className="text-xl font-semibold">All Purchase Requests</h3>
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-500">
+                    Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
+                    {purchaseRequests.length} requests
+                  </div>
+                  <Select
+                    size="sm"
+                    placeholder="Items per page"
+                    defaultSelectedKeys={[itemsPerPage.toString()]}
+                    className="w-32"
+                    onChange={(e) => {
+                      const newItemsPerPage = Number.parseInt(e.target.value);
+                      setItemsPerPage(newItemsPerPage);
+                      setCurrentPage(1); // Reset to first page
+                    }}
+                  >
+                    <SelectItem key="5">5</SelectItem>
+                    <SelectItem key="10">10</SelectItem>
+                    <SelectItem key="25">25</SelectItem>
+                    <SelectItem key="50">50</SelectItem>
+                  </Select>
                 </div>
-                <Select
+              </div>
+
+              {/* Summary Chips */}
+              <div className="flex flex-wrap gap-2 justify-start  w-full">
+                <Chip
+                  color="primary"
+                  variant="flat"
                   size="sm"
-                  placeholder="Items per page"
-                  defaultSelectedKeys={[itemsPerPage.toString()]}
-                  className="w-32"
-                  onChange={(e) => {
-                    const newItemsPerPage = Number.parseInt(e.target.value);
-                    setItemsPerPage(newItemsPerPage);
-                    setCurrentPage(1); // Reset to first page
-                  }}
+                  startContent={<div className="bg-blue-500 rounded-full w-1.5 h-1.5" />}
                 >
-                  <SelectItem key="5">5</SelectItem>
-                  <SelectItem key="10">10</SelectItem>
-                  <SelectItem key="25">25</SelectItem>
-                  <SelectItem key="50">50</SelectItem>
-                </Select>
+                  Total: {purchaseRequests.length}
+                </Chip>
+                <Chip
+                  color="default"
+                  variant="flat"
+                  size="sm"
+                  startContent={<div className="bg-gray-500 rounded-full w-1.5 h-1.5" />}
+                >
+                  Draft: {purchaseRequests.filter((req) => req.status === 'DRAFT').length}
+                </Chip>
+                <Chip
+                  color="warning"
+                  variant="flat"
+                  size="sm"
+                  startContent={<div className="bg-yellow-500 rounded-full w-1.5 h-1.5" />}
+                >
+                  Submitted: {purchaseRequests.filter((req) => req.status === 'SUBMITTED').length}
+                </Chip>
+                <Chip
+                  color="success"
+                  variant="flat"
+                  size="sm"
+                  startContent={<div className="bg-green-500 rounded-full w-1.5 h-1.5" />}
+                >
+                  Approved: {purchaseRequests.filter((req) => req.status === 'APPROVED').length}
+                </Chip>
+                <Chip
+                  color="danger"
+                  variant="flat"
+                  size="sm"
+                  startContent={<div className="bg-red-500 rounded-full w-1.5 h-1.5" />}
+                >
+                  Rejected: {purchaseRequests.filter((req) => req.status === 'REJECTED').length}
+                </Chip>
               </div>
             </CardHeader>
             <CardBody>
@@ -303,40 +349,6 @@ export default function PurchaseRequestsPage() {
               )}
             </CardBody>
           </Card>
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
-            <Card>
-              <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Requests</h3>
-                <p className="text-3xl font-bold text-blue-600">{purchaseRequests.length}</p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Draft</h3>
-                <p className="text-3xl font-bold text-gray-600">
-                  {purchaseRequests.filter((req) => req.status === 'DRAFT').length}
-                </p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Submitted</h3>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {purchaseRequests.filter((req) => req.status === 'SUBMITTED').length}
-                </p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Approved</h3>
-                <p className="text-3xl font-bold text-green-600">
-                  {purchaseRequests.filter((req) => req.status === 'APPROVED').length}
-                </p>
-              </CardBody>
-            </Card>
-          </div>
         </div>
 
         {/* Create/Edit Modal */}
