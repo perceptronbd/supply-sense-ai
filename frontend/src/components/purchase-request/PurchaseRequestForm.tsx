@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, CardBody, CardHeader, addToast } from '@heroui/react';
+import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -10,20 +10,19 @@ import {
   type PurchaseRequestItemFormData,
   purchaseRequestSchema,
 } from '../../lib/schemas/purchase-request.schema';
-import { useGeneratePurchaseRecommendationsMutation } from '../../store/api/aiApi';
 import { useGetAllBranchesQuery } from '../../store/api/branchApi';
 import {
   type PurchaseRequest,
-  useCreatePurchaseRequestMutation,
   useGetPurchaseRequestTemplatesQuery,
-  useUpdatePurchaseRequestMutation,
 } from '../../store/api/purchaseRequestApi';
 import type { RootState } from '../../store/store';
 import { ValidatedDateInput } from '../ui/ValidatedDateInput';
 import { ValidatedInput } from '../ui/ValidatedInput';
 import { ValidatedSelect } from '../ui/ValidatedSelect';
 import { ValidatedTextarea } from '../ui/ValidatedTextarea';
-import { PurchaseRequestItemForm } from './PurchaseRequestItemForm';
+import { ItemsSection } from './ItemsSection';
+import { TemplateSelection } from './TemplateSelection';
+import { useAiRecommendations, useFormSubmission, useItemManagement } from './hooks';
 
 interface PurchaseRequestFormProps {
   id?: string; // Purchase Request ID for editing
@@ -72,8 +71,6 @@ export function PurchaseRequestForm({
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [wasSubmitted, setWasSubmitted] = useState(false);
-  const [showItemForm, setShowItemForm] = useState(false);
-  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
 
   // API queries
   const { data: branches = [] } = useGetAllBranchesQuery(undefined);
@@ -81,145 +78,7 @@ export function PurchaseRequestForm({
     branchId: formData.branchId,
   });
 
-  // API mutations
-  const [createPurchaseRequest, { isLoading: isCreating }] = useCreatePurchaseRequestMutation();
-  const [updatePurchaseRequest, { isLoading: isUpdating }] = useUpdatePurchaseRequestMutation();
-  const [generateRecommendations, { isLoading: isGeneratingRecommendations }] =
-    useGeneratePurchaseRecommendationsMutation();
-
-  // Helper function to clean form data for validation
-  const processFormData = (data: Partial<PurchaseRequestFormData>) => {
-    return {
-      ...data,
-      // Convert empty strings to undefined for optional UUID fields
-      prTemplateId: data.prTemplateId === '' ? undefined : data.prTemplateId,
-      description: data.description === '' ? undefined : data.description,
-      justification: data.justification === '' ? undefined : data.justification,
-      items:
-        data.items?.map((item) => ({
-          ...item,
-          requestedQty: Number(item.requestedQty),
-          estimatedPrice: item.estimatedPrice ? Number(item.estimatedPrice) : undefined,
-          remarks: item.remarks === '' ? undefined : item.remarks,
-        })) || [],
-    };
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    console.log('handleSubmit called');
-    e.preventDefault();
-    setWasSubmitted(true);
-
-    const processedFormData = processFormData(formData);
-
-    const validation = purchaseRequestSchema.safeParse(processedFormData);
-    console.log('Validation result:', validation);
-    console.log('Form data being validated:', processedFormData);
-
-    if (!validation.success) {
-      console.log('Validation failed:', validation.error);
-      const fieldErrors = validation.error.flatten().fieldErrors;
-      setErrors(fieldErrors);
-      return;
-    }
-    try {
-      if (mode === 'create') {
-        console.log('Attempting to create purchase request:', validation.data);
-        const result = await createPurchaseRequest(validation.data).unwrap();
-        console.log('Purchase request created successfully:', result);
-        onSuccess?.(result);
-        router.push('/purchase-requests');
-      } else if (mode === 'edit' && id) {
-        console.log('Attempting to update purchase request:', validation.data);
-        const result = await updatePurchaseRequest({
-          id,
-          data: validation.data,
-        }).unwrap();
-        console.log('Purchase request updated successfully:', result);
-        onSuccess?.(result);
-        router.push('/purchase-requests');
-      }
-    } catch (error: unknown) {
-      console.error('Error saving purchase request:', error);
-      const errorMessage =
-        error &&
-        typeof error === 'object' &&
-        'data' in error &&
-        error.data &&
-        typeof error.data === 'object' &&
-        'message' in error.data &&
-        typeof error.data.message === 'string'
-          ? error.data.message
-          : 'An error occurred while saving the purchase request.';
-
-      setErrors({
-        _form: [errorMessage],
-      });
-    }
-  };
-  const handleFieldChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear errors for this field
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: [] }));
-    }
-  };
-
-  const handleAddItem = (item: PurchaseRequestItemFormData) => {
-    const currentItems = formData.items || [];
-    if (editingItemIndex !== null) {
-      // Update existing item
-      const updatedItems = [...currentItems];
-      updatedItems[editingItemIndex] = item;
-      setFormData((prev) => ({ ...prev, items: updatedItems }));
-      setEditingItemIndex(null);
-    } else {
-      // Add new item
-      setFormData((prev) => ({ ...prev, items: [...currentItems, item] }));
-    }
-    setShowItemForm(false);
-
-    // Clear items error if it exists
-    if (errors.items) {
-      setErrors((prev) => ({ ...prev, items: [] }));
-    }
-  };
-
-  const handleEditItem = (index: number) => {
-    setEditingItemIndex(index);
-    setShowItemForm(true);
-  };
-
-  const handleRemoveItem = (index: number) => {
-    const updatedItems = formData.items?.filter((_, i) => i !== index) || [];
-    setFormData((prev) => ({ ...prev, items: updatedItems }));
-  };
-
-  const handleLoadTemplate = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (template) {
-      const defaultDate = formData.requiredDate || new Date().toISOString().split('T')[0];
-      const templateItems: PurchaseRequestItemFormData[] = template.items.map((item) => ({
-        itemId: item.itemId,
-        requestedQty: item.defaultQty,
-        estimatedPrice: item.item.currentPrice || undefined,
-        requiredDate: defaultDate,
-        remarks: undefined,
-      }));
-      setFormData((prev) => ({ ...prev, items: templateItems }));
-    }
-  };
-
-  const calculateTotalAmount = () => {
-    return (
-      formData.items?.reduce((total, item) => {
-        const price = Number(item.estimatedPrice) || 0;
-        const qty = Number(item.requestedQty) || 0;
-        return total + price * qty;
-      }, 0) || 0
-    );
-  };
-
+  // Create branch and template options
   const branchOptions = branches.map((branch) => ({
     value: branch.id,
     label: `${branch.code} - ${branch.name}`,
@@ -230,106 +89,51 @@ export function PurchaseRequestForm({
     label: template.name,
   }));
 
-  // Set default required date to today if not set
-  const defaultRequiredDate = formData.requiredDate || new Date().toISOString().split('T')[0];
-
-  // Debug log to see component state
-  console.log('🔧 Component render state:', {
+  // Use custom hooks
+  const { handleSubmit, isCreating, isUpdating } = useFormSubmission({
+    mode,
+    id,
     formData,
-    isGeneratingRecommendations,
-    branchOptions,
-    user,
+    onSuccess,
   });
 
-  const handleGenerateRecommendations = async () => {
-    console.log('🚀 Generate AI Recommendations button clicked!');
-    console.log('formData.branchId:', formData.branchId);
-    console.log('formData:', formData);
+  const { handleGenerateRecommendations, isGeneratingRecommendations } = useAiRecommendations({
+    formData,
+    branchOptions,
+    setFormData,
+    setErrors,
+    errors,
+  });
 
-    // Check if a branch is explicitly selected
-    if (!formData.branchId) {
-      console.log('❌ No branch selected');
-      addToast({
-        title: 'Branch Required',
-        description: 'Please select a branch before generating AI recommendations',
-        color: 'warning',
-        variant: 'flat',
-      });
-      return;
-    }
+  const {
+    showItemForm,
+    setShowItemForm,
+    editingItemIndex,
+    setEditingItemIndex,
+    handleAddItem,
+    handleEditItem,
+    handleRemoveItem,
+    handleLoadTemplate,
+    calculateTotalAmount,
+  } = useItemManagement({
+    formData,
+    setFormData,
+    errors,
+    setErrors,
+    templates,
+  });
 
-    // Check if branches are available
-    if (branchOptions.length === 0) {
-      console.log('❌ No branches available');
-      addToast({
-        title: 'No Branches Available',
-        description: 'No branches are available for generating recommendations',
-        color: 'warning',
-        variant: 'flat',
-      });
-      return;
-    }
-
-    const branchToUse = formData.branchId;
-
-    console.log('✅ Starting API call with branch:', branchToUse);
-    try {
-      const result = await generateRecommendations({
-        branchId: branchToUse,
-        createActualPRs: false,
-      }).unwrap();
-
-      console.log('📊 API Response:', result);
-
-      if (result.recommendations && result.recommendations.length > 0) {
-        const defaultDate = formData.requiredDate || new Date().toISOString().split('T')[0];
-
-        // Convert AI recommendations to form items
-        const recommendedItems: PurchaseRequestItemFormData[] = result.recommendations.map(
-          (rec) => ({
-            itemId: rec.itemId,
-            requestedQty: rec.recommendedQuantity,
-            estimatedPrice: rec.estimatedCost / rec.recommendedQuantity, // Price per unit
-            requiredDate: defaultDate,
-            remarks: `AI Generated - ${rec.reasoning} (Confidence: ${Math.round(rec.confidence * 100)}%)`,
-          })
-        );
-
-        console.log('📝 Generated items:', recommendedItems);
-
-        // Replace existing items with AI recommendations
-        setFormData((prev) => ({ ...prev, items: recommendedItems }));
-
-        addToast({
-          title: 'AI Recommendations Generated',
-          description: `Generated ${result.recommendations.length} item recommendations based on AI analysis`,
-          color: 'success',
-          variant: 'flat',
-        });
-
-        // Clear items error if it exists
-        if (errors.items) {
-          setErrors((prev) => ({ ...prev, items: [] }));
-        }
-      } else {
-        console.log('⚠️ No recommendations returned');
-        addToast({
-          title: 'No Recommendations',
-          description: 'No purchase recommendations were generated for this branch',
-          color: 'default',
-          variant: 'flat',
-        });
-      }
-    } catch (error) {
-      console.error('❌ Failed to generate AI recommendations:', error);
-      addToast({
-        title: 'Generation Failed',
-        description: 'Failed to generate AI recommendations. Please try again.',
-        color: 'danger',
-        variant: 'flat',
-      });
+  // Helper functions
+  const handleFieldChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear errors for this field
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: [] }));
     }
   };
+
+  // Set default required date to today if not set
+  const defaultRequiredDate = formData.requiredDate || new Date().toISOString().split('T')[0];
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -354,7 +158,7 @@ export function PurchaseRequestForm({
           </div>
         </div>
       )}
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={(e) => handleSubmit(e, setErrors, setWasSubmitted)}>
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -431,200 +235,24 @@ export function PurchaseRequestForm({
         </Card>
 
         {/* Template Selection */}
-        {templateOptions.length > 0 && (
-          <Card>
-            <CardHeader>
-              <h3 className="text-xl font-semibold">Templates</h3>
-            </CardHeader>
-            <CardBody>
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  {' '}
-                  <ValidatedSelect
-                    name="templateId"
-                    label="Load from Template"
-                    wasSubmitted={false}
-                    fieldSchema={purchaseRequestSchema.shape.prTemplateId}
-                    options={templateOptions}
-                    placeholder="Select a template to load items"
-                    onValueChange={(_, value) => {
-                      if (value) {
-                        handleLoadTemplate(value);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        )}
+        <TemplateSelection templateOptions={templateOptions} onLoadTemplate={handleLoadTemplate} />
 
         {/* Items Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center w-full">
-              <h3 className="text-xl font-semibold">Items</h3>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  color="secondary"
-                  variant="flat"
-                  onPress={() => {
-                    console.log('🔵 Generate AI Recommendations button clicked');
-                    handleGenerateRecommendations();
-                  }}
-                  isLoading={isGeneratingRecommendations}
-                  disabled={isGeneratingRecommendations}
-                  startContent={
-                    !isGeneratingRecommendations ? (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    ) : null
-                  }
-                >
-                  {isGeneratingRecommendations ? 'Generating...' : 'Generate AI Recommendations'}
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardBody>
-            {' '}
-            {errors.items && (
-              <div className="mb-4 text-red-600 text-sm">
-                {errors.items.map((error) => (
-                  <p key={error}>{error}</p>
-                ))}
-              </div>
-            )}
-            {showItemForm && (
-              <div className="mb-6">
-                <PurchaseRequestItemForm
-                  item={editingItemIndex !== null ? formData.items?.[editingItemIndex] : undefined}
-                  onSave={handleAddItem}
-                  onCancel={() => {
-                    setShowItemForm(false);
-                    setEditingItemIndex(null);
-                  }}
-                  wasSubmitted={wasSubmitted}
-                  branchId={formData.branchId}
-                />
-              </div>
-            )}
-            {formData.items && formData.items.length > 0 && (
-              <div className="space-y-4">
-                {' '}
-                {formData.items.map((item, index) => (
-                  <div
-                    key={`${item.itemId}-${index}`}
-                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Item ID</p>
-                          <p className="font-medium">{item.itemId}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Quantity</p>
-                          <p className="font-medium">{item.requestedQty}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Est. Price</p>
-                          <p className="font-medium">
-                            {item.estimatedPrice
-                              ? `$${Number(item.estimatedPrice).toFixed(2)}`
-                              : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Required Date</p>
-                          <p className="font-medium">{item.requiredDate}</p>
-                        </div>
-                        {item.remarks && (
-                          <div className="md:col-span-4">
-                            <p className="text-sm text-gray-600">Remarks</p>
-                            <p className="font-medium">{item.remarks}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="flat"
-                          color="primary"
-                          onPress={() => handleEditItem(index)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="flat"
-                          color="danger"
-                          onPress={() => handleRemoveItem(index)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {/* Total Amount */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="text-right">
-                    <p className="text-lg font-semibold">
-                      Total Estimated Amount: ${calculateTotalAmount().toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* Add Item Container - Show when not currently adding an item */}
-            {!showItemForm && (
-              <div className="text-center py-8 text-gray-500 border-dashed border-2 border-gray-300 bg-gray-50 rounded-lg mt-4">
-                <p className="mb-4">
-                  {formData.items && formData.items.length > 0
-                    ? "Click 'Add Item' to add another item"
-                    : "No items added yet. Click 'Add Item' to get started"}
-                </p>
-                <Button
-                  type="button"
-                  color="primary"
-                  variant="bordered"
-                  className="bg-white hover:bg-gray-100"
-                  onPress={() => {
-                    setEditingItemIndex(null);
-                    setShowItemForm(true);
-                  }}
-                  startContent={
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  }
-                >
-                  Add Item
-                </Button>
-              </div>
-            )}
-          </CardBody>
-        </Card>
+        <ItemsSection
+          formData={formData}
+          errors={errors}
+          wasSubmitted={wasSubmitted}
+          showItemForm={showItemForm}
+          editingItemIndex={editingItemIndex}
+          isGeneratingRecommendations={isGeneratingRecommendations}
+          calculateTotalAmount={calculateTotalAmount}
+          handleGenerateRecommendations={handleGenerateRecommendations}
+          handleAddItem={handleAddItem}
+          handleEditItem={handleEditItem}
+          handleRemoveItem={handleRemoveItem}
+          setShowItemForm={setShowItemForm}
+          setEditingItemIndex={setEditingItemIndex}
+        />
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
