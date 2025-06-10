@@ -1,5 +1,6 @@
 'use client';
 
+import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -29,71 +30,64 @@ export default function LoginPage() {
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold text-gray-800">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to your Supply Chain AI account</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
+              <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
+              <p className="text-default-500 mt-1">Sign in to your Supply Chain AI account</p>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <Input
                 type="email"
+                label="Email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                isRequired
+                labelPlacement="inside"
+                variant="bordered"
               />
-            </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
+              <Input
                 type="password"
+                label="Password"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                isRequired
+                labelPlacement="inside"
+                variant="bordered"
               />
-            </div>
 
-            {error && (
-              <div className="text-red-500 text-sm text-center">
-                {'data' in error &&
-                error.data &&
-                typeof error.data === 'object' &&
-                'message' in error.data
-                  ? (error.data.message as string) || 'Login failed'
-                  : 'An error occurred'}
-              </div>
-            )}
+              {error && (
+                <div className="text-danger text-sm text-center">
+                  {'data' in error &&
+                  error.data &&
+                  typeof error.data === 'object' &&
+                  'message' in error.data
+                    ? (error.data.message as string) || 'Login failed'
+                    : 'An error occurred'}
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
+              <Button type="submit" color="primary" className="w-full" isLoading={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
 
-          {/* Test credentials info */}
-          <div className="mt-6 p-3 bg-blue-50 rounded-md text-sm">
-            <p className="text-blue-800 font-medium">Test Credentials:</p>
-            <p className="text-blue-600">Email: manager.a@supplychain.com</p>
-            <p className="text-blue-600">Password: manager123</p>
-          </div>
-        </div>
+            {/* Test credentials info */}
+            <Card className="mt-6" radius="sm">
+              <CardBody className="p-3">
+                <p className="text-primary font-medium text-sm">Test Credentials:</p>
+                <p className="text-default-600 text-sm">Email: manager.a@supplychain.com</p>
+                <p className="text-default-600 text-sm">Password: manager123</p>
+              </CardBody>
+            </Card>
+          </CardBody>
+        </Card>
       </div>
     </AuthGuard>
   );
