@@ -23,6 +23,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  addToast,
   useDisclosure,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
@@ -122,6 +123,16 @@ export default function PurchaseRequestsPage() {
     onClose();
     // Reset to first page when new data is added
     setCurrentPage(1);
+
+    // Show success toast
+    addToast({
+      title: 'Success',
+      description: selectedRequest
+        ? 'Purchase request updated successfully'
+        : 'Purchase request created successfully',
+      color: 'success',
+      variant: 'flat',
+    });
   };
 
   const handleWorkflowAction = async (
@@ -132,17 +143,41 @@ export default function PurchaseRequestsPage() {
       switch (action) {
         case 'submit':
           await submitPurchaseRequest(requestId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Purchase request submitted for approval',
+            color: 'success',
+            variant: 'flat',
+          });
           break;
         case 'approve':
           await approvePurchaseRequest(requestId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Purchase request approved successfully',
+            color: 'success',
+            variant: 'flat',
+          });
           break;
         case 'reject':
           await rejectPurchaseRequest(requestId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Purchase request rejected',
+            color: 'warning',
+            variant: 'flat',
+          });
           break;
       }
       refetch();
     } catch (error) {
       console.error(`Failed to ${action} purchase request:`, error);
+      addToast({
+        title: 'Error',
+        description: `Failed to ${action} purchase request. Please try again.`,
+        color: 'danger',
+        variant: 'flat',
+      });
     }
   };
 
