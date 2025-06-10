@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import Sidebar from './Sidebar';
@@ -12,13 +12,20 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const pathname = usePathname();
 
-  // Don't show sidebar on login page or if not authenticated
-  const showSidebar = isAuthenticated && pathname !== '/login';
+  // Handle hydration mismatch
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
-  if (!showSidebar) {
+  // Don't show sidebar on login page or if not authenticated
+  const showSidebar = isHydrated && isAuthenticated && pathname !== '/login';
+
+  // During SSR and before hydration, always render children without sidebar
+  if (!isHydrated || !showSidebar) {
     return <>{children}</>;
   }
 
