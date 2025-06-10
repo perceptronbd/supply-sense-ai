@@ -366,7 +366,7 @@ export default function PurchaseRequestsPage() {
                   color="primary"
                   variant="flat"
                   size="sm"
-                  startContent={<div className="bg-blue-500 rounded-full w-1.5 h-1.5" />}
+                  startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
                 >
                   Total: {purchaseRequests.length}
                 </Chip>

@@ -101,23 +101,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           role="button"
           tabIndex={0}
         />
-      )}
+      )}{' '}
       {/* Sidebar */}
       <div
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-0
       `}
       >
         <div className="flex flex-col h-full">
+          {' '}
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-6 bg-blue-600 text-white">
+          <div className="flex items-center justify-between h-16 px-6 bg-primary text-primary-foreground">
             <h2 className="text-lg font-semibold">Supply Chain AI</h2>{' '}
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden p-1 rounded-md hover:bg-blue-700"
+              className="lg:hidden p-1 rounded-md hover:bg-primary/20 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -129,7 +130,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </svg>
             </button>
           </div>
-
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => (
@@ -144,8 +144,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   w-full flex items-center px-3 py-2 text-left text-sm font-medium rounded-md transition-colors duration-200
                   ${
                     isActive(item.href)
-                      ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                      : 'text-foreground hover:bg-default-100 hover:text-foreground'
                   }
                 `}
               >
@@ -153,16 +153,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {item.name}
               </button>
             ))}
-          </nav>
-
+          </nav>{' '}
           {/* User info and logout */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-divider p-4">
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-foreground">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
-              <p className="text-xs text-gray-500">Role: {user?.role}</p>
+              <p className="text-xs text-default-500">{user?.email}</p>
+              <p className="text-xs text-default-500">Role: {user?.role}</p>
             </div>
             <Button color="danger" variant="flat" className="w-full" onPress={handleLogout}>
               Logout
