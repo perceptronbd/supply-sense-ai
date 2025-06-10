@@ -3,19 +3,39 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../app/prisma.service';
 import { QueryItemDto } from './dto/query-item.dto';
 
-type ItemWithStock = Prisma.ItemGetPayload<{
-  include: {
-    stock: {
-      select: {
-        quantity: true;
-        reservedQty: true;
-        availableQty: true;
-        averageCost: true;
-        lastCost: true;
-      };
-    };
-  };
-}>;
+type ItemWithOptionalStock = Prisma.ItemGetPayload<Record<string, never>> & {
+  stock?: Array<{
+    quantity: Prisma.Decimal;
+    reservedQty: Prisma.Decimal;
+    availableQty: Prisma.Decimal;
+    averageCost: Prisma.Decimal;
+    lastCost: Prisma.Decimal;
+  }>;
+};
+
+type TransformedItem = Omit<
+  Prisma.ItemGetPayload<Record<string, never>>,
+  | 'buyingToMainRate'
+  | 'transferToMainRate'
+  | 'usingToMainRate'
+  | 'safetyStockLevel'
+  | 'reorderLevel'
+> & {
+  buyingToMainRate: number | null;
+  transferToMainRate: number | null;
+  usingToMainRate: number | null;
+  safetyStockLevel: number | null;
+  reorderLevel: number | null;
+  stock?:
+    | {
+        quantity: number;
+        reservedQty: number;
+        availableQty: number;
+        averageCost: number | null;
+        lastCost: number | null;
+      }
+    | undefined;
+};
 
 @Injectable()
 export class ItemService {
@@ -23,21 +43,32 @@ export class ItemService {
   /**
    * Transform items with proper Decimal to number conversion
    */
-  private transformItems(items: ItemWithStock[], includeStock: boolean) {
+  private transformItems(items: ItemWithOptionalStock[], includeStock: boolean): TransformedItem[] {
     return items.map((item) => this.transformSingleItem(item, includeStock));
   }
 
   /**
    * Transform a single item with Decimal to number conversion
    */
-  private transformSingleItem(item: ItemWithStock, includeStock: boolean) {
-    const transformed = {
-      ...item,
+  private transformSingleItem(item: ItemWithOptionalStock, includeStock: boolean): TransformedItem {
+    const transformed: TransformedItem = {
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      description: item.description,
+      mainUnit: item.mainUnit,
+      buyingUnit: item.buyingUnit,
+      transferUnit: item.transferUnit,
+      usingUnit: item.usingUnit,
+      isActive: item.isActive,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
       buyingToMainRate: item.buyingToMainRate ? Number(item.buyingToMainRate) : null,
       transferToMainRate: item.transferToMainRate ? Number(item.transferToMainRate) : null,
       usingToMainRate: item.usingToMainRate ? Number(item.usingToMainRate) : null,
       safetyStockLevel: item.safetyStockLevel ? Number(item.safetyStockLevel) : null,
       reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+      stock: undefined, // Initialize with proper type
     };
     if (includeStock && item.stock?.[0]) {
       const stockData = item.stock[0];
@@ -45,15 +76,12 @@ export class ItemService {
       const reservedQty = Number(stockData.reservedQty || 0);
 
       transformed.stock = {
-        ...stockData,
         quantity,
         reservedQty,
         availableQty: Math.max(0, quantity - reservedQty), // Ensure non-negative
         averageCost: stockData.averageCost ? Number(stockData.averageCost) : null,
         lastCost: stockData.lastCost ? Number(stockData.lastCost) : null,
       };
-    } else {
-      transformed.stock = undefined;
     }
 
     return transformed;
