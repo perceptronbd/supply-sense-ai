@@ -10,6 +10,9 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader,
+  Pagination,
+  Select,
+  SelectItem,
   Table,
   TableBody,
   TableCell,
@@ -36,6 +39,10 @@ export default function PurchaseRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Ensure component is mounted before rendering
   useEffect(() => {
     setIsMounted(true);
@@ -51,6 +58,19 @@ export default function PurchaseRequestsPage() {
   const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
   const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
   const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+
+  // Pagination calculations
+  const totalPages = Math.ceil(purchaseRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRequests = purchaseRequests.slice(startIndex, endIndex);
+
+  // Reset to last valid page if current page is out of bounds
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   // Don't render anything until mounted
   if (!isMounted) {
@@ -95,6 +115,8 @@ export default function PurchaseRequestsPage() {
   const handleFormSuccess = () => {
     refetch();
     onClose();
+    // Reset to first page when new data is added
+    setCurrentPage(1);
   };
 
   const handleWorkflowAction = async (
@@ -162,8 +184,30 @@ export default function PurchaseRequestsPage() {
           </div>
 
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex justify-between items-center">
               <h3 className="text-xl font-semibold">All Purchase Requests</h3>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
+                  {purchaseRequests.length} requests
+                </div>
+                <Select
+                  size="sm"
+                  placeholder="Items per page"
+                  defaultSelectedKeys={[itemsPerPage.toString()]}
+                  className="w-32"
+                  onChange={(e) => {
+                    const newItemsPerPage = Number.parseInt(e.target.value);
+                    setItemsPerPage(newItemsPerPage);
+                    setCurrentPage(1); // Reset to first page
+                  }}
+                >
+                  <SelectItem key="5">5</SelectItem>
+                  <SelectItem key="10">10</SelectItem>
+                  <SelectItem key="25">25</SelectItem>
+                  <SelectItem key="50">50</SelectItem>
+                </Select>
+              </div>
             </CardHeader>
             <CardBody>
               <Table aria-label="Purchase requests table">
@@ -176,7 +220,7 @@ export default function PurchaseRequestsPage() {
                   <TableColumn>ACTIONS</TableColumn>
                 </TableHeader>
                 <TableBody>
-                  {purchaseRequests.map((request) => (
+                  {paginatedRequests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{request.prNumber}</TableCell>
                       <TableCell>{request.title || 'Untitled'}</TableCell>
@@ -243,6 +287,20 @@ export default function PurchaseRequestsPage() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination
+                    total={totalPages}
+                    page={currentPage}
+                    onChange={setCurrentPage}
+                    showControls
+                    showShadow
+                    color="primary"
+                  />
+                </div>
+              )}
             </CardBody>
           </Card>
 
