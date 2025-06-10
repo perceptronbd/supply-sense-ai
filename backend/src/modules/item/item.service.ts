@@ -1,54 +1,87 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../app/prisma.service';
 import { QueryItemDto } from './dto/query-item.dto';
 
+type ItemWithStock = Prisma.ItemGetPayload<{
+  include: {
+    stock: {
+      select: {
+        quantity: true;
+        reservedQty: true;
+        availableQty: true;
+        averageCost: true;
+        lastCost: true;
+      };
+    };
+  };
+}>;
+
 @Injectable()
 export class ItemService {
   constructor(private readonly prisma: PrismaService) {}
+  /**
+   * Transform items with proper Decimal to number conversion
+   */
+  private transformItems(items: ItemWithStock[], includeStock: boolean) {
+    return items.map((item) => this.transformSingleItem(item, includeStock));
+  }
 
   /**
-   * Get items with optional pagination, search, and stock information
-   * If no pagination params provided, returns all items
+   * Transform a single item with Decimal to number conversion
    */
-  async findAll(query: QueryItemDto) {
-    const { search, branchId, page, limit, includeInactive = false, includeStock = false } = query; // Build where clause
-    const where: Prisma.ItemWhereInput = {};
+  private transformSingleItem(item: ItemWithStock, includeStock: boolean) {
+    const transformed = {
+      ...item,
+      buyingToMainRate: item.buyingToMainRate ? Number(item.buyingToMainRate) : null,
+      transferToMainRate: item.transferToMainRate ? Number(item.transferToMainRate) : null,
+      usingToMainRate: item.usingToMainRate ? Number(item.usingToMainRate) : null,
+      safetyStockLevel: item.safetyStockLevel ? Number(item.safetyStockLevel) : null,
+      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+    };
+    if (includeStock && item.stock?.[0]) {
+      const stockData = item.stock[0];
+      const quantity = Number(stockData.quantity);
+      const reservedQty = Number(stockData.reservedQty || 0);
 
-    // Filter by active status unless includeInactive is true
+      transformed.stock = {
+        ...stockData,
+        quantity,
+        reservedQty,
+        availableQty: Math.max(0, quantity - reservedQty), // Ensure non-negative
+        averageCost: stockData.averageCost ? Number(stockData.averageCost) : null,
+        lastCost: stockData.lastCost ? Number(stockData.lastCost) : null,
+      };
+    } else {
+      transformed.stock = undefined;
+    }
+
+    return transformed;
+  }
+
+  /**
+   * Build query options for finding items
+   */
+  private buildQueryOptions(query: QueryItemDto) {
+    const { search, branchId, includeInactive = false, includeStock = false } = query;
+
+    const where: Prisma.ItemWhereInput = {};
     if (!includeInactive) {
       where.isActive = true;
     }
 
-    // Add search filter
     if (search) {
       where.OR = [
-        {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          sku: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          description: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ];
-    } // Build include clause for stock if requested
+    }
+
     const include: Prisma.ItemInclude = {};
     if (includeStock && branchId) {
       include.stock = {
-        where: {
-          branchId: branchId,
-        },
+        where: { branchId },
         select: {
           quantity: true,
           reservedQty: true,
@@ -59,58 +92,85 @@ export class ItemService {
       };
     }
 
-    // If pagination params are provided, use pagination
+    return { where, include };
+  }
+
+  /**
+   * Get items with optional pagination, search, and stock information
+   */ async findAll(query: QueryItemDto) {
+    const { page, limit, includeStock = false } = query;
+
+    // Only validate pagination constraints if page is provided
+    if (page && !limit) {
+      throw new BadRequestException('Limit must be provided when page is specified');
+    }
+
+    if (page && page < 1) {
+      throw new BadRequestException('Page must be greater than 0');
+    }
+
+    if (limit && (limit < 1 || limit > 100)) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+    const { where, include } = this.buildQueryOptions(query);
+
+    // Handle paginated queries (both page and limit provided)
     if (page && limit) {
-      const skip = (page - 1) * limit;
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      const skip = (pageNum - 1) * limitNum;
 
       const [items, total] = await Promise.all([
         this.prisma.item.findMany({
           where,
           include,
           skip,
-          take: limit,
+          take: limitNum,
           orderBy: [{ name: 'asc' }, { sku: 'asc' }],
         }),
         this.prisma.item.count({ where }),
       ]);
 
-      // Transform stock data for single branch response
-      const transformedItems = items.map((item) => ({
-        ...item,
-        stock: includeStock && item.stock?.[0] ? item.stock[0] : undefined,
-      }));
+      const transformedItems = this.transformItems(items, includeStock);
 
       return {
         data: transformedItems,
         pagination: {
-          page,
-          limit,
+          page: pageNum,
+          limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page * limit < total,
-          hasPrev: page > 1,
+          totalPages: Math.ceil(total / limitNum),
+          hasNext: pageNum * limitNum < total,
+          hasPrev: pageNum > 1,
         },
       };
-    }
-
-    // If no pagination params, return all items
-    const items = await this.prisma.item.findMany({
+    } // Handle non-paginated queries (with optional limit)
+    const queryOptions: {
+      where: Prisma.ItemWhereInput;
+      include: Prisma.ItemInclude;
+      orderBy: Prisma.ItemOrderByWithRelationInput[];
+      take?: number;
+    } = {
       where,
       include,
       orderBy: [{ name: 'asc' }, { sku: 'asc' }],
-    });
+    };
 
-    // Transform stock data for single branch response
-    const transformedItems = items.map((item) => ({
-      ...item,
-      stock: includeStock && item.stock?.[0] ? item.stock[0] : undefined,
-    }));
+    // Add limit if provided (for performance in non-paginated queries)
+    if (limit) {
+      queryOptions.take = Number(limit);
+    }
+
+    const items = await this.prisma.item.findMany(queryOptions);
+
+    const transformedItems = this.transformItems(items, includeStock);
 
     return {
       data: transformedItems,
       pagination: null,
     };
   }
+
   /**
    * Get a single item by ID with optional stock information
    */
@@ -118,9 +178,7 @@ export class ItemService {
     const include: Prisma.ItemInclude = {};
     if (includeStock && branchId) {
       include.stock = {
-        where: {
-          branchId: branchId,
-        },
+        where: { branchId },
         select: {
           quantity: true,
           reservedQty: true,
@@ -137,14 +195,9 @@ export class ItemService {
     });
 
     if (!item) {
-      throw new Error(`Item with id ${id} not found`);
+      throw new NotFoundException(`Item with id ${id} not found`);
     }
-
-    // Transform stock data for single branch response
-    return {
-      ...item,
-      stock: includeStock && item.stock?.[0] ? item.stock[0] : undefined,
-    };
+    return this.transformSingleItem(item, includeStock);
   }
 
   /**
@@ -161,28 +214,28 @@ export class ItemService {
    * Search items by name or SKU (simplified search for dropdowns)
    */
   async searchItems(searchTerm: string, branchId?: string, limit = 20) {
+    // Validate inputs
+    if (!searchTerm) {
+      throw new BadRequestException('Search term is required');
+    }
+
+    // Ensure limit is a valid number
+    const validLimit = Number(limit) || 20;
+    if (validLimit < 1 || validLimit > 100) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+
     const where: Prisma.ItemWhereInput = {
       isActive: true,
       OR: [
-        {
-          name: {
-            contains: searchTerm,
-            mode: 'insensitive',
-          },
-        },
-        {
-          sku: {
-            contains: searchTerm,
-            mode: 'insensitive',
-          },
-        },
+        { name: { contains: searchTerm, mode: 'insensitive' } },
+        { sku: { contains: searchTerm, mode: 'insensitive' } },
       ],
     };
 
-    // First get items with basic info
     const items = await this.prisma.item.findMany({
       where,
-      take: limit,
+      take: validLimit,
       orderBy: [{ name: 'asc' }, { sku: 'asc' }],
       select: {
         id: true,
@@ -195,32 +248,43 @@ export class ItemService {
       },
     });
 
-    // If branchId is provided, get stock information separately
     if (branchId && items.length > 0) {
       const itemIds = items.map((item) => item.id);
       const stocks = await this.prisma.stock.findMany({
         where: {
           itemId: { in: itemIds },
-          branchId: branchId,
+          branchId,
         },
         select: {
           itemId: true,
           quantity: true,
+          reservedQty: true,
           availableQty: true,
         },
       });
-
-      // Create a map for quick lookup
       const stockMap = new Map(stocks.map((stock) => [stock.itemId, stock]));
-
-      // Combine items with stock data
-      return items.map((item) => ({
-        ...item,
-        stock: stockMap.get(item.id) || null,
-      }));
+      return items.map((item) => {
+        const stock = stockMap.get(item.id);
+        if (stock) {
+          const quantity = Number(stock.quantity);
+          const reservedQty = Number(stock.reservedQty || 0);
+          return {
+            ...item,
+            stock: {
+              ...stock,
+              quantity,
+              reservedQty,
+              availableQty: Math.max(0, quantity - reservedQty), // Calculate properly
+            },
+          };
+        }
+        return {
+          ...item,
+          stock: null,
+        };
+      });
     }
 
-    // Return items without stock information
     return items.map((item) => ({
       ...item,
       stock: null,

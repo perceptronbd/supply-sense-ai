@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -160,9 +160,11 @@ export class ItemController {
   async searchItems(
     @Query('q') searchTerm: string,
     @Query('branchId') branchId?: string,
-    @Query('limit') limit?: number
+    @Query('limit') limit?: string | number
   ) {
-    return this.itemService.searchItems(searchTerm, branchId, limit);
+    // Convert limit to number if it's a string
+    const numericLimit = limit ? Number(limit) : undefined;
+    return this.itemService.searchItems(searchTerm, branchId, numericLimit);
   }
 
   @Get('by-branch/:branchId')
@@ -200,7 +202,7 @@ export class ItemController {
     },
   })
   async findByBranch(
-    @Param('branchId') branchId: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
     @Query() query: Omit<QueryItemDto, 'branchId'>
   ) {
     return this.itemService.findByBranch(branchId, query);
@@ -244,7 +246,7 @@ export class ItemController {
     description: 'Item not found',
   })
   async findOne(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Query('branchId') branchId?: string,
     @Query('includeStock') includeStock?: boolean
   ) {

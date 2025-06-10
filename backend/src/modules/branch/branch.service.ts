@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../app/prisma.service';
 import { QueryBranchDto } from './dto/query-branch.dto';
@@ -6,13 +6,26 @@ import { QueryBranchDto } from './dto/query-branch.dto';
 @Injectable()
 export class BranchService {
   constructor(private readonly prisma: PrismaService) {}
-
   /**
    * Get branches with optional pagination and search
    * If no pagination params provided, returns all branches
-   */
-  async findAll(query: QueryBranchDto) {
-    const { search, page, limit, includeInactive = false } = query; // Build where clause
+   */ async findAll(query: QueryBranchDto) {
+    const { search, page, limit, includeInactive = false } = query;
+
+    // Only validate pagination constraints if page is provided
+    if (page && !limit) {
+      throw new BadRequestException('Limit must be provided when page is specified');
+    }
+
+    if (page && page < 1) {
+      throw new BadRequestException('Page must be greater than 0');
+    }
+
+    if (limit && (limit < 1 || limit > 100)) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+
+    // Build where clause
     const where: Prisma.BranchWhereInput = {};
 
     // Filter by active status unless includeInactive is true
@@ -38,15 +51,17 @@ export class BranchService {
       ];
     }
 
-    // If pagination params are provided, use pagination
+    // If pagination params are provided, use pagination    // Handle paginated queries (both page and limit provided)
     if (page && limit) {
-      const skip = (page - 1) * limit;
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      const skip = (pageNum - 1) * limitNum;
 
       const [branches, total] = await Promise.all([
         this.prisma.branch.findMany({
           where,
           skip,
-          take: limit,
+          take: limitNum,
           orderBy: [{ name: 'asc' }, { code: 'asc' }],
         }),
         this.prisma.branch.count({ where }),
@@ -55,28 +70,38 @@ export class BranchService {
       return {
         data: branches,
         pagination: {
-          page,
-          limit,
+          page: pageNum,
+          limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page * limit < total,
-          hasPrev: page > 1,
+          totalPages: Math.ceil(total / limitNum),
+          hasNext: pageNum * limitNum < total,
+          hasPrev: pageNum > 1,
         },
       };
     }
 
-    // If no pagination params, return all branches
-    const branches = await this.prisma.branch.findMany({
+    // Handle non-paginated queries (with optional limit)
+    const queryOptions: {
+      where: Prisma.BranchWhereInput;
+      orderBy: Prisma.BranchOrderByWithRelationInput[];
+      take?: number;
+    } = {
       where,
       orderBy: [{ name: 'asc' }, { code: 'asc' }],
-    });
+    };
+
+    // Add limit if provided (for performance in non-paginated queries)
+    if (limit) {
+      queryOptions.take = Number(limit);
+    }
+
+    const branches = await this.prisma.branch.findMany(queryOptions);
 
     return {
       data: branches,
       pagination: null,
     };
   }
-
   /**
    * Get a single branch by ID
    */
@@ -86,7 +111,7 @@ export class BranchService {
     });
 
     if (!branch) {
-      throw new Error(`Branch with id ${id} not found`);
+      throw new NotFoundException(`Branch with id ${id} not found`);
     }
 
     return branch;
@@ -102,7 +127,7 @@ export class BranchService {
     });
 
     if (!user) {
-      throw new Error(`User with id ${userId} not found`);
+      throw new NotFoundException(`User with id ${userId} not found`);
     }
 
     return {
