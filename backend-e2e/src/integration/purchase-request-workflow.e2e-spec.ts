@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TestHelpers, type TestUser } from '../../support/test-helpers';
+import { TestHelpers, TestUser } from '../support/test-helpers';
 
 describe('Purchase Request Integration with Branch/Item APIs (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
