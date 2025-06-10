@@ -174,20 +174,6 @@ export const purchaseRequestApi = createApi({
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
 
-    // Supporting data endpoints
-    getBranches: builder.query<Branch[], void>({
-      query: () => '/branches', // This might need to be adjusted based on your backend
-      providesTags: [TAG_TYPES.BRANCH],
-    }),
-
-    getItems: builder.query<Item[], { search?: string; branchId?: string }>({
-      query: ({ search, branchId } = {}) => ({
-        url: '/items', // This might need to be adjusted based on your backend
-        params: { search, branchId },
-      }),
-      providesTags: [TAG_TYPES.ITEM],
-    }),
-
     getPurchaseRequestTemplates: builder.query<PurchaseRequestTemplate[], { branchId?: string }>({
       query: ({ branchId } = {}) => ({
         url: '/templates', // This might need to be adjusted based on your backend
@@ -207,7 +193,5 @@ export const {
   useSubmitPurchaseRequestMutation,
   useApprovePurchaseRequestMutation,
   useRejectPurchaseRequestMutation,
-  useGetBranchesQuery,
-  useGetItemsQuery,
   useGetPurchaseRequestTemplatesQuery,
 } = purchaseRequestApi;

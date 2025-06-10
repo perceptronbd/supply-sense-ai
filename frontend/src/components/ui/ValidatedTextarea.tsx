@@ -23,9 +23,10 @@ export function ValidatedTextarea({
   required = false,
   className = '',
   onValueChange,
+  defaultValue,
   ...props
 }: ValidatedTextareaProps) {
-  const [value, setValue] = useState(props.defaultValue?.toString() || '');
+  const [value, setValue] = useState(defaultValue?.toString() || '');
   const [touched, setTouched] = useState(false);
 
   const getErrors = useCallback(() => {

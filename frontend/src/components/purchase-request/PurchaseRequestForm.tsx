@@ -10,10 +10,10 @@ import {
   type PurchaseRequestItemFormData,
   purchaseRequestSchema,
 } from '../../lib/schemas/purchase-request.schema';
+import { useGetAllBranchesQuery } from '../../store/api/branchApi';
 import {
   type PurchaseRequest,
   useCreatePurchaseRequestMutation,
-  useGetBranchesQuery,
   useGetPurchaseRequestTemplatesQuery,
 } from '../../store/api/purchaseRequestApi';
 import type { RootState } from '../../store/store';
@@ -54,7 +54,7 @@ export function PurchaseRequestForm({
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
 
   // API queries
-  const { data: branches = [] } = useGetBranchesQuery();
+  const { data: branches = [] } = useGetAllBranchesQuery(undefined);
   const { data: templates = [] } = useGetPurchaseRequestTemplatesQuery({
     branchId: formData.branchId,
   });
@@ -62,36 +62,52 @@ export function PurchaseRequestForm({
   // API mutations
   const [createPurchaseRequest, { isLoading: isCreating }] = useCreatePurchaseRequestMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setWasSubmitted(true);
-
-    // Convert string numbers to actual numbers
-    const processedFormData = {
-      ...formData,
+  // Helper function to clean form data for validation
+  const processFormData = (data: Partial<PurchaseRequestFormData>) => {
+    return {
+      ...data,
+      // Convert empty strings to undefined for optional UUID fields
+      prTemplateId: data.prTemplateId === '' ? undefined : data.prTemplateId,
+      description: data.description === '' ? undefined : data.description,
+      justification: data.justification === '' ? undefined : data.justification,
       items:
-        formData.items?.map((item) => ({
+        data.items?.map((item) => ({
           ...item,
           requestedQty: Number(item.requestedQty),
           estimatedPrice: item.estimatedPrice ? Number(item.estimatedPrice) : undefined,
+          remarks: item.remarks === '' ? undefined : item.remarks,
         })) || [],
     };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    console.log('handleSubmit called');
+    e.preventDefault();
+    setWasSubmitted(true);
+
+    const processedFormData = processFormData(formData);
 
     const validation = purchaseRequestSchema.safeParse(processedFormData);
+    console.log('Validation result:', validation);
+    console.log('Form data being validated:', processedFormData);
 
     if (!validation.success) {
+      console.log('Validation failed:', validation.error);
       const fieldErrors = validation.error.flatten().fieldErrors;
       setErrors(fieldErrors);
       return;
     }
     try {
       if (mode === 'create') {
+        console.log('Attempting to create purchase request:', validation.data);
         const result = await createPurchaseRequest(validation.data).unwrap();
+        console.log('Purchase request created successfully:', result);
         onSuccess?.(result);
         router.push('/purchase-requests');
       }
       // TODO: Add edit functionality
     } catch (error: unknown) {
+      console.error('Error creating purchase request:', error);
       const errorMessage =
         error &&
         typeof error === 'object' &&
@@ -206,7 +222,7 @@ export function PurchaseRequestForm({
           </div>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Basic Information */}
         <Card>
           <CardHeader>

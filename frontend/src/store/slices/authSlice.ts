@@ -19,8 +19,8 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
-  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+  token: null,
+  isAuthenticated: false,
   isLoading: false,
 };
 
@@ -28,18 +28,31 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    hydrate: (state) => {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          state.token = token;
+          state.isAuthenticated = true;
+        }
+      }
+    },
     setCredentials: (state, action: PayloadAction<{ user: User; access_token: string }>) => {
       const { user, access_token } = action.payload;
       state.user = user;
       state.token = access_token;
       state.isAuthenticated = true;
-      localStorage.setItem('token', access_token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', access_token);
+      }
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      localStorage.removeItem('token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+      }
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -47,5 +60,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout, setLoading } = authSlice.actions;
+export const { hydrate, setCredentials, logout, setLoading } = authSlice.actions;
 export default authSlice.reducer;

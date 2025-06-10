@@ -19,7 +19,7 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AuthGuard from '../../components/AuthGuard';
 import { PurchaseRequestForm } from '../../components/purchase-request/PurchaseRequestForm';
 import {
@@ -34,6 +34,12 @@ export default function PurchaseRequestsPage() {
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // API hooks
   const {
@@ -41,10 +47,25 @@ export default function PurchaseRequestsPage() {
     isLoading,
     error,
     refetch,
-  } = useGetPurchaseRequestsQuery({});
+  } = useGetPurchaseRequestsQuery({}, { skip: !isMounted });
   const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
   const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
   const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+
+  // Don't render anything until mounted
+  if (!isMounted) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <div className="text-lg">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {

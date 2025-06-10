@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 
@@ -13,14 +13,26 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
   const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     if (requireAuth && !isAuthenticated && !token) {
       router.push('/login');
     } else if (!requireAuth && isAuthenticated && token) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, token, router, requireAuth]);
+  }, [isAuthenticated, token, router, requireAuth, isMounted]);
+
+  // Don't render anything until mounted to prevent hydration mismatches
+  if (!isMounted) {
+    return <div>Loading...</div>;
+  }
 
   if (requireAuth && !isAuthenticated && !token) {
     return null; // or a loading spinner

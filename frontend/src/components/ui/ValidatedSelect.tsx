@@ -26,9 +26,10 @@ export function ValidatedSelect({
   placeholder = 'Select an option',
   className = '',
   onValueChange,
+  defaultValue,
   ...props
 }: ValidatedSelectProps) {
-  const [value, setValue] = useState(props.defaultValue?.toString() || '');
+  const [value, setValue] = useState(defaultValue?.toString() || '');
   const [touched, setTouched] = useState(false);
 
   const getErrors = useCallback(() => {

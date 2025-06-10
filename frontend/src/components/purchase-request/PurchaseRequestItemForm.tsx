@@ -6,7 +6,8 @@ import {
   type PurchaseRequestItemFormData,
   purchaseRequestItemSchema,
 } from '../../lib/schemas/purchase-request.schema';
-import { useGetItemsQuery } from '../../store/api/purchaseRequestApi';
+import type { Item } from '../../store/api/itemApi';
+import { ItemSelector } from '../ui/ItemSelector';
 import { ValidatedInput } from '../ui/ValidatedInput';
 import { ValidatedSelect } from '../ui/ValidatedSelect';
 import { ValidatedTextarea } from '../ui/ValidatedTextarea';
@@ -37,21 +38,24 @@ export function PurchaseRequestItemForm({
   );
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  // Get items for the dropdown
-  const { data: items = [], isLoading: itemsLoading } = useGetItemsQuery({
-    branchId,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const formDataWithNumbers = {
+  const handleSubmit = () => {
+    // Since handleFieldChange already converts the values, use formData directly
+    // but ensure proper type conversion for any edge cases
+    const submissionData = {
       ...formData,
-      requestedQty: Number(formData.requestedQty) || 0,
-      estimatedPrice: formData.estimatedPrice ? Number(formData.estimatedPrice) : undefined,
+      requestedQty:
+        typeof formData.requestedQty === 'number'
+          ? formData.requestedQty
+          : Number(formData.requestedQty) || 0,
+      estimatedPrice:
+        formData.estimatedPrice === undefined
+          ? undefined
+          : typeof formData.estimatedPrice === 'number'
+            ? formData.estimatedPrice
+            : Number(formData.estimatedPrice) || 0,
     };
 
-    const validation = purchaseRequestItemSchema.safeParse(formDataWithNumbers);
+    const validation = purchaseRequestItemSchema.safeParse(submissionData);
 
     if (!validation.success) {
       const fieldErrors = validation.error.flatten().fieldErrors;
@@ -61,35 +65,34 @@ export function PurchaseRequestItemForm({
 
     onSave(validation.data);
   };
-  const handleFieldChange = (name: string, value: string) => {
-    let processedValue: string | number = value;
 
-    // Convert string values to numbers for numeric fields
-    if (name === 'requestedQty' || name === 'estimatedPrice') {
-      const numValue = Number.parseFloat(value);
-      processedValue = Number.isNaN(numValue) ? 0 : numValue;
+  const convertNumericValue = (name: string, value: string): string | number | undefined => {
+    if (value === '') {
+      return name === 'estimatedPrice' ? undefined : value;
     }
+    const numValue = Number.parseFloat(value);
+    return Number.isNaN(numValue) ? value : numValue;
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    const processedValue =
+      name === 'requestedQty' || name === 'estimatedPrice'
+        ? convertNumericValue(name, value)
+        : value;
 
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
+
     // Clear errors for this field when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: [] }));
     }
   };
 
-  const itemOptions = items.map((item) => ({
-    value: item.id,
-    label: `${item.code} - ${item.name}`,
-  }));
-
   // Set default required date to today if not set
   const defaultRequiredDate = formData.requiredDate || new Date().toISOString().split('T')[0];
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 bg-white p-6 rounded-lg border border-gray-200"
-    >
+    <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">{item ? 'Edit Item' : 'Add Item'}</h3>
       </div>
@@ -97,19 +100,20 @@ export function PurchaseRequestItemForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Item Selection */}
         <div className="md:col-span-2">
-          {' '}
-          <ValidatedSelect
-            name="itemId"
+          <ItemSelector
+            value={formData.itemId}
+            onChange={(itemId, _selectedItem) => {
+              setFormData((prev) => ({ ...prev, itemId }));
+              // Clear errors for this field when user makes a selection
+              if (errors.itemId) {
+                setErrors((prev) => ({ ...prev, itemId: [] }));
+              }
+            }}
+            branchId={branchId}
             label="Item"
-            required
-            wasSubmitted={wasSubmitted}
-            fieldSchema={purchaseRequestItemSchema.shape.itemId}
-            errors={errors.itemId}
-            options={itemOptions}
-            placeholder={itemsLoading ? 'Loading items...' : 'Select an item'}
-            defaultValue={formData.itemId}
-            disabled={itemsLoading}
-            onValueChange={handleFieldChange}
+            isRequired={true}
+            isInvalid={wasSubmitted && !!errors.itemId}
+            errorMessage={errors.itemId?.[0]}
           />
         </div>
         {/* Requested Quantity */}{' '}
@@ -175,10 +179,10 @@ export function PurchaseRequestItemForm({
         <Button type="button" variant="flat" color="default" onPress={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" color="primary">
+        <Button type="button" color="primary" onPress={handleSubmit}>
           {item ? 'Update Item' : 'Add Item'}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

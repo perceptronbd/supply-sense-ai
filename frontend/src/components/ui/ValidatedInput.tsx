@@ -22,15 +22,23 @@ export function ValidatedInput({
   required = false,
   className = '',
   onValueChange,
+  defaultValue,
   ...props
 }: ValidatedInputProps) {
-  const [value, setValue] = useState(props.defaultValue?.toString() || '');
+  const [value, setValue] = useState(defaultValue?.toString() || '');
   const [touched, setTouched] = useState(false);
 
   const getErrors = useCallback(() => {
-    const validationResult = fieldSchema.safeParse(value);
+    // For number inputs, convert the string value to number for validation
+    let valueToValidate: string | number = value;
+    if (props.type === 'number' && value !== '') {
+      const numValue = Number.parseFloat(value);
+      valueToValidate = Number.isNaN(numValue) ? value : numValue;
+    }
+
+    const validationResult = fieldSchema.safeParse(valueToValidate);
     return validationResult.success ? [] : validationResult.error.flatten().formErrors;
-  }, [fieldSchema, value]);
+  }, [fieldSchema, value, props.type]);
 
   const fieldErrors = errors || getErrors();
   const shouldRenderErrors = errors || wasSubmitted || touched;
