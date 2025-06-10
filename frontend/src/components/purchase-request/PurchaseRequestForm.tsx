@@ -15,6 +15,7 @@ import {
   type PurchaseRequest,
   useCreatePurchaseRequestMutation,
   useGetPurchaseRequestTemplatesQuery,
+  useUpdatePurchaseRequestMutation,
 } from '../../store/api/purchaseRequestApi';
 import type { RootState } from '../../store/store';
 import { ValidatedInput } from '../ui/ValidatedInput';
@@ -23,12 +24,14 @@ import { ValidatedTextarea } from '../ui/ValidatedTextarea';
 import { PurchaseRequestItemForm } from './PurchaseRequestItemForm';
 
 interface PurchaseRequestFormProps {
+  id?: string; // Purchase Request ID for editing
   initialData?: Partial<PurchaseRequestFormData>;
   mode?: 'create' | 'edit';
   onSuccess?: (purchaseRequest: PurchaseRequest) => void;
 }
 
 export function PurchaseRequestForm({
+  id,
   initialData,
   mode = 'create',
   onSuccess,
@@ -36,16 +39,33 @@ export function PurchaseRequestForm({
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const [formData, setFormData] = useState<Partial<PurchaseRequestFormData>>(
-    initialData || {
-      title: '',
-      description: '',
-      requiredDate: '',
-      branchId: user?.branchId || '',
-      prTemplateId: '',
-      justification: '',
-      items: [],
+  // Helper function to normalize initial data
+  const normalizeInitialData = (data?: Partial<PurchaseRequestFormData>) => {
+    if (!data) {
+      return {
+        title: '',
+        description: '',
+        requiredDate: '',
+        branchId: user?.branchId || '',
+        prTemplateId: '',
+        justification: '',
+        items: [],
+      };
     }
+
+    return {
+      ...data,
+      items:
+        data.items?.map((item) => ({
+          ...item,
+          requestedQty: Number(item.requestedQty) || 0,
+          estimatedPrice: item.estimatedPrice ? Number(item.estimatedPrice) : undefined,
+        })) || [],
+    };
+  };
+
+  const [formData, setFormData] = useState<Partial<PurchaseRequestFormData>>(
+    normalizeInitialData(initialData)
   );
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -61,6 +81,7 @@ export function PurchaseRequestForm({
 
   // API mutations
   const [createPurchaseRequest, { isLoading: isCreating }] = useCreatePurchaseRequestMutation();
+  const [updatePurchaseRequest, { isLoading: isUpdating }] = useUpdatePurchaseRequestMutation();
 
   // Helper function to clean form data for validation
   const processFormData = (data: Partial<PurchaseRequestFormData>) => {
@@ -104,10 +125,18 @@ export function PurchaseRequestForm({
         console.log('Purchase request created successfully:', result);
         onSuccess?.(result);
         router.push('/purchase-requests');
+      } else if (mode === 'edit' && id) {
+        console.log('Attempting to update purchase request:', validation.data);
+        const result = await updatePurchaseRequest({
+          id,
+          data: validation.data,
+        }).unwrap();
+        console.log('Purchase request updated successfully:', result);
+        onSuccess?.(result);
+        router.push('/purchase-requests');
       }
-      // TODO: Add edit functionality
     } catch (error: unknown) {
-      console.error('Error creating purchase request:', error);
+      console.error('Error saving purchase request:', error);
       const errorMessage =
         error &&
         typeof error === 'object' &&
@@ -179,8 +208,8 @@ export function PurchaseRequestForm({
   const calculateTotalAmount = () => {
     return (
       formData.items?.reduce((total, item) => {
-        const price = item.estimatedPrice || 0;
-        const qty = item.requestedQty || 0;
+        const price = Number(item.estimatedPrice) || 0;
+        const qty = Number(item.requestedQty) || 0;
         return total + price * qty;
       }, 0) || 0
     );
@@ -390,7 +419,9 @@ export function PurchaseRequestForm({
                         <div>
                           <p className="text-sm text-gray-600">Est. Price</p>
                           <p className="font-medium">
-                            {item.estimatedPrice ? `$${item.estimatedPrice.toFixed(2)}` : 'N/A'}
+                            {item.estimatedPrice
+                              ? `$${Number(item.estimatedPrice).toFixed(2)}`
+                              : 'N/A'}
                           </p>
                         </div>
                         <div>
@@ -449,7 +480,12 @@ export function PurchaseRequestForm({
           <Button type="button" variant="flat" color="default" onPress={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" color="primary" isLoading={isCreating} disabled={isCreating}>
+          <Button
+            type="submit"
+            color="primary"
+            isLoading={isCreating || isUpdating}
+            disabled={isCreating || isUpdating}
+          >
             {mode === 'create' ? 'Create Purchase Request' : 'Update Purchase Request'}
           </Button>
         </div>

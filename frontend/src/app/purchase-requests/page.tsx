@@ -289,6 +289,7 @@ export default function PurchaseRequestsPage() {
             </ModalHeader>
             <ModalBody className="pb-6">
               <PurchaseRequestForm
+                id={selectedRequest?.id}
                 initialData={
                   selectedRequest
                     ? {
