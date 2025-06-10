@@ -474,7 +474,7 @@ export class StockPredictionService {
             currentStock: Number(stock.quantity),
             reorderPoint,
             recommendedOrderQty,
-            urgency: Number(stock.quantity) <= reorderPoint ? 'high' : 'low',
+            urgency: Number(stock.quantity) <= reorderPoint ? ('high' as const) : ('low' as const),
             daysUntilStockout: Number(stock.quantity) / Math.max(avgDemand, 1),
             estimatedCost: recommendedOrderQty * 10, // Placeholder cost calculation
           });

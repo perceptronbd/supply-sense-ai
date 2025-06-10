@@ -431,7 +431,7 @@ export class GoodsReceiptService {
       orderedQty: Number(poItem.orderedQty),
       receivedQty: Number(poItem.orderedQty), // Default to ordered quantity
       unitPrice: Number(poItem.unitPrice),
-      qualityNotes: undefined,
+      qualityNotes: undefined as string | undefined,
     }));
 
     const createDto: CreateGoodsReceiptDto = {
@@ -470,7 +470,7 @@ export class GoodsReceiptService {
       itemId: mrItem.itemId,
       orderedQty: Number(mrItem.quantity),
       receivedQty: Number(mrItem.quantity), // Default to requested quantity
-      qualityNotes: undefined,
+      qualityNotes: undefined as string | undefined,
     }));
 
     const createDto: CreateGoodsReceiptDto = {

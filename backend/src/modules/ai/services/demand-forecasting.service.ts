@@ -433,7 +433,7 @@ export class DemandForecastingService {
             reason: `Based on ${forecast.trend} trend with ${Math.round(
               forecast.confidence * 100
             )}% confidence`, // Added reason field to match test expectations
-            urgency: stock.quantity.lte(new Decimal(5)) ? 'high' : 'medium',
+            urgency: stock.quantity.lte(new Decimal(5)) ? ('high' as const) : ('medium' as const),
             estimatedCost: estimatedCost,
           });
         }

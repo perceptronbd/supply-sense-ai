@@ -132,7 +132,14 @@ export class BranchService {
 
     return {
       data: [user.branch],
-      pagination: null,
+      pagination: null as {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+      } | null,
     };
   }
 }

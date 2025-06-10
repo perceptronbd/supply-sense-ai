@@ -567,7 +567,7 @@ export class WorkflowAutomationService {
       }
 
       return suggestions.sort((a, b) => {
-        const urgencyOrder = { high: 3, medium: 2, low: 1 };
+        const urgencyOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
         return urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
       });
     } catch (error) {

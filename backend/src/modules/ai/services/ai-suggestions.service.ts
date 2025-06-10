@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AISuggestionType, Prisma, SuggestionStatus } from '@prisma/client';
+import { AISuggestion, AISuggestionType, Prisma, SuggestionStatus } from '@prisma/client';
 import { PrismaService } from '../../../app/prisma.service';
 import {
   AISuggestionFiltersDto,
@@ -422,13 +422,19 @@ export class AISuggestionsService {
     return suggestions;
   }
 
-  private async generateTransferSuggestions(_branchId: string, _userId: string) {
+  private async generateTransferSuggestions(
+    _branchId: string,
+    _userId: string
+  ): Promise<AISuggestion[]> {
     // This would analyze stock distribution across branches
     // and suggest transfers from overstocked to understocked branches
     return []; // Placeholder for now
   }
 
-  private async generateCostVarianceSuggestions(_branchId: string, _userId: string) {
+  private async generateCostVarianceSuggestions(
+    _branchId: string,
+    _userId: string
+  ): Promise<AISuggestion[]> {
     // This would analyze recent purchase prices vs historical averages
     // and suggest cost variance alerts
     return []; // Placeholder for now

@@ -315,7 +315,7 @@ export class ItemService {
 
     return items.map((item) => ({
       ...item,
-      stock: null,
+      stock: null as null,
     }));
   }
 }
