@@ -21,7 +21,7 @@ export default function LoginPage() {
       console.log('Login successful:', result);
       dispatch(setCredentials(result));
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login failed:', err);
       console.error('Error details:', JSON.stringify(err, null, 2));
     }
@@ -69,8 +69,11 @@ export default function LoginPage() {
 
             {error && (
               <div className="text-red-500 text-sm text-center">
-                {'data' in error
-                  ? (error.data as any)?.message || 'Login failed'
+                {'data' in error &&
+                error.data &&
+                typeof error.data === 'object' &&
+                'message' in error.data
+                  ? (error.data.message as string) || 'Login failed'
                   : 'An error occurred'}
               </div>
             )}

@@ -1,4 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { RootState } from '../store';
+import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
 
 interface LoginRequest {
   email: string;
@@ -23,14 +25,15 @@ export const authApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://localhost:3000/api/auth',
     prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).auth.token;
+      const state = getState() as RootState;
+      const token = state.auth.token;
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
       }
       return headers;
     },
   }),
-  tagTypes: ['Auth'],
+  tagTypes: TAG_TYPE_GROUPS.AUTH_MODULE,
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
@@ -48,7 +51,7 @@ export const authApi = createApi({
     }),
     getProfile: builder.query<LoginResponse['user'], void>({
       query: () => '/profile',
-      providesTags: ['Auth'],
+      providesTags: [TAG_TYPES.AUTH],
     }),
   }),
 });

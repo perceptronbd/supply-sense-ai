@@ -2,20 +2,13 @@
 
 import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import AuthGuard from '../../components/AuthGuard';
-import { logout } from '../../store/slices/authSlice';
 import type { RootState } from '../../store/store';
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch();
   const router = useRouter();
-
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push('/login');
-  };
 
   if (!isAuthenticated) {
     router.push('/login');
@@ -24,18 +17,13 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Supply Chain AI Dashboard</h1>
-              <p className="text-gray-600 mt-2">
-                Welcome back, {user?.firstName} {user?.lastName}
-              </p>
-            </div>
-            <Button color="danger" variant="flat" onPress={handleLogout}>
-              Logout
-            </Button>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-2">
+              Welcome back, {user?.firstName} {user?.lastName}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
