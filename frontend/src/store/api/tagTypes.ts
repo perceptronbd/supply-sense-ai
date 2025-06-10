@@ -44,6 +44,10 @@ export const TAG_TYPES = {
   // Reports & Analytics
   REPORT: 'Report',
   ANALYTICS: 'Analytics',
+
+  // AI & Recommendations
+  AI_RECOMMENDATION: 'AiRecommendation',
+  AI_FORECAST: 'AiForecast',
 } as const;
 
 export const TAG_TYPES_LIST = Object.values(TAG_TYPES);

@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { aiApi } from './api/aiApi';
 import { authApi } from './api/authApi';
 import { branchApi } from './api/branchApi';
 import { itemApi } from './api/itemApi';
@@ -12,13 +13,15 @@ export const store = configureStore({
     [branchApi.reducerPath]: branchApi.reducer,
     [itemApi.reducerPath]: itemApi.reducer,
     [purchaseRequestApi.reducerPath]: purchaseRequestApi.reducer,
+    [aiApi.reducerPath]: aiApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       authApi.middleware,
       branchApi.middleware,
       itemApi.middleware,
-      purchaseRequestApi.middleware
+      purchaseRequestApi.middleware,
+      aiApi.middleware
     ),
 });
 

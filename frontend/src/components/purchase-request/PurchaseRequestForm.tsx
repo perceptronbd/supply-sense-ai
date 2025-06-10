@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, CardBody, CardHeader } from '@heroui/react';
+import { Button, Card, CardBody, CardHeader, addToast } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -10,6 +10,7 @@ import {
   type PurchaseRequestItemFormData,
   purchaseRequestSchema,
 } from '../../lib/schemas/purchase-request.schema';
+import { useGeneratePurchaseRecommendationsMutation } from '../../store/api/aiApi';
 import { useGetAllBranchesQuery } from '../../store/api/branchApi';
 import {
   type PurchaseRequest,
@@ -83,6 +84,8 @@ export function PurchaseRequestForm({
   // API mutations
   const [createPurchaseRequest, { isLoading: isCreating }] = useCreatePurchaseRequestMutation();
   const [updatePurchaseRequest, { isLoading: isUpdating }] = useUpdatePurchaseRequestMutation();
+  const [generateRecommendations, { isLoading: isGeneratingRecommendations }] =
+    useGeneratePurchaseRecommendationsMutation();
 
   // Helper function to clean form data for validation
   const processFormData = (data: Partial<PurchaseRequestFormData>) => {
@@ -230,6 +233,104 @@ export function PurchaseRequestForm({
   // Set default required date to today if not set
   const defaultRequiredDate = formData.requiredDate || new Date().toISOString().split('T')[0];
 
+  // Debug log to see component state
+  console.log('🔧 Component render state:', {
+    formData,
+    isGeneratingRecommendations,
+    branchOptions,
+    user,
+  });
+
+  const handleGenerateRecommendations = async () => {
+    console.log('🚀 Generate AI Recommendations button clicked!');
+    console.log('formData.branchId:', formData.branchId);
+    console.log('formData:', formData);
+
+    // Check if a branch is explicitly selected
+    if (!formData.branchId) {
+      console.log('❌ No branch selected');
+      addToast({
+        title: 'Branch Required',
+        description: 'Please select a branch before generating AI recommendations',
+        color: 'warning',
+        variant: 'flat',
+      });
+      return;
+    }
+
+    // Check if branches are available
+    if (branchOptions.length === 0) {
+      console.log('❌ No branches available');
+      addToast({
+        title: 'No Branches Available',
+        description: 'No branches are available for generating recommendations',
+        color: 'warning',
+        variant: 'flat',
+      });
+      return;
+    }
+
+    const branchToUse = formData.branchId;
+
+    console.log('✅ Starting API call with branch:', branchToUse);
+    try {
+      const result = await generateRecommendations({
+        branchId: branchToUse,
+        createActualPRs: false,
+      }).unwrap();
+
+      console.log('📊 API Response:', result);
+
+      if (result.recommendations && result.recommendations.length > 0) {
+        const defaultDate = formData.requiredDate || new Date().toISOString().split('T')[0];
+
+        // Convert AI recommendations to form items
+        const recommendedItems: PurchaseRequestItemFormData[] = result.recommendations.map(
+          (rec) => ({
+            itemId: rec.itemId,
+            requestedQty: rec.recommendedQuantity,
+            estimatedPrice: rec.estimatedCost / rec.recommendedQuantity, // Price per unit
+            requiredDate: defaultDate,
+            remarks: `AI Generated - ${rec.reasoning} (Confidence: ${Math.round(rec.confidence * 100)}%)`,
+          })
+        );
+
+        console.log('📝 Generated items:', recommendedItems);
+
+        // Replace existing items with AI recommendations
+        setFormData((prev) => ({ ...prev, items: recommendedItems }));
+
+        addToast({
+          title: 'AI Recommendations Generated',
+          description: `Generated ${result.recommendations.length} item recommendations based on AI analysis`,
+          color: 'success',
+          variant: 'flat',
+        });
+
+        // Clear items error if it exists
+        if (errors.items) {
+          setErrors((prev) => ({ ...prev, items: [] }));
+        }
+      } else {
+        console.log('⚠️ No recommendations returned');
+        addToast({
+          title: 'No Recommendations',
+          description: 'No purchase recommendations were generated for this branch',
+          color: 'default',
+          variant: 'flat',
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to generate AI recommendations:', error);
+      addToast({
+        title: 'Generation Failed',
+        description: 'Failed to generate AI recommendations. Please try again.',
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -363,17 +464,38 @@ export function PurchaseRequestForm({
           <CardHeader>
             <div className="flex justify-between items-center w-full">
               <h3 className="text-xl font-semibold">Items</h3>
-              <Button
-                type="button"
-                color="primary"
-                variant="flat"
-                onPress={() => {
-                  setEditingItemIndex(null);
-                  setShowItemForm(true);
-                }}
-              >
-                Add Item
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  color="secondary"
+                  variant="flat"
+                  onPress={() => {
+                    console.log('🔵 Generate AI Recommendations button clicked');
+                    handleGenerateRecommendations();
+                  }}
+                  isLoading={isGeneratingRecommendations}
+                  disabled={isGeneratingRecommendations}
+                  startContent={
+                    !isGeneratingRecommendations ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
+                      </svg>
+                    ) : null
+                  }
+                >
+                  {isGeneratingRecommendations ? 'Generating...' : 'Generate AI Recommendations'}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardBody>
@@ -399,7 +521,7 @@ export function PurchaseRequestForm({
                 />
               </div>
             )}
-            {formData.items && formData.items.length > 0 ? (
+            {formData.items && formData.items.length > 0 && (
               <div className="space-y-4">
                 {' '}
                 {formData.items.map((item, index) => (
@@ -468,9 +590,37 @@ export function PurchaseRequestForm({
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>No items added yet. Click "Add Item" to get started.</p>
+            )}
+            {/* Add Item Container - Show when not currently adding an item */}
+            {!showItemForm && (
+              <div className="text-center py-8 text-gray-500 border-dashed border-2 border-gray-300 bg-gray-50 rounded-lg mt-4">
+                <p className="mb-4">
+                  {formData.items && formData.items.length > 0
+                    ? "Click 'Add Item' to add another item"
+                    : "No items added yet. Click 'Add Item' to get started"}
+                </p>
+                <Button
+                  type="button"
+                  color="primary"
+                  variant="bordered"
+                  className="bg-white hover:bg-gray-100"
+                  onPress={() => {
+                    setEditingItemIndex(null);
+                    setShowItemForm(true);
+                  }}
+                  startContent={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  }
+                >
+                  Add Item
+                </Button>
               </div>
             )}
           </CardBody>
