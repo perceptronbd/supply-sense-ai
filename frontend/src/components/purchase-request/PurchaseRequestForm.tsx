@@ -18,6 +18,7 @@ import {
   useUpdatePurchaseRequestMutation,
 } from '../../store/api/purchaseRequestApi';
 import type { RootState } from '../../store/store';
+import { ValidatedDateInput } from '../ui/ValidatedDateInput';
 import { ValidatedInput } from '../ui/ValidatedInput';
 import { ValidatedSelect } from '../ui/ValidatedSelect';
 import { ValidatedTextarea } from '../ui/ValidatedTextarea';
@@ -194,12 +195,13 @@ export function PurchaseRequestForm({
   const handleLoadTemplate = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
     if (template) {
-      const templateItems = template.items.map((item) => ({
+      const defaultDate = formData.requiredDate || new Date().toISOString().split('T')[0];
+      const templateItems: PurchaseRequestItemFormData[] = template.items.map((item) => ({
         itemId: item.itemId,
         requestedQty: item.defaultQty,
-        estimatedPrice: item.item.currentPrice,
-        requiredDate: formData.requiredDate || new Date().toISOString().split('T')[0],
-        remarks: '',
+        estimatedPrice: item.item.currentPrice || undefined,
+        requiredDate: defaultDate,
+        remarks: undefined,
       }));
       setFormData((prev) => ({ ...prev, items: templateItems }));
     }
@@ -285,9 +287,8 @@ export function PurchaseRequestForm({
                 defaultValue={formData.branchId}
                 onValueChange={handleFieldChange}
               />
-              <ValidatedInput
+              <ValidatedDateInput
                 name="requiredDate"
-                type="date"
                 label="Required Date"
                 required
                 wasSubmitted={wasSubmitted}
@@ -360,7 +361,7 @@ export function PurchaseRequestForm({
         {/* Items Section */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center w-full">
               <h3 className="text-xl font-semibold">Items</h3>
               <Button
                 type="button"

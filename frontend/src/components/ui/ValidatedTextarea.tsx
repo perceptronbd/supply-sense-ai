@@ -1,10 +1,10 @@
 'use client';
 
-import { TextareaHTMLAttributes, useCallback, useState } from 'react';
+import { Textarea } from '@heroui/react';
+import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-interface ValidatedTextareaProps
-  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
+interface ValidatedTextareaProps {
   name: string;
   wasSubmitted: boolean;
   errors?: string[];
@@ -12,6 +12,15 @@ interface ValidatedTextareaProps
   label?: string;
   required?: boolean;
   onValueChange?: (name: string, value: string) => void;
+  placeholder?: string;
+  defaultValue?: string;
+  rows?: number;
+  minRows?: number;
+  maxRows?: number;
+  className?: string;
+  variant?: 'flat' | 'bordered' | 'faded' | 'underlined';
+  labelPlacement?: 'inside' | 'outside' | 'outside-left';
+  disableAutosize?: boolean;
 }
 
 export function ValidatedTextarea({
@@ -21,9 +30,16 @@ export function ValidatedTextarea({
   fieldSchema,
   label,
   required = false,
-  className = '',
   onValueChange,
   defaultValue,
+  placeholder,
+  rows,
+  minRows = 3,
+  maxRows = 8,
+  className = '',
+  variant = 'bordered',
+  labelPlacement = 'inside',
+  disableAutosize = false,
   ...props
 }: ValidatedTextareaProps) {
   const [value, setValue] = useState(defaultValue?.toString() || '');
@@ -39,46 +55,30 @@ export function ValidatedTextarea({
   const hasErrors = fieldErrors.length > 0;
 
   const handleBlur = () => setTouched(true);
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
+  const handleValueChange = (newValue: string) => {
     setValue(newValue);
     onValueChange?.(name, newValue);
   };
 
   return (
-    <div className="space-y-1">
-      {label && (
-        <label htmlFor={name} className="block text-sm font-medium text-gray-700">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      <textarea
-        id={name}
-        name={name}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        value={value}
-        className={`
-          w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical
-          ${
-            hasErrors && shouldRenderErrors
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:border-transparent'
-          }
-          ${className}
-        `}
-        {...props}
-      />{' '}
-      {shouldRenderErrors && hasErrors && (
-        <div className="space-y-1">
-          {fieldErrors.map((error) => (
-            <p key={error} className="text-sm text-red-600">
-              {error}
-            </p>
-          ))}
-        </div>
-      )}
-    </div>
+    <Textarea
+      name={name}
+      label={label}
+      placeholder={placeholder}
+      value={value}
+      onValueChange={handleValueChange}
+      onBlur={handleBlur}
+      isRequired={required}
+      isInvalid={Boolean(hasErrors && shouldRenderErrors)}
+      errorMessage={shouldRenderErrors && hasErrors ? fieldErrors.join(', ') : ''}
+      variant={variant}
+      labelPlacement={labelPlacement}
+      className={className}
+      minRows={minRows}
+      maxRows={maxRows}
+      disableAutosize={disableAutosize}
+      {...(rows && { minRows: rows, maxRows: rows })}
+      {...props}
+    />
   );
 }

@@ -8,6 +8,7 @@ import {
 } from '../../lib/schemas/purchase-request.schema';
 import type { Item } from '../../store/api/itemApi';
 import { ItemSelector } from '../ui/ItemSelector';
+import { ValidatedDateInput } from '../ui/ValidatedDateInput';
 import { ValidatedInput } from '../ui/ValidatedInput';
 import { ValidatedSelect } from '../ui/ValidatedSelect';
 import { ValidatedTextarea } from '../ui/ValidatedTextarea';
@@ -145,10 +146,8 @@ export function PurchaseRequestItemForm({
         />
         {/* Required Date */}
         <div className="md:col-span-2">
-          {' '}
-          <ValidatedInput
+          <ValidatedDateInput
             name="requiredDate"
-            type="date"
             label="Required Date"
             required
             wasSubmitted={wasSubmitted}

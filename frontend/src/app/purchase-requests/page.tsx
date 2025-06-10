@@ -10,10 +10,6 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
   Pagination,
   Select,
   SelectItem,
@@ -24,12 +20,10 @@ import {
   TableHeader,
   TableRow,
   addToast,
-  useDisclosure,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthGuard from '../../components/AuthGuard';
-import { PurchaseRequestForm } from '../../components/purchase-request/PurchaseRequestForm';
 import { Text } from '../../components/ui/Text';
 import {
   type PurchaseRequest,
@@ -41,8 +35,6 @@ import {
 
 export default function PurchaseRequestsPage() {
   const router = useRouter();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   // Pagination state
@@ -109,30 +101,11 @@ export default function PurchaseRequestsPage() {
   };
 
   const handleCreateRequest = () => {
-    setSelectedRequest(null);
-    onOpen();
+    router.push('/purchase-requests/create');
   };
 
   const handleEditRequest = (request: PurchaseRequest) => {
-    setSelectedRequest(request);
-    onOpen();
-  };
-
-  const handleFormSuccess = () => {
-    refetch();
-    onClose();
-    // Reset to first page when new data is added
-    setCurrentPage(1);
-
-    // Show success toast
-    addToast({
-      title: 'Success',
-      description: selectedRequest
-        ? 'Purchase request updated successfully'
-        : 'Purchase request created successfully',
-      color: 'success',
-      variant: 'flat',
-    });
+    router.push(`/purchase-requests/${request.id}/edit`);
   };
 
   const getDropdownItems = (request: PurchaseRequest) => {
@@ -492,41 +465,6 @@ export default function PurchaseRequestsPage() {
             </CardBody>
           </Card>
         </div>
-
-        {/* Create/Edit Modal */}
-        <Modal isOpen={isOpen} onClose={onClose} size="5xl" scrollBehavior="inside">
-          <ModalContent>
-            <ModalHeader>
-              {selectedRequest ? 'Edit Purchase Request' : 'Create New Purchase Request'}
-            </ModalHeader>
-            <ModalBody className="pb-6">
-              <PurchaseRequestForm
-                id={selectedRequest?.id}
-                initialData={
-                  selectedRequest
-                    ? {
-                        title: selectedRequest.title || '',
-                        description: selectedRequest.description || '',
-                        requiredDate: selectedRequest.requiredDate,
-                        branchId: selectedRequest.branchId,
-                        justification: selectedRequest.justification || '',
-                        items:
-                          selectedRequest.items?.map((item) => ({
-                            itemId: item.itemId,
-                            requestedQty: item.requestedQty,
-                            estimatedPrice: item.estimatedPrice || undefined,
-                            requiredDate: item.requiredDate,
-                            remarks: item.remarks || '',
-                          })) || [],
-                      }
-                    : undefined
-                }
-                mode={selectedRequest ? 'edit' : 'create'}
-                onSuccess={handleFormSuccess}
-              />
-            </ModalBody>
-          </ModalContent>
-        </Modal>
       </div>
     </AuthGuard>
   );
