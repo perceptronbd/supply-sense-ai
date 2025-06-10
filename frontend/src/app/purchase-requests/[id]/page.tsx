@@ -184,7 +184,7 @@ export default function PurchaseRequestDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Amount</p>
                   <p className="mt-1 text-gray-900 font-semibold">
-                    ${purchaseRequest.totalAmount.toFixed(2)}
+                    ${Number(purchaseRequest.totalAmount).toFixed(2)}
                   </p>
                 </div>
                 {purchaseRequest.description && (
@@ -231,9 +231,11 @@ export default function PurchaseRequestDetailPage() {
                         {item.requestedQty} {item.item.unit}
                       </TableCell>
                       <TableCell>
-                        {item.estimatedPrice ? `$${item.estimatedPrice.toFixed(2)}` : 'N/A'}
+                        {item.estimatedPrice ? `$${Number(item.estimatedPrice).toFixed(2)}` : 'N/A'}
                       </TableCell>
-                      <TableCell className="font-medium">${item.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">
+                        ${Number(item.totalAmount).toFixed(2)}
+                      </TableCell>
                       <TableCell>{new Date(item.requiredDate).toLocaleDateString()}</TableCell>
                       <TableCell>{item.remarks || '—'}</TableCell>
                     </TableRow>
