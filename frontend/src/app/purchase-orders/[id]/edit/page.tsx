@@ -2,23 +2,23 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import AuthGuard from '../../../../components/AuthGuard';
-import { PurchaseRequestForm } from '../../../../components/purchase-request/PurchaseRequestForm';
+import { PurchaseOrderForm } from '../../../../components/purchase-order/PurchaseOrderForm';
 import { Text } from '../../../../components/ui/Text';
 import {
-  type PurchaseRequest,
-  useGetPurchaseRequestQuery,
-} from '../../../../store/api/purchaseRequestApi';
+  type PurchaseOrder,
+  useGetPurchaseOrderQuery,
+} from '../../../../store/api/purchaseOrderApi';
 
-export default function EditPurchaseRequestPage() {
+export default function EditPurchaseOrderPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
-  const { data: purchaseRequest, isLoading, error } = useGetPurchaseRequestQuery(id);
+  const { data: purchaseOrder, isLoading, error } = useGetPurchaseOrderQuery(id);
 
-  const handleSuccess = (purchaseRequest: PurchaseRequest) => {
-    // Navigate back to the purchase request's detail page
-    router.push(`/purchase-requests/${purchaseRequest.id}`);
+  const handleSuccess = (purchaseOrder: PurchaseOrder) => {
+    // Navigate back to the purchase order's detail page
+    router.push(`/purchase-orders/${purchaseOrder.id}`);
   };
 
   if (isLoading) {
@@ -28,7 +28,7 @@ export default function EditPurchaseRequestPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" as="p">
-                Loading purchase request...
+                Loading purchase order...
               </Text>
             </div>
           </div>
@@ -37,14 +37,14 @@ export default function EditPurchaseRequestPage() {
     );
   }
 
-  if (error || !purchaseRequest) {
+  if (error || !purchaseOrder) {
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-red-600" as="p">
-                Error loading purchase request or request not found
+                Error loading purchase order or order not found
               </Text>
             </div>
           </div>
@@ -53,16 +53,16 @@ export default function EditPurchaseRequestPage() {
     );
   }
 
-  // Only allow editing if the request is in DRAFT status
-  if (purchaseRequest.status !== 'DRAFT') {
+  // Only allow editing if the order is in DRAFT status
+  if (purchaseOrder.status !== 'DRAFT') {
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-yellow-600" as="p">
-                This purchase request cannot be edited because it is in {purchaseRequest.status}{' '}
-                status. Only DRAFT requests can be edited.
+                This purchase order cannot be edited because it is in {purchaseOrder.status} status.
+                Only DRAFT orders can be edited.
               </Text>
             </div>
           </div>
@@ -73,21 +73,24 @@ export default function EditPurchaseRequestPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <PurchaseRequestForm
+      <PurchaseOrderForm
         id={id}
         mode="edit"
         initialData={{
-          title: purchaseRequest.title || '',
-          description: purchaseRequest.description || '',
-          requiredDate: purchaseRequest.requiredDate,
-          branchId: purchaseRequest.branchId,
-          justification: purchaseRequest.justification || '',
+          title: purchaseOrder.title || '',
+          prId: purchaseOrder.prId || '',
+          supplierId: purchaseOrder.supplierId,
+          expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
+          paymentTerms: purchaseOrder.paymentTerms || '',
+          deliveryTerms: purchaseOrder.deliveryTerms || '',
+          branchId: purchaseOrder.branch.id,
+          notes: purchaseOrder.notes || '',
           items:
-            purchaseRequest.items?.map((item) => ({
+            purchaseOrder.items?.map((item) => ({
               itemId: item.itemId,
-              requestedQty: item.requestedQty,
-              estimatedPrice: item.estimatedPrice || undefined,
-              requiredDate: item.requiredDate,
+              orderedQty: item.orderedQty,
+              unitPrice: item.unitPrice,
+              deliveryDate: item.deliveryDate,
               remarks: item.remarks || '',
             })) || [],
         }}

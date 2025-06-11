@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import Sidebar from './Sidebar';
+import { MenuIcon } from './icons';
+import { Text } from './ui/Text';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -35,24 +37,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Top bar for mobile */}
-        <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          {' '}
+        <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+            <MenuIcon className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Supply Chain AI</h1>
-        </div>
+          <Text variant="titleMedium" weight="semiBold" as="h1">
+            Supply Chain AI
+          </Text>
+        </header>
 
         {/* Main content */}
         <main className="flex-1 overflow-auto">{children}</main>

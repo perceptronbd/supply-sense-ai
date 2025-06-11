@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import type { RootState } from '../store/store';
 import { ClipboardIcon, CloseIcon, DashboardIcon, DocumentIcon, InboxIcon } from './icons';
+import { Text } from './ui/Text';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,7 +51,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {' '}
       {/* Mobile backdrop */}
       {isOpen && (
         <div
@@ -60,9 +60,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           role="button"
           tabIndex={0}
         />
-      )}{' '}
+      )}
       {/* Sidebar */}
-      <div
+      <aside
         className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -70,10 +70,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       `}
       >
         <div className="flex flex-col h-full">
-          {' '}
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-6 bg-primary text-primary-foreground">
-            <h2 className="text-lg font-semibold">Supply Chain AI</h2>{' '}
+          <header className="flex items-center justify-between h-16 px-6 bg-primary text-primary-foreground">
+            <Text variant="titleMedium" weight="semiBold" as="h1">
+              Supply Chain AI
+            </Text>
             <button
               type="button"
               onClick={onClose}
@@ -81,46 +82,53 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <CloseIcon className="w-6 h-6" />
             </button>
-          </div>
+          </header>
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigation.map((item) => (
-              <button
-                key={item.name}
-                type="button"
-                onClick={() => {
-                  router.push(item.href);
-                  onClose();
-                }}
-                className={`
-                  w-full flex items-center px-3 py-2 text-left text-sm font-medium rounded-md transition-colors duration-200
-                  ${
-                    isActive(item.href)
-                      ? 'bg-primary/10 text-primary border-r-2 border-primary'
-                      : 'text-foreground hover:bg-default-100 hover:text-foreground'
-                  }
-                `}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
-              </button>
-            ))}
-          </nav>{' '}
+            <ul className="space-y-2">
+              {navigation.map((item) => (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push(item.href);
+                      onClose();
+                    }}
+                    className={`
+                      w-full flex items-center px-3 py-2 text-left text-sm font-medium rounded-md transition-colors duration-200
+                      ${
+                        isActive(item.href)
+                          ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                          : 'text-foreground hover:bg-default-100 hover:text-foreground'
+                      }
+                    `}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    {item.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
           {/* User info and logout */}
-          <div className="border-t border-divider p-4">
+          <footer className="border-t border-divider p-4">
             <div className="mb-4">
-              <p className="text-sm font-medium text-foreground">
+              <Text variant="bodySmall" weight="medium" as="p">
                 {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-default-500">{user?.email}</p>
-              <p className="text-xs text-default-500">Role: {user?.role}</p>
+              </Text>
+              <Text variant="bodyXSmall" className="text-default-500" as="p">
+                {user?.email}
+              </Text>
+              <Text variant="bodyXSmall" className="text-default-500" as="p">
+                Role: {user?.role}
+              </Text>
             </div>
             <Button color="danger" variant="flat" className="w-full" onPress={handleLogout}>
               Logout
             </Button>
-          </div>
+          </footer>
         </div>
-      </div>
+      </aside>
     </>
   );
 }

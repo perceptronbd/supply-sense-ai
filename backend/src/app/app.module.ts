@@ -11,6 +11,7 @@ import { MaterialRequisitionModule } from '../modules/material-requisition/mater
 import { PurchaseOrderModule } from '../modules/purchase-order/purchase-order.module';
 import { PurchaseRequestModule } from '../modules/purchase-request/purchase-request.module';
 import { RequestFormModule } from '../modules/request-form/request-form.module';
+import { SupplierModule } from '../modules/supplier/supplier.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
@@ -22,6 +23,7 @@ import { PrismaService } from './prisma.service';
     ItemModule,
     PurchaseRequestModule,
     PurchaseOrderModule,
+    SupplierModule,
     GoodsReceiptModule,
     RequestFormModule,
     MaterialRequisitionModule,

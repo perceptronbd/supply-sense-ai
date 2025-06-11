@@ -14,6 +14,7 @@ import {
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '../../components/AuthGuard';
+import { Text } from '../../components/ui/Text';
 
 export default function GoodsReceiptsPage() {
   const _router = useRouter();
@@ -89,12 +90,17 @@ export default function GoodsReceiptsPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="p-6">
+      <main className="p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          {/* Header */}
+          <header className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Goods Receipts</h1>
-              <p className="text-gray-600 mt-2">Track and manage all incoming goods receipts</p>
+              <Text variant="headerLarge" weight="bold" className="text-gray-900" as="h1">
+                Goods Receipts
+              </Text>
+              <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+                Track and manage all incoming goods receipts
+              </Text>
             </div>
             <Button
               color="primary"
@@ -102,11 +108,13 @@ export default function GoodsReceiptsPage() {
             >
               Record New Receipt
             </Button>
-          </div>
+          </header>
 
           <Card>
             <CardHeader className="pb-3">
-              <h3 className="text-xl font-semibold">All Goods Receipts</h3>
+              <Text variant="titleLarge" weight="semiBold" as="h2">
+                All Goods Receipts
+              </Text>
             </CardHeader>
             <CardBody>
               <Table aria-label="Goods receipts table">
@@ -160,40 +168,70 @@ export default function GoodsReceiptsPage() {
           </Card>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+          <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
             <Card>
               <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Receipts</h3>
-                <p className="text-3xl font-bold text-blue-600">{goodsReceipts.length}</p>
+                <Text
+                  variant="titleMedium"
+                  weight="semiBold"
+                  className="text-gray-800 mb-2"
+                  as="h3"
+                >
+                  Total Receipts
+                </Text>
+                <Text variant="display" weight="bold" className="text-blue-600" as="p">
+                  {goodsReceipts.length}
+                </Text>
               </CardBody>
             </Card>
             <Card>
               <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed</h3>
-                <p className="text-3xl font-bold text-green-600">
+                <Text
+                  variant="titleMedium"
+                  weight="semiBold"
+                  className="text-gray-800 mb-2"
+                  as="h3"
+                >
+                  Completed
+                </Text>
+                <Text variant="display" weight="bold" className="text-green-600" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Completed').length}
-                </p>
+                </Text>
               </CardBody>
             </Card>
             <Card>
               <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Pending Review</h3>
-                <p className="text-3xl font-bold text-yellow-600">
+                <Text
+                  variant="titleMedium"
+                  weight="semiBold"
+                  className="text-gray-800 mb-2"
+                  as="h3"
+                >
+                  Pending Review
+                </Text>
+                <Text variant="display" weight="bold" className="text-yellow-600" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Pending Review').length}
-                </p>
+                </Text>
               </CardBody>
             </Card>
             <Card>
               <CardBody className="text-center p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Discrepancies</h3>
-                <p className="text-3xl font-bold text-red-600">
+                <Text
+                  variant="titleMedium"
+                  weight="semiBold"
+                  className="text-gray-800 mb-2"
+                  as="h3"
+                >
+                  Discrepancies
+                </Text>
+                <Text variant="display" weight="bold" className="text-red-600" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Discrepancy').length}
-                </p>
+                </Text>
               </CardBody>
             </Card>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </AuthGuard>
   );
 }

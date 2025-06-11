@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import AuthGuard from '../../components/AuthGuard';
+import { Text } from '../../components/ui/Text';
 import { useLoginMutation } from '../../store/api/authApi';
 import { setCredentials } from '../../store/slices/authSlice';
 
@@ -30,13 +31,17 @@ export default function LoginPage() {
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <main className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
-              <p className="text-default-500 mt-1">Sign in to your Supply Chain AI account</p>
-            </div>
+            <header>
+              <Text variant="titleLarge" weight="bold" as="h1">
+                Welcome Back
+              </Text>
+              <Text variant="bodyBase" className="text-default-500 mt-1" as="p">
+                Sign in to your Supply Chain AI account
+              </Text>
+            </header>
           </CardHeader>
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -81,14 +86,20 @@ export default function LoginPage() {
             {/* Test credentials info */}
             <Card className="mt-6" radius="sm">
               <CardBody className="p-3">
-                <p className="text-primary font-medium text-sm">Test Credentials:</p>
-                <p className="text-default-600 text-sm">Email: manager.a@supplychain.com</p>
-                <p className="text-default-600 text-sm">Password: manager123</p>
+                <Text variant="bodySmall" weight="medium" className="text-primary" as="p">
+                  Test Credentials:
+                </Text>
+                <Text variant="bodySmall" className="text-default-600" as="p">
+                  Email: manager.a@supplychain.com
+                </Text>
+                <Text variant="bodySmall" className="text-default-600" as="p">
+                  Password: manager123
+                </Text>
               </CardBody>
             </Card>
           </CardBody>
         </Card>
-      </div>
+      </main>
     </AuthGuard>
   );
 }

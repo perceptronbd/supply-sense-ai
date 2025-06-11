@@ -1,4 +1,3 @@
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   type PurchaseRequestFormData,
@@ -18,7 +17,6 @@ interface UseFormSubmissionProps {
 }
 
 export function useFormSubmission({ mode, id, formData, onSuccess }: UseFormSubmissionProps) {
-  const router = useRouter();
   const [createPurchaseRequest, { isLoading: isCreating }] = useCreatePurchaseRequestMutation();
   const [updatePurchaseRequest, { isLoading: isUpdating }] = useUpdatePurchaseRequestMutation();
 
@@ -78,7 +76,6 @@ export function useFormSubmission({ mode, id, formData, onSuccess }: UseFormSubm
       }
 
       onSuccess?.(result);
-      router.push('/purchase-requests');
     } catch (error: unknown) {
       console.error('Error saving purchase request:', error);
       const errorMessage = getErrorMessage(error);

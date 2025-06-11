@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { Text } from '../components/ui/Text';
 import type { RootState } from '../store/store';
 
 export default function Index() {
@@ -18,10 +19,12 @@ export default function Index() {
   }, [isAuthenticated, token, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <main className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-700">Loading...</h1>
+        <Text variant="headerMedium" weight="semiBold" className="text-gray-700" as="h1">
+          Loading...
+        </Text>
       </div>
-    </div>
+    </main>
   );
 }

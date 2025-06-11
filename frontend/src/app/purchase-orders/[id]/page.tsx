@@ -18,53 +18,60 @@ import { useParams } from 'next/navigation';
 import AuthGuard from '../../../components/AuthGuard';
 import { Text } from '../../../components/ui/Text';
 import {
-  useApprovePurchaseRequestMutation,
-  useGetPurchaseRequestQuery,
-  useRejectPurchaseRequestMutation,
-  useSubmitPurchaseRequestMutation,
-} from '../../../store/api/purchaseRequestApi';
+  useCancelPurchaseOrderMutation,
+  useClosePurchaseOrderMutation,
+  useConfirmPurchaseOrderMutation,
+  useGetPurchaseOrderQuery,
+  useSendToSupplierMutation,
+} from '../../../store/api/purchaseOrderApi';
 
-export default function PurchaseRequestDetailPage() {
+export default function PurchaseOrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
-  const { data: purchaseRequest, isLoading, error } = useGetPurchaseRequestQuery(id);
-  const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
-  const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
-  const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+  const { data: purchaseOrder, isLoading, error } = useGetPurchaseOrderQuery(id);
+  const [sendToSupplier] = useSendToSupplierMutation();
+  const [confirmPurchaseOrder] = useConfirmPurchaseOrderMutation();
+  const [cancelPurchaseOrder] = useCancelPurchaseOrderMutation();
+  const [closePurchaseOrder] = useClosePurchaseOrderMutation();
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'approved':
+      case 'confirmed':
         return 'success';
-      case 'rejected':
+      case 'cancelled':
         return 'danger';
-      case 'submitted':
+      case 'sent_to_supplier':
         return 'warning';
       case 'draft':
         return 'default';
-      default:
+      case 'closed':
         return 'primary';
+      default:
+        return 'secondary';
     }
   };
 
-  const handleWorkflowAction = async (action: 'submit' | 'approve' | 'reject') => {
+  const handleWorkflowAction = async (action: 'send' | 'confirm' | 'cancel' | 'close') => {
     try {
       switch (action) {
-        case 'submit':
-          await submitPurchaseRequest(id).unwrap();
+        case 'send':
+          await sendToSupplier(id).unwrap();
           break;
-        case 'approve':
-          await approvePurchaseRequest(id).unwrap();
+        case 'confirm':
+          await confirmPurchaseOrder(id).unwrap();
           break;
-        case 'reject':
-          await rejectPurchaseRequest(id).unwrap();
+        case 'cancel':
+          await cancelPurchaseOrder(id).unwrap();
+          break;
+        case 'close':
+          await closePurchaseOrder(id).unwrap();
           break;
       }
       // The query will automatically refetch due to cache invalidation
     } catch (error) {
-      console.error(`Failed to ${action} purchase request:`, error);
+      console.error(`Failed to ${action} purchase order:`, error);
     }
   };
 
@@ -74,7 +81,7 @@ export default function PurchaseRequestDetailPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading purchase request...</Text>
+              <Text variant="bodyLarge">Loading purchase order...</Text>
             </div>
           </div>
         </main>
@@ -82,14 +89,14 @@ export default function PurchaseRequestDetailPage() {
     );
   }
 
-  if (error || !purchaseRequest) {
+  if (error || !purchaseOrder) {
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-red-600">
-                Error loading purchase request or request not found
+                Error loading purchase order or order not found
               </Text>
             </div>
           </div>
@@ -109,40 +116,45 @@ export default function PurchaseRequestDetailPage() {
                 ← Back
               </Button>
               <Text variant="headerSmall" weight="bold" className="text-gray-900" as="h1">
-                Purchase Request {purchaseRequest.prNumber}
+                Purchase Order {purchaseOrder.poNumber}
               </Text>
               <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
-                View and manage purchase request details
+                View and manage purchase order details
               </Text>
             </div>
             <div className="flex gap-2">
-              {purchaseRequest.status === 'DRAFT' && (
+              {purchaseOrder.status === 'DRAFT' && (
                 <>
                   <Button
                     color="secondary"
                     variant="flat"
-                    onPress={() => router.push(`/purchase-requests/${id}/edit`)}
+                    onPress={() => router.push(`/purchase-orders/${id}/edit`)}
                   >
                     Edit
                   </Button>
-                  <Button color="warning" onPress={() => handleWorkflowAction('submit')}>
-                    Submit for Approval
+                  <Button color="warning" onPress={() => handleWorkflowAction('send')}>
+                    Send to Supplier
                   </Button>
                 </>
               )}
-              {purchaseRequest.status === 'SUBMITTED' && (
+              {purchaseOrder.status === 'SENT_TO_SUPPLIER' && (
                 <>
-                  <Button color="success" onPress={() => handleWorkflowAction('approve')}>
-                    Approve
+                  <Button color="success" onPress={() => handleWorkflowAction('confirm')}>
+                    Confirm
                   </Button>
                   <Button
                     color="danger"
                     variant="flat"
-                    onPress={() => handleWorkflowAction('reject')}
+                    onPress={() => handleWorkflowAction('cancel')}
                   >
-                    Reject
+                    Cancel
                   </Button>
                 </>
+              )}
+              {purchaseOrder.status === 'CONFIRMED' && (
+                <Button color="primary" onPress={() => handleWorkflowAction('close')}>
+                  Close Order
+                </Button>
               )}
             </div>
           </header>
@@ -161,11 +173,11 @@ export default function PurchaseRequestDetailPage() {
                     Status
                   </Text>
                   <Chip
-                    color={getStatusColor(purchaseRequest.status)}
+                    color={getStatusColor(purchaseOrder.status)}
                     variant="flat"
                     className="mt-1"
                   >
-                    {purchaseRequest.status}
+                    {purchaseOrder.status.replace('_', ' ')}
                   </Chip>
                 </div>
                 <div>
@@ -173,15 +185,23 @@ export default function PurchaseRequestDetailPage() {
                     Title
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {purchaseRequest.title || 'Untitled'}
+                    {purchaseOrder.title || 'Untitled'}
                   </Text>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                    Required Date
+                    Expected Delivery Date
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {new Date(purchaseRequest.requiredDate).toLocaleDateString()}
+                    {new Date(purchaseOrder.expectedDeliveryDate).toLocaleDateString()}
+                  </Text>
+                </div>
+                <div>
+                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    Supplier
+                  </Text>
+                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    {purchaseOrder.supplier.name}
                   </Text>
                 </div>
                 <div>
@@ -189,15 +209,15 @@ export default function PurchaseRequestDetailPage() {
                     Branch
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {purchaseRequest.branch.name}
+                    {purchaseOrder.branch.name}
                   </Text>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                    Requested By
+                    Created By
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {purchaseRequest.createdBy.firstName} {purchaseRequest.createdBy.lastName}
+                    {purchaseOrder.createdBy.firstName} {purchaseOrder.createdBy.lastName}
                   </Text>
                 </div>
                 <div>
@@ -205,26 +225,36 @@ export default function PurchaseRequestDetailPage() {
                     Total Amount
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900 font-semibold" as="p">
-                    ${Number(purchaseRequest.totalAmount).toFixed(2)}
+                    ${Number(purchaseOrder.totalAmount).toFixed(2)}
                   </Text>
                 </div>
-                {purchaseRequest.description && (
-                  <div className="md:col-span-2 lg:col-span-3">
+                {purchaseOrder.paymentTerms && (
+                  <div>
                     <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                      Description
+                      Payment Terms
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                      {purchaseRequest.description}
+                      {purchaseOrder.paymentTerms}
                     </Text>
                   </div>
                 )}
-                {purchaseRequest.justification && (
-                  <div className="md:col-span-2 lg:col-span-3">
+                {purchaseOrder.deliveryTerms && (
+                  <div>
                     <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                      Justification
+                      Delivery Terms
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                      {purchaseRequest.justification}
+                      {purchaseOrder.deliveryTerms}
+                    </Text>
+                  </div>
+                )}
+                {purchaseOrder.notes && (
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                      Notes
+                    </Text>
+                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                      {purchaseOrder.notes}
                     </Text>
                   </div>
                 )}
@@ -240,17 +270,18 @@ export default function PurchaseRequestDetailPage() {
               </Text>
             </CardHeader>
             <CardBody>
-              <Table aria-label="Purchase request items">
+              <Table aria-label="Purchase order items">
                 <TableHeader>
                   <TableColumn>ITEM</TableColumn>
-                  <TableColumn>QUANTITY</TableColumn>
+                  <TableColumn>ORDERED QTY</TableColumn>
+                  <TableColumn>RECEIVED QTY</TableColumn>
                   <TableColumn>UNIT PRICE</TableColumn>
                   <TableColumn>TOTAL</TableColumn>
-                  <TableColumn>REQUIRED DATE</TableColumn>
+                  <TableColumn>DELIVERY DATE</TableColumn>
                   <TableColumn>REMARKS</TableColumn>
                 </TableHeader>
                 <TableBody>
-                  {purchaseRequest.items.map((item) => (
+                  {purchaseOrder.items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div>
@@ -263,15 +294,16 @@ export default function PurchaseRequestDetailPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {item.requestedQty} {item.item.unit}
+                        {item.orderedQty} {item.item.unit}
                       </TableCell>
                       <TableCell>
-                        {item.estimatedPrice ? `$${Number(item.estimatedPrice).toFixed(2)}` : 'N/A'}
+                        {item.receivedQty} {item.item.unit}
                       </TableCell>
+                      <TableCell>${Number(item.unitPrice).toFixed(2)}</TableCell>
                       <TableCell className="font-medium">
                         ${Number(item.totalAmount).toFixed(2)}
                       </TableCell>
-                      <TableCell>{new Date(item.requiredDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(item.deliveryDate).toLocaleDateString()}</TableCell>
                       <TableCell>{item.remarks || '—'}</TableCell>
                     </TableRow>
                   ))}
@@ -291,10 +323,10 @@ export default function PurchaseRequestDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                    Created At
+                    Order Date
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {new Date(purchaseRequest.createdAt).toLocaleString()}
+                    {new Date(purchaseOrder.orderDate).toLocaleString()}
                   </Text>
                 </div>
                 <div>
@@ -302,17 +334,65 @@ export default function PurchaseRequestDetailPage() {
                     Last Updated
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                    {new Date(purchaseRequest.updatedAt).toLocaleString()}
+                    {new Date(purchaseOrder.updatedAt).toLocaleString()}
                   </Text>
                 </div>
-                {purchaseRequest.prTemplate && (
+                {purchaseOrder.sentToSupplierAt && (
                   <div>
                     <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
-                      Template Used
+                      Sent to Supplier
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
-                      {purchaseRequest.prTemplate.name}
+                      {new Date(purchaseOrder.sentToSupplierAt).toLocaleString()}
                     </Text>
+                  </div>
+                )}
+                {purchaseOrder.confirmedAt && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                      Confirmed
+                    </Text>
+                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                      {new Date(purchaseOrder.confirmedAt).toLocaleString()}
+                    </Text>
+                  </div>
+                )}
+                {purchaseOrder.cancelledAt && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                      Cancelled
+                    </Text>
+                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                      {new Date(purchaseOrder.cancelledAt).toLocaleString()}
+                    </Text>
+                  </div>
+                )}
+                {purchaseOrder.closedAt && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                      Closed
+                    </Text>
+                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                      {new Date(purchaseOrder.closedAt).toLocaleString()}
+                    </Text>
+                  </div>
+                )}
+                {purchaseOrder.purchaseRequest && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                      Related Purchase Request
+                    </Text>
+                    <div className="mt-1">
+                      <Button
+                        variant="flat"
+                        size="sm"
+                        onPress={() =>
+                          router.push(`/purchase-requests/${purchaseOrder.purchaseRequest?.id}`)
+                        }
+                      >
+                        {purchaseOrder.purchaseRequest.prNumber}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

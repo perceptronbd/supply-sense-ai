@@ -19,6 +19,13 @@ applyTo: '**'
 - Ensure edits result in valid, idiomatic code
 
 ## React and Frontend Best Practices
+- **Always refer to `frontend/SEMANTIC_HTML_GUIDELINES.md` for semantic HTML and component usage guidelines**
+- Use semantic HTML elements (`<main>`, `<header>`, `<nav>`, `<section>`, `<aside>`, `<form>`, etc.) instead of generic `<div>` containers
+- Always use Text component instead of h1-h6 and p tags with proper variant and as props
+- Keep interactive components (Button, Input, etc.) as-is without wrapping in Text components
+- **Convert all inline SVGs to reusable React components stored in `components/icons/` directory**
+- Create SVG components with proper TypeScript interfaces including size, color, and className props
+- Use semantic naming for SVG components (e.g., `ChevronDownIcon`, `UserIcon`, `SearchIcon`)
 - Extract complex logic into custom hooks for better reusability
 - Create reusable components following component composition patterns
 - Use proper prop interfaces with TypeScript
