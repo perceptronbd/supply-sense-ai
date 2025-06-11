@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { BranchModule } from '../modules/branch/branch.module';
+import { ChatModule } from '../modules/chat/chat.module';
 import { FormulaModule } from '../modules/formula/formula.module';
 import { GoodsReceiptModule } from '../modules/goods-receipt/goods-receipt.module';
 import { ItemModule } from '../modules/item/item.module';
@@ -30,6 +31,7 @@ import { PrismaService } from './prisma.service';
     ManufacturingListModule,
     FormulaModule,
     AiModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, Reflector],

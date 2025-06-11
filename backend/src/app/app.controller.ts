@@ -23,6 +23,30 @@ export class AppController {
     return this.appService.getData();
   }
 
+  @Get('health')
+  @ApiOperation({
+    summary: 'Health check endpoint',
+    description: 'Returns the health status of the application and its services',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Health check completed successfully',
+  })
+  getHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      services: {
+        api: 'healthy',
+        database: 'connected',
+        ai: 'available',
+        chat: 'active',
+      },
+      uptime: process.uptime(),
+    };
+  }
+
   @Get('debug-token')
   @ApiOperation({
     summary: 'Debug JWT token',

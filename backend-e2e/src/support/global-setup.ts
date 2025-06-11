@@ -1,7 +1,8 @@
 import { waitForPortOpen } from '@nx/node/utils';
 
-/* eslint-disable */
-let __TEARDOWN_MESSAGE__: string;
+declare global {
+  var __TEARDOWN_MESSAGE__: string;
+}
 
 module.exports = async () => {
   // Start services that that the app needs to run (e.g. database, docker-compose, etc.).
