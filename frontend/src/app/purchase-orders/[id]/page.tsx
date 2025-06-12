@@ -95,7 +95,7 @@ export default function PurchaseOrderDetailPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-red-600">
+              <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase order or order not found
               </Text>
             </div>
@@ -115,10 +115,10 @@ export default function PurchaseOrderDetailPage() {
               <Button variant="flat" color="default" onPress={() => router.back()} className="mb-4">
                 ← Back
               </Button>
-              <Text variant="headerSmall" weight="bold" className="text-gray-900" as="h1">
+              <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Order {purchaseOrder.poNumber}
               </Text>
-              <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
                 View and manage purchase order details
               </Text>
             </div>
@@ -169,7 +169,7 @@ export default function PurchaseOrderDetailPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Status
                   </Text>
                   <Chip
@@ -181,79 +181,79 @@ export default function PurchaseOrderDetailPage() {
                   </Chip>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Title
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseOrder.title || 'Untitled'}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Expected Delivery Date
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseOrder.expectedDeliveryDate).toLocaleDateString()}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Supplier
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseOrder.supplier.name}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Branch
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseOrder.branch.name}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Created By
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseOrder.createdBy.firstName} {purchaseOrder.createdBy.lastName}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Total Amount
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900 font-semibold" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground font-semibold" as="p">
                     ${Number(purchaseOrder.totalAmount).toFixed(2)}
                   </Text>
                 </div>
                 {purchaseOrder.paymentTerms && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Payment Terms
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseOrder.paymentTerms}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.deliveryTerms && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Delivery Terms
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseOrder.deliveryTerms}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.notes && (
                   <div className="md:col-span-2 lg:col-span-3">
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Notes
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseOrder.notes}
                     </Text>
                   </div>
@@ -288,7 +288,7 @@ export default function PurchaseOrderDetailPage() {
                           <Text variant="bodyBase" weight="medium" as="p">
                             {item.item.name}
                           </Text>
-                          <Text variant="bodySmall" className="text-gray-600" as="p">
+                          <Text variant="bodySmall" className="text-default-500" as="p">
                             {item.item.code}
                           </Text>
                         </div>
@@ -322,64 +322,64 @@ export default function PurchaseOrderDetailPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Order Date
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseOrder.orderDate).toLocaleString()}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Last Updated
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseOrder.updatedAt).toLocaleString()}
                   </Text>
                 </div>
                 {purchaseOrder.sentToSupplierAt && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Sent to Supplier
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {new Date(purchaseOrder.sentToSupplierAt).toLocaleString()}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.confirmedAt && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Confirmed
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {new Date(purchaseOrder.confirmedAt).toLocaleString()}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.cancelledAt && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Cancelled
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {new Date(purchaseOrder.cancelledAt).toLocaleString()}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.closedAt && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Closed
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {new Date(purchaseOrder.closedAt).toLocaleString()}
                     </Text>
                   </div>
                 )}
                 {purchaseOrder.purchaseRequest && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Related Purchase Request
                     </Text>
                     <div className="mt-1">

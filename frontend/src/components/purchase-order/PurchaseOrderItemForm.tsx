@@ -93,9 +93,9 @@ export function PurchaseOrderItemForm({
   };
 
   return (
-    <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
+    <div className="space-y-4 bg-content1 p-6 rounded-lg border border-divider">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">{item ? 'Edit Item' : 'Add Item'}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{item ? 'Edit Item' : 'Add Item'}</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

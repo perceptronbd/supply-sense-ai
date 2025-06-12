@@ -87,8 +87,8 @@ export function ValidatedDateInput({
         base: 'w-full',
         input: 'bg-transparent',
         inputWrapper:
-          'border-gray-300 data-[hover=true]:border-gray-400 data-[focus=true]:border-primary',
-        label: 'text-gray-700 font-medium pb-1',
+          'border-default-300 data-[hover=true]:border-default-400 data-[focus=true]:border-primary',
+        label: 'text-foreground font-medium pb-1',
       }}
     />
   );

@@ -43,7 +43,7 @@ export default function EditPurchaseOrderPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-red-600" as="p">
+              <Text variant="bodyLarge" className="text-danger" as="p">
                 Error loading purchase order or order not found
               </Text>
             </div>
@@ -60,7 +60,7 @@ export default function EditPurchaseOrderPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-yellow-600" as="p">
+              <Text variant="bodyLarge" className="text-warning" as="p">
                 This purchase order cannot be edited because it is in {purchaseOrder.status} status.
                 Only DRAFT orders can be edited.
               </Text>

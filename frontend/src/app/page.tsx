@@ -21,7 +21,7 @@ export default function Index() {
   return (
     <main className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <Text variant="headerMedium" weight="semiBold" className="text-gray-700" as="h1">
+        <Text variant="headerMedium" weight="semiBold" className="text-foreground" as="h1">
           Loading...
         </Text>
       </div>

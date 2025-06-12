@@ -43,7 +43,7 @@ export default function EditPurchaseRequestPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-red-600" as="p">
+              <Text variant="bodyLarge" className="text-danger" as="p">
                 Error loading purchase request or request not found
               </Text>
             </div>
@@ -60,7 +60,7 @@ export default function EditPurchaseRequestPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-yellow-600" as="p">
+              <Text variant="bodyLarge" className="text-warning" as="p">
                 This purchase request cannot be edited because it is in {purchaseRequest.status}{' '}
                 status. Only DRAFT requests can be edited.
               </Text>

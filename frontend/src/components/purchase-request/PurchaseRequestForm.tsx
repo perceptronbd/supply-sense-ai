@@ -143,7 +143,7 @@ export function PurchaseRequestForm({
           <Text variant="headerSmall" weight="bold" as="h1">
             {mode === 'create' ? 'Create Purchase Request' : 'Edit Purchase Request'}
           </Text>
-          <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+          <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
             {mode === 'create'
               ? 'Create a new purchase request for your branch'
               : 'Update the purchase request details'}
@@ -151,8 +151,8 @@ export function PurchaseRequestForm({
         </div>
       </header>
       {errors._form && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="text-red-800">
+        <div className="bg-danger-50 border border-danger-200 rounded-md p-4">
+          <div className="text-danger-800">
             {errors._form.map((error) => (
               <Text variant="bodyBase" key={error} as="p">
                 {error}

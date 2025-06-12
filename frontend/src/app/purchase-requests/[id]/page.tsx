@@ -88,7 +88,7 @@ export default function PurchaseRequestDetailPage() {
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-red-600">
+              <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase request or request not found
               </Text>
             </div>
@@ -108,10 +108,10 @@ export default function PurchaseRequestDetailPage() {
               <Button variant="flat" color="default" onPress={() => router.back()} className="mb-4">
                 ← Back
               </Button>
-              <Text variant="headerSmall" weight="bold" className="text-gray-900" as="h1">
+              <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Request {purchaseRequest.prNumber}
               </Text>
-              <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
                 View and manage purchase request details
               </Text>
             </div>
@@ -157,7 +157,7 @@ export default function PurchaseRequestDetailPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Status
                   </Text>
                   <Chip
@@ -169,61 +169,61 @@ export default function PurchaseRequestDetailPage() {
                   </Chip>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Title
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseRequest.title || 'Untitled'}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Required Date
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseRequest.requiredDate).toLocaleDateString()}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Branch
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseRequest.branch.name}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Requested By
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {purchaseRequest.createdBy.firstName} {purchaseRequest.createdBy.lastName}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Total Amount
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900 font-semibold" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground font-semibold" as="p">
                     ${Number(purchaseRequest.totalAmount).toFixed(2)}
                   </Text>
                 </div>
                 {purchaseRequest.description && (
                   <div className="md:col-span-2 lg:col-span-3">
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Description
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseRequest.description}
                     </Text>
                   </div>
                 )}
                 {purchaseRequest.justification && (
                   <div className="md:col-span-2 lg:col-span-3">
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Justification
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseRequest.justification}
                     </Text>
                   </div>
@@ -257,7 +257,7 @@ export default function PurchaseRequestDetailPage() {
                           <Text variant="bodyBase" weight="medium" as="p">
                             {item.item.name}
                           </Text>
-                          <Text variant="bodySmall" className="text-gray-600" as="p">
+                          <Text variant="bodySmall" className="text-default-500" as="p">
                             {item.item.code}
                           </Text>
                         </div>
@@ -290,27 +290,27 @@ export default function PurchaseRequestDetailPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Created At
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseRequest.createdAt).toLocaleString()}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Last Updated
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                  <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                     {new Date(purchaseRequest.updatedAt).toLocaleString()}
                   </Text>
                 </div>
                 {purchaseRequest.prTemplate && (
                   <div>
-                    <Text variant="bodySmall" weight="medium" className="text-gray-600" as="p">
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                       Template Used
                     </Text>
-                    <Text variant="bodyBase" className="mt-1 text-gray-900" as="p">
+                    <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
                       {purchaseRequest.prTemplate.name}
                     </Text>
                   </div>

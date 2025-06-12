@@ -76,15 +76,15 @@ export default function GoodsReceiptsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed':
-        return 'text-green-600 bg-green-100';
+        return 'text-success bg-success/20';
       case 'Partial':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-primary bg-primary/20';
       case 'Pending Review':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-warning bg-warning/20';
       case 'Discrepancy':
-        return 'text-red-600 bg-red-100';
+        return 'text-danger bg-danger/20';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-default-500 bg-default-100';
     }
   };
 
@@ -95,10 +95,10 @@ export default function GoodsReceiptsPage() {
           {/* Header */}
           <header className="flex justify-between items-center mb-6">
             <div>
-              <Text variant="headerLarge" weight="bold" className="text-gray-900" as="h1">
+              <Text variant="headerLarge" weight="bold" className="text-foreground" as="h1">
                 Goods Receipts
               </Text>
-              <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
                 Track and manage all incoming goods receipts
               </Text>
             </div>
@@ -133,9 +133,7 @@ export default function GoodsReceiptsPage() {
                   {goodsReceipts.map((receipt) => (
                     <TableRow key={receipt.id}>
                       <TableCell className="font-medium">{receipt.id}</TableCell>
-                      <TableCell className="font-medium text-blue-600">
-                        {receipt.poNumber}
-                      </TableCell>
+                      <TableCell className="font-medium text-primary">{receipt.poNumber}</TableCell>
                       <TableCell>{receipt.supplier}</TableCell>
                       <TableCell>{receipt.receivedDate}</TableCell>
                       <TableCell>{receipt.receivedBy}</TableCell>
@@ -174,12 +172,12 @@ export default function GoodsReceiptsPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Total Receipts
                 </Text>
-                <Text variant="display" weight="bold" className="text-blue-600" as="p">
+                <Text variant="display" weight="bold" className="text-primary" as="p">
                   {goodsReceipts.length}
                 </Text>
               </CardBody>
@@ -189,12 +187,12 @@ export default function GoodsReceiptsPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Completed
                 </Text>
-                <Text variant="display" weight="bold" className="text-green-600" as="p">
+                <Text variant="display" weight="bold" className="text-success" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Completed').length}
                 </Text>
               </CardBody>
@@ -204,12 +202,12 @@ export default function GoodsReceiptsPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Pending Review
                 </Text>
-                <Text variant="display" weight="bold" className="text-yellow-600" as="p">
+                <Text variant="display" weight="bold" className="text-warning" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Pending Review').length}
                 </Text>
               </CardBody>
@@ -219,12 +217,12 @@ export default function GoodsReceiptsPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Discrepancies
                 </Text>
-                <Text variant="display" weight="bold" className="text-red-600" as="p">
+                <Text variant="display" weight="bold" className="text-danger" as="p">
                   {goodsReceipts.filter((receipt) => receipt.status === 'Discrepancy').length}
                 </Text>
               </CardBody>

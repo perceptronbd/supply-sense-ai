@@ -31,7 +31,7 @@ export function ApiTestComponent() {
         <CardBody>
           {branchesLoading && <p>Loading branches...</p>}
           {branchesError && (
-            <p className="text-red-500">Error loading branches: {JSON.stringify(branchesError)}</p>
+            <p className="text-danger">Error loading branches: {JSON.stringify(branchesError)}</p>
           )}
           {branches && (
             <div>
@@ -56,7 +56,7 @@ export function ApiTestComponent() {
         <CardBody>
           {itemsLoading && <p>Loading items...</p>}
           {itemsError && (
-            <p className="text-red-500">Error loading items: {JSON.stringify(itemsError)}</p>
+            <p className="text-danger">Error loading items: {JSON.stringify(itemsError)}</p>
           )}
           {items && (
             <div>
@@ -66,7 +66,9 @@ export function ApiTestComponent() {
                   <li key={item.id} className="text-sm">
                     {item.sku} - {item.name} ({item.mainUnit})
                     {item.stock && (
-                      <span className="ml-2 text-gray-500">Stock: {item.stock.availableQty}</span>
+                      <span className="ml-2 text-default-500">
+                        Stock: {item.stock.availableQty}
+                      </span>
                     )}
                   </li>
                 ))}

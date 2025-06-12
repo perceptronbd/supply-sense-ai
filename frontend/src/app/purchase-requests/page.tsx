@@ -214,7 +214,7 @@ export default function PurchaseRequestsPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge" className="text-red-600">
+              <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase requests
               </Text>
             </div>
@@ -230,10 +230,10 @@ export default function PurchaseRequestsPage() {
         <div className="max-w-7xl mx-auto">
           <header className="flex justify-between items-center mb-6">
             <div>
-              <Text variant="headerSmall" weight="bold" className="text-gray-900" as="h1">
+              <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Requests
               </Text>
-              <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
                 Manage and track all purchase requests
               </Text>
             </div>
@@ -250,7 +250,7 @@ export default function PurchaseRequestsPage() {
                     All Purchase Requests
                   </Text>
                   <div className="flex items-center gap-4">
-                    <Text variant="bodySmall" className="text-gray-500" as="p">
+                    <Text variant="bodySmall" className="text-default-500" as="p">
                       Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
                       {purchaseRequests.length} requests
                     </Text>
@@ -287,7 +287,7 @@ export default function PurchaseRequestsPage() {
                     color="default"
                     variant="flat"
                     size="sm"
-                    startContent={<div className="bg-gray-500 rounded-full w-1.5 h-1.5" />}
+                    startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
                   >
                     Draft: {purchaseRequests.filter((req) => req.status === 'DRAFT').length}
                   </Chip>
@@ -295,7 +295,7 @@ export default function PurchaseRequestsPage() {
                     color="warning"
                     variant="flat"
                     size="sm"
-                    startContent={<div className="bg-yellow-500 rounded-full w-1.5 h-1.5" />}
+                    startContent={<div className="bg-warning rounded-full w-1.5 h-1.5" />}
                   >
                     Submitted: {purchaseRequests.filter((req) => req.status === 'SUBMITTED').length}
                   </Chip>
@@ -303,7 +303,7 @@ export default function PurchaseRequestsPage() {
                     color="success"
                     variant="flat"
                     size="sm"
-                    startContent={<div className="bg-green-500 rounded-full w-1.5 h-1.5" />}
+                    startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
                   >
                     Approved: {purchaseRequests.filter((req) => req.status === 'APPROVED').length}
                   </Chip>
@@ -311,7 +311,7 @@ export default function PurchaseRequestsPage() {
                     color="danger"
                     variant="flat"
                     size="sm"
-                    startContent={<div className="bg-red-500 rounded-full w-1.5 h-1.5" />}
+                    startContent={<div className="bg-danger rounded-full w-1.5 h-1.5" />}
                   >
                     Rejected: {purchaseRequests.filter((req) => req.status === 'REJECTED').length}
                   </Chip>
@@ -347,7 +347,7 @@ export default function PurchaseRequestsPage() {
                                   variant="light"
                                   size="sm"
                                   isIconOnly
-                                  className="text-gray-400 hover:text-gray-600"
+                                  className="text-default-400 hover:text-default-600"
                                 >
                                   <DotsVerticalIcon />
                                 </Button>

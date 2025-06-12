@@ -42,7 +42,7 @@ export function ItemsSection({
       </CardHeader>
       <CardBody>
         {errors.items && (
-          <div className="mb-4 text-red-600 text-sm">
+          <div className="mb-4 text-danger text-sm">
             {errors.items.map((error) => (
               <p key={error}>{error}</p>
             ))}
@@ -69,31 +69,31 @@ export function ItemsSection({
             {formData.items.map((item, index) => (
               <div
                 key={`${item.itemId}-${index}`}
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                className="border border-divider rounded-lg p-4 bg-content2"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Item ID</p>
+                      <p className="text-sm text-default-500">Item ID</p>
                       <p className="font-medium">{item.itemId}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Quantity</p>
+                      <p className="text-sm text-default-500">Quantity</p>
                       <p className="font-medium">{item.orderedQty}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Unit Price</p>
+                      <p className="text-sm text-default-500">Unit Price</p>
                       <p className="font-medium">${Number(item.unitPrice).toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Delivery Date</p>
+                      <p className="text-sm text-default-500">Delivery Date</p>
                       <p className="font-medium">
                         {new Date(item.deliveryDate).toLocaleDateString()}
                       </p>
                     </div>
                     {item.remarks && (
                       <div className="md:col-span-4">
-                        <p className="text-sm text-gray-600">Remarks</p>
+                        <p className="text-sm text-default-500">Remarks</p>
                         <p className="font-medium">{item.remarks}</p>
                       </div>
                     )}
@@ -123,7 +123,7 @@ export function ItemsSection({
             ))}
 
             {/* Total Amount */}
-            <div className="border-t border-gray-200 pt-4">
+            <div className="border-t border-divider pt-4">
               <div className="text-right">
                 <p className="text-lg font-semibold">
                   Total Amount: ${calculateTotalAmount().toFixed(2)}
@@ -135,7 +135,7 @@ export function ItemsSection({
 
         {/* Add Item Container - Show when not currently adding an item */}
         {!showItemForm && (
-          <div className="text-center py-8 text-gray-500 border-dashed border-2 border-gray-300 bg-gray-50 rounded-lg mt-4">
+          <div className="text-center py-8 text-default-500 border-dashed border-2 border-default-300 bg-content1 rounded-lg mt-4">
             <p className="mb-4">
               {formData.items && formData.items.length > 0
                 ? "Click 'Add Item' to add another item"
@@ -145,7 +145,7 @@ export function ItemsSection({
               type="button"
               color="primary"
               variant="bordered"
-              className="bg-white hover:bg-gray-100"
+              className="bg-content1 hover:bg-content2"
               onPress={() => {
                 setEditingItemIndex(null);
                 setShowItemForm(true);

@@ -110,7 +110,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       w-full flex items-center px-3 py-2 text-left text-sm font-medium rounded-md transition-colors duration-200
                       ${
                         isActive(item.href)
-                          ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                          ? 'bg-primary/10 text-primary '
                           : 'text-foreground hover:bg-default-100 hover:text-foreground'
                       }
                     `}

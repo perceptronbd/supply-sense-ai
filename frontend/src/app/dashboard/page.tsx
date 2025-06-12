@@ -24,7 +24,7 @@ export default function DashboardPage() {
             <Text variant="headerSmall" weight="bold" as="h1">
               Dashboard
             </Text>
-            <Text variant="bodyBase" className="text-gray-600 mt-2" as="p">
+            <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
               Welcome back, {user?.firstName} {user?.lastName}
             </Text>
           </header>
@@ -35,15 +35,15 @@ export default function DashboardPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Purchase Requests
                 </Text>
-                <Text variant="display" weight="bold" className="text-blue-600" as="p">
+                <Text variant="display" weight="bold" className="text-primary" as="p">
                   24
                 </Text>
-                <Text variant="bodySmall" className="text-gray-500" as="p">
+                <Text variant="bodySmall" className="text-default-500" as="p">
                   Active requests
                 </Text>
               </CardBody>
@@ -54,15 +54,15 @@ export default function DashboardPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Purchase Orders
                 </Text>
-                <Text variant="display" weight="bold" className="text-green-600" as="p">
+                <Text variant="display" weight="bold" className="text-success" as="p">
                   18
                 </Text>
-                <Text variant="bodySmall" className="text-gray-500" as="p">
+                <Text variant="bodySmall" className="text-default-500" as="p">
                   In progress
                 </Text>
               </CardBody>
@@ -73,15 +73,15 @@ export default function DashboardPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   Goods Receipts
                 </Text>
-                <Text variant="display" weight="bold" className="text-purple-600" as="p">
+                <Text variant="display" weight="bold" className="text-secondary" as="p">
                   12
                 </Text>
-                <Text variant="bodySmall" className="text-gray-500" as="p">
+                <Text variant="bodySmall" className="text-default-500" as="p">
                   Pending review
                 </Text>
               </CardBody>
@@ -92,15 +92,15 @@ export default function DashboardPage() {
                 <Text
                   variant="titleMedium"
                   weight="semiBold"
-                  className="text-gray-800 mb-2"
+                  className="text-foreground mb-2"
                   as="h3"
                 >
                   AI Insights
                 </Text>
-                <Text variant="display" weight="bold" className="text-orange-600" as="p">
+                <Text variant="display" weight="bold" className="text-warning" as="p">
                   7
                 </Text>
-                <Text variant="bodySmall" className="text-gray-500" as="p">
+                <Text variant="bodySmall" className="text-default-500" as="p">
                   Recommendations
                 </Text>
               </CardBody>
@@ -116,36 +116,36 @@ export default function DashboardPage() {
               </CardHeader>
               <CardBody className="space-y-3">
                 <div>
-                  <Text variant="bodyBase" weight="medium" className="text-gray-700" as="span">
+                  <Text variant="bodyBase" weight="medium" className="text-foreground" as="span">
                     Email:
                   </Text>
-                  <Text variant="bodyBase" className="ml-2 text-gray-600" as="span">
+                  <Text variant="bodyBase" className="ml-2 text-default-600" as="span">
                     {user?.email}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodyBase" weight="medium" className="text-gray-700" as="span">
+                  <Text variant="bodyBase" weight="medium" className="text-foreground" as="span">
                     Role:
                   </Text>
-                  <Text variant="bodyBase" className="ml-2 text-gray-600" as="span">
+                  <Text variant="bodyBase" className="ml-2 text-default-600" as="span">
                     {user?.role}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodyBase" weight="medium" className="text-gray-700" as="span">
+                  <Text variant="bodyBase" weight="medium" className="text-foreground" as="span">
                     Branch ID:
                   </Text>
-                  <Text variant="bodyBase" className="ml-2 text-gray-600" as="span">
+                  <Text variant="bodyBase" className="ml-2 text-default-600" as="span">
                     {user?.branchId}
                   </Text>
                 </div>
                 <div>
-                  <Text variant="bodyBase" weight="medium" className="text-gray-700" as="span">
+                  <Text variant="bodyBase" weight="medium" className="text-foreground" as="span">
                     Status:
                   </Text>
                   <Text
                     variant="bodyBase"
-                    className={`ml-2 ${user?.isActive ? 'text-green-600' : 'text-red-600'}`}
+                    className={`ml-2 ${user?.isActive ? 'text-success' : 'text-danger'}`}
                     as="span"
                   >
                     {user?.isActive ? 'Active' : 'Inactive'}
