@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Header */}
           <header className="flex items-center justify-between h-16 px-6 bg-primary text-primary-foreground">
             <Text variant="titleMedium" weight="semiBold" as="h1">
-              Supply Chain AI
+              SupplySense
             </Text>
             <button
               type="button"

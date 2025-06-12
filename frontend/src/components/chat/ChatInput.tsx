@@ -48,7 +48,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask me about your supply chain data..."
+          placeholder="Ask me about your SupplySense data..."
           minRows={1}
           maxRows={6}
           disabled={disabled}

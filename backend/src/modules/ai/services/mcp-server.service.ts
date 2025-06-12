@@ -40,7 +40,7 @@ export class McpServerService implements OnModuleInit {
     try {
       this.server = new Server(
         {
-          name: 'supply-chain-ai-mcp',
+          name: 'supplysense-mcp',
           version: '1.0.0',
         },
         {

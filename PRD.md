@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD) for AI-Based Supply Chain Management MVP
+# Product Requirements Document (PRD) for AI-Based SupplySense Management MVP
 
 ## 1. Introduction
 

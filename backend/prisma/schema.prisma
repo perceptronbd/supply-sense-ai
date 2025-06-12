@@ -1,4 +1,4 @@
-// Supply Chain AI Management MVP - Database Schema
+// SupplySense Management MVP - Database Schema
 // Based on detailed MVP requirements for manufacturing supply chain management
 // Core Modules: PR (Purchase Request), PO (Purchase Order), GR (Goods Receipt), 
 // RF (Request Form), MR (Material Requisition), ML (Manufacturing List), Formula

@@ -46,7 +46,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <MenuIcon className="w-6 h-6" />
           </button>
           <Text variant="titleMedium" weight="semiBold" as="h1">
-            Supply Chain AI
+            SupplySense
           </Text>
         </header>
 

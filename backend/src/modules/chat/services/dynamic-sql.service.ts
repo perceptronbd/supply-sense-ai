@@ -138,7 +138,7 @@ export class DynamicSQLService {
     const schemaDescription = this.formatSchemaForAI(schema);
 
     const prompt = `
-You are a SQL query generator for a supply chain management system. Convert the natural language question into a parameterized PostgreSQL SELECT query.
+You are a SQL query generator for SupplySense, a supply chain management system. Convert the natural language question into a parameterized PostgreSQL SELECT query.
 
 IMPORTANT SECURITY CONSTRAINTS:
 - ONLY generate SELECT queries. No INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or other modifications allowed.
@@ -281,7 +281,7 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
     queryExplanation: string
   ): Promise<string> {
     const prompt = `
-You are a supply chain management assistant. A user asked: "${originalQuestion}"
+You are a SupplySense management assistant. A user asked: "${originalQuestion}"
 
 The database query returned ${results.length} results. Here's the query explanation: ${queryExplanation}
 

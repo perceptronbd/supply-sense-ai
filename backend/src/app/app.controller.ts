@@ -12,7 +12,7 @@ export class AppController {
   @Get()
   @ApiOperation({
     summary: 'Get application information',
-    description: 'Returns basic information about the Supply Chain AI Management API',
+    description: 'Returns basic information about the SupplySense Management API',
   })
   @ApiResponse({
     status: 200,

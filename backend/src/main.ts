@@ -33,7 +33,7 @@ async function bootstrap() {
 
   // Setup Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('Supply Chain AI Management API')
+    .setTitle('SupplySense Management API')
     .setDescription(
       'Comprehensive API for managing supply chain operations including authentication, purchase requests, purchase orders, goods receipts, material requisitions, request forms, manufacturing lists, formulas, and AI services.'
     )
@@ -54,7 +54,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'Supply Chain AI API Documentation',
+    customSiteTitle: 'SupplySense API Documentation',
     customfavIcon: '/favicon.ico',
     customCss: '.swagger-ui .topbar { display: none }',
     swaggerOptions: {

@@ -149,7 +149,7 @@ export class GeminiService {
     data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
   ): string {
     return `
-You are an AI supply chain analyst. Analyze the following historical data and provide a demand forecast.
+You are an AI SupplySense analyst. Analyze the following historical data and provide a demand forecast.
 
 Historical Data:
 ${JSON.stringify(data, null, 2)}
@@ -276,9 +276,9 @@ Consider:
     data: HistoricalDemandData | QualityAnalysisData | OptimizationData | RiskAssessmentData
   ): string {
     return `
-You are an AI risk assessment specialist for supply chains. Analyze the following data for potential risks.
+You are an AI risk assessment specialist for SupplySense. Analyze the following data for potential risks.
 
-Supply Chain Data:
+SupplySense Data:
 ${JSON.stringify(data, null, 2)}
 
 Provide a JSON response with (return only valid JSON, no markdown):

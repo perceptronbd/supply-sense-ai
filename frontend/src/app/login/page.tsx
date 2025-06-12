@@ -39,7 +39,7 @@ export default function LoginPage() {
                 Welcome Back
               </Text>
               <Text variant="bodyBase" className="text-default-500 mt-1" as="p">
-                Sign in to your Supply Chain AI account
+                Sign in to your SupplySense account
               </Text>
             </header>
           </CardHeader>

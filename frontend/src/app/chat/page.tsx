@@ -53,10 +53,10 @@ export default function ChatPage() {
                 </span>
               </div>
               <Text variant="titleLarge" className="text-foreground mb-4" as="h1">
-                Welcome to Supply Chain AI
+                Welcome to SupplySense
               </Text>
               <Text variant="bodyLarge" className="text-default-600 mb-6" as="p">
-                Get instant insights about your supply chain data through natural language queries.
+                Get instant insights about your SupplySense data through natural language queries.
                 Ask about inventory levels, supplier performance, costs, and more.
               </Text>
               <Button

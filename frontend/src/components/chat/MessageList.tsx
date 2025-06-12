@@ -29,7 +29,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
             Start a conversation
           </Text>
           <Text variant="bodyMedium" className="text-default-600 max-w-md" as="p">
-            Ask me anything about your supply chain data - from inventory levels to supplier
+            Ask me anything about your SupplySense data - from inventory levels to supplier
             performance, purchase orders, and cost analysis.
           </Text>
           <div className="mt-6 space-y-2">

@@ -200,7 +200,7 @@ export class ChatService {
       const dataString = JSON.stringify(data, null, 2);
 
       const prompt = `
-You are a supply chain AI assistant. A user asked: "${originalQuery}"
+You are a SupplySense AI assistant. A user asked: "${originalQuery}"
 
 I've retrieved the following data from the database: ${explanation}
 
@@ -242,7 +242,7 @@ Response:`;
 
   private buildSystemPrompt(context: QueryContext): string {
     return `
-You are an AI assistant for a supply chain management system. You help users understand their supply chain data, processes, and provide insights.
+You are an AI assistant for SupplySense, a supply chain management system. You help users understand their supply chain data, processes, and provide insights.
 
 Context:
 - User Role: ${context.userRole}

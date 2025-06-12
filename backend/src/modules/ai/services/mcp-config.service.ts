@@ -60,7 +60,7 @@ export class McpConfigService {
   private async initializeServer() {
     this.server = new Server(
       {
-        name: 'supply-chain-ai-mcp',
+        name: 'supplysense-mcp',
         version: '1.0.0',
       },
       {
