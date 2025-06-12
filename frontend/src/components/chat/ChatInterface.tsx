@@ -92,14 +92,14 @@ export function ChatInterface({ sessionId, className }: ChatInterfaceProps) {
   if (messagesError) {
     return (
       <section
-        className={`flex items-center justify-center h-full ${className}`}
+        className={`flex items-center justify-center h-full bg-background ${className}`}
         aria-label="Chat error"
       >
         <div className="text-center">
-          <Text variant="titleSmall" className="text-danger mb-2" as="h2">
+          <Text variant="titleSmall" color="danger" className="mb-2" as="h2">
             Failed to load chat
           </Text>
-          <Text variant="bodyMedium" className="text-default-600" as="p">
+          <Text variant="bodyMedium" color="muted" as="p">
             Please refresh the page or try again later.
           </Text>
         </div>

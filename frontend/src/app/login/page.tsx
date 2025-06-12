@@ -32,18 +32,18 @@ export default function LoginPage() {
   return (
     <AuthGuard requireAuth={false}>
       <main className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+        <Card className="w-full max-w-md bg-content1 border border-divider shadow-large">
+          <CardHeader className="text-center pb-2">
             <header>
-              <Text variant="titleLarge" weight="bold" as="h1">
+              <Text variant="titleLarge" weight="bold" color="default" as="h1">
                 Welcome Back
               </Text>
-              <Text variant="bodyBase" className="text-default-500 mt-1" as="p">
+              <Text variant="bodyBase" color="muted" className="mt-1" as="p">
                 Sign in to your SupplySense account
               </Text>
             </header>
           </CardHeader>
-          <CardBody>
+          <CardBody className="pt-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <Input
                 type="email"
@@ -54,6 +54,11 @@ export default function LoginPage() {
                 isRequired
                 labelPlacement="inside"
                 variant="bordered"
+                classNames={{
+                  input: 'text-foreground',
+                  inputWrapper: 'border-divider',
+                  label: 'text-default-600',
+                }}
               />
 
               <Input
@@ -65,10 +70,15 @@ export default function LoginPage() {
                 isRequired
                 labelPlacement="inside"
                 variant="bordered"
+                classNames={{
+                  input: 'text-foreground',
+                  inputWrapper: 'border-divider',
+                  label: 'text-default-600',
+                }}
               />
 
               {error && (
-                <div className="text-danger text-sm text-center">
+                <div className="text-danger text-small text-center">
                   {'data' in error &&
                   error.data &&
                   typeof error.data === 'object' &&
@@ -78,21 +88,27 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" color="primary" className="w-full" isLoading={isLoading}>
+              <Button
+                type="submit"
+                color="primary"
+                className="w-full"
+                isLoading={isLoading}
+                size="lg"
+              >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
             {/* Test credentials info */}
-            <Card className="mt-6" radius="sm">
+            <Card className="mt-6 bg-content2 border border-divider" radius="sm">
               <CardBody className="p-3">
-                <Text variant="bodySmall" weight="medium" className="text-primary" as="p">
+                <Text variant="bodySmall" weight="medium" color="primary" as="p">
                   Test Credentials:
                 </Text>
-                <Text variant="bodySmall" className="text-default-600" as="p">
+                <Text variant="bodySmall" color="muted" as="p">
                   Email: manager.a@supplychain.com
                 </Text>
-                <Text variant="bodySmall" className="text-default-600" as="p">
+                <Text variant="bodySmall" color="muted" as="p">
                   Password: manager123
                 </Text>
               </CardBody>

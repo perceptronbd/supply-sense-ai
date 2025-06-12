@@ -23,13 +23,13 @@ export function SessionList({
 }: SessionListProps) {
   return (
     <aside
-      className="w-64 border-r border-divider bg-default-50 flex flex-col"
+      className="w-64 border-r border-divider bg-content1 flex flex-col"
       aria-label="Chat sessions"
     >
       {/* Header */}
       <header className="p-4 border-b border-divider">
         <div className="flex items-center justify-between mb-4">
-          <Text variant="titleSmall" weight="semiBold" as="h2">
+          <Text variant="titleSmall" weight="semiBold" color="default" as="h2">
             Chat Sessions
           </Text>
           <Button
@@ -43,12 +43,12 @@ export function SessionList({
             <PlusIcon className="w-4 h-4" />
           </Button>
         </div>
-      </header>{' '}
+      </header>
       {/* Sessions list */}
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Session navigation">
         {sessions.length === 0 && !isLoading ? (
           <div className="text-center py-8">
-            <Text variant="bodySmall" className="text-default-500" as="p">
+            <Text variant="bodySmall" color="muted" as="p">
               No chat sessions yet
             </Text>
             <Button size="sm" variant="flat" onPress={onNewSession} className="mt-2">
@@ -65,21 +65,20 @@ export function SessionList({
                   className={`cursor-pointer transition-colors ${
                     activeSessionId === session.id
                       ? 'bg-primary/10 border-primary'
-                      : 'bg-background hover:bg-default-100'
+                      : 'bg-content2 hover:bg-content3'
                   }`}
                 >
                   <CardBody className="p-3">
                     <Text
                       variant="bodyMedium"
                       weight="medium"
-                      className={`line-clamp-2 ${
-                        activeSessionId === session.id ? 'text-primary' : 'text-foreground'
-                      }`}
+                      color={activeSessionId === session.id ? 'primary' : 'default'}
+                      className="line-clamp-2"
                       as="h3"
                     >
                       {session.title || 'New Chat'}
-                    </Text>{' '}
-                    <time className="text-default-500 mt-1 text-xs">
+                    </Text>
+                    <time className="text-default-500 mt-1 text-tiny">
                       {(() => {
                         try {
                           const date = new Date(session.updatedAt);

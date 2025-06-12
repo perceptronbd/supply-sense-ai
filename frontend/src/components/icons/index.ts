@@ -15,3 +15,5 @@ export { CheckCircleIcon } from './CheckCircleIcon';
 export { DotsVerticalIcon } from './DotsVerticalIcon';
 export { ChatIcon } from './ChatIcon';
 export { UserIcon } from './UserIcon';
+export { SunIcon } from './SunIcon';
+export { MoonIcon } from './MoonIcon';

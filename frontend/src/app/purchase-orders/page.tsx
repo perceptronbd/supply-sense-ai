@@ -271,83 +271,60 @@ export default function PurchaseOrdersPage() {
                   <Text variant="titleSmall" weight="semiBold">
                     All Purchase Orders
                   </Text>
-                  <div className="flex items-center gap-4">
-                    <Text variant="bodySmall" className="text-default-500">
-                      Showing {startIndex + 1}-{Math.min(endIndex, purchaseOrders.length)} of{' '}
-                      {purchaseOrders.length} orders
-                    </Text>
-                    <Select
+                  {/* Status Summary Chips moved to the right */}
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Chip
+                      color="primary"
+                      variant="flat"
                       size="sm"
-                      placeholder="Items per page"
-                      defaultSelectedKeys={[itemsPerPage.toString()]}
-                      className="w-32"
-                      onChange={(e) => {
-                        const newItemsPerPage = Number.parseInt(e.target.value);
-                        setItemsPerPage(newItemsPerPage);
-                        setCurrentPage(1); // Reset to first page
-                      }}
+                      startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
                     >
-                      <SelectItem key="5">5</SelectItem>
-                      <SelectItem key="10">10</SelectItem>
-                      <SelectItem key="25">25</SelectItem>
-                      <SelectItem key="50">50</SelectItem>
-                    </Select>
+                      Total: {purchaseOrders.length}
+                    </Chip>
+                    <Chip
+                      color="default"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
+                    >
+                      Draft: {purchaseOrders.filter((order) => order.status === 'DRAFT').length}
+                    </Chip>
+                    <Chip
+                      color="warning"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-warning rounded-full w-1.5 h-1.5" />}
+                    >
+                      Sent:{' '}
+                      {purchaseOrders.filter((order) => order.status === 'SENT_TO_SUPPLIER').length}
+                    </Chip>
+                    <Chip
+                      color="success"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
+                    >
+                      Confirmed:{' '}
+                      {purchaseOrders.filter((order) => order.status === 'CONFIRMED').length}
+                    </Chip>
+                    <Chip
+                      color="danger"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-danger rounded-full w-1.5 h-1.5" />}
+                    >
+                      Cancelled:{' '}
+                      {purchaseOrders.filter((order) => order.status === 'CANCELLED').length}
+                    </Chip>
+                    <Chip
+                      color="primary"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
+                    >
+                      Closed: {purchaseOrders.filter((order) => order.status === 'CLOSED').length}
+                    </Chip>
                   </div>
-                </div>
-
-                {/* Summary Chips */}
-                <div className="flex flex-wrap gap-2 justify-start w-full">
-                  <Chip
-                    color="primary"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
-                  >
-                    Total: {purchaseOrders.length}
-                  </Chip>
-                  <Chip
-                    color="default"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
-                  >
-                    Draft: {purchaseOrders.filter((order) => order.status === 'DRAFT').length}
-                  </Chip>
-                  <Chip
-                    color="warning"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-warning rounded-full w-1.5 h-1.5" />}
-                  >
-                    Sent:{' '}
-                    {purchaseOrders.filter((order) => order.status === 'SENT_TO_SUPPLIER').length}
-                  </Chip>
-                  <Chip
-                    color="success"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
-                  >
-                    Confirmed:{' '}
-                    {purchaseOrders.filter((order) => order.status === 'CONFIRMED').length}
-                  </Chip>
-                  <Chip
-                    color="danger"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-danger rounded-full w-1.5 h-1.5" />}
-                  >
-                    Cancelled:{' '}
-                    {purchaseOrders.filter((order) => order.status === 'CANCELLED').length}
-                  </Chip>
-                  <Chip
-                    color="primary"
-                    variant="flat"
-                    size="sm"
-                    startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
-                  >
-                    Closed: {purchaseOrders.filter((order) => order.status === 'CLOSED').length}
-                  </Chip>
                 </div>
               </CardHeader>
               <CardBody>
@@ -424,7 +401,32 @@ export default function PurchaseOrdersPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center mt-6">
+                  <div className="flex justify-between items-center mt-6">
+                    {/* Left side: Dropdown and text */}
+                    <div className="flex items-center gap-4">
+                      <Select
+                        size="sm"
+                        placeholder="Items per page"
+                        defaultSelectedKeys={[itemsPerPage.toString()]}
+                        className="w-32"
+                        onChange={(e) => {
+                          const newItemsPerPage = Number.parseInt(e.target.value);
+                          setItemsPerPage(newItemsPerPage);
+                          setCurrentPage(1); // Reset to first page
+                        }}
+                      >
+                        <SelectItem key="5">5</SelectItem>
+                        <SelectItem key="10">10</SelectItem>
+                        <SelectItem key="25">25</SelectItem>
+                        <SelectItem key="50">50</SelectItem>
+                      </Select>
+                      <Text variant="bodySmall" className="text-default-500">
+                        Showing {startIndex + 1}-{Math.min(endIndex, purchaseOrders.length)} of{' '}
+                        {purchaseOrders.length} orders
+                      </Text>
+                    </div>
+
+                    {/* Right side: Pagination buttons */}
                     <Pagination
                       total={totalPages}
                       page={currentPage}

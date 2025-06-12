@@ -3,6 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* HeroUI semantic styling base */
 html {
   -webkit-text-size-adjust: 100%;
   font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -11,41 +12,59 @@ html {
   tab-size: 4;
   scroll-behavior: smooth;
 }
+
 body {
   font-family: inherit;
   line-height: inherit;
   margin: 0;
+  /* Use HeroUI semantic colors for consistent theming */
+  background-color: hsl(var(--nextui-background));
+  color: hsl(var(--nextui-foreground));
 }
+
+/* Reset with HeroUI considerations */
 h1,
 h2,
+h3,
+h4,
+h5,
+h6,
 p,
 pre {
   margin: 0;
 }
+
 *,
 ::before,
 ::after {
   box-sizing: border-box;
   border-width: 0;
   border-style: solid;
-  border-color: currentColor;
+  border-color: hsl(var(--nextui-divider));
 }
+
 h1,
-h2 {
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-size: inherit;
   font-weight: inherit;
 }
+
 a {
   color: inherit;
   text-decoration: inherit;
 }
+
 pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New,
     monospace;
 }
+
 svg {
   display: block;
-  vertical-align: middle;
   shape-rendering: auto;
   text-rendering: optimizeLegibility;
 }
@@ -214,15 +233,11 @@ pre {
   color: hsl(var(--heroui-primary-foreground));
   background-color: hsl(var(--heroui-primary));
 }
-.list-item-link:hover > span {
-}
 .list-item-link:hover > span > span {
   color: hsl(var(--heroui-primary-foreground));
 }
 .list-item-link:hover svg:last-child {
   transform: translateX(0.25rem);
-}
-#other-links {
 }
 .button-pill {
   padding: 1.5rem 2rem;

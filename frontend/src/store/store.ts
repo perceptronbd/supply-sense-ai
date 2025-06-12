@@ -8,10 +8,12 @@ import { purchaseOrderApi } from './api/purchaseOrderApi';
 import { purchaseRequestApi } from './api/purchaseRequestApi';
 import { supplierApi } from './api/supplierApi';
 import authSlice from './slices/authSlice';
+import themeSlice from './slices/themeSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authSlice,
+    theme: themeSlice,
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,
     [chatApi.reducerPath]: chatApi.reducer,

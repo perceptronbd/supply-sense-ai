@@ -1,9 +1,10 @@
 'use client';
 
-import { Button } from '@heroui/react';
+import { Badge, Button } from '@heroui/react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
+import { toggleTheme } from '../store/slices/themeSlice';
 import type { RootState } from '../store/store';
 import {
   ChatIcon,
@@ -12,6 +13,8 @@ import {
   DashboardIcon,
   DocumentIcon,
   InboxIcon,
+  MoonIcon,
+  SunIcon,
 } from './icons';
 import { Text } from './ui/Text';
 
@@ -25,10 +28,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { theme } = useSelector((state: RootState) => state.theme);
 
   const handleLogout = () => {
     dispatch(logout());
     router.push('/login');
+  };
+
+  const handleThemeToggle = () => {
+    dispatch(toggleTheme());
   };
 
   const navigation = [
@@ -60,13 +68,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   const isActive = (href: string) => pathname === href;
-
   return (
     <>
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-overlay/50 z-40 lg:hidden"
           onClick={onClose}
           onKeyDown={(e) => e.key === 'Escape' && onClose()}
           role="button"
@@ -76,24 +83,41 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-64 bg-content1 rounded-xl m-3 shadow-large transform transition-transform duration-300 ease-in-out border border-divider
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-0
       `}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <header className="flex items-center justify-between h-16 px-6 bg-primary text-primary-foreground">
-            <Text variant="titleMedium" weight="semiBold" as="h1">
+          <header className="flex items-center justify-between h-16 px-6 border-b border-divider rounded-t-xl">
+            <Text variant="titleMedium" weight="semiBold" color="default" as="h1">
               SupplySense
             </Text>
-            <button
-              type="button"
-              onClick={onClose}
-              className="lg:hidden p-1 rounded-md hover:bg-primary/20 transition-colors"
-            >
-              <CloseIcon className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Theme toggle icon button */}
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                className="text-foreground hover:bg-content2"
+                onPress={handleThemeToggle}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <SunIcon className="w-4 h-4" />
+                ) : (
+                  <MoonIcon className="w-4 h-4" />
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="lg:hidden p-1 rounded-medium hover:bg-content2 transition-colors text-foreground"
+              >
+                <CloseIcon className="w-6 h-6" />
+              </button>
+            </div>
           </header>
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
@@ -107,11 +131,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       onClose();
                     }}
                     className={`
-                      w-full flex items-center px-3 py-2 text-left text-sm font-medium rounded-md transition-colors duration-200
+                      w-full flex items-center px-3 py-2 text-left text-small font-medium rounded-medium transition-colors duration-200
                       ${
                         isActive(item.href)
-                          ? 'bg-primary/10 text-primary '
-                          : 'text-foreground hover:bg-default-100 hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-content2 hover:text-foreground'
                       }
                     `}
                   >
@@ -123,19 +147,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </ul>
           </nav>
           {/* User info and logout */}
-          <footer className="border-t border-divider p-4">
-            <div className="mb-4">
-              <Text variant="bodySmall" weight="medium" as="p">
+          <footer className="border-t border-divider p-4 rounded-b-xl">
+            <div className="mb-4 space-y-2">
+              <Text variant="bodySmall" weight="medium" color="default" className="truncate" as="p">
                 {user?.firstName} {user?.lastName}
               </Text>
-              <Text variant="bodyXSmall" className="text-default-500" as="p">
+              <Text variant="bodyXSmall" color="muted" className="truncate" as="p">
                 {user?.email}
               </Text>
-              <Text variant="bodyXSmall" className="text-default-500" as="p">
-                Role: {user?.role}
-              </Text>
+              <Badge color="secondary" variant="flat" size="sm">
+                {user?.role?.replace(/_/g, ' ')}
+              </Badge>
             </div>
-            <Button color="danger" variant="flat" className="w-full" onPress={handleLogout}>
+
+            {/* Logout button */}
+            <Button variant="flat" color="danger" className="w-full" onPress={handleLogout}>
               Logout
             </Button>
           </footer>

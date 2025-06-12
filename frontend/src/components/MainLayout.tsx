@@ -28,30 +28,29 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   // During SSR and before hydration, always render children without sidebar
   if (!isHydrated || !showSidebar) {
-    return <>{children}</>;
+    return <div className="min-h-screen bg-background">{children}</div>;
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Top bar for mobile */}
-        <header className="lg:hidden bg-content1 shadow-sm border-b border-divider px-4 py-3 flex items-center justify-between">
+        <header className="lg:hidden bg-content1 shadow-small border-b border-divider px-4 py-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md text-default-500 hover:text-foreground hover:bg-content2"
+            className="p-2 rounded-medium text-default-500 hover:text-foreground hover:bg-content2 transition-colors"
           >
             <MenuIcon className="w-6 h-6" />
           </button>
-          <Text variant="titleMedium" weight="semiBold" as="h1">
+          <Text variant="titleMedium" weight="semiBold" color="default" as="h1">
             SupplySense
           </Text>
-        </header>
-
+        </header>{' '}
         {/* Main content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto bg-background">{children}</main>
       </div>
     </div>
   );

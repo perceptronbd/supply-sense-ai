@@ -48,23 +48,23 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
           color={isUser ? 'primary' : 'secondary'}
           size="sm"
         />
-      </div>
-
+      </div>{' '}
       {/* Message content */}
       <div className={`flex-1 max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
-        {' '}
         <Card
           className={`${
-            isUser ? 'bg-primary text-primary-foreground' : 'bg-default-100 text-foreground'
+            isUser
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-content2 text-foreground border border-divider'
           }`}
         >
           <CardBody className="p-3">
             {isUser ? (
-              <Text variant="bodyMedium" className="whitespace-pre-wrap text-primary-foreground">
+              <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
                 {message.content}
               </Text>
             ) : (
-              <div className="chat-markdown">
+              <div className="chat-markdown text-foreground">
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             )}
@@ -73,10 +73,10 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
             message.metadata.suggestions &&
             Array.isArray(message.metadata.suggestions) ? (
               <section
-                className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-md"
+                className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-medium"
                 aria-label="Suggested follow-up questions"
               >
-                <Text variant="bodySmall" className="text-primary font-medium mb-2" as="h4">
+                <Text variant="bodySmall" color="primary" weight="medium" className="mb-2" as="h4">
                   💡 Suggested follow-up questions:
                 </Text>
                 <ul className="space-y-1">
@@ -85,7 +85,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                       <Button
                         variant="light"
                         size="sm"
-                        className="h-auto p-2 justify-start text-left text-xs text-primary/80 hover:text-primary hover:bg-primary/10 w-full"
+                        className="h-auto p-2 justify-start text-left text-tiny text-primary/80 hover:text-primary hover:bg-primary/10 w-full"
                         onPress={() => {
                           onSuggestionClick?.(suggestion);
                         }}
@@ -101,7 +101,8 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
         </Card>
         <Text
           variant="bodyXSmall"
-          className={`text-default-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}
+          color="muted"
+          className={`mt-1 ${isUser ? 'text-right' : 'text-left'}`}
           as="span"
         >
           <time dateTime={message.createdAt}>{timestamp}</time>
@@ -128,11 +129,11 @@ export function LoadingMessage() {
       </div>
 
       <div className="flex-1 max-w-[80%]">
-        <Card className="bg-default-100">
+        <Card className="bg-content2 border border-divider">
           <CardBody className="p-3">
             <div className="flex items-center gap-2">
               <Spinner size="sm" color="primary" />
-              <Text variant="bodyMedium" className="text-default-600" as="span">
+              <Text variant="bodyMedium" color="muted" as="span">
                 AI is thinking...
               </Text>
             </div>

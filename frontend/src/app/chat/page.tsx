@@ -30,7 +30,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground">
       {/* Sessions sidebar */}
       <SessionList
         sessions={sessions}
@@ -41,21 +41,24 @@ export default function ChatPage() {
       />
 
       {/* Chat interface */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col bg-background">
         {activeSessionId ? (
           <ChatInterface sessionId={activeSessionId} />
         ) : (
-          <section className="flex-1 flex items-center justify-center" aria-label="Welcome section">
+          <section
+            className="flex-1 flex items-center justify-center p-6"
+            aria-label="Welcome section"
+          >
             <div className="text-center max-w-md">
               <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl" role="img" aria-label="AI assistant">
                   🤖
                 </span>
               </div>
-              <Text variant="titleLarge" className="text-foreground mb-4" as="h1">
-                Welcome to SupplySense
+              <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
+                Welcome to SupplySense AI
               </Text>
-              <Text variant="bodyLarge" className="text-default-600 mb-6" as="p">
+              <Text variant="bodyLarge" color="muted" className="mb-6" as="p">
                 Get instant insights about your SupplySense data through natural language queries.
                 Ask about inventory levels, supplier performance, costs, and more.
               </Text>

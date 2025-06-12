@@ -39,7 +39,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex gap-2 p-4 border-t border-divider bg-background"
+      className="flex gap-2 p-4 border-t border-divider bg-content1"
       aria-label="Send message form"
     >
       <div className="flex-1">
@@ -55,7 +55,8 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
           aria-label="Message input"
           classNames={{
             base: 'w-full',
-            input: 'resize-none',
+            input: 'resize-none text-foreground',
+            inputWrapper: 'bg-content2 border-divider',
           }}
         />
       </div>
@@ -67,6 +68,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
         disabled={!message.trim() || disabled}
         className="self-end"
         aria-label="Send message"
+        size="lg"
       >
         {!isLoading && <SendIcon className="w-4 h-4" />}
       </Button>

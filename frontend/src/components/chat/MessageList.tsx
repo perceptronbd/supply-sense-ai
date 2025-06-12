@@ -16,7 +16,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
   if (messages.length === 0 && !isLoading) {
     return (
       <section
-        className="flex-1 flex items-center justify-center p-8"
+        className="flex-1 flex items-center justify-center p-8 bg-background"
         aria-label="Chat welcome message"
       >
         <div className="text-center">
@@ -25,30 +25,30 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
               💬
             </span>
           </div>
-          <Text variant="titleMedium" className="text-foreground mb-2" as="h2">
+          <Text variant="titleMedium" color="default" weight="semiBold" className="mb-2" as="h2">
             Start a conversation
           </Text>
-          <Text variant="bodyMedium" className="text-default-600 max-w-md" as="p">
+          <Text variant="bodyMedium" color="muted" className="max-w-md" as="p">
             Ask me anything about your SupplySense data - from inventory levels to supplier
             performance, purchase orders, and cost analysis.
           </Text>
           <div className="mt-6 space-y-2">
-            <Text variant="bodySmall" className="text-default-500" as="p">
+            <Text variant="bodySmall" color="muted" as="p">
               Try asking:
             </Text>
-            <ul className="space-y-1 text-sm text-default-600">
+            <ul className="space-y-1 text-small text-default-600">
               <li>
-                <Text variant="bodySmall" as="span">
+                <Text variant="bodySmall" color="muted" as="span">
                   • "Show me suppliers with low performance"
                 </Text>
               </li>
               <li>
-                <Text variant="bodySmall" as="span">
+                <Text variant="bodySmall" color="muted" as="span">
                   • "What items are running low on stock?"
                 </Text>
               </li>
               <li>
-                <Text variant="bodySmall" as="span">
+                <Text variant="bodySmall" color="muted" as="span">
                   • "Analyze our purchase costs this month"
                 </Text>
               </li>
@@ -59,7 +59,11 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
     );
   }
   return (
-    <main className="flex-1 overflow-y-auto p-4" role="log" aria-label="Chat messages">
+    <main
+      className="flex-1 overflow-y-auto p-4 bg-background"
+      role="log"
+      aria-label="Chat messages"
+    >
       <div className="max-w-4xl mx-auto">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
