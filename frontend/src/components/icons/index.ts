@@ -13,3 +13,5 @@ export { CheckIcon } from './CheckIcon';
 export { XMarkIcon } from './XMarkIcon';
 export { CheckCircleIcon } from './CheckCircleIcon';
 export { DotsVerticalIcon } from './DotsVerticalIcon';
+export { ChatIcon } from './ChatIcon';
+export { UserIcon } from './UserIcon';

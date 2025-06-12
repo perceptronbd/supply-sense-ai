@@ -48,6 +48,10 @@ export const TAG_TYPES = {
   // AI & Recommendations
   AI_RECOMMENDATION: 'AiRecommendation',
   AI_FORECAST: 'AiForecast',
+
+  // Chat Module
+  CHAT_SESSION: 'ChatSession',
+  CHAT_MESSAGE: 'ChatMessage',
 } as const;
 
 export const TAG_TYPES_LIST = Object.values(TAG_TYPES);
@@ -90,4 +94,6 @@ export const TAG_TYPE_GROUPS = {
   INVENTORY_MODULE: getTagTypes(['STOCK', 'INVENTORY', 'ITEM', 'BRANCH', 'CATEGORY']),
 
   AUTH_MODULE: getTagTypes(['AUTH', 'USER_PROFILE']),
+
+  CHAT_MODULE: getTagTypes(['CHAT_SESSION', 'CHAT_MESSAGE']),
 } as const;

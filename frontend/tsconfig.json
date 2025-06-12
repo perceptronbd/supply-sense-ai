@@ -2,6 +2,7 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "preserve",
+    "jsxImportSource": "react",
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -16,6 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -24,7 +26,8 @@
         "name": "next"
       }
     ],
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "react", "react-dom"],
+    "declaration": false
   },
   "include": [
     "**/*.js",
@@ -34,7 +37,8 @@
     "../dist/frontend/.next/types/**/*.ts",
     "../frontend/.next/types/**/*.ts",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": ["node_modules", "jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
 }

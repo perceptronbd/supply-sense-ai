@@ -1,0 +1,72 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { Text } from '../ui/Text';
+import { LoadingMessage, MessageBubble } from './MessageBubble';
+import type { MessageListProps } from './types';
+
+export function MessageList({ messages, isLoading = false, onSuggestionClick }: MessageListProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages and isLoading dependencies are needed for auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+  if (messages.length === 0 && !isLoading) {
+    return (
+      <section
+        className="flex-1 flex items-center justify-center p-8"
+        aria-label="Chat welcome message"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl" role="img" aria-label="Chat bubble">
+              💬
+            </span>
+          </div>
+          <Text variant="titleMedium" className="text-foreground mb-2" as="h2">
+            Start a conversation
+          </Text>
+          <Text variant="bodyMedium" className="text-default-600 max-w-md" as="p">
+            Ask me anything about your supply chain data - from inventory levels to supplier
+            performance, purchase orders, and cost analysis.
+          </Text>
+          <div className="mt-6 space-y-2">
+            <Text variant="bodySmall" className="text-default-500" as="p">
+              Try asking:
+            </Text>
+            <ul className="space-y-1 text-sm text-default-600">
+              <li>
+                <Text variant="bodySmall" as="span">
+                  • "Show me suppliers with low performance"
+                </Text>
+              </li>
+              <li>
+                <Text variant="bodySmall" as="span">
+                  • "What items are running low on stock?"
+                </Text>
+              </li>
+              <li>
+                <Text variant="bodySmall" as="span">
+                  • "Analyze our purchase costs this month"
+                </Text>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <main className="flex-1 overflow-y-auto p-4" role="log" aria-label="Chat messages">
+      <div className="max-w-4xl mx-auto">
+        {messages.map((message) => (
+          <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
+        ))}
+        {isLoading && <LoadingMessage />}
+        <div ref={messagesEndRef} />
+      </div>
+    </main>
+  );
+}

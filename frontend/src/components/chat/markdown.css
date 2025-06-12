@@ -1,0 +1,77 @@
+/* Markdown styling for chat messages */
+.chat-markdown {
+  @apply text-foreground;
+}
+
+.chat-markdown h1 {
+  @apply text-lg font-bold mb-3 mt-4 first:mt-0 text-foreground;
+}
+
+.chat-markdown h2 {
+  @apply text-base font-semibold mb-2 mt-3 first:mt-0 text-foreground;
+}
+
+.chat-markdown h3 {
+  @apply text-sm font-semibold mb-2 mt-3 first:mt-0 text-foreground;
+}
+
+.chat-markdown p {
+  @apply mb-2 last:mb-0 text-foreground;
+}
+
+.chat-markdown code {
+  @apply bg-default-200 px-1 py-0.5 rounded text-xs font-mono;
+}
+
+.chat-markdown pre {
+  @apply bg-default-100 p-3 rounded-md overflow-x-auto my-2;
+}
+
+.chat-markdown pre code {
+  @apply bg-transparent p-0 text-xs font-mono;
+}
+
+.chat-markdown ul {
+  @apply list-disc list-inside space-y-1 my-2 text-foreground;
+}
+
+.chat-markdown ol {
+  @apply list-decimal list-inside space-y-1 my-2 text-foreground;
+}
+
+.chat-markdown li {
+  @apply text-foreground;
+}
+
+.chat-markdown blockquote {
+  @apply border-l-4 border-primary pl-4 italic text-default-600 my-2;
+}
+
+.chat-markdown strong {
+  @apply font-semibold text-foreground;
+}
+
+.chat-markdown em {
+  @apply italic text-foreground;
+}
+
+.chat-markdown a {
+  @apply text-primary hover:text-primary/80 underline;
+}
+
+.chat-markdown table {
+  @apply border-collapse border border-default-300 my-2;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+  @apply border border-default-300 px-2 py-1 text-left;
+}
+
+.chat-markdown th {
+  @apply bg-default-100 font-semibold;
+}
+
+.chat-markdown hr {
+  @apply border-default-300 my-4;
+}

@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { aiApi } from './api/aiApi';
 import { authApi } from './api/authApi';
 import { branchApi } from './api/branchApi';
+import { chatApi } from './api/chatApi';
 import { itemApi } from './api/itemApi';
 import { purchaseOrderApi } from './api/purchaseOrderApi';
 import { purchaseRequestApi } from './api/purchaseRequestApi';
@@ -13,6 +14,7 @@ export const store = configureStore({
     auth: authSlice,
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,
+    [chatApi.reducerPath]: chatApi.reducer,
     [itemApi.reducerPath]: itemApi.reducer,
     [purchaseRequestApi.reducerPath]: purchaseRequestApi.reducer,
     [purchaseOrderApi.reducerPath]: purchaseOrderApi.reducer,
@@ -23,6 +25,7 @@ export const store = configureStore({
     getDefaultMiddleware().concat(
       authApi.middleware,
       branchApi.middleware,
+      chatApi.middleware,
       itemApi.middleware,
       purchaseRequestApi.middleware,
       purchaseOrderApi.middleware,

@@ -5,7 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import type { RootState } from '../store/store';
-import { ClipboardIcon, CloseIcon, DashboardIcon, DocumentIcon, InboxIcon } from './icons';
+import {
+  ChatIcon,
+  ClipboardIcon,
+  CloseIcon,
+  DashboardIcon,
+  DocumentIcon,
+  InboxIcon,
+} from './icons';
 import { Text } from './ui/Text';
 
 interface SidebarProps {
@@ -29,6 +36,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Dashboard',
       href: '/dashboard',
       icon: <DashboardIcon className="w-5 h-5" />,
+    },
+    {
+      name: 'AI Chat',
+      href: '/chat',
+      icon: <ChatIcon className="w-5 h-5" />,
     },
     {
       name: 'Purchase Requests',
