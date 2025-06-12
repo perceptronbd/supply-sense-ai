@@ -47,7 +47,6 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
           }}
           color={isUser ? 'primary' : 'secondary'}
           size="sm"
-          name={isUser ? 'User' : 'AI'}
         />
       </div>
 
@@ -125,7 +124,6 @@ export function LoadingMessage() {
           }}
           color="secondary"
           size="sm"
-          name="AI"
         />
       </div>
 
