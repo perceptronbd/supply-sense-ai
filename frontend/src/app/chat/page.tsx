@@ -31,58 +31,60 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="flex h-screen bg-background text-foreground relative">
-      <LoadingOverlay
-        isVisible={isCreatingSession}
-        message="Creating new chat session..."
-        opacity="light"
-        size="md"
-      />
+    <main className="w-full h-screen p-4">
+      <div className="flex h-full bg-background text-foreground relative border border-divider rounded-lg shadow-lg overflow-hidden">
+        <LoadingOverlay
+          isVisible={isCreatingSession}
+          message="Creating new chat session..."
+          opacity="light"
+          size="md"
+        />
 
-      {/* Sessions sidebar */}
-      <SessionList
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSessionSelect={handleSessionSelect}
-        onNewSession={handleNewSession}
-        isLoading={isLoadingSessions}
-      />
+        {/* Sessions sidebar */}
+        <SessionList
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          onSessionSelect={handleSessionSelect}
+          onNewSession={handleNewSession}
+          isLoading={isLoadingSessions}
+        />
 
-      {/* Chat interface */}
-      <section className="flex-1 flex flex-col bg-background">
-        {activeSessionId ? (
-          <ChatInterface sessionId={activeSessionId} />
-        ) : (
-          <article
-            className="flex-1 flex items-center justify-center p-6"
-            aria-label="Welcome section"
-          >
-            <header className="text-center max-w-md">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Text variant="titleLarge" as="span" role="img" aria-label="AI assistant">
-                  🤖
+        {/* Chat interface */}
+        <section className="flex-1 flex flex-col bg-background">
+          {activeSessionId ? (
+            <ChatInterface sessionId={activeSessionId} />
+          ) : (
+            <article
+              className="flex-1 flex items-center justify-center p-6"
+              aria-label="Welcome section"
+            >
+              <header className="text-center max-w-md">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Text variant="titleLarge" as="span" role="img" aria-label="AI assistant">
+                    🤖
+                  </Text>
+                </div>
+                <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
+                  Welcome to SupplySense AI
                 </Text>
-              </div>
-              <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
-                Welcome to SupplySense AI
-              </Text>
-              <Text variant="bodyLarge" color="muted" className="mb-6" as="p">
-                Get instant insights about your SupplySense data through natural language queries.
-                Ask about inventory levels, supplier performance, costs, and more.
-              </Text>
-              <Button
-                onPress={handleNewSession}
-                isLoading={isCreatingSession}
-                color="primary"
-                size="lg"
-                className="font-medium"
-              >
-                {isCreatingSession ? 'Creating...' : 'Start New Chat'}
-              </Button>
-            </header>
-          </article>
-        )}
-      </section>
+                <Text variant="bodyLarge" color="muted" className="mb-6" as="p">
+                  Get instant insights about your SupplySense data through natural language queries.
+                  Ask about inventory levels, supplier performance, costs, and more.
+                </Text>
+                <Button
+                  onPress={handleNewSession}
+                  isLoading={isCreatingSession}
+                  color="primary"
+                  size="lg"
+                  className="font-medium"
+                >
+                  {isCreatingSession ? 'Creating...' : 'Start New Chat'}
+                </Button>
+              </header>
+            </article>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
