@@ -51,10 +51,19 @@ interface TextProps extends VariantProps<typeof textVariants> {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label';
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label' | 'time';
 }
 
-export const Text = ({ variant, weight, color, children, className, style, as }: TextProps) => {
+export const Text = ({
+  variant,
+  weight,
+  color,
+  children,
+  className,
+  style,
+  as,
+  ...otherProps
+}: TextProps & React.HTMLAttributes<HTMLElement>) => {
   const classes = cn(textVariants({ variant, weight, color }), className);
 
   // Determine the element based on `as` prop or variant
@@ -68,7 +77,8 @@ export const Text = ({ variant, weight, color, children, className, style, as }:
     | 'p'
     | 'span'
     | 'div'
-    | 'label' => {
+    | 'label'
+    | 'time' => {
     if (as) return as;
 
     switch (variant) {
@@ -93,7 +103,7 @@ export const Text = ({ variant, weight, color, children, className, style, as }:
   };
 
   const elementType = getElementType();
-  const props = { className: classes, style };
+  const props = { className: classes, style, ...otherProps };
 
   switch (elementType) {
     case 'h1':
@@ -115,6 +125,8 @@ export const Text = ({ variant, weight, color, children, className, style, as }:
       return <span {...props}>{children}</span>;
     case 'div':
       return <div {...props}>{children}</div>;
+    case 'time':
+      return <time {...props}>{children}</time>;
     default:
       return <p {...props}>{children}</p>;
   }

@@ -123,7 +123,7 @@ export function PurchaseOrderForm({
   };
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-6">
+    <section className="max-w-6xl mx-auto p-6 space-y-6">
       <header className="flex justify-between items-center">
         <div>
           <Text variant="headerSmall" weight="bold" as="h1">
@@ -138,7 +138,7 @@ export function PurchaseOrderForm({
       </header>
 
       {errors._form && (
-        <div className="bg-danger-50 border border-danger-200 rounded-md p-4">
+        <section className="bg-danger-50 border border-danger-200 rounded-md p-4">
           <div className="text-danger-800">
             {errors._form.map((error) => (
               <Text variant="bodyBase" key={error} as="p">
@@ -146,7 +146,7 @@ export function PurchaseOrderForm({
               </Text>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       <form className="space-y-6" onSubmit={(e) => handleSubmit(e, setErrors, setWasSubmitted)}>
@@ -272,6 +272,6 @@ export function PurchaseOrderForm({
           </Button>
         </div>
       </form>
-    </main>
+    </section>
   );
 }

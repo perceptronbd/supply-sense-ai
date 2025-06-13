@@ -76,14 +76,14 @@ export default function LoginPage() {
               }}
             />
             {error && (
-              <div className="text-danger text-small text-center">
+              <Text variant="bodySmall" color="danger" className="text-center" as="p">
                 {'data' in error &&
                 error.data &&
                 typeof error.data === 'object' &&
                 'message' in error.data
                   ? (error.data.message as string) || 'Login failed'
                   : 'An error occurred'}
-              </div>
+              </Text>
             )}{' '}
             <Button
               type="submit"

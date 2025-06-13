@@ -78,7 +78,7 @@ export function SessionList({
                     >
                       {session.title || 'New Chat'}
                     </Text>
-                    <time className="text-default-500 mt-1 text-tiny">
+                    <Text variant="bodyXSmall" color="muted" as="time" className="mt-1">
                       {(() => {
                         try {
                           const date = new Date(session.updatedAt);
@@ -89,7 +89,7 @@ export function SessionList({
                           return 'Just now';
                         }
                       })()}
-                    </time>
+                    </Text>
                   </CardBody>
                 </Card>
               </li>

@@ -21,9 +21,9 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
       >
         <div className="text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl" role="img" aria-label="Chat bubble">
+            <Text variant="bodyLarge" as="span" role="img" aria-label="Chat bubble">
               💬
-            </span>
+            </Text>
           </div>
           <Text variant="titleMedium" color="default" weight="semiBold" className="mb-2" as="h2">
             Start a conversation
@@ -59,7 +59,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
     );
   }
   return (
-    <main
+    <section
       className="flex-1 overflow-y-auto p-4 bg-background"
       role="log"
       aria-label="Chat messages"
@@ -71,6 +71,6 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
         {isLoading && <LoadingMessage />}
         <div ref={messagesEndRef} />
       </div>
-    </main>
+    </section>
   );
 }

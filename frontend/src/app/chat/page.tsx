@@ -31,7 +31,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground relative">
+    <main className="flex h-screen bg-background text-foreground relative">
       <LoadingOverlay
         isVisible={isCreatingSession}
         message="Creating new chat session..."
@@ -49,19 +49,19 @@ export default function ChatPage() {
       />
 
       {/* Chat interface */}
-      <main className="flex-1 flex flex-col bg-background">
+      <section className="flex-1 flex flex-col bg-background">
         {activeSessionId ? (
           <ChatInterface sessionId={activeSessionId} />
         ) : (
-          <section
+          <article
             className="flex-1 flex items-center justify-center p-6"
             aria-label="Welcome section"
           >
-            <div className="text-center max-w-md">
+            <header className="text-center max-w-md">
               <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl" role="img" aria-label="AI assistant">
+                <Text variant="titleLarge" as="span" role="img" aria-label="AI assistant">
                   🤖
-                </span>
+                </Text>
               </div>
               <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
                 Welcome to SupplySense AI
@@ -79,10 +79,10 @@ export default function ChatPage() {
               >
                 {isCreatingSession ? 'Creating...' : 'Start New Chat'}
               </Button>
-            </div>
-          </section>
+            </header>
+          </article>
         )}
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }

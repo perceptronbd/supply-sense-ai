@@ -28,7 +28,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   // During SSR and before hydration, always render children without sidebar
   if (!isHydrated || !showSidebar) {
-    return <div className="min-h-screen bg-background">{children}</div>;
+    return <main className="min-h-screen bg-background">{children}</main>;
   }
 
   return (

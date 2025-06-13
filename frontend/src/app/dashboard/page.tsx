@@ -113,39 +113,57 @@ export default function DashboardPage() {
                 User Information
               </Text>
             </CardHeader>
-            <CardBody className="space-y-3">
-              <div>
-                <Text variant="bodyBase" weight="medium" color="default" as="span">
-                  Email:
-                </Text>
-                <Text variant="bodyBase" color="muted" className="ml-2" as="span">
-                  {user?.email}
-                </Text>
-              </div>
-              <div>
-                <Text variant="bodyBase" weight="medium" color="default" as="span">
-                  Role:
-                </Text>
-                <Text variant="bodyBase" color="muted" className="ml-2" as="span">
-                  {user?.role}
-                </Text>
-              </div>
-              <div>
-                <Text variant="bodyBase" weight="medium" color="default" as="span">
-                  Branch ID:
-                </Text>
-                <Text variant="bodyBase" color="muted" className="ml-2" as="span">
-                  {user?.branchId}
-                </Text>
-              </div>
-              <div>
-                <Text variant="bodyBase" weight="medium" color="default" as="span">
-                  Status:
-                </Text>
-                <Text variant="bodyBase" color="success" className="ml-2" as="span">
-                  Active
-                </Text>
-              </div>
+            <CardBody>
+              <dl className="space-y-3">
+                <div className="flex gap-2">
+                  <dt>
+                    <Text variant="bodyBase" weight="medium" color="default" as="span">
+                      Email:
+                    </Text>
+                  </dt>
+                  <dd>
+                    <Text variant="bodyBase" color="muted" as="span">
+                      {user?.email}
+                    </Text>
+                  </dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt>
+                    <Text variant="bodyBase" weight="medium" color="default" as="span">
+                      Role:
+                    </Text>
+                  </dt>
+                  <dd>
+                    <Text variant="bodyBase" color="muted" as="span">
+                      {user?.role}
+                    </Text>
+                  </dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt>
+                    <Text variant="bodyBase" weight="medium" color="default" as="span">
+                      Branch ID:
+                    </Text>
+                  </dt>
+                  <dd>
+                    <Text variant="bodyBase" color="muted" as="span">
+                      {user?.branchId}
+                    </Text>
+                  </dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt>
+                    <Text variant="bodyBase" weight="medium" color="default" as="span">
+                      Status:
+                    </Text>
+                  </dt>
+                  <dd>
+                    <Text variant="bodyBase" color="success" as="span">
+                      Active
+                    </Text>
+                  </dd>
+                </div>
+              </dl>
             </CardBody>
           </Card>
 

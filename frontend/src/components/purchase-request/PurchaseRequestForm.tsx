@@ -137,7 +137,7 @@ export function PurchaseRequestForm({
   const defaultRequiredDate = formData.requiredDate || new Date().toISOString().split('T')[0];
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-6">
+    <section className="max-w-6xl mx-auto p-6 space-y-6">
       <header className="flex justify-between items-center">
         <div>
           <Text variant="headerSmall" weight="bold" as="h1">
@@ -151,7 +151,7 @@ export function PurchaseRequestForm({
         </div>
       </header>
       {errors._form && (
-        <div className="bg-danger-50 border border-danger-200 rounded-md p-4">
+        <section className="bg-danger-50 border border-danger-200 rounded-md p-4">
           <div className="text-danger-800">
             {errors._form.map((error) => (
               <Text variant="bodyBase" key={error} as="p">
@@ -159,7 +159,7 @@ export function PurchaseRequestForm({
               </Text>
             ))}
           </div>
-        </div>
+        </section>
       )}
       <form className="space-y-6" onSubmit={(e) => handleSubmit(e, setErrors, setWasSubmitted)}>
         {/* Basic Information */}
@@ -274,6 +274,6 @@ export function PurchaseRequestForm({
           </Button>
         </div>
       </form>
-    </main>
+    </section>
   );
 }

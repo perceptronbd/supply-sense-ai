@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader } from '@heroui/react';
 import { useGetAllBranchesQuery } from '../../store/api/branchApi';
 import { useSearchItemsQuery } from '../../store/api/itemApi';
+import { Text } from '../ui/Text';
 
 export function ApiTestComponent() {
   // Test branch API
@@ -20,30 +21,46 @@ export function ApiTestComponent() {
   } = useSearchItemsQuery({ q: 'steel', limit: 5 }, { skip: false });
 
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="text-2xl font-bold">API Integration Test</h2>
+    <section className="space-y-6 p-6">
+      <header>
+        <Text variant="headerMedium" weight="bold" as="h2">
+          API Integration Test
+        </Text>
+      </header>
 
       {/* Branch API Test */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Branch API Test</h3>
+          <Text variant="titleMedium" weight="semiBold" as="h3">
+            Branch API Test
+          </Text>
         </CardHeader>
         <CardBody>
-          {branchesLoading && <p>Loading branches...</p>}
+          {branchesLoading && (
+            <Text variant="bodyBase" as="p">
+              Loading branches...
+            </Text>
+          )}
           {branchesError && (
-            <p className="text-danger">Error loading branches: {JSON.stringify(branchesError)}</p>
+            <Text variant="bodyBase" color="danger" as="p">
+              Error loading branches: {JSON.stringify(branchesError)}
+            </Text>
           )}
           {branches && (
-            <div>
-              <p className="mb-2">Found {branches.length} branches:</p>
+            <article>
+              <Text variant="bodyBase" className="mb-2" as="p">
+                Found {branches.length} branches:
+              </Text>
               <ul className="space-y-1">
                 {branches.slice(0, 3).map((branch) => (
-                  <li key={branch.id} className="text-sm">
-                    {branch.code} - {branch.name}
+                  <li key={branch.id}>
+                    <Text variant="bodySmall" as="span">
+                      {branch.code} - {branch.name}
+                    </Text>
                   </li>
                 ))}
               </ul>
-            </div>
+            </article>
           )}
         </CardBody>
       </Card>
@@ -51,32 +68,45 @@ export function ApiTestComponent() {
       {/* Item API Test */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Item Search API Test</h3>
+          <Text variant="titleMedium" weight="semiBold" as="h3">
+            Item Search API Test
+          </Text>
         </CardHeader>
         <CardBody>
-          {itemsLoading && <p>Loading items...</p>}
+          {itemsLoading && (
+            <Text variant="bodyBase" as="p">
+              Loading items...
+            </Text>
+          )}
           {itemsError && (
-            <p className="text-danger">Error loading items: {JSON.stringify(itemsError)}</p>
+            <Text variant="bodyBase" color="danger" as="p">
+              Error loading items: {JSON.stringify(itemsError)}
+            </Text>
           )}
           {items && (
-            <div>
-              <p className="mb-2">Found {items.length} items for "steel":</p>
+            <article>
+              <Text variant="bodyBase" className="mb-2" as="p">
+                Found {items.length} items for "steel":
+              </Text>
               <ul className="space-y-1">
                 {items.map((item) => (
-                  <li key={item.id} className="text-sm">
-                    {item.sku} - {item.name} ({item.mainUnit})
-                    {item.stock && (
-                      <span className="ml-2 text-default-500">
-                        Stock: {item.stock.availableQty}
-                      </span>
-                    )}
+                  <li key={item.id}>
+                    <Text variant="bodySmall" as="span">
+                      {item.sku} - {item.name} ({item.mainUnit})
+                      {item.stock && (
+                        <Text variant="bodySmall" color="muted" className="ml-2" as="span">
+                          {' '}
+                          Stock: {item.stock.availableQty}
+                        </Text>
+                      )}
+                    </Text>
                   </li>
                 ))}
               </ul>
-            </div>
+            </article>
           )}
         </CardBody>
       </Card>
-    </div>
+    </section>
   );
 }

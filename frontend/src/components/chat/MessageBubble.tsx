@@ -64,9 +64,9 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                 {message.content}
               </Text>
             ) : (
-              <div className="chat-markdown text-foreground">
+              <article className="chat-markdown text-foreground">
                 <ReactMarkdown>{message.content}</ReactMarkdown>
-              </div>
+              </article>
             )}
             {!isUser &&
             message.metadata &&
@@ -103,9 +103,9 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
           variant="bodyXSmall"
           color="muted"
           className={`mt-1 ${isUser ? 'text-right' : 'text-left'}`}
-          as="span"
+          as="time"
         >
-          <time dateTime={message.createdAt}>{timestamp}</time>
+          {timestamp}
         </Text>
       </div>
     </article>

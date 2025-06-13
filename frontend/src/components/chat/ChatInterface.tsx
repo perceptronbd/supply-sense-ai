@@ -108,7 +108,10 @@ export function ChatInterface({ sessionId, className }: ChatInterfaceProps) {
   }
 
   return (
-    <main className={`flex flex-col h-full bg-background ${className}`} aria-label="Chat interface">
+    <section
+      className={`flex flex-col h-full bg-background ${className}`}
+      aria-label="Chat interface"
+    >
       <MessageList
         messages={messages}
         isLoading={isLoadingMessages || isSendingMessage}
@@ -119,6 +122,6 @@ export function ChatInterface({ sessionId, className }: ChatInterfaceProps) {
         isLoading={isSendingMessage}
         disabled={isLoadingMessages}
       />
-    </main>
+    </section>
   );
 }

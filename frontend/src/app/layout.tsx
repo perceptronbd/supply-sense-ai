@@ -18,13 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning={true} className="min-h-screen bg-background text-foreground">
-        {' '}
         <Provider store={store}>
           <PersistGate
             loading={
-              <div className="min-h-screen flex items-center justify-center bg-background">
+              <main className="min-h-screen flex items-center justify-center bg-background">
                 <Loading size="xl" message="Loading..." />
-              </div>
+              </main>
             }
             persistor={persistor}
           >
