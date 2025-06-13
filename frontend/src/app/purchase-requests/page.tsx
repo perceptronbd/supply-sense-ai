@@ -7,8 +7,10 @@ import {
   EditIcon,
   EyeIcon,
   SendIcon,
+  ShoppingCartIcon,
   XMarkIcon,
 } from '@/components/icons';
+import CreatePOFromPRModal from '@/components/purchase-request/CreatePOFromPRModal';
 import { Text } from '@/components/ui/Text';
 import {
   type PurchaseRequest,
@@ -48,6 +50,17 @@ export default function PurchaseRequestsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Modal state
+  const [createPOModal, setCreatePOModal] = useState<{
+    isOpen: boolean;
+    purchaseRequestId: string;
+    purchaseRequestNumber: string;
+  }>({
+    isOpen: false,
+    purchaseRequestId: '',
+    purchaseRequestNumber: '',
+  });
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -116,6 +129,14 @@ export default function PurchaseRequestsPage() {
     router.push(`/purchase-requests/${request.id}/edit`);
   };
 
+  const handleCreatePO = (request: PurchaseRequest) => {
+    setCreatePOModal({
+      isOpen: true,
+      purchaseRequestId: request.id,
+      purchaseRequestNumber: request.prNumber,
+    });
+  };
+
   const getDropdownItems = (request: PurchaseRequest) => {
     const items = [
       <DropdownItem key="view" startContent={<EyeIcon />}>
@@ -141,6 +162,14 @@ export default function PurchaseRequestsPage() {
         </DropdownItem>,
         <DropdownItem key="reject" color="danger" startContent={<XMarkIcon />}>
           Reject Request
+        </DropdownItem>
+      );
+    }
+
+    if (request.status === 'APPROVED') {
+      items.push(
+        <DropdownItem key="createPO" color="primary" startContent={<ShoppingCartIcon />}>
+          Create Purchase Order
         </DropdownItem>
       );
     }
@@ -183,8 +212,8 @@ export default function PurchaseRequestsPage() {
           break;
       }
       refetch();
-    } catch (error) {
-      console.error(`Failed to ${action} purchase request:`, error);
+    } catch {
+      // Error logging would be handled by a proper logging service in production
       addToast({
         title: 'Error',
         description: `Failed to ${action} purchase request. Please try again.`,
@@ -338,6 +367,8 @@ export default function PurchaseRequestsPage() {
                                     router.push(`/purchase-requests/${request.id}`);
                                   } else if (action === 'edit') {
                                     handleEditRequest(request);
+                                  } else if (action === 'createPO') {
+                                    handleCreatePO(request);
                                   } else if (
                                     action === 'submit' ||
                                     action === 'approve' ||
@@ -403,6 +434,17 @@ export default function PurchaseRequestsPage() {
           </section>
         </div>
       </main>
+
+      {/* Create PO from PR Modal */}
+      {createPOModal.isOpen && (
+        <CreatePOFromPRModal
+          isOpen={createPOModal.isOpen}
+          onClose={() => setCreatePOModal({ ...createPOModal, isOpen: false })}
+          purchaseRequestId={createPOModal.purchaseRequestId}
+          purchaseRequestNumber={createPOModal.purchaseRequestNumber}
+          onSuccess={() => refetch()}
+        />
+      )}
     </AuthGuard>
   );
 }

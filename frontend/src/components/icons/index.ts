@@ -17,6 +17,7 @@ export { SunIcon } from './SunIcon';
 export { MoonIcon } from './MoonIcon';
 export { CheckCircleIcon } from './CheckCircleIcon';
 export { DotsVerticalIcon } from './DotsVerticalIcon';
+export { ShoppingCartIcon } from './ShoppingCartIcon';
 
 // Loading components
 export {

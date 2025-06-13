@@ -204,7 +204,11 @@ export const purchaseOrderApi = createApi({
         method: 'POST',
         body: { supplierId },
       }),
-      invalidatesTags: [TAG_TYPES.PURCHASE_ORDER],
+      invalidatesTags: (_result, _error, { prId }) => [
+        TAG_TYPES.PURCHASE_ORDER,
+        TAG_TYPES.PURCHASE_REQUEST,
+        { type: TAG_TYPES.PURCHASE_REQUEST, id: prId },
+      ],
     }),
 
     // TODO: NEW MUTATION - Create PO from multiple PRs
