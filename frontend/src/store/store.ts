@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE, persistStore } from 'redux-persist';
 import { aiApi } from './api/aiApi';
 import { authApi } from './api/authApi';
 import { branchApi } from './api/branchApi';
@@ -24,7 +25,11 @@ export const store = configureStore({
     [aiApi.reducerPath]: aiApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }).concat(
       authApi.middleware,
       branchApi.middleware,
       chatApi.middleware,
@@ -36,5 +41,6 @@ export const store = configureStore({
     ),
 });
 
+export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

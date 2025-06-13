@@ -31,7 +31,14 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
 
   // Don't render anything until mounted to prevent hydration mismatches
   if (!isMounted) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="text-foreground text-sm">Loading...</div>
+        </div>
+      </div>
+    );
   }
 
   if (requireAuth && !isAuthenticated && !token) {
