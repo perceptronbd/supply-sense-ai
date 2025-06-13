@@ -1,14 +1,14 @@
-'use client';
+﻿'use client';
 
+import { Button } from '@/components/ui/Button';
+import { Text } from '@/components/ui/Text';
+import { ROUTE_PATHS } from '@/config/routes';
+import { useLoginMutation } from '@/store/api/authApi';
+import { setCredentials } from '@/store/slices/authSlice';
 import { Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Button } from '../../components/ui/Button';
-import { Text } from '../../components/ui/Text';
-import { ROUTE_PATHS } from '../../config/routes';
-import { useLoginMutation } from '../../store/api/authApi';
-import { setCredentials } from '../../store/slices/authSlice';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

@@ -1,6 +1,6 @@
+﻿import { PrismaService } from '@app/prisma.service';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../app/prisma.service';
 import { QueryItemDto } from './dto/query-item.dto';
 
 type ItemWithOptionalStock = Prisma.ItemGetPayload<Record<string, never>> & {

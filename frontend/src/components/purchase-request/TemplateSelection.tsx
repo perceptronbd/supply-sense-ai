@@ -1,5 +1,5 @@
+﻿import { purchaseRequestSchema } from '@/lib/schemas/purchase-request.schema';
 import { Card, CardBody, CardHeader } from '@heroui/react';
-import { purchaseRequestSchema } from '../../lib/schemas/purchase-request.schema';
 import { ValidatedSelect } from '../ui/ValidatedSelect';
 
 interface TemplateSelectionProps {

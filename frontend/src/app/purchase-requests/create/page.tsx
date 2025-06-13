@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
+import AuthGuard from '@/components/AuthGuard';
+import { PurchaseRequestForm } from '@/components/purchase-request/PurchaseRequestForm';
+import { type PurchaseRequest } from '@/store/api/purchaseRequestApi';
 import { useRouter } from 'next/navigation';
-import AuthGuard from '../../../components/AuthGuard';
-import { PurchaseRequestForm } from '../../../components/purchase-request/PurchaseRequestForm';
-import { type PurchaseRequest } from '../../../store/api/purchaseRequestApi';
 
 export default function CreatePurchaseRequestPage() {
   const router = useRouter();

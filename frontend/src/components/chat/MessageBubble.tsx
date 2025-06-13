@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
+import type { ChatMessage } from '@/store/api/chatApi';
 import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
-import type { ChatMessage } from '../../store/api/chatApi';
 import { AiIcon, UserIcon } from '../icons';
 import { Text } from '../ui/Text';
 import './markdown.css';

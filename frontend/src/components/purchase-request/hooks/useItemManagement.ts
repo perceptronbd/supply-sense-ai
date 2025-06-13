@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import {
+﻿import {
   type PurchaseRequestFormData,
   type PurchaseRequestItemFormData,
-} from '../../../lib/schemas/purchase-request.schema';
-import type { PurchaseRequestTemplate } from '../../../store/api/purchaseRequestApi';
+} from '@/lib/schemas/purchase-request.schema';
+import type { PurchaseRequestTemplate } from '@/store/api/purchaseRequestApi';
+import { useState } from 'react';
 
 interface UseItemManagementProps {
   formData: Partial<PurchaseRequestFormData>;

@@ -1,6 +1,6 @@
+﻿import { PrismaService } from '@app/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
 

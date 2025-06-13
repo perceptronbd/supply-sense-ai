@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import type {
+﻿import type {
   PurchaseOrderFormData,
   PurchaseOrderItemFormData,
-} from '../../../lib/schemas/purchase-order.schema';
+} from '@/lib/schemas/purchase-order.schema';
+import { useState } from 'react';
 
 interface UseItemManagementProps {
   formData: Partial<PurchaseOrderFormData>;

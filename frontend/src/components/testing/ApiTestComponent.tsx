@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
+import { useGetAllBranchesQuery } from '@/store/api/branchApi';
+import { useSearchItemsQuery } from '@/store/api/itemApi';
 import { Card, CardBody, CardHeader } from '@heroui/react';
-import { useGetAllBranchesQuery } from '../../store/api/branchApi';
-import { useSearchItemsQuery } from '../../store/api/itemApi';
 import { Text } from '../ui/Text';
 
 export function ApiTestComponent() {

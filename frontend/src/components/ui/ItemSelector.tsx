@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
+import { useGetAllItemsQuery, useSearchItemsQuery } from '@/store/api/itemApi';
+import type { Item } from '@/store/api/itemApi';
 import { Autocomplete, AutocompleteItem, type AutocompleteProps } from '@heroui/react';
 import { useMemo, useState } from 'react';
-import { useGetAllItemsQuery, useSearchItemsQuery } from '../../store/api/itemApi';
-import type { Item } from '../../store/api/itemApi';
 
 interface ItemSelectorProps
   extends Omit<

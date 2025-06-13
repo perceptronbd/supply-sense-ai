@@ -1,5 +1,7 @@
-'use client';
+﻿'use client';
 
+import AuthGuard from '@/components/AuthGuard';
+import { Text } from '@/components/ui/Text';
 import {
   Button,
   Card,
@@ -13,8 +15,6 @@ import {
   TableRow,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import AuthGuard from '../../components/AuthGuard';
-import { Text } from '../../components/ui/Text';
 
 export default function GoodsReceiptsPage() {
   const _router = useRouter();

@@ -1,12 +1,12 @@
-'use client';
+﻿'use client';
 
+import { Button } from '@/components/ui/Button';
+import { Text } from '@/components/ui/Text';
+import { ROUTE_PATHS } from '@/config/routes';
+import type { RootState } from '@/store/store';
 import { Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { Button } from '../../components/ui/Button';
-import { Text } from '../../components/ui/Text';
-import { ROUTE_PATHS } from '../../config/routes';
-import type { RootState } from '../../store/store';
 
 export default function DashboardPage() {
   const { user } = useSelector((state: RootState) => state.auth);

@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useGetItemQuery } from '../../store/api/itemApi';
+import { useGetItemQuery } from '@/store/api/itemApi';
 import { Text } from './Text';
 
 interface ItemDisplayProps {

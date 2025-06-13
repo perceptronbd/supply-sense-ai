@@ -1,6 +1,6 @@
+﻿import { PrismaService } from '@app/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
 import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
 import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 

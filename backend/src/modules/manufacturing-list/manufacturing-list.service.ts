@@ -1,8 +1,8 @@
+﻿import { PrismaService } from '@app/prisma.service';
+import { PrismaTransaction } from '@common/interfaces/prisma.interface';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
-import { PrismaTransaction } from '../common/interfaces/prisma.interface';
 import { type CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 

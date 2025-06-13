@@ -1,5 +1,22 @@
-'use client';
+﻿'use client';
 
+import AuthGuard from '@/components/AuthGuard';
+import {
+  CheckIcon,
+  DotsVerticalIcon,
+  EditIcon,
+  EyeIcon,
+  SendIcon,
+  XMarkIcon,
+} from '@/components/icons';
+import { Text } from '@/components/ui/Text';
+import {
+  type PurchaseRequest,
+  useApprovePurchaseRequestMutation,
+  useGetPurchaseRequestsQuery,
+  useRejectPurchaseRequestMutation,
+  useSubmitPurchaseRequestMutation,
+} from '@/store/api/purchaseRequestApi';
 import {
   Button,
   Card,
@@ -23,23 +40,6 @@ import {
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import AuthGuard from '../../components/AuthGuard';
-import {
-  CheckIcon,
-  DotsVerticalIcon,
-  EditIcon,
-  EyeIcon,
-  SendIcon,
-  XMarkIcon,
-} from '../../components/icons';
-import { Text } from '../../components/ui/Text';
-import {
-  type PurchaseRequest,
-  useApprovePurchaseRequestMutation,
-  useGetPurchaseRequestsQuery,
-  useRejectPurchaseRequestMutation,
-  useSubmitPurchaseRequestMutation,
-} from '../../store/api/purchaseRequestApi';
 
 export default function PurchaseRequestsPage() {
   const router = useRouter();

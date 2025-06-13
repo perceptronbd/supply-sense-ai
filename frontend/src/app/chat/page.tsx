@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
+import { ChatInterface, SessionList } from '@/components/chat';
+import { Button } from '@/components/ui/Button';
+import { LoadingOverlay } from '@/components/ui/Loading';
+import { Text } from '@/components/ui/Text';
+import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
 import { useState } from 'react';
-import { ChatInterface, SessionList } from '../../components/chat';
-import { Button } from '../../components/ui/Button';
-import { LoadingOverlay } from '../../components/ui/Loading';
-import { Text } from '../../components/ui/Text';
-import { useCreateSessionMutation, useGetSessionsQuery } from '../../store/api/chatApi';
 
 export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(); // RTK Query hooks

@@ -1,10 +1,10 @@
-import { type FormEvent } from 'react';
-import type { PurchaseOrderFormData } from '../../../lib/schemas/purchase-order.schema';
+﻿import type { PurchaseOrderFormData } from '@/lib/schemas/purchase-order.schema';
 import {
   type PurchaseOrder,
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderMutation,
-} from '../../../store/api/purchaseOrderApi';
+} from '@/store/api/purchaseOrderApi';
+import { type FormEvent } from 'react';
 
 interface UseFormSubmissionProps {
   mode: 'create' | 'edit';

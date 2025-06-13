@@ -1,6 +1,6 @@
+﻿import { PrismaService } from '@app/prisma.service';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../app/prisma.service';
 import { QueryBranchDto } from './dto/query-branch.dto';
 
 @Injectable()

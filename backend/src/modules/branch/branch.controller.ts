@@ -1,3 +1,10 @@
+﻿import {
+  type AuthenticatedUser,
+  CurrentUser,
+} from '@modules/auth/decorators/current-user.decorator';
+import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -7,10 +14,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '../auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { BranchService } from './branch.service';
 import { QueryBranchDto } from './dto/query-branch.dto';
 import { BranchEntity } from './entities/branch.entity';

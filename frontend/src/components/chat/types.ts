@@ -1,6 +1,6 @@
-// Re-export types from the API
-export type { ChatMessage, ChatSession } from '../../store/api/chatApi';
-import type { ChatMessage } from '../../store/api/chatApi';
+﻿// Re-export types from the API
+export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
+import type { ChatMessage } from '@/store/api/chatApi';
 
 export interface ChatInputProps {
   onSendMessage: (message: string) => void;

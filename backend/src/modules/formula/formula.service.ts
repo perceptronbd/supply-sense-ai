@@ -1,6 +1,6 @@
+﻿import { PrismaService } from '@app/prisma.service';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
 

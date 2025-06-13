@@ -1,7 +1,7 @@
+﻿import { PrismaService } from '@app/prisma.service';
+import { PrismaTransaction } from '@common/interfaces/prisma.interface';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../../app/prisma.service';
-import { PrismaTransaction } from '../common/interfaces/prisma.interface';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 

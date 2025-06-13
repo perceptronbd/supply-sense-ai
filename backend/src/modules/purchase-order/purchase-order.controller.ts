@@ -1,3 +1,10 @@
+﻿import {
+  type AuthenticatedUser,
+  CurrentUser,
+} from '@modules/auth/decorators/current-user.decorator';
+import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import {
   Body,
   Controller,
@@ -20,10 +27,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '../auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 import { PurchaseOrderService } from './purchase-order.service';
