@@ -1,9 +1,10 @@
 'use client';
 
-import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
+import { Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { Button } from '../../components/ui/Button';
 import { Text } from '../../components/ui/Text';
 import { ROUTE_PATHS } from '../../config/routes';
 import { useLoginMutation } from '../../store/api/authApi';
@@ -59,7 +60,6 @@ export default function LoginPage() {
                 label: 'text-default-600',
               }}
             />
-
             <Input
               type="password"
               label="Password"
@@ -75,7 +75,6 @@ export default function LoginPage() {
                 label: 'text-default-600',
               }}
             />
-
             {error && (
               <div className="text-danger text-small text-center">
                 {'data' in error &&
@@ -85,16 +84,16 @@ export default function LoginPage() {
                   ? (error.data.message as string) || 'Login failed'
                   : 'An error occurred'}
               </div>
-            )}
-
+            )}{' '}
             <Button
               type="submit"
               color="primary"
               className="w-full"
               isLoading={isLoading}
+              loadingText="Signing in..."
               size="lg"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              Sign In
             </Button>
           </form>
 

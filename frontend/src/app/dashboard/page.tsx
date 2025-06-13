@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
+import { Button } from '../../components/ui/Button';
 import { Text } from '../../components/ui/Text';
 import { ROUTE_PATHS } from '../../config/routes';
 import type { RootState } from '../../store/store';

@@ -1,8 +1,9 @@
 'use client';
 
-import { Button } from '@heroui/react';
 import { useState } from 'react';
 import { ChatInterface, SessionList } from '../../components/chat';
+import { Button } from '../../components/ui/Button';
+import { LoadingOverlay } from '../../components/ui/Loading';
 import { Text } from '../../components/ui/Text';
 import { useCreateSessionMutation, useGetSessionsQuery } from '../../store/api/chatApi';
 
@@ -30,14 +31,21 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-background text-foreground relative">
+      <LoadingOverlay
+        isVisible={isCreatingSession}
+        message="Creating new chat session..."
+        opacity="light"
+        size="md"
+      />
+
       {/* Sessions sidebar */}
       <SessionList
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSessionSelect={handleSessionSelect}
         onNewSession={handleNewSession}
-        isLoading={isLoadingSessions || isCreatingSession}
+        isLoading={isLoadingSessions}
       />
 
       {/* Chat interface */}

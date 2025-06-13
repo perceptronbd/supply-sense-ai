@@ -11,9 +11,27 @@ export { SendIcon } from './SendIcon';
 export { MenuIcon } from './MenuIcon';
 export { CheckIcon } from './CheckIcon';
 export { XMarkIcon } from './XMarkIcon';
-export { CheckCircleIcon } from './CheckCircleIcon';
-export { DotsVerticalIcon } from './DotsVerticalIcon';
-export { ChatIcon } from './ChatIcon';
 export { UserIcon } from './UserIcon';
+export { ChatIcon } from './ChatIcon';
 export { SunIcon } from './SunIcon';
 export { MoonIcon } from './MoonIcon';
+export { CheckCircleIcon } from './CheckCircleIcon';
+export { DotsVerticalIcon } from './DotsVerticalIcon';
+
+// Loading components
+export {
+  LoaderIcon,
+  Loader,
+  LoaderSizes,
+  type LoaderIconProps,
+  type LoaderProps,
+  type LoaderSize,
+} from './LoaderIcon';
+export {
+  Loading,
+  LoadingOverlay,
+  InlineLoading,
+  type LoadingProps,
+  type LoadingOverlayProps,
+  type InlineLoadingProps,
+} from '../ui/Loading';

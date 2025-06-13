@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import AuthProvider from '../components/AuthProvider';
 import MainLayout from '../components/MainLayout';
 import { ThemeProvider } from '../components/ThemeProvider';
+import { Loading } from '../components/ui/Loading';
 import { persistor, store } from '../store/store';
 
 export default function RootLayout({
@@ -22,10 +23,7 @@ export default function RootLayout({
           <PersistGate
             loading={
               <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                  <div className="text-foreground text-sm">Loading...</div>
-                </div>
+                <Loading size="xl" message="Loading..." />
               </div>
             }
             persistor={persistor}

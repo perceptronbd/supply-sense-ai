@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Text } from '../components/ui/Text';
+import { Loading } from '../components/ui/Loading';
 import { ROUTE_PATHS } from '../config/routes';
 import type { RootState } from '../store/store';
 
@@ -18,14 +18,9 @@ export default function Index() {
       router.push(ROUTE_PATHS.LOGIN);
     }
   }, [isAuthenticated, token, router]);
-
   return (
     <main className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <Text variant="headerMedium" weight="semiBold" className="text-foreground" as="h1">
-          Loading...
-        </Text>
-      </div>
+      <Loading size="xl" message="Loading..." />
     </main>
   );
 }

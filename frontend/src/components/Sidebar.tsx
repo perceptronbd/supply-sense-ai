@@ -1,8 +1,10 @@
 'use client';
 
 import { Badge, Button } from '@heroui/react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
+import { ROUTE_PATHS } from '../config/routes';
+import { useNavigation } from '../hooks/useNavigation';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/themeSlice';
 import type { RootState } from '../store/store';
@@ -25,49 +27,47 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const { isActive } = useNavigation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { theme } = useSelector((state: RootState) => state.theme);
 
   const handleLogout = () => {
     dispatch(logout());
-    router.push('/login');
+    router.push(ROUTE_PATHS.LOGIN);
   };
 
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
   };
-
   const navigation = [
     {
       name: 'Dashboard',
-      href: '/dashboard',
+      href: ROUTE_PATHS.DASHBOARD,
       icon: <DashboardIcon className="w-5 h-5" />,
     },
     {
       name: 'AI Chat',
-      href: '/chat',
+      href: ROUTE_PATHS.CHAT,
       icon: <ChatIcon className="w-5 h-5" />,
     },
     {
       name: 'Purchase Requests',
-      href: '/purchase-requests',
+      href: ROUTE_PATHS.PURCHASE_REQUESTS,
       icon: <DocumentIcon className="w-5 h-5" />,
     },
     {
       name: 'Purchase Orders',
-      href: '/purchase-orders',
+      href: ROUTE_PATHS.PURCHASE_ORDERS,
       icon: <ClipboardIcon className="w-5 h-5" />,
     },
     {
       name: 'Goods Receipts',
-      href: '/goods-receipts',
+      href: ROUTE_PATHS.GOODS_RECEIPTS,
       icon: <InboxIcon className="w-5 h-5" />,
     },
   ];
 
-  const isActive = (href: string) => pathname === href;
   return (
     <>
       {/* Mobile backdrop */}
