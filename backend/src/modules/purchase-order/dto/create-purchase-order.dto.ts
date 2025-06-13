@@ -124,5 +124,8 @@ export class CreatePurchaseOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreatePOItemDto)
+  // TODO: VALIDATION - Add minimum items validation
+  // TODO: @ArrayMinSize(1, { message: 'At least one item is required' })
+  // TODO: @ArrayMaxSize(100, { message: 'Maximum 100 items allowed per order' })
   items: CreatePOItemDto[];
 }

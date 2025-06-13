@@ -260,4 +260,49 @@ export class PurchaseOrderController {
   ) {
     return this.purchaseOrderService.createFromPR(prId, supplierId, user.id);
   }
+
+  // TODO: NEW ENDPOINT - Create PO from multiple PRs
+  // TODO: @Post('create-from-multiple-prs')
+  // TODO: @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  // TODO: @ApiOperation({ summary: 'Create purchase order from multiple purchase requests' })
+  // TODO: @ApiBody({ type: CreatePOFromMultiplePRsDto })
+  // TODO: async createFromMultiplePRs(
+  // TODO:   @Body() dto: CreatePOFromMultiplePRsDto,
+  // TODO:   @CurrentUser() user: AuthenticatedUser
+  // TODO: ) {
+  // TODO:   return this.purchaseOrderService.createFromMultiplePRs(dto.prIds, dto.supplierId, user.id);
+  // TODO: }
+
+  // TODO: NEW ENDPOINT - Create PO with selective items from PR
+  // TODO: @Post('create-from-pr/:prId/selective')
+  // TODO: @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  // TODO: @ApiOperation({ summary: 'Create purchase order from selected items in purchase request' })
+  // TODO: @ApiBody({
+  // TODO:   schema: {
+  // TODO:     type: 'object',
+  // TODO:     properties: {
+  // TODO:       supplierId: { type: 'string' },
+  // TODO:       selectedItems: {
+  // TODO:         type: 'array',
+  // TODO:         items: {
+  // TODO:           type: 'object',
+  // TODO:           properties: {
+  // TODO:             prItemId: { type: 'string' },
+  // TODO:             orderedQty: { type: 'number' },
+  // TODO:             unitPrice: { type: 'number' }
+  // TODO:           }
+  // TODO:         }
+  // TODO:       }
+  // TODO:     }
+  // TODO:   }
+  // TODO: })
+  // TODO: async createFromPRWithSelection(
+  // TODO:   @Param('prId') prId: string,
+  // TODO:   @Body() body: { supplierId: string, selectedItems: SelectiveItemDto[] },
+  // TODO:   @CurrentUser() user: AuthenticatedUser
+  // TODO: ) {
+  // TODO:   return this.purchaseOrderService.createFromPRWithSelection(
+  // TODO:     prId, body.supplierId, user.id, body.selectedItems
+  // TODO:   );
+  // TODO: }
 }

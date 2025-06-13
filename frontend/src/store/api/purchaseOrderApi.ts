@@ -207,6 +207,41 @@ export const purchaseOrderApi = createApi({
       invalidatesTags: [TAG_TYPES.PURCHASE_ORDER],
     }),
 
+    // TODO: NEW MUTATION - Create PO from multiple PRs
+    // TODO: createPurchaseOrderFromMultiplePRs: builder.mutation<
+    // TODO:   PurchaseOrder,
+    // TODO:   { prIds: string[]; supplierId: string; title?: string; notes?: string }
+    // TODO: >({
+    // TODO:   query: (data) => ({
+    // TODO:     url: '/create-from-multiple-prs',
+    // TODO:     method: 'POST',
+    // TODO:     body: data,
+    // TODO:   }),
+    // TODO:   invalidatesTags: [TAG_TYPES.PURCHASE_ORDER],
+    // TODO: }),
+
+    // TODO: NEW MUTATION - Create PO with selective items
+    // TODO: createPurchaseOrderFromPRSelective: builder.mutation<
+    // TODO:   PurchaseOrder,
+    // TODO:   {
+    // TODO:     prId: string;
+    // TODO:     supplierId: string;
+    // TODO:     selectedItems: {
+    // TODO:       prItemId: string;
+    // TODO:       orderedQty: number;
+    // TODO:       unitPrice: number;
+    // TODO:       remarks?: string;
+    // TODO:     }[];
+    // TODO:   }
+    // TODO: >({
+    // TODO:   query: ({ prId, ...data }) => ({
+    // TODO:     url: `/create-from-pr/${prId}/selective`,
+    // TODO:     method: 'POST',
+    // TODO:     body: data,
+    // TODO:   }),
+    // TODO:   invalidatesTags: [TAG_TYPES.PURCHASE_ORDER],
+    // TODO: }),
+
     // Support endpoints for branches
     getBranches: builder.query<Branch[], void>({
       query: () => ({
@@ -229,4 +264,7 @@ export const {
   useClosePurchaseOrderMutation,
   useCreatePurchaseOrderFromPRMutation,
   useGetBranchesQuery,
+  // TODO: Add exports for new mutations when implemented
+  // TODO: useCreatePurchaseOrderFromMultiplePRsMutation,
+  // TODO: useCreatePurchaseOrderFromPRSelectiveMutation,
 } = purchaseOrderApi;

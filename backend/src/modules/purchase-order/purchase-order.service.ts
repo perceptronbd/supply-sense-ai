@@ -370,6 +370,12 @@ export class PurchaseOrderService {
 
   // Create PO from approved PR
   async createFromPR(prId: string, supplierId: string, userId: string) {
+    // TODO: ENHANCEMENT - Add support for selective item conversion
+    // TODO: Currently converts ALL items from PR to PO automatically
+    // TODO: Future enhancement should allow selecting specific items and adjusting quantities
+    // TODO: API signature could be: createFromPR(prId, supplierId, userId, selectedItems?: SelectedItemDto[])
+    // TODO: where SelectedItemDto = { prItemId: string, orderedQty: number, unitPrice: number }
+
     const pr = await this.prisma.purchaseRequest.findUnique({
       where: { id: prId },
       include: {
@@ -390,14 +396,33 @@ export class PurchaseOrderService {
       throw new BadRequestException('Can only create PO from APPROVED Purchase Requests');
     }
 
+    // TODO: VALIDATION - Add minimum items validation
+    // TODO: Add validation to ensure PR has at least 1 item
+    // TODO: if (pr.items.length === 0) throw new BadRequestException('Cannot create PO from PR with no items')
+
+    // TODO: ENHANCEMENT - Add support for multiple PR to single PO conversion
+    // TODO: Create new method: createFromMultiplePRs(prIds: string[], supplierId: string, userId: string)
+    // TODO: This would validate all PRs are approved, from same branch, and merge items
+
     // Convert PR items to PO items (convert units from buying to buying - no conversion needed)
     const poItems = pr.items.map((prItem) => ({
       itemId: prItem.itemId,
       orderedQty: prItem.requestedQty,
+      // TODO: PRICING - Replace estimated price with actual supplier pricing
+      // TODO: Look up actual supplier price from ItemSupplier table instead of using estimated price
+      // TODO: const supplierPrice = await this.getSupplierPrice(prItem.itemId, supplierId)
       unitPrice: prItem.estimatedPrice, // This should be updated with actual supplier price
       deliveryDate: prItem.requiredDate,
       remarks: prItem.remarks,
     }));
+
+    // TODO: QUANTITY VALIDATION - Add validation for reasonable quantities
+    // TODO: Validate orderedQty > 0 and within reasonable limits
+    // TODO: Validate unitPrice > 0 and matches supplier pricing
+
+    // TODO: BUSINESS LOGIC - Add handling for unavailable items
+    // TODO: Check if all items are available from the selected supplier
+    // TODO: Handle partial fulfillment scenarios
 
     const createDto: CreatePurchaseOrderDto = {
       title: `PO for ${pr.prNumber}`,
@@ -427,4 +452,42 @@ export class PurchaseOrderService {
 
     return po;
   }
+
+  // TODO: NEW METHOD - Create PO from multiple PRs
+  // TODO: async createFromMultiplePRs(prIds: string[], supplierId: string, userId: string) {
+  // TODO:   // Validate all PRs exist and are approved
+  // TODO:   // Validate all PRs belong to same branch
+  // TODO:   // Merge items from multiple PRs (handle duplicate items by summing quantities)
+  // TODO:   // Create single PO with all items
+  // TODO:   // Update all source PRs to CONVERTED_TO_PO status
+  // TODO: }
+
+  // TODO: NEW METHOD - Create PO with selective items
+  // TODO: async createFromPRWithSelection(
+  // TODO:   prId: string,
+  // TODO:   supplierId: string,
+  // TODO:   userId: string,
+  // TODO:   selectedItems: { prItemId: string, orderedQty: number, unitPrice: number }[]
+  // TODO: ) {
+  // TODO:   // Validate selected items exist in the PR
+  // TODO:   // Allow quantity adjustments and price updates
+  // TODO:   // Create PO with only selected items
+  // TODO:   // Optionally update PR status or create partial conversion tracking
+  // TODO: }
+
+  // TODO: HELPER METHOD - Get actual supplier pricing
+  // TODO: private async getSupplierPrice(itemId: string, supplierId: string): Promise<Decimal> {
+  // TODO:   const supplierItem = await this.prisma.itemSupplier.findUnique({
+  // TODO:     where: { itemId_supplierId: { itemId, supplierId } }
+  // TODO:   });
+  // TODO:   return supplierItem?.unitPrice || new Decimal(0);
+  // TODO: }
+
+  // TODO: HELPER METHOD - Validate supplier can supply all items
+  // TODO: private async validateSupplierItems(itemIds: string[], supplierId: string): Promise<boolean> {
+  // TODO:   const availableItems = await this.prisma.itemSupplier.findMany({
+  // TODO:     where: { supplierId, itemId: { in: itemIds }, isActive: true }
+  // TODO:   });
+  // TODO:   return availableItems.length === itemIds.length;
+  // TODO: }
 }
