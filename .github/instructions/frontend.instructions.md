@@ -98,7 +98,7 @@ Use semantic HTML elements to provide meaning and structure to content. This imp
 
 ## Component Development Standards
 
-- **If a JSX block has more than 5 elements, extract it into a separate component to keep the main component concise**
+- **If a JSX block can be turned into a component for reusability in the future, then it should be extracted and converted into a component**
 - **For simple conditions with short return elements, prefer a ternary expression. But if conditions or returned JSX are complex, use if statements or switch for clarity**
 - **Convert all inline SVGs to reusable React components stored in `components/icons/` directory**
 - Create SVG components with proper TypeScript interfaces including size, color, and className props
@@ -148,39 +148,50 @@ return condition1 ? (
 ## Component Extraction Guidelines
 
 ```tsx
-// ❌ AVOID: Large JSX blocks (>5 elements) in main component
+// ❌ AVOID: Inline JSX that could be reused elsewhere
 function MainComponent() {
   return (
     <section>
-      <header>...</header>
-      <div>...</div>
-      <div>...</div>
-      <div>...</div>
-      <div>...</div>
-      <div>...</div>
-      <footer>...</footer>
+      <header>
+        <h1>Product Title</h1>
+        <p>Product description</p>
+        <div className="price">$99.99</div>
+      </header>
+      <div className="actions">
+        <button>Add to Cart</button>
+        <button>Save for Later</button>
+      </div>
     </section>
   );
 }
 
-// ✅ GOOD: Extract into smaller components
+// ✅ GOOD: Extract reusable components
 function MainComponent() {
   return (
     <section>
-      <ComponentHeader />
-      <ComponentContent />
-      <ComponentFooter />
+      <ProductHeader title="Product Title" description="Product description" price="$99.99" />
+      <ProductActions onAddToCart={handleAddToCart} onSaveForLater={handleSaveForLater} />
     </section>
   );
 }
 
-function ComponentContent() {
+// These components can now be reused across different product displays
+function ProductHeader({ title, description, price }) {
   return (
-    <>
-      <ContentSection1 />
-      <ContentSection2 />
-      <ContentSection3 />
-    </>
+    <header>
+      <Text variant="titleLarge" as="h1">{title}</Text>
+      <Text variant="bodyBase" as="p">{description}</Text>
+      <Text variant="titleMedium" className="price" as="div">{price}</Text>
+    </header>
+  );
+}
+
+function ProductActions({ onAddToCart, onSaveForLater }) {
+  return (
+    <section className="actions">
+      <Button onPress={onAddToCart}>Add to Cart</Button>
+      <Button variant="flat" onPress={onSaveForLater}>Save for Later</Button>
+    </section>
   );
 }
 ```
