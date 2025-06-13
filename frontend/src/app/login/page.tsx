@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Text } from '../../components/ui/Text';
+import { ROUTE_PATHS } from '../../config/routes';
 import { useLoginMutation } from '../../store/api/authApi';
 import { setCredentials } from '../../store/slices/authSlice';
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
       const result = await login({ email, password }).unwrap();
       console.log('Login successful:', result);
       dispatch(setCredentials(result));
-      router.push('/dashboard');
+      router.push(ROUTE_PATHS.DASHBOARD);
     } catch (err: unknown) {
       console.error('Login failed:', err);
       console.error('Error details:', JSON.stringify(err, null, 2));

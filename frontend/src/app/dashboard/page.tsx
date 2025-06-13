@@ -4,6 +4,7 @@ import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { Text } from '../../components/ui/Text';
+import { ROUTE_PATHS } from '../../config/routes';
 import type { RootState } from '../../store/store';
 
 export default function DashboardPage() {
@@ -158,7 +159,7 @@ export default function DashboardPage() {
                 color="primary"
                 variant="flat"
                 className="w-full justify-start"
-                onPress={() => router.push('/purchase-requests/create')}
+                onPress={() => router.push(`${ROUTE_PATHS.PURCHASE_REQUESTS}/create`)}
               >
                 Create Purchase Request
               </Button>
@@ -166,7 +167,7 @@ export default function DashboardPage() {
                 color="secondary"
                 variant="flat"
                 className="w-full justify-start"
-                onPress={() => router.push('/purchase-orders')}
+                onPress={() => router.push(ROUTE_PATHS.PURCHASE_ORDERS)}
               >
                 View Purchase Orders
               </Button>
@@ -174,7 +175,7 @@ export default function DashboardPage() {
                 color="default"
                 variant="flat"
                 className="w-full justify-start"
-                onPress={() => router.push('/goods-receipts')}
+                onPress={() => router.push(ROUTE_PATHS.GOODS_RECEIPTS)}
               >
                 Check Goods Receipts
               </Button>
@@ -182,7 +183,7 @@ export default function DashboardPage() {
                 color="warning"
                 variant="flat"
                 className="w-full justify-start"
-                onPress={() => router.push('/chat')}
+                onPress={() => router.push(ROUTE_PATHS.CHAT)}
               >
                 AI Assistant
               </Button>

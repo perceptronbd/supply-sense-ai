@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Text } from '../components/ui/Text';
+import { ROUTE_PATHS } from '../config/routes';
 import type { RootState } from '../store/store';
 
 export default function Index() {
@@ -12,9 +13,9 @@ export default function Index() {
 
   useEffect(() => {
     if (isAuthenticated && token) {
-      router.push('/dashboard');
+      router.push(ROUTE_PATHS.DASHBOARD);
     } else {
-      router.push('/login');
+      router.push(ROUTE_PATHS.LOGIN);
     }
   }, [isAuthenticated, token, router]);
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useRoutes } from '../hooks/useRoutes';
 import { validateToken } from '../store/slices/authSlice';
 import type { RootState } from '../store/store';
 
@@ -10,29 +10,11 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Routes that require authentication
-const protectedRoutes = [
-  '/dashboard',
-  '/purchase-requests',
-  '/purchase-orders',
-  '/goods-receipts',
-  '/chat',
-  '/items',
-  '/suppliers',
-  '/manufacturing-list',
-  '/material-requisition',
-  '/branches',
-  '/request-forms',
-];
-
-// Routes that should redirect to dashboard if user is authenticated
-const authRoutes = ['/login'];
-
 export default function AuthProvider({ children }: AuthProviderProps) {
   const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { isCurrentRouteProtected, isCurrentRouteAuth, navigateToLogin, navigateToDashboard } =
+    useRoutes();
   const [isMounted, setIsMounted] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -44,27 +26,33 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     if (!isMounted) return;
-    const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-    const isAuthRoute = authRoutes.includes(pathname);
 
     // Handle authentication logic
-    if (isProtectedRoute && !isAuthenticated && !token) {
+    if (isCurrentRouteProtected && !isAuthenticated && !token) {
       // User trying to access protected route without authentication
       setIsNavigating(true);
-      router.push('/login');
+      navigateToLogin();
       return;
     }
 
-    if (isAuthRoute && isAuthenticated && token) {
+    if (isCurrentRouteAuth && isAuthenticated && token) {
       // Authenticated user trying to access login page
       setIsNavigating(true);
-      router.push('/dashboard');
+      navigateToDashboard();
       return;
     }
 
     // Reset navigation state for valid routes
     setIsNavigating(false);
-  }, [isAuthenticated, token, pathname, router, isMounted]);
+  }, [
+    isAuthenticated,
+    token,
+    isCurrentRouteProtected,
+    isCurrentRouteAuth,
+    navigateToLogin,
+    navigateToDashboard,
+    isMounted,
+  ]);
 
   // Show loading state during initial mount to prevent hydration mismatches
   if (!isMounted) {
@@ -91,16 +79,13 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   }
 
   // Check if user should see content
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAuthRoute = authRoutes.includes(pathname);
-
   // Don't render protected content if user is not authenticated
-  if (isProtectedRoute && !isAuthenticated && !token) {
+  if (isCurrentRouteProtected && !isAuthenticated && !token) {
     return null;
   }
 
   // Don't render auth pages if user is already authenticated
-  if (isAuthRoute && isAuthenticated && token) {
+  if (isCurrentRouteAuth && isAuthenticated && token) {
     return null;
   }
 
