@@ -4,6 +4,7 @@ import {
   type PurchaseOrderItemFormData,
 } from '../../lib/schemas/purchase-order.schema';
 import { PlusIcon } from '../icons';
+import { ItemCard } from '../ui/ItemCard';
 import { PurchaseOrderItemForm } from './PurchaseOrderItemForm';
 
 interface ItemsSectionProps {
@@ -67,59 +68,14 @@ export function ItemsSection({
         {formData.items && formData.items.length > 0 && (
           <div className="space-y-4">
             {formData.items.map((item, index) => (
-              <div
+              <ItemCard
                 key={`${item.itemId}-${index}`}
-                className="border border-divider rounded-lg p-4 bg-content2"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-default-500">Item ID</p>
-                      <p className="font-medium">{item.itemId}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-500">Quantity</p>
-                      <p className="font-medium">{item.orderedQty}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-500">Unit Price</p>
-                      <p className="font-medium">${Number(item.unitPrice).toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-500">Delivery Date</p>
-                      <p className="font-medium">
-                        {new Date(item.deliveryDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    {item.remarks && (
-                      <div className="md:col-span-4">
-                        <p className="text-sm text-default-500">Remarks</p>
-                        <p className="font-medium">{item.remarks}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="flat"
-                      color="primary"
-                      onPress={() => handleEditItem(index)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="flat"
-                      color="danger"
-                      onPress={() => handleRemoveItem(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                item={item}
+                index={index}
+                type="purchase-order"
+                onEdit={handleEditItem}
+                onRemove={handleRemoveItem}
+              />
             ))}
 
             {/* Total Amount */}
