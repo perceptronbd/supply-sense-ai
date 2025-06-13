@@ -1,20 +1,24 @@
 'use client';
 
-import { DateInput } from '@heroui/react';
-import { type CalendarDate, getLocalTimeZone, parseDate, today } from '@internationalized/date';
+import { DateInput, type DateInputProps } from '@heroui/react';
+import {
+  type CalendarDate,
+  type DateValue,
+  getLocalTimeZone,
+  parseDate,
+  today,
+} from '@internationalized/date';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-interface ValidatedDateInputProps {
+interface ValidatedDateInputProps
+  extends Omit<DateInputProps, 'isInvalid' | 'errorMessage' | 'onChange' | 'defaultValue'> {
   name: string;
   wasSubmitted: boolean;
   errors?: string[];
   fieldSchema: z.ZodType<unknown>;
-  label?: string;
-  required?: boolean;
   onValueChange?: (name: string, value: string) => void;
   defaultValue?: string;
-  className?: string;
 }
 
 export function ValidatedDateInput({
@@ -22,11 +26,9 @@ export function ValidatedDateInput({
   wasSubmitted,
   errors,
   fieldSchema,
-  label,
-  required = false,
   onValueChange,
   defaultValue,
-  className = '',
+  ...props
 }: ValidatedDateInputProps) {
   // Convert string date to DateValue for HeroUI DateInput
   const getDateValue = (dateString?: string) => {
@@ -41,7 +43,7 @@ export function ValidatedDateInput({
     }
   };
 
-  const [value, setValue] = useState(getDateValue(defaultValue));
+  const [value, setValue] = useState<DateValue | null>(getDateValue(defaultValue?.toString()));
   const [touched, setTouched] = useState(false);
 
   const getErrors = useCallback(() => {
@@ -55,7 +57,7 @@ export function ValidatedDateInput({
   const shouldRenderErrors = Boolean(errors) || wasSubmitted || touched;
   const hasErrors = Boolean(fieldErrors && fieldErrors.length > 0);
 
-  const handleValueChange = (dateValue: CalendarDate | null) => {
+  const handleValueChange = (dateValue: DateValue | null) => {
     setValue(dateValue);
     // Convert DateValue to ISO string for the parent component
     const stringValue = dateValue ? dateValue.toString() : '';
@@ -72,24 +74,14 @@ export function ValidatedDateInput({
   return (
     <DateInput
       name={name}
-      label={label}
       value={value}
+      defaultValue={getDateValue(defaultValue?.toString())}
       onChange={handleValueChange}
       onBlur={handleBlur}
-      isRequired={required}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}
       errorMessage={shouldRenderErrors && hasErrors ? fieldErrors[0] : undefined}
       minValue={minValue}
-      labelPlacement="inside"
-      variant="bordered"
-      className={className}
-      classNames={{
-        base: 'w-full',
-        input: 'bg-transparent',
-        inputWrapper:
-          'border-default-300 data-[hover=true]:border-default-400 data-[focus=true]:border-primary',
-        label: 'text-foreground font-medium pb-1',
-      }}
+      {...props}
     />
   );
 }

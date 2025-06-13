@@ -174,29 +174,29 @@ export function PurchaseOrderForm({
               <ValidatedSelect
                 name="supplierId"
                 label="Supplier"
-                required
+                isRequired
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.supplierId}
                 errors={errors.supplierId}
                 options={supplierOptions}
-                defaultValue={formData.supplierId}
+                defaultSelectedKeys={formData.supplierId ? [formData.supplierId] : []}
                 onValueChange={handleFieldChange}
               />
               <ValidatedSelect
                 name="branchId"
                 label="Branch"
-                required
+                isRequired
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.branchId}
                 errors={errors.branchId}
                 options={branchOptions}
-                defaultValue={formData.branchId}
+                defaultSelectedKeys={formData.branchId ? [formData.branchId] : []}
                 onValueChange={handleFieldChange}
               />{' '}
               <ValidatedDateInput
                 name="expectedDeliveryDate"
                 label="Expected Delivery Date"
-                required
+                isRequired
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.expectedDeliveryDate}
                 errors={errors.expectedDeliveryDate}

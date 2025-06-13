@@ -189,18 +189,18 @@ export function PurchaseRequestForm({
               <ValidatedSelect
                 name="branchId"
                 label="Branch"
-                required
+                isRequired
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseRequestSchema.shape.branchId}
                 errors={errors.branchId}
                 options={branchOptions}
-                defaultValue={formData.branchId}
+                defaultSelectedKeys={formData.branchId ? [formData.branchId] : []}
                 onValueChange={handleFieldChange}
               />
               <ValidatedDateInput
                 name="requiredDate"
                 label="Required Date"
-                required
+                isRequired
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseRequestSchema.shape.requiredDate}
                 errors={errors.requiredDate}

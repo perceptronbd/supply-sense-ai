@@ -1,23 +1,16 @@
 'use client';
 
-import { Input } from '@heroui/react';
+import { Input, type InputProps } from '@heroui/react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-interface ValidatedInputProps {
+interface ValidatedInputProps
+  extends Omit<InputProps, 'name' | 'isInvalid' | 'errorMessage' | 'onValueChange'> {
   name: string;
   wasSubmitted: boolean;
   errors?: string[];
   fieldSchema: z.ZodType<unknown>;
-  label?: string;
-  required?: boolean;
   onValueChange?: (name: string, value: string) => void;
-  type?: string;
-  placeholder?: string;
-  defaultValue?: string | number;
-  min?: string;
-  max?: string;
-  step?: string;
   className?: string;
   variant?: 'flat' | 'bordered' | 'underlined' | 'faded';
   labelPlacement?: 'inside' | 'outside' | 'outside-left';
@@ -28,18 +21,9 @@ export function ValidatedInput({
   wasSubmitted,
   errors,
   fieldSchema,
-  label,
-  required = false,
   onValueChange,
   defaultValue,
   type = 'text',
-  placeholder,
-  min,
-  max,
-  step,
-  className = '',
-  variant = 'bordered',
-  labelPlacement = 'inside',
   ...props
 }: ValidatedInputProps) {
   const [value, setValue] = useState(defaultValue?.toString() || '');
@@ -71,20 +55,12 @@ export function ValidatedInput({
     <Input
       name={name}
       type={type}
-      label={label}
-      placeholder={placeholder}
       value={value}
+      defaultValue={defaultValue}
       onValueChange={handleValueChange}
       onBlur={handleBlur}
-      isRequired={required}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}
       errorMessage={shouldRenderErrors && hasErrors ? fieldErrors.join(', ') : ''}
-      variant={variant}
-      labelPlacement={labelPlacement}
-      className={className}
-      min={min}
-      max={max}
-      step={step}
       {...props}
     />
   );

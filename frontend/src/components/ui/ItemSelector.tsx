@@ -1,31 +1,21 @@
 'use client';
 
-import { Autocomplete, AutocompleteItem } from '@heroui/react';
+import { Autocomplete, AutocompleteItem, type AutocompleteProps } from '@heroui/react';
 import { useMemo, useState } from 'react';
 import { useGetAllItemsQuery, useSearchItemsQuery } from '../../store/api/itemApi';
 import type { Item } from '../../store/api/itemApi';
 
-interface ItemSelectorProps {
+interface ItemSelectorProps
+  extends Omit<
+    AutocompleteProps,
+    'children' | 'onSelectionChange' | 'inputValue' | 'onInputChange' | 'onChange'
+  > {
   value?: string;
   onChange: (itemId: string, item?: Item) => void;
   branchId?: string;
-  placeholder?: string;
-  label?: string;
-  isRequired?: boolean;
-  errorMessage?: string;
-  isInvalid?: boolean;
 }
 
-export function ItemSelector({
-  value,
-  onChange,
-  branchId,
-  placeholder = 'Search and select an item...',
-  label = 'Item',
-  isRequired = false,
-  errorMessage,
-  isInvalid = false,
-}: ItemSelectorProps) {
+export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [inputValue, setInputValue] = useState('');
 
@@ -88,17 +78,12 @@ export function ItemSelector({
 
   return (
     <Autocomplete
-      label={label}
-      placeholder={placeholder}
-      isRequired={isRequired}
-      errorMessage={errorMessage}
-      isInvalid={isInvalid}
       isLoading={isLoading}
       inputValue={inputValue}
       selectedKey={value || null}
       onInputChange={handleInputChange}
       onSelectionChange={(key) => handleSelectionChange(key as string)}
-      className="w-full"
+      {...props}
     >
       {items.map((item) => (
         <AutocompleteItem key={item.id} textValue={item.name}>

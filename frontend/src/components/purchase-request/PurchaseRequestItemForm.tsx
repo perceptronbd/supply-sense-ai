@@ -149,7 +149,7 @@ export function PurchaseRequestItemForm({
           <ValidatedDateInput
             name="requiredDate"
             label="Required Date"
-            required
+            isRequired
             wasSubmitted={wasSubmitted}
             fieldSchema={purchaseRequestItemSchema.shape.requiredDate}
             errors={errors.requiredDate}

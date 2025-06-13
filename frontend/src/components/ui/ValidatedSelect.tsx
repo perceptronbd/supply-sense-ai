@@ -1,21 +1,17 @@
 'use client';
 
-import { Select, SelectItem } from '@heroui/react';
+import { Select, SelectItem, type SelectProps } from '@heroui/react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-interface ValidatedSelectProps {
+interface ValidatedSelectProps
+  extends Omit<SelectProps, 'children' | 'isInvalid' | 'errorMessage' | 'onSelectionChange'> {
   name: string;
   wasSubmitted: boolean;
   errors?: string[];
   fieldSchema: z.ZodType<unknown>;
-  label?: string;
-  required?: boolean;
   options: { value: string; label: string; disabled?: boolean }[];
-  placeholder?: string;
   onValueChange?: (name: string, value: string) => void;
-  defaultValue?: string;
-  className?: string;
 }
 
 export function ValidatedSelect({
@@ -23,15 +19,13 @@ export function ValidatedSelect({
   wasSubmitted,
   errors,
   fieldSchema,
-  label,
-  required = false,
   options,
-  placeholder = 'Select an option',
-  className = '',
   onValueChange,
-  defaultValue,
+  defaultSelectedKeys,
+  ...props
 }: ValidatedSelectProps) {
-  const [value, setValue] = useState(defaultValue?.toString() || '');
+  const defaultValue = defaultSelectedKeys ? (Array.from(defaultSelectedKeys)[0] as string) : '';
+  const [value, setValue] = useState(defaultValue || '');
   const [touched, setTouched] = useState(false);
 
   const getErrors = useCallback(() => {
@@ -52,9 +46,6 @@ export function ValidatedSelect({
   return (
     <Select
       name={name}
-      label={label}
-      placeholder={placeholder}
-      isRequired={required}
       isInvalid={hasErrors && shouldRenderErrors}
       errorMessage={hasErrors && shouldRenderErrors ? fieldErrors.join(', ') : undefined}
       selectedKeys={value ? [value] : []}
@@ -64,7 +55,7 @@ export function ValidatedSelect({
           handleSelectionChange(selectedValue);
         }
       }}
-      className={className}
+      {...props}
     >
       {options.map((option) => (
         <SelectItem key={option.value} isDisabled={option.disabled}>
