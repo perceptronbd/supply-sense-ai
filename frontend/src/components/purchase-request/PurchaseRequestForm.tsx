@@ -1,5 +1,10 @@
-﻿'use client';
+'use client';
 
+import { Text } from '@/components/ui/Text';
+import { ValidatedDateInput } from '@/components/ui/ValidatedDateInput';
+import { ValidatedInput } from '@/components/ui/ValidatedInput';
+import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
+import { ValidatedTextarea } from '@/components/ui/ValidatedTextarea';
 import {
   type PurchaseRequestActionState,
   type PurchaseRequestFormData,
@@ -16,11 +21,6 @@ import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Text } from '../ui/Text';
-import { ValidatedDateInput } from '../ui/ValidatedDateInput';
-import { ValidatedInput } from '../ui/ValidatedInput';
-import { ValidatedSelect } from '../ui/ValidatedSelect';
-import { ValidatedTextarea } from '../ui/ValidatedTextarea';
 import { ItemsSection } from './ItemsSection';
 import { TemplateSelection } from './TemplateSelection';
 import { useAiRecommendations, useFormSubmission, useItemManagement } from './hooks';

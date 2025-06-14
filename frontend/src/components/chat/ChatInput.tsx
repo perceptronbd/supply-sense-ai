@@ -1,8 +1,8 @@
 'use client';
 
+import { SendIcon } from '@/components/icons';
 import { Button, Textarea } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
-import { SendIcon } from '../icons';
 import type { ChatInputProps } from './types';
 
 export function ChatInput({ onSendMessage, isLoading = false, disabled = false }: ChatInputProps) {

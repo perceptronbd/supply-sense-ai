@@ -1,11 +1,11 @@
 'use client';
 
+import { Loading } from '@/components/ui/Loading';
+import { ROUTE_PATHS } from '@/config/routes';
+import type { RootState } from '@/store/store';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Loading } from '../components/ui/Loading';
-import { ROUTE_PATHS } from '../config/routes';
-import type { RootState } from '../store/store';
 
 export default function Index() {
   const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);

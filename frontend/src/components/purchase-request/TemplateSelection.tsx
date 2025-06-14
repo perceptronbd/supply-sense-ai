@@ -1,6 +1,6 @@
-﻿import { purchaseRequestSchema } from '@/lib/schemas/purchase-request.schema';
+import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
+import { purchaseRequestSchema } from '@/lib/schemas/purchase-request.schema';
 import { Card, CardBody, CardHeader } from '@heroui/react';
-import { ValidatedSelect } from '../ui/ValidatedSelect';
 
 interface TemplateSelectionProps {
   templateOptions: Array<{ value: string; label: string }>;

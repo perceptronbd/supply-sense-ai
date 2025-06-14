@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
+import { AiIcon, UserIcon } from '@/components/icons';
+import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
-import { AiIcon, UserIcon } from '../icons';
-import { Text } from '../ui/Text';
 import './markdown.css';
 
 interface MessageBubbleProps {

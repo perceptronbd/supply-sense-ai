@@ -3,11 +3,10 @@
 import AuthGuard from '@/components/AuthGuard';
 import { Text } from '@/components/ui/Text';
 import {
-  useApprovePurchaseRequestMutation,
-  useGetPurchaseRequestQuery,
-  useRejectPurchaseRequestMutation,
-  useSubmitPurchaseRequestMutation,
-} from '@/store/api/purchaseRequestApi';
+  useCancelGoodsReceiptMutation,
+  useGetGoodsReceiptByIdQuery,
+  usePostGoodsReceiptMutation,
+} from '@/store/api/goodsReceiptApi';
 import {
   Button,
   Card,
@@ -20,58 +19,105 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  addToast,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 
-interface PurchaseRequestDetailPageProps {
+interface GoodsReceiptDetailPageProps {
   params: Promise<{
     id: string;
   }>;
 }
 
-export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDetailPageProps) {
+export default function GoodsReceiptDetailPage({ params }: GoodsReceiptDetailPageProps) {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Unwrap the async params
   const { id } = use(params);
 
-  const { data: purchaseRequest, isLoading, error } = useGetPurchaseRequestQuery(id);
-  const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
-  const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
-  const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const {
+    data: goodsReceipt,
+    isLoading,
+    error,
+    refetch,
+  } = useGetGoodsReceiptByIdQuery(id, { skip: !isMounted });
+
+  const [postGoodsReceipt] = usePostGoodsReceiptMutation();
+  const [cancelGoodsReceipt] = useCancelGoodsReceiptMutation();
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'approved':
+      case 'posted':
         return 'success';
-      case 'rejected':
+      case 'cancelled':
         return 'danger';
-      case 'submitted':
-        return 'warning';
       case 'draft':
         return 'default';
       default:
         return 'primary';
     }
   };
-
-  const handleWorkflowAction = async (action: 'submit' | 'approve' | 'reject') => {
+  const handleWorkflowAction = async (action: 'post' | 'cancel') => {
     try {
       switch (action) {
-        case 'submit':
-          await submitPurchaseRequest(id).unwrap();
+        case 'post':
+          await postGoodsReceipt(id).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt posted successfully',
+            color: 'success',
+            variant: 'flat',
+          });
           break;
-        case 'approve':
-          await approvePurchaseRequest(id).unwrap();
-          break;
-        case 'reject':
-          await rejectPurchaseRequest(id).unwrap();
+        case 'cancel':
+          await cancelGoodsReceipt(id).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt cancelled',
+            color: 'warning',
+            variant: 'flat',
+          });
           break;
       }
-      // The query will automatically refetch due to cache invalidation
+      refetch();
     } catch (error) {
-      console.error(`Failed to ${action} purchase request:`, error);
+      console.error(`Failed to ${action} goods receipt:`, error);
+      addToast({
+        title: 'Error',
+        description: `Failed to ${action} goods receipt. Please try again.`,
+        color: 'danger',
+        variant: 'flat',
+      });
     }
   };
+
+  const calculateTotalValue = (): number => {
+    if (!goodsReceipt?.items) return 0;
+    return goodsReceipt.items.reduce((total, item) => {
+      const totalCost = item.totalCost ? Number.parseFloat(item.totalCost) : 0;
+      return total + totalCost;
+    }, 0);
+  };
+
+  if (!isMounted) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <main className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <Text variant="bodyLarge">Loading...</Text>
+            </div>
+          </div>
+        </main>
+      </AuthGuard>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -79,7 +125,7 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading purchase request...</Text>
+              <Text variant="bodyLarge">Loading goods receipt...</Text>
             </div>
           </div>
         </main>
@@ -87,14 +133,14 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
     );
   }
 
-  if (error || !purchaseRequest) {
+  if (error || !goodsReceipt) {
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-danger">
-                Error loading purchase request or request not found
+                Error loading goods receipt or receipt not found
               </Text>
             </div>
           </div>
@@ -102,7 +148,6 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
       </AuthGuard>
     );
   }
-
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
@@ -114,38 +159,31 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                 ← Back
               </Button>
               <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
-                Purchase Request {purchaseRequest.prNumber}
+                Goods Receipt {goodsReceipt.grNumber}
               </Text>
               <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
-                View and manage purchase request details
+                View and manage goods receipt details
               </Text>
             </div>
             <div className="flex gap-2">
-              {purchaseRequest.status === 'DRAFT' && (
+              {goodsReceipt.status === 'DRAFT' && (
                 <>
                   <Button
                     color="secondary"
                     variant="flat"
-                    onPress={() => router.push(`/purchase-requests/${id}/edit`)}
+                    onPress={() => router.push(`/goods-receipts/${id}/edit`)}
                   >
                     Edit
-                  </Button>
-                  <Button color="warning" onPress={() => handleWorkflowAction('submit')}>
-                    Submit for Approval
-                  </Button>
-                </>
-              )}
-              {purchaseRequest.status === 'SUBMITTED' && (
-                <>
-                  <Button color="success" onPress={() => handleWorkflowAction('approve')}>
-                    Approve
                   </Button>
                   <Button
                     color="danger"
                     variant="flat"
-                    onPress={() => handleWorkflowAction('reject')}
+                    onPress={() => handleWorkflowAction('cancel')}
                   >
-                    Reject
+                    Cancel
+                  </Button>
+                  <Button color="success" onPress={() => handleWorkflowAction('post')}>
+                    Post Receipt
                   </Button>
                 </>
               )}
@@ -165,28 +203,24 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Status
                   </Text>
-                  <Chip
-                    color={getStatusColor(purchaseRequest.status)}
-                    variant="flat"
-                    className="mt-1"
-                  >
-                    {purchaseRequest.status}
+                  <Chip color={getStatusColor(goodsReceipt.status)} variant="flat" className="mt-1">
+                    {goodsReceipt.status}
                   </Chip>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                    Title
+                    Receipt Date
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {purchaseRequest.title || 'Untitled'}
+                    {new Date(goodsReceipt.receiptDate).toLocaleDateString()}
                   </Text>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                    Required Date
+                    Document Number
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {new Date(purchaseRequest.requiredDate).toLocaleDateString()}
+                    {goodsReceipt.documentNumber || '—'}
                   </Text>
                 </div>
                 <div>
@@ -194,42 +228,88 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                     Branch
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {purchaseRequest.branch.name}
+                    {goodsReceipt.branch.name}
                   </Text>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                    Requested By
+                    Received By
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {purchaseRequest.createdBy.firstName} {purchaseRequest.createdBy.lastName}
+                    {goodsReceipt.receivedBy.firstName} {goodsReceipt.receivedBy.lastName}
                   </Text>
                 </div>
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                    Total Amount
+                    Total Items
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground font-semibold" as="p">
-                    ${Number(purchaseRequest.totalAmount).toFixed(2)}
+                    {goodsReceipt.items.length}
                   </Text>
                 </div>
-                {purchaseRequest.description && (
-                  <div className="md:col-span-2 lg:col-span-3">
+                <div>
+                  <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
+                    Total Value
+                  </Text>
+                  <Text variant="bodyBase" className="mt-1 text-foreground font-semibold" as="p">
+                    ${calculateTotalValue().toFixed(2)}
+                  </Text>
+                </div>
+                {goodsReceipt.purchaseOrder && (
+                  <div>
                     <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                      Description
+                      Source Purchase Order
+                    </Text>
+                    <div className="mt-1">
+                      <Button
+                        variant="flat"
+                        size="sm"
+                        onPress={() =>
+                          router.push(`/purchase-orders/${goodsReceipt.purchaseOrder?.id}`)
+                        }
+                      >
+                        {goodsReceipt.purchaseOrder.poNumber}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {goodsReceipt.materialRequisition && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
+                      Source Material Requisition
+                    </Text>
+                    <div className="mt-1">
+                      <Button
+                        variant="flat"
+                        size="sm"
+                        onPress={() =>
+                          router.push(
+                            `/material-requisitions/${goodsReceipt.materialRequisition?.id}`
+                          )
+                        }
+                      >
+                        {goodsReceipt.materialRequisition.mrNumber}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {goodsReceipt.purchaseOrder?.supplier && (
+                  <div>
+                    <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
+                      Supplier
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                      {purchaseRequest.description}
+                      {goodsReceipt.purchaseOrder.supplier.name}
                     </Text>
                   </div>
                 )}
-                {purchaseRequest.justification && (
+                {goodsReceipt.remarks && (
                   <div className="md:col-span-2 lg:col-span-3">
                     <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                      Justification
+                      Remarks
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                      {purchaseRequest.justification}
+                      {goodsReceipt.remarks}
                     </Text>
                   </div>
                 )}
@@ -241,21 +321,21 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
           <Card>
             <CardHeader>
               <Text variant="titleLarge" weight="semiBold" as="h2">
-                Items
+                Received Items
               </Text>
             </CardHeader>
             <CardBody>
-              <Table aria-label="Purchase request items">
+              <Table aria-label="Goods receipt items">
                 <TableHeader>
                   <TableColumn>ITEM</TableColumn>
-                  <TableColumn>QUANTITY</TableColumn>
+                  <TableColumn>ORDERED QTY</TableColumn>
+                  <TableColumn>RECEIVED QTY</TableColumn>
                   <TableColumn>UNIT PRICE</TableColumn>
-                  <TableColumn>TOTAL</TableColumn>
-                  <TableColumn>REQUIRED DATE</TableColumn>
-                  <TableColumn>REMARKS</TableColumn>
+                  <TableColumn>TOTAL COST</TableColumn>
+                  <TableColumn>QUALITY NOTES</TableColumn>
                 </TableHeader>
                 <TableBody>
-                  {purchaseRequest.items.map((item) => (
+                  {goodsReceipt.items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div>
@@ -268,16 +348,18 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                         </div>
                       </TableCell>
                       <TableCell>
-                        {item.requestedQty} {item.item.unit}
+                        {item.orderedQty} {item.item.unit}
                       </TableCell>
                       <TableCell>
-                        {item.estimatedPrice ? `$${Number(item.estimatedPrice).toFixed(2)}` : 'N/A'}
+                        {item.receivedQty} {item.item.unit}
+                      </TableCell>
+                      <TableCell>
+                        {item.unitPrice ? `$${Number.parseFloat(item.unitPrice).toFixed(2)}` : '—'}
                       </TableCell>
                       <TableCell className="font-medium">
-                        ${Number(item.totalAmount).toFixed(2)}
+                        {item.totalCost ? `$${Number.parseFloat(item.totalCost).toFixed(2)}` : '—'}
                       </TableCell>
-                      <TableCell>{new Date(item.requiredDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{item.remarks || '—'}</TableCell>
+                      <TableCell>{item.qualityNotes || '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -299,7 +381,7 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                     Created At
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {new Date(purchaseRequest.createdAt).toLocaleString()}
+                    {new Date(goodsReceipt.createdAt).toLocaleString()}
                   </Text>
                 </div>
                 <div>
@@ -307,16 +389,16 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                     Last Updated
                   </Text>
                   <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                    {new Date(purchaseRequest.updatedAt).toLocaleString()}
+                    {new Date(goodsReceipt.updatedAt).toLocaleString()}
                   </Text>
-                </div>
-                {purchaseRequest.prTemplate && (
+                </div>{' '}
+                {goodsReceipt.postedAt && (
                   <div>
                     <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
-                      Template Used
+                      Posted At
                     </Text>
                     <Text variant="bodyBase" className="mt-1 text-foreground" as="p">
-                      {purchaseRequest.prTemplate.name}
+                      {new Date(goodsReceipt.postedAt).toLocaleString()}
                     </Text>
                   </div>
                 )}

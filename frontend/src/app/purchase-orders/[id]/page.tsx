@@ -1,5 +1,14 @@
 'use client';
 
+import AuthGuard from '@/components/AuthGuard';
+import { Text } from '@/components/ui/Text';
+import {
+  useCancelPurchaseOrderMutation,
+  useClosePurchaseOrderMutation,
+  useConfirmPurchaseOrderMutation,
+  useGetPurchaseOrderQuery,
+  useSendToSupplierMutation,
+} from '@/store/api/purchaseOrderApi';
 import {
   Button,
   Card,
@@ -14,21 +23,17 @@ import {
   TableRow,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
-import AuthGuard from '../../../components/AuthGuard';
-import { Text } from '../../../components/ui/Text';
-import {
-  useCancelPurchaseOrderMutation,
-  useClosePurchaseOrderMutation,
-  useConfirmPurchaseOrderMutation,
-  useGetPurchaseOrderQuery,
-  useSendToSupplierMutation,
-} from '../../../store/api/purchaseOrderApi';
+import { use } from 'react';
 
-export default function PurchaseOrderDetailPage() {
+interface PurchaseOrderDetailPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailPageProps) {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = use(params);
 
   const { data: purchaseOrder, isLoading, error } = useGetPurchaseOrderQuery(id);
   const [sendToSupplier] = useSendToSupplierMutation();

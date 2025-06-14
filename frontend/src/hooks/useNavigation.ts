@@ -2,8 +2,8 @@
  * Navigation utilities and hooks for sidebar and menu components
  */
 
+import { ROUTE_PATHS } from '@/config/routes';
 import { usePathname } from 'next/navigation';
-import { ROUTE_PATHS } from '../config/routes';
 
 /**
  * Hook to determine if a navigation item should be highlighted as active

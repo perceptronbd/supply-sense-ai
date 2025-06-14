@@ -1,9 +1,9 @@
 'use client';
 
+import { PlusIcon } from '@/components/icons';
+import { Text } from '@/components/ui/Text';
 import { Button, Card, CardBody } from '@heroui/react';
 import { format } from 'date-fns';
-import { PlusIcon } from '../icons';
-import { Text } from '../ui/Text';
 import type { ChatSession } from './types';
 
 interface SessionListProps {

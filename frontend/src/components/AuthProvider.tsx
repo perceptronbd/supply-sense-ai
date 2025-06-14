@@ -1,10 +1,10 @@
 'use client';
 
+import { useRoutes } from '@/hooks/useRoutes';
+import { validateToken } from '@/store/slices/authSlice';
+import type { RootState } from '@/store/store';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRoutes } from '../hooks/useRoutes';
-import { validateToken } from '../store/slices/authSlice';
-import type { RootState } from '../store/store';
 import { Loading } from './ui/Loading';
 
 interface AuthProviderProps {

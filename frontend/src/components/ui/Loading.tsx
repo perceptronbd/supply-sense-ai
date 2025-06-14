@@ -1,5 +1,5 @@
-import { Loader, type LoaderSize } from '../icons/LoaderIcon';
-import { Text } from '../ui/Text';
+import { Loader, type LoaderSize } from '@/components/icons/LoaderIcon';
+import { Text } from '@/components/ui/Text';
 
 export interface LoadingProps {
   /** Size of the loading spinner */

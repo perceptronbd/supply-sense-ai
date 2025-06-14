@@ -305,3 +305,80 @@ function ProductActions({ onAddToCart, onSaveForLater }) {
 
 ## Implementation Priority
 1. **High Priority**: Everything is high priority
+
+## Import Path Guidelines (MANDATORY)
+
+### Alias Import Rules
+- **MANDATORY: Always use alias imports (`@/`) for internal project files**
+- **FORBIDDEN: Use relative imports (`../`, `../../`) for internal files**
+- **REQUIRED: Use alias imports for components, hooks, utils, stores, and schemas**
+- **EXCEPTION: Only use relative imports for files in the same directory**
+
+### Correct Import Patterns
+```tsx
+// ✅ CORRECT: Use alias imports for all internal files
+import { Text } from '@/components/ui/Text';
+import { useGetItemsQuery } from '@/store/api/itemApi';
+import { createGoodsReceiptSchema } from '@/lib/schemas/goods-receipt.schema';
+import { GoodsReceiptForm } from '@/components/goods-receipt/GoodsReceiptForm';
+import AuthGuard from '@/components/AuthGuard';
+
+// ✅ CORRECT: External libraries without alias
+import { Button, Card, CardBody } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+
+// ✅ ACCEPTABLE: Same directory files can use relative imports
+import { ItemsSection } from './ItemsSection';
+import { hooks } from './hooks';
+
+// ❌ INCORRECT: Never use relative imports for distant files
+import { Text } from '../../../ui/Text';
+import { useGetItemsQuery } from '../../../../store/api/itemApi';
+import AuthGuard from '../../../AuthGuard';
+```
+
+### Import Organization Order
+```tsx
+// 1. React and core Next.js imports
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
+
+// 2. External library imports
+import { Button, Card, CardBody, addToast } from '@heroui/react';
+import { z } from 'zod';
+
+// 3. Internal alias imports - Store/API
+import { useGetItemsQuery } from '@/store/api/itemApi';
+import { useCreateGoodsReceiptMutation } from '@/store/api/goodsReceiptApi';
+import type { RootState } from '@/store/store';
+
+// 4. Internal alias imports - Schemas and Types
+import { createGoodsReceiptSchema } from '@/lib/schemas/goods-receipt.schema';
+import type { CreateGoodsReceiptFormData } from '@/lib/schemas/goods-receipt.schema';
+
+// 5. Internal alias imports - Components
+import AuthGuard from '@/components/AuthGuard';
+import { Text } from '@/components/ui/Text';
+import { ValidatedInput } from '@/components/ui/ValidatedInput';
+
+// 6. Same directory relative imports (optional)
+import { ItemsSection } from './ItemsSection';
+import { useFormSubmission } from './hooks';
+```
+
+### Path Alias Configuration
+The project is configured with `@/` alias pointing to `frontend/src/`:
+- `@/components/` → `frontend/src/components/`
+- `@/store/` → `frontend/src/store/`
+- `@/lib/` → `frontend/src/lib/`
+- `@/app/` → `frontend/src/app/`
+- `@/hooks/` → `frontend/src/hooks/`
+
+### Benefits of Alias Imports
+- **Maintainability**: Easy to refactor and move files
+- **Readability**: Clear project structure understanding
+- **Consistency**: Same import pattern across all files
+- **IDE Support**: Better autocomplete and navigation
+- **Avoid Deep Nesting**: No more `../../../` chains

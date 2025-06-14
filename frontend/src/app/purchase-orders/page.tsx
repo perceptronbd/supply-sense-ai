@@ -7,10 +7,12 @@ import {
   DotsVerticalIcon,
   EditIcon,
   EyeIcon,
+  ReceiptIcon,
   SendIcon,
   XMarkIcon,
 } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
+import { useCreateGoodsReceiptFromPOMutation } from '@/store/api/goodsReceiptApi';
 import {
   type PurchaseOrder,
   useCancelPurchaseOrderMutation,
@@ -67,6 +69,7 @@ export default function PurchaseOrdersPage() {
   const [confirmPurchaseOrder] = useConfirmPurchaseOrderMutation();
   const [cancelPurchaseOrder] = useCancelPurchaseOrderMutation();
   const [closePurchaseOrder] = useClosePurchaseOrderMutation();
+  const [createGoodsReceiptFromPO] = useCreateGoodsReceiptFromPOMutation();
 
   // Pagination calculations
   const totalPages = Math.ceil(purchaseOrders.length / itemsPerPage);
@@ -152,7 +155,10 @@ export default function PurchaseOrdersPage() {
 
     if (order.status === 'CONFIRMED') {
       items.push(
-        <DropdownItem key="close" color="primary" startContent={<CheckCircleIcon />}>
+        <DropdownItem key="createGR" color="primary" startContent={<ReceiptIcon />}>
+          Create Goods Receipt
+        </DropdownItem>,
+        <DropdownItem key="close" color="success" startContent={<CheckCircleIcon />}>
           Close Order
         </DropdownItem>
       );
@@ -162,7 +168,7 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleWorkflowAction = async (
-    action: 'send' | 'confirm' | 'cancel' | 'close',
+    action: 'send' | 'confirm' | 'cancel' | 'close' | 'createGR',
     orderId: string
   ) => {
     try {
@@ -203,6 +209,18 @@ export default function PurchaseOrdersPage() {
             variant: 'flat',
           });
           break;
+        case 'createGR': {
+          const goodsReceipt = await createGoodsReceiptFromPO(orderId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt created successfully',
+            color: 'success',
+            variant: 'flat',
+          });
+          // Navigate to the new goods receipt
+          router.push(`/goods-receipts/${goodsReceipt.id}`);
+          break;
+        }
       }
       refetch();
     } catch (error) {
@@ -380,10 +398,16 @@ export default function PurchaseOrdersPage() {
                                     action === 'send' ||
                                     action === 'confirm' ||
                                     action === 'cancel' ||
-                                    action === 'close'
+                                    action === 'close' ||
+                                    action === 'createGR'
                                   ) {
                                     handleWorkflowAction(
-                                      action as 'send' | 'confirm' | 'cancel' | 'close',
+                                      action as
+                                        | 'send'
+                                        | 'confirm'
+                                        | 'cancel'
+                                        | 'close'
+                                        | 'createGR',
                                       order.id
                                     );
                                   }

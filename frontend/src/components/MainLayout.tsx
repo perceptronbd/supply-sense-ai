@@ -1,9 +1,9 @@
 'use client';
 
+import type { RootState } from '@/store/store';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../store/store';
 import Sidebar from './Sidebar';
 import { MenuIcon } from './icons';
 import { Text } from './ui/Text';

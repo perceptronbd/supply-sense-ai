@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
+import { Text } from '@/components/ui/Text';
 import { useGetSessionMessagesQuery, useSendQueryMutation } from '@/store/api/chatApi';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { useEffect, useState } from 'react';
-import { Text } from '../ui/Text';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 import type { ChatInterfaceProps } from './types';

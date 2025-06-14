@@ -1,9 +1,9 @@
 'use client';
 
+import type { RootState } from '@/store/store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../store/store';
 
 interface AuthGuardProps {
   children: React.ReactNode;

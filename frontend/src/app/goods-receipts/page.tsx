@@ -1,92 +1,232 @@
-﻿'use client';
+'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import {
+  DotsVerticalIcon,
+  EditIcon,
+  EyeIcon,
+  PostIcon,
+  ReceiptIcon,
+  TrashIcon,
+  XMarkIcon,
+} from '@/components/icons';
 import { Text } from '@/components/ui/Text';
+import {
+  type GoodsReceipt,
+  useCancelGoodsReceiptMutation,
+  useDeleteGoodsReceiptMutation,
+  useGetGoodsReceiptsQuery,
+  usePostGoodsReceiptMutation,
+} from '@/store/api/goodsReceiptApi';
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
+  Chip,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Pagination,
+  Select,
+  SelectItem,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
   TableRow,
+  addToast,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function GoodsReceiptsPage() {
-  const _router = useRouter();
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Mock data for the table
-  const goodsReceipts = [
-    {
-      id: 'GR001',
-      poNumber: 'PO001',
-      supplier: 'ABC Supplies Inc.',
-      receivedDate: '2025-06-10',
-      receivedBy: 'John Warehouse',
-      status: 'Completed',
-      totalItems: 15,
-      totalValue: '$2,450.00',
-    },
-    {
-      id: 'GR002',
-      poNumber: 'PO002',
-      supplier: 'Tech Solutions Ltd.',
-      receivedDate: '2025-06-09',
-      receivedBy: 'Sarah Storage',
-      status: 'Partial',
-      totalItems: 5,
-      totalValue: '$950.00',
-    },
-    {
-      id: 'GR003',
-      poNumber: 'PO003',
-      supplier: 'Industrial Materials Co.',
-      receivedDate: '2025-06-08',
-      receivedBy: 'Mike Receiver',
-      status: 'Completed',
-      totalItems: 25,
-      totalValue: '$3,200.00',
-    },
-    {
-      id: 'GR004',
-      poNumber: 'PO005',
-      supplier: 'Safety First Equipment',
-      receivedDate: '2025-06-07',
-      receivedBy: 'Lisa Handler',
-      status: 'Pending Review',
-      totalItems: 6,
-      totalValue: '$670.00',
-    },
-    {
-      id: 'GR005',
-      poNumber: 'PO006',
-      supplier: 'Office Plus',
-      receivedDate: '2025-06-06',
-      receivedBy: 'Tom Checker',
-      status: 'Discrepancy',
-      totalItems: 10,
-      totalValue: '$380.00',
-    },
-  ];
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // API hooks
+  const {
+    data: goodsReceipts = [],
+    isLoading,
+    error,
+    refetch,
+  } = useGetGoodsReceiptsQuery({}, { skip: !isMounted });
+  const [postGoodsReceipt] = usePostGoodsReceiptMutation();
+  const [cancelGoodsReceipt] = useCancelGoodsReceiptMutation();
+  const [deleteGoodsReceipt] = useDeleteGoodsReceiptMutation();
+
+  // Pagination calculations
+  const totalPages = Math.ceil(goodsReceipts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReceipts = goodsReceipts.slice(startIndex, endIndex);
+
+  // Reset to last valid page if current page is out of bounds
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  // Don't render anything until mounted
+  if (!isMounted) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <Text variant="bodyLarge">Loading...</Text>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return 'text-success bg-success/20';
-      case 'Partial':
-        return 'text-primary bg-primary/20';
-      case 'Pending Review':
-        return 'text-warning bg-warning/20';
-      case 'Discrepancy':
-        return 'text-danger bg-danger/20';
+    switch (status?.toLowerCase()) {
+      case 'posted':
+        return 'success';
+      case 'cancelled':
+        return 'danger';
+      case 'draft':
+        return 'default';
       default:
-        return 'text-default-500 bg-default-100';
+        return 'primary';
     }
   };
+
+  const handleCreateReceipt = () => {
+    router.push('/goods-receipts/create');
+  };
+
+  const handleEditReceipt = (receipt: GoodsReceipt) => {
+    router.push(`/goods-receipts/${receipt.id}/edit`);
+  };
+
+  const getDropdownItems = (receipt: GoodsReceipt) => {
+    const items = [
+      <DropdownItem key="view" startContent={<EyeIcon />}>
+        View Details
+      </DropdownItem>,
+    ];
+
+    if (receipt.status === 'DRAFT') {
+      items.push(
+        <DropdownItem key="edit" startContent={<EditIcon />}>
+          Edit Receipt
+        </DropdownItem>,
+        <DropdownItem key="post" color="success" startContent={<PostIcon />}>
+          Post Receipt
+        </DropdownItem>,
+        <DropdownItem key="cancel" color="warning" startContent={<XMarkIcon />}>
+          Cancel Receipt
+        </DropdownItem>,
+        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+          Delete Receipt
+        </DropdownItem>
+      );
+    }
+
+    return items;
+  };
+
+  const handleWorkflowAction = async (action: 'post' | 'cancel' | 'delete', receiptId: string) => {
+    try {
+      switch (action) {
+        case 'post':
+          await postGoodsReceipt(receiptId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt posted successfully',
+            color: 'success',
+            variant: 'flat',
+          });
+          break;
+        case 'cancel':
+          await cancelGoodsReceipt(receiptId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt cancelled',
+            color: 'warning',
+            variant: 'flat',
+          });
+          break;
+        case 'delete':
+          await deleteGoodsReceipt(receiptId).unwrap();
+          addToast({
+            title: 'Success',
+            description: 'Goods receipt deleted',
+            color: 'success',
+            variant: 'flat',
+          });
+          break;
+      }
+      refetch();
+    } catch {
+      addToast({
+        title: 'Error',
+        description: `Failed to ${action} goods receipt. Please try again.`,
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
+  };
+
+  const calculateTotalValue = (receipt: GoodsReceipt): number => {
+    return receipt.items.reduce((total, item) => {
+      const totalCost = item.totalCost ? Number.parseFloat(item.totalCost) : 0;
+      return total + totalCost;
+    }, 0);
+  };
+
+  const calculateTotalItems = (receipt: GoodsReceipt): number => {
+    return receipt.items.reduce((total, item) => {
+      const receivedQty = Number.parseFloat(item.receivedQty);
+      return total + receivedQty;
+    }, 0);
+  };
+
+  if (isLoading) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <Text variant="bodyLarge">Loading goods receipts...</Text>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  if (error) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <Text variant="bodyLarge" className="text-danger">
+                Error loading goods receipts
+              </Text>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard requireAuth={true}>
@@ -95,136 +235,215 @@ export default function GoodsReceiptsPage() {
           {/* Header */}
           <header className="flex justify-between items-center mb-6">
             <div>
-              <Text variant="headerLarge" weight="bold" className="text-foreground" as="h1">
+              <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Goods Receipts
               </Text>
               <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
                 Track and manage all incoming goods receipts
               </Text>
             </div>
-            <Button
-              color="primary"
-              onPress={() => alert('Create new receipt functionality coming soon!')}
-            >
+            <Button color="primary" onPress={handleCreateReceipt} startContent={<ReceiptIcon />}>
               Record New Receipt
             </Button>
           </header>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <Text variant="titleLarge" weight="semiBold" as="h2">
-                All Goods Receipts
-              </Text>
-            </CardHeader>
-            <CardBody>
-              <Table aria-label="Goods receipts table">
-                <TableHeader>
-                  <TableColumn>RECEIPT ID</TableColumn>
-                  <TableColumn>PO NUMBER</TableColumn>
-                  <TableColumn>SUPPLIER</TableColumn>
-                  <TableColumn>RECEIVED DATE</TableColumn>
-                  <TableColumn>RECEIVED BY</TableColumn>
-                  <TableColumn>STATUS</TableColumn>
-                  <TableColumn>ITEMS</TableColumn>
-                  <TableColumn>TOTAL VALUE</TableColumn>
-                  <TableColumn>ACTIONS</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {goodsReceipts.map((receipt) => (
-                    <TableRow key={receipt.id}>
-                      <TableCell className="font-medium">{receipt.id}</TableCell>
-                      <TableCell className="font-medium text-primary">{receipt.poNumber}</TableCell>
-                      <TableCell>{receipt.supplier}</TableCell>
-                      <TableCell>{receipt.receivedDate}</TableCell>
-                      <TableCell>{receipt.receivedBy}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            receipt.status
-                          )}`}
-                        >
-                          {receipt.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{receipt.totalItems}</TableCell>
-                      <TableCell className="font-medium">{receipt.totalValue}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="flat" color="primary">
-                            View
-                          </Button>
-                          <Button size="sm" variant="flat" color="secondary">
-                            Edit
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardBody>
-          </Card>
+          <section>
+            <Card>
+              <CardHeader className="pb-3 flex flex-col gap-4">
+                <div className="flex justify-between items-center w-full">
+                  <Text variant="titleSmall" weight="semiBold">
+                    All Goods Receipts
+                  </Text>
+                  {/* Status Summary Chips */}
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Chip
+                      color="primary"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
+                    >
+                      Total: {goodsReceipts.length}
+                    </Chip>
+                    <Chip
+                      color="default"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
+                    >
+                      Draft: {goodsReceipts.filter((receipt) => receipt.status === 'DRAFT').length}
+                    </Chip>
+                    <Chip
+                      color="success"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
+                    >
+                      Posted:{' '}
+                      {goodsReceipts.filter((receipt) => receipt.status === 'POSTED').length}
+                    </Chip>
+                    <Chip
+                      color="danger"
+                      variant="flat"
+                      size="sm"
+                      startContent={<div className="bg-danger rounded-full w-1.5 h-1.5" />}
+                    >
+                      Cancelled:{' '}
+                      {goodsReceipts.filter((receipt) => receipt.status === 'CANCELLED').length}
+                    </Chip>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody>
+                <Table aria-label="Goods receipts table">
+                  <TableHeader>
+                    <TableColumn>RECEIPT ID</TableColumn>
+                    <TableColumn>SOURCE</TableColumn>
+                    <TableColumn>SUPPLIER/BRANCH</TableColumn>
+                    <TableColumn>RECEIVED DATE</TableColumn>
+                    <TableColumn>RECEIVED BY</TableColumn>
+                    <TableColumn>STATUS</TableColumn>
+                    <TableColumn>ITEMS</TableColumn>
+                    <TableColumn>TOTAL VALUE</TableColumn>
+                    <TableColumn>ACTIONS</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedReceipts.map((receipt) => (
+                      <TableRow key={receipt.id}>
+                        <TableCell className="font-medium">{receipt.grNumber}</TableCell>
+                        <TableCell>
+                          {receipt.purchaseOrder ? (
+                            <div>
+                              <Text
+                                variant="bodyBase"
+                                weight="medium"
+                                className="text-primary"
+                                as="p"
+                              >
+                                {receipt.purchaseOrder.poNumber}
+                              </Text>
+                              <Text variant="bodySmall" className="text-default-500" as="p">
+                                Purchase Order
+                              </Text>
+                            </div>
+                          ) : receipt.materialRequisition ? (
+                            <div>
+                              <Text
+                                variant="bodyBase"
+                                weight="medium"
+                                className="text-warning"
+                                as="p"
+                              >
+                                {receipt.materialRequisition.mrNumber}
+                              </Text>
+                              <Text variant="bodySmall" className="text-default-500" as="p">
+                                Material Requisition
+                              </Text>
+                            </div>
+                          ) : (
+                            <div>
+                              <Text variant="bodyBase" weight="medium" as="p">
+                                Manual Entry
+                              </Text>
+                              <Text variant="bodySmall" className="text-default-500" as="p">
+                                Standalone Receipt
+                              </Text>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {receipt.purchaseOrder?.supplier?.name || receipt.branch.name}
+                        </TableCell>
+                        <TableCell>{new Date(receipt.receiptDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {receipt.receivedBy.firstName} {receipt.receivedBy.lastName}
+                        </TableCell>
+                        <TableCell>
+                          <Chip color={getStatusColor(receipt.status)} variant="flat" size="sm">
+                            {receipt.status}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>{calculateTotalItems(receipt)}</TableCell>
+                        <TableCell className="font-medium">
+                          ${calculateTotalValue(receipt).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Dropdown>
+                              <DropdownTrigger>
+                                <Button
+                                  variant="light"
+                                  size="sm"
+                                  isIconOnly
+                                  className="text-default-400 hover:text-default-600"
+                                >
+                                  <DotsVerticalIcon />
+                                </Button>
+                              </DropdownTrigger>
+                              <DropdownMenu
+                                variant="flat"
+                                onAction={(key) => {
+                                  const action = key as string;
+                                  if (action === 'view') {
+                                    router.push(`/goods-receipts/${receipt.id}`);
+                                  } else if (action === 'edit') {
+                                    handleEditReceipt(receipt);
+                                  } else if (
+                                    action === 'post' ||
+                                    action === 'cancel' ||
+                                    action === 'delete'
+                                  ) {
+                                    handleWorkflowAction(
+                                      action as 'post' | 'cancel' | 'delete',
+                                      receipt.id
+                                    );
+                                  }
+                                }}
+                              >
+                                {getDropdownItems(receipt)}
+                              </DropdownMenu>
+                            </Dropdown>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="flex items-center gap-4">
+                      <Select
+                        size="sm"
+                        placeholder="Items per page"
+                        defaultSelectedKeys={[itemsPerPage.toString()]}
+                        className="w-32"
+                        onChange={(e) => {
+                          const newItemsPerPage = Number.parseInt(e.target.value);
+                          setItemsPerPage(newItemsPerPage);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <SelectItem key="5">5</SelectItem>
+                        <SelectItem key="10">10</SelectItem>
+                        <SelectItem key="25">25</SelectItem>
+                        <SelectItem key="50">50</SelectItem>
+                      </Select>
+                      <Text variant="bodySmall" className="text-default-500">
+                        Showing {startIndex + 1}-{Math.min(endIndex, goodsReceipts.length)} of{' '}
+                        {goodsReceipts.length} receipts
+                      </Text>
+                    </div>
 
-          {/* Summary Cards */}
-          <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
-            <Card>
-              <CardBody className="text-center p-6">
-                <Text
-                  variant="titleMedium"
-                  weight="semiBold"
-                  className="text-foreground mb-2"
-                  as="h3"
-                >
-                  Total Receipts
-                </Text>
-                <Text variant="display" weight="bold" className="text-primary" as="p">
-                  {goodsReceipts.length}
-                </Text>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <Text
-                  variant="titleMedium"
-                  weight="semiBold"
-                  className="text-foreground mb-2"
-                  as="h3"
-                >
-                  Completed
-                </Text>
-                <Text variant="display" weight="bold" className="text-success" as="p">
-                  {goodsReceipts.filter((receipt) => receipt.status === 'Completed').length}
-                </Text>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <Text
-                  variant="titleMedium"
-                  weight="semiBold"
-                  className="text-foreground mb-2"
-                  as="h3"
-                >
-                  Pending Review
-                </Text>
-                <Text variant="display" weight="bold" className="text-warning" as="p">
-                  {goodsReceipts.filter((receipt) => receipt.status === 'Pending Review').length}
-                </Text>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="text-center p-6">
-                <Text
-                  variant="titleMedium"
-                  weight="semiBold"
-                  className="text-foreground mb-2"
-                  as="h3"
-                >
-                  Discrepancies
-                </Text>
-                <Text variant="display" weight="bold" className="text-danger" as="p">
-                  {goodsReceipts.filter((receipt) => receipt.status === 'Discrepancy').length}
-                </Text>
+                    <Pagination
+                      total={totalPages}
+                      page={currentPage}
+                      onChange={setCurrentPage}
+                      showControls
+                      showShadow
+                      color="primary"
+                    />
+                  </div>
+                )}{' '}
               </CardBody>
             </Card>
           </section>

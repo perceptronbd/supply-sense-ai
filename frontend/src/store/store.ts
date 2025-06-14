@@ -4,6 +4,7 @@ import { aiApi } from './api/aiApi';
 import { authApi } from './api/authApi';
 import { branchApi } from './api/branchApi';
 import { chatApi } from './api/chatApi';
+import { goodsReceiptApi } from './api/goodsReceiptApi';
 import { itemApi } from './api/itemApi';
 import { purchaseOrderApi } from './api/purchaseOrderApi';
 import { purchaseRequestApi } from './api/purchaseRequestApi';
@@ -18,6 +19,7 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,
     [chatApi.reducerPath]: chatApi.reducer,
+    [goodsReceiptApi.reducerPath]: goodsReceiptApi.reducer,
     [itemApi.reducerPath]: itemApi.reducer,
     [purchaseRequestApi.reducerPath]: purchaseRequestApi.reducer,
     [purchaseOrderApi.reducerPath]: purchaseOrderApi.reducer,
@@ -33,6 +35,7 @@ export const store = configureStore({
       authApi.middleware,
       branchApi.middleware,
       chatApi.middleware,
+      goodsReceiptApi.middleware,
       itemApi.middleware,
       purchaseRequestApi.middleware,
       purchaseOrderApi.middleware,

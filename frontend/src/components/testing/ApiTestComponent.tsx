@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
+import { Text } from '@/components/ui/Text';
 import { useGetAllBranchesQuery } from '@/store/api/branchApi';
 import { useSearchItemsQuery } from '@/store/api/itemApi';
 import { Card, CardBody, CardHeader } from '@heroui/react';
-import { Text } from '../ui/Text';
 
 export function ApiTestComponent() {
   // Test branch API

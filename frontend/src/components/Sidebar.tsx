@@ -1,13 +1,13 @@
 'use client';
 
+import { ROUTE_PATHS } from '@/config/routes';
+import { useNavigation } from '@/hooks/useNavigation';
+import { logout } from '@/store/slices/authSlice';
+import { toggleTheme } from '@/store/slices/themeSlice';
+import type { RootState } from '@/store/store';
 import { Badge, Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { ROUTE_PATHS } from '../config/routes';
-import { useNavigation } from '../hooks/useNavigation';
-import { logout } from '../store/slices/authSlice';
-import { toggleTheme } from '../store/slices/themeSlice';
-import type { RootState } from '../store/store';
 import {
   ChatIcon,
   ClipboardIcon,

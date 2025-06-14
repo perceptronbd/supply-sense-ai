@@ -1,18 +1,21 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import AuthGuard from '../../../../components/AuthGuard';
-import { PurchaseOrderForm } from '../../../../components/purchase-order/PurchaseOrderForm';
-import { Text } from '../../../../components/ui/Text';
-import {
-  type PurchaseOrder,
-  useGetPurchaseOrderQuery,
-} from '../../../../store/api/purchaseOrderApi';
+import AuthGuard from '@/components/AuthGuard';
+import { PurchaseOrderForm } from '@/components/purchase-order/PurchaseOrderForm';
+import { Text } from '@/components/ui/Text';
+import { type PurchaseOrder, useGetPurchaseOrderQuery } from '@/store/api/purchaseOrderApi';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 
-export default function EditPurchaseOrderPage() {
+interface EditPurchaseOrderPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function EditPurchaseOrderPage({ params }: EditPurchaseOrderPageProps) {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = use(params);
 
   const { data: purchaseOrder, isLoading, error } = useGetPurchaseOrderQuery(id);
 

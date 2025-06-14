@@ -1,18 +1,21 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import AuthGuard from '../../../../components/AuthGuard';
-import { PurchaseRequestForm } from '../../../../components/purchase-request/PurchaseRequestForm';
-import { Text } from '../../../../components/ui/Text';
-import {
-  type PurchaseRequest,
-  useGetPurchaseRequestQuery,
-} from '../../../../store/api/purchaseRequestApi';
+import AuthGuard from '@/components/AuthGuard';
+import { PurchaseRequestForm } from '@/components/purchase-request/PurchaseRequestForm';
+import { Text } from '@/components/ui/Text';
+import { type PurchaseRequest, useGetPurchaseRequestQuery } from '@/store/api/purchaseRequestApi';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 
-export default function EditPurchaseRequestPage() {
+interface EditPurchaseRequestPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function EditPurchaseRequestPage({ params }: EditPurchaseRequestPageProps) {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = use(params);
 
   const { data: purchaseRequest, isLoading, error } = useGetPurchaseRequestQuery(id);
 

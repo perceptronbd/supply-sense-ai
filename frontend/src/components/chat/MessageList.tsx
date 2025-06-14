@@ -1,7 +1,7 @@
 'use client';
 
+import { Text } from '@/components/ui/Text';
 import { useEffect, useRef } from 'react';
-import { Text } from '../ui/Text';
 import { LoadingMessage, MessageBubble } from './MessageBubble';
 import type { MessageListProps } from './types';
 
