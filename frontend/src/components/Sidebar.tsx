@@ -1,5 +1,6 @@
 'use client';
 
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import { useNavigation } from '@/hooks/useNavigation';
 import { logout } from '@/store/slices/authSlice';
@@ -91,9 +92,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <header className="flex items-center justify-between h-16 px-6 border-b border-divider rounded-t-xl">
-            <Text variant="titleMedium" weight="semiBold" color="default" as="h1">
-              SupplySense
-            </Text>
+            <BrandLogo variant="primary" showText={true} />
             <div className="flex items-center gap-2">
               {/* Theme toggle icon button */}
               <Button
