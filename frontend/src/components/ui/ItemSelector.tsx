@@ -83,6 +83,10 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
       selectedKey={value || null}
       onInputChange={handleInputChange}
       onSelectionChange={(key) => handleSelectionChange(key as string)}
+      variant="bordered"
+      classNames={{
+        popoverContent: 'bg-default-200',
+      }}
       {...props}
     >
       {items.map((item) => (

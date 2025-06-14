@@ -346,7 +346,13 @@ export default function PurchaseOrdersPage() {
                 </div>
               </CardHeader>
               <CardBody>
-                <Table aria-label="Purchase orders table">
+                <Table
+                  classNames={{
+                    th: 'bg-default-200',
+                    tr: 'hover:bg-default-200',
+                  }}
+                  aria-label="Purchase orders table"
+                >
                   <TableHeader>
                     <TableColumn>ORDER ID</TableColumn>
                     <TableColumn>SUPPLIER</TableColumn>
@@ -381,7 +387,7 @@ export default function PurchaseOrdersPage() {
                                   variant="light"
                                   size="sm"
                                   isIconOnly
-                                  className="text-default-400 hover:text-default-600"
+                                  className="text-default-600 hover:text-default-600"
                                 >
                                   <DotsVerticalIcon />
                                 </Button>
@@ -433,6 +439,10 @@ export default function PurchaseOrdersPage() {
                         placeholder="Items per page"
                         defaultSelectedKeys={[itemsPerPage.toString()]}
                         className="w-32"
+                        classNames={{
+                          popoverContent: 'bg-default-200',
+                          trigger: 'bg-default-200',
+                        }}
                         onChange={(e) => {
                           const newItemsPerPage = Number.parseInt(e.target.value);
                           setItemsPerPage(newItemsPerPage);

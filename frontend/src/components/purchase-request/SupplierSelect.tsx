@@ -32,8 +32,12 @@ export function SupplierSelect({
         label="Select Supplier"
         placeholder="Choose a supplier for this purchase order"
         isRequired
+        variant="bordered"
         isLoading={isLoading}
         selectedKeys={selectedSupplierId ? new Set([selectedSupplierId]) : new Set()}
+        classNames={{
+          popoverContent: 'bg-default-200',
+        }}
         onSelectionChange={(keys) => {
           const selected = Array.from(keys)[0] as string;
           onSelectionChange(selected || '');
@@ -47,11 +51,11 @@ export function SupplierSelect({
               <Text variant="bodyMedium" weight="medium" as="span">
                 {supplier.name}
               </Text>
-              <Text variant="bodyXSmall" className="text-default-500" as="span">
+              <Text variant="bodyXSmall" className="text-default-600" as="span">
                 Code: {supplier.code}
               </Text>
               {supplier.contactPerson && (
-                <Text variant="bodyXSmall" className="text-default-400" as="span">
+                <Text variant="bodyXSmall" className="text-default-700" as="span">
                   Contact: {supplier.contactPerson}
                 </Text>
               )}

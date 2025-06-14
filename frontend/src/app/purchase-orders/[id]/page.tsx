@@ -275,7 +275,13 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
               </Text>
             </CardHeader>
             <CardBody>
-              <Table aria-label="Purchase order items">
+              <Table
+                classNames={{
+                  th: 'bg-default-200',
+                  tr: 'hover:bg-default-200',
+                }}
+                aria-label="Purchase order items"
+              >
                 <TableHeader>
                   <TableColumn>ITEM</TableColumn>
                   <TableColumn>ORDERED QTY</TableColumn>

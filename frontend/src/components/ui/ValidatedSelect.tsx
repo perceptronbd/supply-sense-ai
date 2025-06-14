@@ -49,6 +49,8 @@ export function ValidatedSelect({
       isInvalid={hasErrors && shouldRenderErrors}
       errorMessage={hasErrors && shouldRenderErrors ? fieldErrors.join(', ') : undefined}
       selectedKeys={value ? [value] : []}
+      variant="bordered"
+      classNames={{ popoverContent: 'bg-default-200', ...props.classNames }}
       onSelectionChange={(keys) => {
         const selectedValue = Array.from(keys)[0] as string;
         if (selectedValue) {

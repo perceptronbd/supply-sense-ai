@@ -54,11 +54,6 @@ export default function LoginPage() {
               isRequired
               labelPlacement="inside"
               variant="bordered"
-              classNames={{
-                input: 'text-foreground',
-                inputWrapper: 'border-divider',
-                label: 'text-default-600',
-              }}
             />
             <Input
               type="password"
@@ -69,11 +64,6 @@ export default function LoginPage() {
               isRequired
               labelPlacement="inside"
               variant="bordered"
-              classNames={{
-                input: 'text-foreground',
-                inputWrapper: 'border-divider',
-                label: 'text-default-600',
-              }}
             />
             {error && (
               <Text variant="bodySmall" color="danger" className="text-center" as="p">

@@ -294,7 +294,13 @@ export default function GoodsReceiptsPage() {
                 </div>
               </CardHeader>
               <CardBody>
-                <Table aria-label="Goods receipts table">
+                <Table
+                  aria-label="Goods receipts table"
+                  classNames={{
+                    th: 'bg-default-200',
+                    tr: 'hover:bg-default-200',
+                  }}
+                >
                   <TableHeader>
                     <TableColumn>RECEIPT ID</TableColumn>
                     <TableColumn>SOURCE</TableColumn>
@@ -374,7 +380,7 @@ export default function GoodsReceiptsPage() {
                                   variant="light"
                                   size="sm"
                                   isIconOnly
-                                  className="text-default-400 hover:text-default-600"
+                                  className="text-default-600 hover:text-default-600"
                                 >
                                   <DotsVerticalIcon />
                                 </Button>
@@ -417,6 +423,10 @@ export default function GoodsReceiptsPage() {
                         placeholder="Items per page"
                         defaultSelectedKeys={[itemsPerPage.toString()]}
                         className="w-32"
+                        classNames={{
+                          popoverContent: 'bg-default-200',
+                          trigger: 'bg-default-200',
+                        }}
                         onChange={(e) => {
                           const newItemsPerPage = Number.parseInt(e.target.value);
                           setItemsPerPage(newItemsPerPage);

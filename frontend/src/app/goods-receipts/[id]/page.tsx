@@ -325,7 +325,13 @@ export default function GoodsReceiptDetailPage({ params }: GoodsReceiptDetailPag
               </Text>
             </CardHeader>
             <CardBody>
-              <Table aria-label="Goods receipt items">
+              <Table
+                classNames={{
+                  th: 'bg-default-200',
+                  tr: 'hover:bg-default-200',
+                }}
+                aria-label="Goods receipt items"
+              >
                 <TableHeader>
                   <TableColumn>ITEM</TableColumn>
                   <TableColumn>ORDERED QTY</TableColumn>
