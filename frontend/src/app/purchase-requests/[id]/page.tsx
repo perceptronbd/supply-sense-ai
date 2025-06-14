@@ -1,6 +1,7 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   useApprovePurchaseRequestMutation,
@@ -79,7 +80,7 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading purchase request...</Text>
+              <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
         </main>

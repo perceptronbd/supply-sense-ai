@@ -1,5 +1,6 @@
 'use client';
 
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import type { RootState } from '@/store/store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,10 +34,13 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   if (!isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <div className="text-foreground text-sm">Loading...</div>
-        </div>
+        <DrawingLogo
+          size={60}
+          variant="primary"
+          speed="fast"
+          showFill={true}
+          id="auth-guard-mount"
+        />
       </div>
     );
   }

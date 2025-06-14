@@ -4,7 +4,7 @@ import './global.css';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { Loading } from '@/components/ui/Loading';
+import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
 import { persistor, store } from '@/store/store';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import { Provider } from 'react-redux';
@@ -17,12 +17,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning={true} className="min-h-screen bg-background text-foreground">
+      <body suppressHydrationWarning={true} className="min-h-screen">
         <Provider store={store}>
           <PersistGate
             loading={
               <main className="min-h-screen flex items-center justify-center bg-background">
-                <Loading size="xl" message="Loading..." />
+                <SSRSafeDrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
               </main>
             }
             persistor={persistor}

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useGetItemQuery } from '@/store/api/itemApi';
+import { DrawingLogo } from './DrawingLogo';
 import { Text } from './Text';
 
 interface ItemDisplayProps {
@@ -35,11 +36,7 @@ export function ItemDisplay({
   const { data: item, isLoading, error } = useGetItemQuery({ id: itemId });
 
   if (isLoading) {
-    return (
-      <Text variant={variant} color="muted" weight="normal">
-        Loading...
-      </Text>
-    );
+    return <DrawingLogo size={24} variant="primary" speed="fast" showFill={true} />;
   }
 
   if (error || !item) {

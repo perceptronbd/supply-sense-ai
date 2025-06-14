@@ -1,6 +1,6 @@
 'use client';
 
-import { Loading } from '@/components/ui/Loading';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import type { RootState } from '@/store/store';
 import { useRouter } from 'next/navigation';
@@ -20,7 +20,7 @@ export default function Index() {
   }, [isAuthenticated, token, router]);
   return (
     <main className="min-h-screen flex items-center justify-center">
-      <Loading size="xl" message="Loading..." />
+      <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} id="app-loading" />
     </main>
   );
 }

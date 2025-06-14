@@ -1,17 +1,17 @@
-import { Loader, type LoaderSize } from '@/components/icons/LoaderIcon';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 
 export interface LoadingProps {
   /** Size of the loading spinner */
-  size?: LoaderSize | number | string;
+  size?: number;
   /** Loading message to display */
   message?: string;
   /** Whether to show the loading message */
   showMessage?: boolean;
   /** Custom className for styling */
   className?: string;
-  /** Color of the spinner */
-  color?: string;
+  /** Color variant */
+  variant?: 'primary' | 'secondary' | 'mono';
   /** Layout orientation */
   orientation?: 'vertical' | 'horizontal';
 }
@@ -21,11 +21,11 @@ export interface LoadingProps {
  * Follows HeroUI design patterns and semantic color tokens
  */
 export const Loading = ({
-  size = 'md',
+  size = 60,
   message = 'Loading...',
   showMessage = true,
   className = '',
-  color = 'hsl(var(--heroui-primary))',
+  variant = 'primary',
   orientation = 'vertical',
 }: LoadingProps) => {
   const isVertical = orientation === 'vertical';
@@ -38,7 +38,7 @@ export const Loading = ({
         ${className}
       `}
     >
-      <Loader size={size} color={color} />
+      <DrawingLogo size={size} variant={variant} speed="fast" showFill={true} />
       {showMessage && (
         <Text variant="bodySmall" color="muted" as="span" className="select-none">
           {message}
@@ -61,7 +61,7 @@ export interface LoadingOverlayProps extends LoadingProps {
 export const LoadingOverlay = ({
   isVisible = true,
   opacity = 'medium',
-  size = 'lg',
+  size = 80,
   message = 'Loading...',
   ...props
 }: LoadingOverlayProps) => {
@@ -98,11 +98,19 @@ export interface InlineLoadingProps extends Omit<LoadingProps, 'orientation' | '
 
 export const InlineLoading = ({
   isLoading = true,
-  size = 'sm',
-  color = 'currentColor',
+  size = 24,
+  variant = 'primary',
   className = '',
 }: InlineLoadingProps) => {
   if (!isLoading) return null;
 
-  return <Loader size={size} color={color} className={`inline-block ${className}`} />;
+  return (
+    <DrawingLogo
+      size={size}
+      variant={variant}
+      speed="fast"
+      showFill={true}
+      className={`inline-block ${className}`}
+    />
+  );
 };

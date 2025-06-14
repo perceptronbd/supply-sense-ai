@@ -2,6 +2,7 @@
 
 import { AiIcon, UserIcon } from '@/components/icons';
 import { LogoIcon } from '@/components/icons/LogoIcon';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
@@ -141,7 +142,7 @@ export function LoadingMessage() {
         <Card className="bg-content2 border border-divider">
           <CardBody className="p-3">
             <div className="flex items-center gap-2">
-              <Spinner size="sm" color="primary" />
+              <DrawingLogo size={24} variant="primary" speed="fast" showFill={true} />
               <Text variant="bodyMedium" color="muted" as="span">
                 AI is thinking...
               </Text>

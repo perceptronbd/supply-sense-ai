@@ -11,6 +11,7 @@ import {
   SendIcon,
   XMarkIcon,
 } from '@/components/icons';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import { useCreateGoodsReceiptFromPOMutation } from '@/store/api/goodsReceiptApi';
 import {
@@ -91,7 +92,7 @@ export default function PurchaseOrdersPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading...</Text>
+              <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
         </div>
@@ -240,7 +241,7 @@ export default function PurchaseOrdersPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading purchase orders...</Text>
+              <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
         </div>

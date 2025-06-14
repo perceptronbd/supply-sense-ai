@@ -11,6 +11,7 @@ import {
   XMarkIcon,
 } from '@/components/icons';
 import CreatePOFromPRModal from '@/components/purchase-request/CreatePOFromPRModal';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   type PurchaseRequest,
@@ -229,7 +230,7 @@ export default function PurchaseRequestsPage() {
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <Text variant="bodyLarge">Loading purchase requests...</Text>
+              <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
         </div>
