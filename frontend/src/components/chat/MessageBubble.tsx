@@ -1,6 +1,7 @@
 'use client';
 
 import { AiIcon, UserIcon } from '@/components/icons';
+import { LogoIcon } from '@/components/icons/LogoIcon';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
@@ -40,12 +41,18 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
       {/* Avatar */}
       <div className="flex-shrink-0">
         <Avatar
-          icon={isUser ? <UserIcon className="w-5 h-5" /> : <AiIcon className="w-5 h-5" />}
+          icon={
+            isUser ? (
+              <UserIcon className="w-5 h-5" />
+            ) : (
+              <LogoIcon size={14} className="text-primary" />
+            )
+          }
           classNames={{
             base: 'w-8 h-8 min-w-8',
             icon: isUser ? 'text-primary-foreground' : 'text-secondary-foreground',
           }}
-          color={isUser ? 'primary' : 'secondary'}
+          color={isUser ? 'primary' : 'default'}
           size="sm"
         />
       </div>{' '}
@@ -76,9 +83,12 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                 className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-medium"
                 aria-label="Suggested follow-up questions"
               >
-                <Text variant="bodySmall" color="primary" weight="medium" className="mb-2" as="h4">
-                  💡 Suggested follow-up questions:
-                </Text>
+                <div className="flex items-center gap-2 mb-2">
+                  <LogoIcon size={14} className="text-primary" />
+                  <Text variant="bodySmall" color="primary" weight="medium" as="h4">
+                    Suggested follow-up questions:
+                  </Text>
+                </div>
                 <ul className="space-y-1">
                   {message.metadata.suggestions.map((suggestion: string, index: number) => (
                     <li key={`suggestion-${index}-${suggestion.slice(0, 20)}`}>
@@ -101,8 +111,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
         </Card>
         <Text
           variant="bodyXSmall"
-          color="muted"
-          className={`mt-1 ${isUser ? 'text-right' : 'text-left'}`}
+          className={`mt-1 text-default-400 ${isUser ? 'text-right' : 'text-left'}`}
           as="time"
         >
           {timestamp}

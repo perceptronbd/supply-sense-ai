@@ -36,7 +36,7 @@ const textVariants = cva('', {
       success: 'text-success',
       warning: 'text-warning',
       danger: 'text-danger',
-      muted: 'text-default-500',
+      muted: 'text-default-600',
       inverse: 'text-primary-foreground',
     },
   },

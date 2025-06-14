@@ -64,7 +64,7 @@ export function SessionList({
                   onPress={() => onSessionSelect(session.id)}
                   className={`cursor-pointer transition-colors ${
                     activeSessionId === session.id
-                      ? 'bg-primary/10 border-primary'
+                      ? 'bg-primary border-primary'
                       : 'bg-content2 hover:bg-content3'
                   }`}
                 >
@@ -72,8 +72,11 @@ export function SessionList({
                     <Text
                       variant="bodyMedium"
                       weight="medium"
-                      color={activeSessionId === session.id ? 'primary' : 'default'}
-                      className="line-clamp-2"
+                      className={
+                        activeSessionId === session.id
+                          ? 'text-primary-foreground'
+                          : 'text-default-700'
+                      }
                       as="h3"
                     >
                       {session.title || 'New Chat'}
