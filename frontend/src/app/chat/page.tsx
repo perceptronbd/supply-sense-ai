@@ -37,7 +37,6 @@ export default function ChatPage() {
           isVisible={isCreatingSession}
           message="Creating new chat session..."
           opacity="light"
-          size="md"
         />
 
         {/* Sessions sidebar */}

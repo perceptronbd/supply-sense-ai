@@ -172,48 +172,6 @@ module.exports = {
               DEFAULT: '#E84A2E', // pomegranate.500
               foreground: '#FCFAF5', // pavlova.50
             },
-            success: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              200: '#bbf7d0',
-              300: '#86efac',
-              400: '#4ade80',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d',
-              DEFAULT: '#22c55e',
-              foreground: '#FFFFFF',
-            },
-            warning: {
-              50: '#FCFAF5', // pavlova.50
-              100: '#F9F5EB', // pavlova.100
-              200: '#F3EBD7', // pavlova.200
-              300: '#EEE0C4', // pavlova.300
-              400: '#E8D6B0', // pavlova.400
-              500: '#E2CC9C', // pavlova.500
-              600: '#C2AE81', // pavlova.600
-              700: '#A28F66', // pavlova.700
-              800: '#83714A', // pavlova.800
-              900: '#63522F', // pavlova.900
-              DEFAULT: '#E2CC9C', // pavlova.500
-              foreground: '#0A2538', // bigStone.500
-            },
-            danger: {
-              50: '#FDEDEA', // pomegranate.50
-              100: '#FADBD5', // pomegranate.100
-              200: '#F6B7AB', // pomegranate.200
-              300: '#F19282', // pomegranate.300
-              400: '#ED6E58', // pomegranate.400
-              500: '#E84A2E', // pomegranate.500
-              600: '#BA3B25', // pomegranate.600
-              700: '#8B2C1C', // pomegranate.700
-              800: '#5D1E12', // pomegranate.800
-              900: '#2E0F09', // pomegranate.900
-              DEFAULT: '#E84A2E', // pomegranate.500
-              foreground: '#FCFAF5', // pavlova.50
-            },
           },
         },
         dark: {
@@ -289,48 +247,6 @@ module.exports = {
               900: '#FDEDEA', // pomegranate.50
               DEFAULT: '#BA3B25', // pomegranate.600
               foreground: '#FDEDEA', // pomegranate.50
-            },
-            success: {
-              50: '#14532d',
-              100: '#166534',
-              200: '#15803d',
-              300: '#16a34a',
-              400: '#22c55e',
-              500: '#4ade80',
-              600: '#86efac',
-              700: '#bbf7d0',
-              800: '#dcfce7',
-              900: '#f0fdf4',
-              DEFAULT: '#22c55e',
-              foreground: '#02070B',
-            },
-            warning: {
-              50: '#63522F', // pavlova.900
-              100: '#83714A', // pavlova.800
-              200: '#A28F66', // pavlova.700
-              300: '#C2AE81', // pavlova.600
-              400: '#E2CC9C', // pavlova.500
-              500: '#E8D6B0', // pavlova.400
-              600: '#EEE0C4', // pavlova.300
-              700: '#F3EBD7', // pavlova.200
-              800: '#F9F5EB', // pavlova.100
-              900: '#FCFAF5', // pavlova.50
-              DEFAULT: '#C2AE81', // pavlova.600
-              foreground: '#02070B', // bigStone.900
-            },
-            danger: {
-              50: '#2E0F09', // pomegranate.900
-              100: '#5D1E12', // pomegranate.800
-              200: '#8B2C1C', // pomegranate.700
-              300: '#BA3B25', // pomegranate.600
-              400: '#E84A2E', // pomegranate.500
-              500: '#ED6E58', // pomegranate.400
-              600: '#F19282', // pomegranate.300
-              700: '#F6B7AB', // pomegranate.200
-              800: '#FADBD5', // pomegranate.100
-              900: '#FDEDEA', // pomegranate.50
-              DEFAULT: '#E84A2E', // pomegranate.500
-              foreground: '#F9F5EB', // pavlova.100
             },
           },
         },

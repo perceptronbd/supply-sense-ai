@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { LogoLoader } from '@/components/ui/LogoLoader';
-import { LogoSpinner } from '@/components/ui/LogoSpinner';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
 import type { RootState } from '@/store/store';
