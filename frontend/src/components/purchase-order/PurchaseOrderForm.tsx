@@ -163,6 +163,7 @@ export function PurchaseOrderForm({
                   type="text"
                   label="Title"
                   required
+                  variant="bordered"
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseOrderSchema.shape.title}
                   errors={errors.title}
@@ -175,6 +176,7 @@ export function PurchaseOrderForm({
                 name="supplierId"
                 label="Supplier"
                 isRequired
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.supplierId}
                 errors={errors.supplierId}
@@ -186,6 +188,7 @@ export function PurchaseOrderForm({
                 name="branchId"
                 label="Branch"
                 isRequired
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.branchId}
                 errors={errors.branchId}
@@ -197,6 +200,7 @@ export function PurchaseOrderForm({
                 name="expectedDeliveryDate"
                 label="Expected Delivery Date"
                 isRequired
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.expectedDeliveryDate}
                 errors={errors.expectedDeliveryDate}
@@ -207,6 +211,7 @@ export function PurchaseOrderForm({
                 name="paymentTerms"
                 type="text"
                 label="Payment Terms"
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.paymentTerms}
                 errors={errors.paymentTerms}
@@ -218,6 +223,7 @@ export function PurchaseOrderForm({
                 name="deliveryTerms"
                 type="text"
                 label="Delivery Terms"
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.deliveryTerms}
                 errors={errors.deliveryTerms}
@@ -229,6 +235,7 @@ export function PurchaseOrderForm({
                 <ValidatedTextarea
                   name="notes"
                   label="Notes"
+                  variant="bordered"
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseOrderSchema.shape.notes}
                   errors={errors.notes}

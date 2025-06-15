@@ -178,6 +178,7 @@ export function PurchaseRequestForm({
                   type="text"
                   label="Title"
                   required
+                  variant="bordered"
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseRequestSchema.shape.title}
                   errors={errors.title}
@@ -190,6 +191,7 @@ export function PurchaseRequestForm({
                 name="branchId"
                 label="Branch"
                 isRequired
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseRequestSchema.shape.branchId}
                 errors={errors.branchId}
@@ -201,6 +203,7 @@ export function PurchaseRequestForm({
                 name="requiredDate"
                 label="Required Date"
                 isRequired
+                variant="bordered"
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseRequestSchema.shape.requiredDate}
                 errors={errors.requiredDate}
@@ -212,6 +215,7 @@ export function PurchaseRequestForm({
                 <ValidatedTextarea
                   name="description"
                   label="Description"
+                  variant="bordered"
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseRequestSchema.shape.description}
                   errors={errors.description}
@@ -226,6 +230,7 @@ export function PurchaseRequestForm({
                 <ValidatedTextarea
                   name="justification"
                   label="Justification"
+                  variant="bordered"
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseRequestSchema.shape.justification}
                   errors={errors.justification}

@@ -123,6 +123,7 @@ export function PurchaseRequestItemForm({
           type="number"
           label="Requested Quantity"
           required
+          variant="bordered"
           wasSubmitted={wasSubmitted}
           fieldSchema={purchaseRequestItemSchema.shape.requestedQty}
           errors={errors.requestedQty}
@@ -136,6 +137,7 @@ export function PurchaseRequestItemForm({
           name="estimatedPrice"
           type="number"
           label="Estimated Price (per unit)"
+          variant="bordered"
           wasSubmitted={wasSubmitted}
           fieldSchema={purchaseRequestItemSchema.shape.estimatedPrice}
           errors={errors.estimatedPrice}
@@ -150,6 +152,7 @@ export function PurchaseRequestItemForm({
             name="requiredDate"
             label="Required Date"
             isRequired
+            variant="bordered"
             wasSubmitted={wasSubmitted}
             fieldSchema={purchaseRequestItemSchema.shape.requiredDate}
             errors={errors.requiredDate}
@@ -163,6 +166,7 @@ export function PurchaseRequestItemForm({
           <ValidatedTextarea
             name="remarks"
             label="Remarks"
+            variant="bordered"
             wasSubmitted={wasSubmitted}
             fieldSchema={purchaseRequestItemSchema.shape.remarks}
             errors={errors.remarks}
