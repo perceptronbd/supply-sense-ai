@@ -1,5 +1,7 @@
 ﻿'use client';
 
+import { LogoIcon } from '@/components/icons/LogoIcon';
+import { SupplySenseTextIcon } from '@/components/icons/SupplySenseTextIcon';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
@@ -16,6 +18,7 @@ export default function LoginPage() {
   const [login, { isLoading, error }] = useLoginMutation();
   const dispatch = useDispatch();
   const router = useRouter();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -31,78 +34,91 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md bg-content1 border border-divider shadow-large">
-        <CardHeader className="text-center pb-2">
-          <header>
-            <Text variant="titleLarge" weight="bold" color="default" as="h1">
-              Welcome Back
-            </Text>
-            <Text variant="bodyBase" color="muted" className="mt-1" as="p">
-              Sign in to your SupplySense account
-            </Text>
-          </header>
-        </CardHeader>
-        <CardBody className="pt-2">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              type="email"
-              label="Email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              isRequired
-              labelPlacement="inside"
-              variant="bordered"
-            />
-            <Input
-              type="password"
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              isRequired
-              labelPlacement="inside"
-              variant="bordered"
-            />
-            {error && (
-              <Text variant="bodySmall" color="danger" className="text-center" as="p">
-                {'data' in error &&
-                error.data &&
-                typeof error.data === 'object' &&
-                'message' in error.data
-                  ? (error.data.message as string) || 'Login failed'
-                  : 'An error occurred'}
-              </Text>
-            )}{' '}
-            <Button
-              type="submit"
-              color="primary"
-              className="w-full"
-              isLoading={isLoading}
-              loadingText="Signing in..."
-              size="lg"
-            >
-              Sign In
-            </Button>
-          </form>
+    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo Section */}
+        <header className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <LogoIcon size={40} className="text-primary" />
+            <SupplySenseTextIcon size={160} className="text-foreground" />
+          </div>
+          <Text variant="headerMedium" as="h1" className="mb-2">
+            Welcome Back
+          </Text>
+          <Text variant="bodyBase" color="muted" as="p">
+            Sign in to continue
+          </Text>
+        </header>
 
-          {/* Test credentials info */}
-          <Card className="mt-6 bg-content2 border border-divider" radius="sm">
-            <CardBody className="p-3">
-              <Text variant="bodySmall" weight="medium" color="primary" as="p">
-                Test Credentials:
+        {/* Login Form */}
+        <Card className="bg-content1 shadow-medium">
+          <CardBody className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                type="email"
+                label="Email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                isRequired
+                variant="bordered"
+                labelPlacement="inside"
+              />
+
+              <Input
+                type="password"
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                isRequired
+                variant="bordered"
+                labelPlacement="inside"
+              />
+
+              {error && (
+                <div className="p-3 bg-danger-50 border border-danger-200 rounded-medium">
+                  <Text variant="bodySmall" color="danger" as="p">
+                    {/* ...existing error handling... */}
+                    {'data' in error &&
+                    error.data &&
+                    typeof error.data === 'object' &&
+                    'message' in error.data
+                      ? (error.data.message as string) || 'Login failed'
+                      : 'An error occurred during login'}
+                  </Text>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                color="primary"
+                className="w-full"
+                isLoading={isLoading}
+                size="lg"
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+
+            {/* Demo credentials */}
+            <div className="mt-6 p-4 bg-default-50 rounded-medium">
+              <Text variant="bodySmall" className="font-medium mb-2">
+                Demo Account:
               </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                Email: manager.a@supplychain.com
+              <Text variant="bodyXSmall" color="muted" as="p">
+                manager.a@supplychain.com / manager123
               </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                Password: manager123
-              </Text>
-            </CardBody>
-          </Card>
-        </CardBody>{' '}
-      </Card>
+            </div>
+          </CardBody>
+        </Card>
+
+        <footer className="text-center mt-6">
+          <Text variant="bodySmall" color="muted" as="p">
+            © 2025 SupplySense
+          </Text>
+        </footer>
+      </div>
     </main>
   );
 }
