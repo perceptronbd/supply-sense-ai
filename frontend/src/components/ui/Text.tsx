@@ -5,15 +5,15 @@ import React from 'react';
 const textVariants = cva('', {
   variants: {
     variant: {
-      // HeroUI-aligned heading variants
-      display: 'text-5xl lg:text-7xl font-display tracking-tight',
-      headerLarge: 'text-4xl lg:text-6xl font-display tracking-tight',
-      headerMedium: 'text-3xl lg:text-5xl font-display tracking-tight',
-      headerSmall: 'text-2xl lg:text-4xl font-display tracking-tight',
-      titleLarge: 'text-xl lg:text-3xl font-display',
-      titleMedium: 'text-lg lg:text-2xl font-display',
-      titleSmall: 'text-base lg:text-xl font-display',
-      // HeroUI-aligned body variants using semantic sizing
+      // Professional heading variants for supply chain context
+      display: 'text-5xl lg:text-7xl font-display font-bold tracking-tight',
+      headerLarge: 'text-4xl lg:text-6xl font-display font-bold tracking-tight',
+      headerMedium: 'text-3xl lg:text-5xl font-display font-semibold tracking-tight',
+      headerSmall: 'text-2xl lg:text-4xl font-display font-semibold tracking-tight',
+      titleLarge: 'text-xl lg:text-3xl font-display font-semibold',
+      titleMedium: 'text-lg lg:text-2xl font-display font-medium',
+      titleSmall: 'text-base lg:text-xl font-display font-medium',
+      // Body variants optimized for data-heavy interfaces
       bodyLarge: 'text-large font-sans leading-large',
       bodyMedium: 'text-medium font-sans leading-medium',
       bodyBase: 'text-medium font-sans leading-medium',
@@ -21,6 +21,9 @@ const textVariants = cva('', {
       bodyXSmall: 'text-tiny font-sans leading-tiny',
       caption: 'text-tiny font-sans leading-tiny',
       label: 'text-small font-sans leading-small font-medium',
+      // Special variants for supply chain data
+      data: 'text-small font-data tabular-nums leading-small',
+      code: 'text-small font-mono leading-small',
     },
     weight: {
       bold: 'font-bold',
