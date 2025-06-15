@@ -65,6 +65,30 @@ export interface StockPrediction {
   recommendedAction: string;
 }
 
+// Quality Report Types
+export interface QualityReportResponse {
+  period: {
+    startDate: string | Date;
+    endDate: string | Date;
+  };
+  metrics: {
+    summary: {
+      totalReceipts: number;
+      totalItems: number;
+      itemsWithIssues: number;
+      qualityRate: string;
+    };
+    supplierPerformance: Array<{
+      name: string;
+      totalReceipts: number;
+      itemsWithIssues: number;
+      qualityRate: string;
+    }>;
+  };
+  report: string;
+  generatedAt: Date;
+}
+
 // AI API Request Types
 export interface AutoPurchaseRequestsParams {
   branchId: string;
@@ -85,6 +109,12 @@ export interface StockPredictionParams {
   branchId: string;
   itemId?: string;
   daysAhead?: number;
+}
+
+export interface QualityReportParams {
+  branchId?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const aiApi = createApi({
@@ -164,6 +194,15 @@ export const aiApi = createApi({
       }),
       invalidatesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
+
+    // Get quality report
+    getQualityReport: builder.query<QualityReportResponse, QualityReportParams>({
+      query: (params) => ({
+        url: '/quality-report',
+        params,
+      }),
+      providesTags: [TAG_TYPES.AI_RECOMMENDATION],
+    }),
   }),
 });
 
@@ -174,4 +213,5 @@ export const {
   useGetStockPredictionsQuery,
   useGetReorderRecommendationsQuery,
   useGeneratePurchaseRecommendationsMutation,
+  useGetQualityReportQuery,
 } = aiApi;

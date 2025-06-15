@@ -22,6 +22,7 @@ export { ShoppingCartIcon } from './ShoppingCartIcon';
 export { ReceiptIcon } from './ReceiptIcon';
 export { PostIcon } from './PostIcon';
 export { TrashIcon } from './TrashIcon';
+export { ReloadIcon } from './ReloadIcon';
 
 // Loading components
 export {

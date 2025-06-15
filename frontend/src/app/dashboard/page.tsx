@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { QualityStatisticsChart } from '@/components/ai';
 import { AnimatedLogo } from '@/components/ui/AnimatedLogo';
 import { Button } from '@/components/ui/Button';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
@@ -28,128 +29,9 @@ export default function DashboardPage() {
           </Text>
         </header>
 
-        {/* Temporary Loading Components Demo */}
-        <section className="mb-8 p-6 bg-content1 border border-divider rounded-xl">
-          <Text variant="titleMedium" weight="semiBold" className="mb-6" as="h2">
-            Selected Loading Components (Temporary)
-          </Text>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Fast Drawing Logo - No Fill */}
-            <div className="text-center space-y-4">
-              <Text variant="titleSmall" weight="medium" as="h3">
-                Drawing Logo
-              </Text>
-              <div className="p-6 bg-background rounded-lg">
-                <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
-                <Text variant="bodySmall" color="muted" className="mt-2" as="p">
-                  Fast Speed, No Fill
-                </Text>
-              </div>
-            </div>
-
-            {/* Medium Pulse */}
-            <div className="text-center space-y-4">
-              <Text variant="titleSmall" weight="medium" as="h3">
-                Medium Pulse
-              </Text>
-              <div className="p-6 bg-background rounded-lg">
-                <LogoLoader size="md" animationType="pulse" loadingText="Processing..." />
-              </div>
-            </div>
-
-            {/* Large Bounce */}
-            <div className="text-center space-y-4">
-              <Text variant="titleSmall" weight="medium" as="h3">
-                Large Bounce
-              </Text>
-              <div className="p-6 bg-background rounded-lg">
-                <LogoLoader size="lg" animationType="bounce" loadingText="Loading..." />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-content1 border border-divider">
-            <CardBody className="text-center p-6">
-              <Text
-                variant="titleMedium"
-                weight="semiBold"
-                color="default"
-                className="mb-2"
-                as="h3"
-              >
-                Purchase Requests
-              </Text>
-              <Text variant="display" weight="bold" color="primary" as="p">
-                24
-              </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                Active requests
-              </Text>
-            </CardBody>
-          </Card>
-
-          <Card className="bg-content1 border border-divider">
-            <CardBody className="text-center p-6">
-              <Text
-                variant="titleMedium"
-                weight="semiBold"
-                color="default"
-                className="mb-2"
-                as="h3"
-              >
-                Purchase Orders
-              </Text>
-              <Text variant="display" weight="bold" color="success" as="p">
-                18
-              </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                In progress
-              </Text>
-            </CardBody>
-          </Card>
-
-          <Card className="bg-content1 border border-divider">
-            <CardBody className="text-center p-6">
-              <Text
-                variant="titleMedium"
-                weight="semiBold"
-                color="default"
-                className="mb-2"
-                as="h3"
-              >
-                Goods Receipts
-              </Text>
-              <Text variant="display" weight="bold" color="secondary" as="p">
-                12
-              </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                Pending review
-              </Text>
-            </CardBody>
-          </Card>
-
-          <Card className="bg-content1 border border-divider">
-            <CardBody className="text-center p-6">
-              <Text
-                variant="titleMedium"
-                weight="semiBold"
-                color="default"
-                className="mb-2"
-                as="h3"
-              >
-                AI Insights
-              </Text>
-              <Text variant="display" weight="bold" color="warning" as="p">
-                7
-              </Text>
-              <Text variant="bodySmall" color="muted" as="p">
-                Recommendations
-              </Text>
-            </CardBody>
-          </Card>
+        {/* AI Quality Statistics Chart */}
+        <section className="mb-8">
+          <QualityStatisticsChart />
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
