@@ -7,7 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
-import { DatabaseQueryService } from './services/database-query.service';
+import { DatabaseSchemaService } from './services/database-schema.service';
 import { DynamicSQLService } from './services/dynamic-sql.service';
 import { MessageService } from './services/message.service';
 import { SessionService } from './services/session.service';
@@ -28,8 +28,8 @@ import { SessionService } from './services/session.service';
     ChatService,
     MessageService,
     SessionService,
-    DatabaseQueryService,
     DynamicSQLService,
+    DatabaseSchemaService,
     PrismaService,
   ],
   exports: [ChatService, MessageService, SessionService],

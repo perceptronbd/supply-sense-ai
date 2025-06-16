@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../app/prisma.service';
 import { GeminiService } from '../../ai/services/gemini.service';
+import { DatabaseSchemaService } from './database-schema.service';
 
 interface SQLQueryResult {
   sql: string;
@@ -8,31 +9,14 @@ interface SQLQueryResult {
   explanation: string;
 }
 
-interface SchemaInfo {
-  tableName: string;
-  columnName: string;
-  dataType: string;
-  isNullable: string;
-  columnDefault: string | null;
-}
-
-interface ColumnInfo {
-  column: string;
-  type: string;
-  nullable: boolean;
-  default: string | null;
-}
-
 @Injectable()
 export class DynamicSQLService {
   private readonly logger = new Logger(DynamicSQLService.name);
-  private schemaCache: SchemaInfo[] | null = null;
-  private schemaCacheTime = 0;
-  private readonly CACHE_TTL = 300000; // 5 minutes
 
   constructor(
     private prisma: PrismaService,
-    private geminiService: GeminiService
+    private geminiService: GeminiService,
+    private databaseSchemaService: DatabaseSchemaService
   ) {}
 
   /**
@@ -51,11 +35,26 @@ export class DynamicSQLService {
     sql?: string;
   }> {
     try {
-      // Step 1: Get database schema context
-      const schema = await this.getDatabaseSchema(); // Step 2: Generate SQL using AI with security constraints
-      const sqlResult = await this.generateSecureSQL(question, schema, userContext);
+      // Step 1: Get comprehensive database schema context
+      const _schemaDoc = await this.databaseSchemaService.getDatabaseSchema();
+      const schemaForAI = this.databaseSchemaService.formatSchemaForAI(userContext.userRole);
 
-      // Log the generated SQL query
+      // Log the initial request
+      console.log('\n🔍 ===== AI SQL GENERATION STARTED =====');
+      console.log('📝 User Question:', question);
+      console.log('👤 User Context:', JSON.stringify(userContext, null, 2));
+      console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters');
+
+      // Step 2: Generate SQL using AI with comprehensive schema context
+      const sqlResult = await this.generateSecureSQL(question, schemaForAI, userContext);
+
+      // Enhanced logging for generated SQL
+      console.log('\n🎯 ===== AI GENERATED SQL RESULT =====');
+      console.log('📊 Generated SQL Query:');
+      console.log(sqlResult.sql);
+      console.log('\n🔧 SQL Parameters:', sqlResult.values);
+      console.log('💬 AI Explanation:', sqlResult.explanation);
+
       this.logger.log('🔧 Generated SQL Query from AI:');
       this.logger.log(sqlResult.sql);
       this.logger.log('📋 SQL Parameters:', sqlResult.values);
@@ -63,14 +62,31 @@ export class DynamicSQLService {
       // Step 3: Validate and execute the SQL
       const validationResult = this.validateSQL(sqlResult.sql);
       if (!validationResult.isValid) {
+        console.log('\n❌ ===== SQL VALIDATION FAILED =====');
+        console.log('🚫 Validation Errors:', validationResult.errors);
         throw new Error(`Invalid SQL query: ${validationResult.errors.join(', ')}`);
       }
 
+      console.log('\n✅ SQL Validation: PASSED');
+
       // Step 4: Execute the query
+      const startTime = Date.now();
       const rows = await this.executeSQL(sqlResult.sql, sqlResult.values);
+      const executionTime = Date.now() - startTime;
+
+      // Log execution results
+      console.log('\n📊 ===== SQL EXECUTION RESULTS =====');
+      console.log('⏱️ Execution Time:', executionTime, 'ms');
+      console.log('📈 Row Count:', rows.length);
+      console.log('🔍 Sample Data (first 2 rows):');
+      console.log(JSON.stringify(rows.slice(0, 2), null, 2));
 
       // Step 5: Generate human-readable response
       const explanation = await this.generateExplanation(question, rows, sqlResult.explanation);
+
+      console.log('\n💬 ===== FINAL AI EXPLANATION =====');
+      console.log(explanation);
+      console.log('\n🏁 ===== AI SQL GENERATION COMPLETED =====\n');
 
       return {
         result: rows,
@@ -78,48 +94,13 @@ export class DynamicSQLService {
         sql: sqlResult.sql,
       };
     } catch (error) {
+      console.log('\n💥 ===== DYNAMIC SQL SERVICE ERROR =====');
+      console.log('🚫 Error Type:', error.constructor.name);
+      console.log('🚫 Error Message:', error.message);
+      console.log('🚫 Error Stack:', error.stack);
+
       this.logger.error('Failed to process natural language query:', error);
       throw new Error(`Failed to process query: ${error.message}`);
-    }
-  }
-
-  /**
-   * Get database schema with caching
-   */
-  private async getDatabaseSchema(): Promise<SchemaInfo[]> {
-    const now = Date.now();
-
-    // Return cached schema if it's still valid
-    if (this.schemaCache && now - this.schemaCacheTime < this.CACHE_TTL) {
-      return this.schemaCache;
-    }
-
-    try {
-      // Get schema information from PostgreSQL information_schema
-      const schema = await this.prisma.$queryRaw<SchemaInfo[]>`
-        SELECT 
-          table_name as "tableName",
-          column_name as "columnName", 
-          data_type as "dataType",
-          is_nullable as "isNullable",
-          column_default as "columnDefault"
-        FROM information_schema.columns 
-        WHERE table_schema = 'public'
-        AND table_name IN (
-          'users', 'branches', 'items', 'suppliers', 'stock',
-          'purchase_requests', 'purchase_orders', 'goods_receipts',
-          'material_requisitions', 'request_forms', 'manufacturing_lists'
-        )
-        ORDER BY table_name, ordinal_position;
-      `;
-
-      this.schemaCache = schema;
-      this.schemaCacheTime = now;
-
-      return schema;
-    } catch (error) {
-      this.logger.error('Failed to get database schema:', error);
-      throw new Error('Failed to retrieve database schema');
     }
   }
 
@@ -128,19 +109,109 @@ export class DynamicSQLService {
    */
   private async generateSecureSQL(
     question: string,
-    schema: SchemaInfo[],
+    schemaContext: string,
     userContext: {
       userId: string;
       branchId?: string;
       userRole: string;
     }
   ): Promise<SQLQueryResult> {
-    const schemaDescription = this.formatSchemaForAI(schema);
-
     const prompt = `
 You are a SQL query generator for SupplySense, a supply chain management system. Convert the natural language question into a parameterized PostgreSQL SELECT query.
 
-IMPORTANT SECURITY CONSTRAINTS:
+${schemaContext}
+
+IMPORTANT SCHEMA NOTES:
+🔴 PURCHASE FLOW STRUCTURE:
+- purchase_requests table does NOT have supplierId column
+- Suppliers are linked through purchase_orders, not purchase_requests  
+- To get supplier info for purchase requests: purchase_requests → purchase_orders → suppliers
+- purchase_requests contains: prNumber, title, status, branchId, createdById, requiredDate, totalAmount
+- pr_items contains: purchaseRequestId, itemId, requestedQty, unitPrice, etc.
+
+🔴 TABLE RELATIONSHIPS:
+- purchase_requests → pr_items (one-to-many via purchaseRequestId) 
+- pr_items → items (many-to-one via itemId)
+- purchase_requests → branches (many-to-one via branchId)
+- purchase_requests → users (many-to-one via createdById)
+- purchase_orders → suppliers (many-to-one via supplierId)
+
+CRITICAL REQUIREMENT - HUMAN-READABLE RESULTS:
+🚨🚨🚨 ABSOLUTE RULE: Users should NEVER see raw UUIDs/IDs in results - this is MANDATORY 🚨🚨🚨
+- ALWAYS JOIN to get human-readable names for ALL foreign key references  
+- For branches: ALWAYS include b."name" as "branchName" (NEVER just branchId)
+- For items: ALWAYS include i."sku" and i."name" as "itemName" (NEVER just itemId)
+- For suppliers: ALWAYS include s."name" as "supplierName" (NEVER just supplierId)
+- For users: ALWAYS include CONCAT(u."firstName", ' ', u."lastName") or u."firstName" || ' ' || u."lastName" as "userName" (users have firstName/lastName, NOT name!)
+- Use descriptive column aliases for ALL result columns
+- Even if user doesn't ask for names, ALWAYS include them in results
+
+❌ WRONG (returns UUIDs):
+SELECT pr."id", pri."itemId", pr."branchId" FROM purchase_requests pr...
+
+✅ CORRECT (returns human-readable names):
+SELECT pr."prNumber", pr."title", i."sku", i."name" as "itemName", b."name" as "branchName" 
+FROM purchase_requests pr 
+JOIN pr_items pri ON pr."id" = pri."purchaseRequestId"
+JOIN items i ON pri."itemId" = i."id" 
+JOIN branches b ON pr."branchId" = b."id"...
+
+EXAMPLE for "pending purchase requests for items with low stock":
+SELECT 
+  pr."prNumber" as "requestNumber",
+  pr."title" as "requestTitle", 
+  pr."status",
+  i."sku" as "itemSku",
+  i."name" as "itemName",
+  pri."requestedQty" as "requestedQuantity",
+  st."quantity" as "currentStock",
+  st."availableQty" as "availableStock",
+  b."name" as "branchName",
+  u."firstName" || ' ' || u."lastName" as "requestedBy"
+FROM purchase_requests pr
+JOIN pr_items pri ON pr."id" = pri."purchaseRequestId"
+JOIN items i ON pri."itemId" = i."id"
+JOIN stock st ON i."id" = st."itemId" AND pr."branchId" = st."branchId"
+JOIN branches b ON pr."branchId" = b."id"
+JOIN users u ON pr."createdById" = u."id"
+WHERE pr."status" IN ('DRAFT', 'SUBMITTED') AND st."quantity" <= 10
+
+🚨 NOTICE: purchase_requests does NOT have supplierId - suppliers are in purchase_orders only!
+🚨 NOTICE: For "pending" purchase requests, use status IN ('DRAFT', 'SUBMITTED') - NO 'PENDING' status exists!
+
+MANDATORY JOIN REQUIREMENTS:
+🚨 CRITICAL: You MUST always include JOINs to get human-readable names when referencing related data:
+- When selecting from purchase_requests: JOIN with users table to get user names, branches table to get branch names
+- When selecting from purchase_request_items: JOIN with items table to get item names and SKUs
+- When selecting from purchase_orders: JOIN with suppliers table to get supplier names
+- When selecting from stock: JOIN with items table to get item names and SKUs
+- When selecting from any table with foreign keys: JOIN with related tables to get descriptive names
+
+NEVER select raw IDs without corresponding names. ALWAYS include human-readable columns like:
+- i."name" as "itemName", i."sku" as "itemSku" (not just item IDs)
+- b."name" as "branchName" (not just branch IDs)  
+- s."name" as "supplierName" (not just supplier IDs)
+- u."firstName" || ' ' || u."lastName" as "userName" (users have firstName/lastName fields, NOT a single name field!)
+
+🚨 CRITICAL SCHEMA FACTS:
+- users table has "firstName" and "lastName" columns, NOT "name" 
+- Use u."firstName" || ' ' || u."lastName" or CONCAT(u."firstName", ' ', u."lastName") for user names
+- purchase_requests table does NOT have "supplierId" - suppliers are linked through purchase_orders only
+- Table names use snake_case: pr_items, po_items, rf_items, mr_items, gr_items (NOT camelCase)
+- Column names use camelCase with quotes: "itemId", "branchId", "createdById"
+
+🚨 ENUM VALUES - USE EXACT VALUES:
+- PRStatus: 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'CONVERTED_TO_PO' (NO 'PENDING'!)
+- POStatus: 'DRAFT', 'SENT', 'CONFIRMED', 'RECEIVED', 'CANCELLED'
+- RFStatus: 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'TRANSFERRED'
+- MRStatus: 'DRAFT', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
+- GRStatus: 'DRAFT', 'RECEIVED', 'COMPLETED'
+- MLStatus: 'DRAFT', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
+- UserRole: 'SYSTEM_ADMIN', 'BRANCH_MANAGER', 'INVENTORY_CLERK', 'PROCUREMENT_SPECIALIST', 'PRODUCTION_PLANNER'
+
+⚠️ CRITICAL: For "pending" requests, use status IN ('DRAFT', 'SUBMITTED') - there is NO 'PENDING' status!
+
+SECURITY CONSTRAINTS:
 - ONLY generate SELECT queries. No INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or other modifications allowed.
 - Use parameterized queries with $1, $2, etc. for all user inputs.
 - Always include proper WHERE clauses to limit data access based on user context.
@@ -151,38 +222,62 @@ USER CONTEXT:
 - Branch ID: ${userContext.branchId || 'N/A'}
 - User Role: ${userContext.userRole}
 
-DATABASE SCHEMA:
-${schemaDescription}
-
-SECURITY RULES:
-1. If user role is not 'admin' or 'BRANCH_MANAGER', always filter by branchId where applicable
-2. Users can only see data from their own branch unless they have admin privileges
-3. Sensitive columns (passwords, tokens) should never be selected
-4. Always use proper JOINs instead of subqueries when possible for performance
-
 QUESTION: "${question}"
+
+🚨 FINAL REMINDER: Your SQL MUST include JOINs to get human-readable names. Users should see item names, branch names, etc. - NOT UUIDs! 🚨
 
 Respond with JSON in this exact format:
 {
-  "sql": "SELECT ... FROM ... WHERE ... LIMIT ...",
+  "sql": "SELECT ... FROM ... JOIN ... WHERE ... LIMIT ...",
   "values": [value1, value2, ...],
   "explanation": "Brief explanation of what the query does"
 }
 
-Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
+Make sure the SQL includes JOINs for readable names and is valid PostgreSQL syntax with proper parameterization.
     `.trim();
 
     try {
+      // Log the AI prompt being sent
+      console.log('\n🤖 ===== AI PROMPT BEING SENT =====');
+      console.log('📝 Prompt Length:', prompt.length, 'characters');
+      console.log('🎯 Key sections:');
+      console.log('  - Question:', question);
+      console.log('  - User Role:', userContext.userRole);
+      console.log('  - Branch ID:', userContext.branchId || 'N/A');
+      console.log('\n📋 Full AI Prompt:');
+      console.log('='.repeat(80));
+      console.log(prompt);
+      console.log('='.repeat(80));
+
       const response = await this.geminiService.generateText(prompt);
+
+      console.log('\n🔄 ===== RAW AI RESPONSE =====');
+      console.log('📤 Raw Response Length:', response.length, 'characters');
+      console.log('📤 Raw AI Response:');
+      console.log(response);
 
       // Parse the JSON response
       const cleanResponse = response.replace(/```json|```/g, '').trim();
+
+      console.log('\n🧹 ===== CLEANED AI RESPONSE =====');
+      console.log('🔧 Cleaned Response:');
+      console.log(cleanResponse);
+
       const parsed = JSON.parse(cleanResponse);
+
+      console.log('\n✅ ===== PARSED AI RESPONSE =====');
+      console.log('📊 Parsed SQL:', parsed.sql);
+      console.log('🔧 Parsed Values:', parsed.values);
+      console.log('💬 Parsed Explanation:', parsed.explanation);
 
       // Validate the response structure
       if (!parsed.sql || !Array.isArray(parsed.values) || !parsed.explanation) {
+        console.log('\n❌ ===== AI RESPONSE VALIDATION FAILED =====');
+        console.log('🚫 Missing required fields in AI response');
         throw new Error('Invalid response format from AI');
       }
+
+      console.log('\n✅ AI Response Validation: PASSED');
 
       return {
         sql: parsed.sql,
@@ -190,6 +285,8 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
         explanation: parsed.explanation,
       };
     } catch (error) {
+      console.log('\n❌ ===== AI SQL GENERATION ERROR =====');
+      console.log('🚫 Error Details:', error);
       this.logger.error('Failed to generate SQL with AI:', error);
       throw new Error('Failed to generate SQL query');
     }
@@ -199,6 +296,9 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
    * Validate SQL query for security
    */
   private validateSQL(sql: string): { isValid: boolean; errors: string[] } {
+    console.log('\n🔍 ===== SQL VALIDATION STARTED =====');
+    console.log('📝 SQL to validate:', sql);
+
     const errors: string[] = [];
     const lowerSQL = sql.toLowerCase().trim();
 
@@ -207,7 +307,7 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
       errors.push('Only SELECT queries are allowed');
     }
 
-    // Check for dangerous keywords
+    // Check for dangerous keywords using word boundaries to avoid false positives
     const dangerousKeywords = [
       'insert',
       'update',
@@ -220,19 +320,27 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
       'execute',
       'procedure',
       'function',
-      '--',
-      '/*',
-      '*/',
-      'union',
       'declare',
       'set',
       'grant',
       'revoke',
     ];
 
+    // Use word boundaries to ensure we match whole words, not parts of column names
     for (const keyword of dangerousKeywords) {
-      if (lowerSQL.includes(keyword)) {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      if (regex.test(lowerSQL)) {
+        console.log(`🚫 Found dangerous keyword: ${keyword}`);
         errors.push(`Dangerous keyword detected: ${keyword}`);
+      }
+    }
+
+    // Check for comment patterns that could be used for SQL injection
+    const commentPatterns = ['--', '/*', '*/'];
+    for (const pattern of commentPatterns) {
+      if (lowerSQL.includes(pattern)) {
+        console.log(`🚫 Found dangerous comment pattern: ${pattern}`);
+        errors.push(`Dangerous comment pattern detected: ${pattern}`);
       }
     }
 
@@ -246,8 +354,14 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
 
     for (const pattern of injectionPatterns) {
       if (pattern.test(sql)) {
+        console.log(`🚫 Found SQL injection pattern: ${pattern}`);
         errors.push('Potential SQL injection pattern detected');
       }
+    }
+
+    console.log('🔍 Validation result:', errors.length === 0 ? 'PASSED' : 'FAILED');
+    if (errors.length > 0) {
+      console.log('🚫 Validation errors:', errors);
     }
 
     return {
@@ -271,7 +385,6 @@ Make sure the SQL is valid PostgreSQL syntax with proper parameterization.
       throw new Error('Failed to execute database query');
     }
   }
-
   /**
    * Generate human-readable explanation of results
    */
@@ -288,77 +401,60 @@ The database query returned ${results.length} results. Here's the query explanat
 Sample of the data (first 3 rows):
 ${JSON.stringify(results.slice(0, 3), null, 2)}
 
-Provide a clear, concise summary of the results in natural language. Focus on:
-- What was found
-- Key insights or patterns
-- Actionable information
-- Any recommendations if applicable
+CRITICAL INSTRUCTIONS FOR HUMAN-READABLE RESPONSES:
+- NEVER reference item IDs like "78802d98-5b57-4e7b-a269-2c9fed5236cb" in your response
+- ALWAYS use item names, SKUs, or descriptions instead of IDs
+- NEVER reference branch IDs - use branch names instead  
+- NEVER reference supplier IDs - use supplier names instead
+- NEVER reference user IDs - use user names instead
+- If you see fields like "itemName", "itemSku", "branchName", "supplierName", "userName" - use those values
+- If the data contains both IDs and names, ONLY mention the names in your response
+
+🚨 MANDATORY TABULAR FORMAT REQUIREMENT:
+- ALWAYS present the data in a clean, readable table format using Markdown tables
+- Include relevant columns with descriptive headers
+- Show all rows (or a reasonable sample if too many)
+- Use proper table alignment and formatting
+- Add a summary/insights section after the table
+
+Example format:
+## Query Results
+
+| Request Number | Item Name | SKU | Current Stock | Requested Qty | Branch | Status |
+|----------------|-----------|-----|---------------|---------------|--------|--------|
+| PR000123 | Office Supplies | OFF-001 | 5 | 50 | Main Branch | DRAFT |
+| PR000124 | Electronic Components | ELC-002 | 2 | 25 | Warehouse A | SUBMITTED |
+
+### Summary & Insights:
+- Found 2 purchase requests for low stock items
+- Office Supplies and Electronic Components need immediate attention
+- Both items are below safety stock levels
+
+Example of what NOT to do:
+❌ "Item 78802d98-5b57-4e7b-a269-2c9fed5236cb needs attention"
+
+Example of what TO do: 
+✅ Present data in clean tables with proper headers and readable values
+✅ "Electronic Component XYZ needs attention"
+✅ "Office Supplies (SKU: OFF-001) are running low"
+
+RESPONSE FORMAT REQUIREMENTS:
+1. Start with a brief introduction
+2. Present data in a markdown table with appropriate columns
+3. Add a "Summary & Insights" section with key findings
+4. Include actionable recommendations if applicable
+5. Use proper markdown formatting (headers, tables, bullet points)
 
 Keep the response professional and relevant to supply chain management.
+REMEMBER: Users should never see database IDs in your response - only human-readable names and values!
     `.trim();
 
     try {
       return await this.geminiService.generateText(prompt);
     } catch (error) {
       this.logger.error('Failed to generate explanation:', error);
-      // Fallback to basic explanation
-      return `Found ${results.length} results for your query: ${queryExplanation}`;
+      // Fallback to basic explanation      return `Found ${results.length} results for your query: ${queryExplanation}`;
     }
-  }
-  /**
-   * Format schema for AI consumption
-   */
-  private formatSchemaForAI(schema: SchemaInfo[]): string {
-    const tables = schema.reduce(
-      (acc, col) => {
-        if (!acc[col.tableName]) {
-          acc[col.tableName] = [];
-        }
-        acc[col.tableName].push({
-          column: col.columnName,
-          type: col.dataType,
-          nullable: col.isNullable === 'YES',
-          default: col.columnDefault,
-        });
-        return acc;
-      },
-      {} as Record<string, ColumnInfo[]>
-    );
-
-    let schemaDescription =
-      'IMPORTANT: PostgreSQL is case-sensitive. Use exact column names with proper case and double quotes.\n\n';
-
-    // Add specific supply chain context
-    schemaDescription += `SUPPLY CHAIN BUSINESS CONTEXT:
-- stock table contains inventory data with "quantity", "reservedQty", "availableQty"
-- branches table contains branch information with "name" and "code" (like 'BR002')
-- items table contains product information
-- Use proper JOINs to connect related tables
-
-AVAILABLE TABLES:\n\n`;
-
-    schemaDescription += Object.entries(tables)
-      .map(([tableName, columns]) => {
-        const columnList = columns
-          .map((col) => `  "${col.column}" (${col.type}${col.nullable ? ', nullable' : ''})`)
-          .join('\n');
-        return `Table: ${tableName}\n${columnList}`;
-      })
-      .join('\n\n');
-
-    // Add common query patterns
-    schemaDescription += `\n\nCOMMON PATTERNS FOR THIS SYSTEM:
-- For stock below threshold in specific branch: 
-  SELECT i."name", i."sku", s."quantity", b."name" as branch_name, b."code" as branch_code
-  FROM stock s 
-  JOIN branches b ON s."branchId" = b."id" 
-  JOIN items i ON s."itemId" = i."id" 
-  WHERE b."code" = $1 AND s."quantity" < $2
-- Always use double quotes around column names: s."itemId", b."branchId"
-- Use proper case: "itemId" not "itemid", "branchId" not "branchid"
-- For branch filtering use: b."code" = 'BR002' (exact branch code match)`;
-
-    return schemaDescription;
   }
 
   /**

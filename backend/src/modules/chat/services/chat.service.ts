@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GeminiService } from '../../ai/services/gemini.service';
 import { AIChatResponse, ChatMessage, QueryContext } from '../interfaces/chat.interface';
-import { DatabaseQueryService } from './database-query.service';
 import { DynamicSQLService } from './dynamic-sql.service';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -12,7 +11,6 @@ export class ChatService {
   constructor(
     private sessionService: SessionService,
     private messageService: MessageService,
-    private databaseQueryService: DatabaseQueryService,
     private dynamicSQLService: DynamicSQLService,
     private geminiService: GeminiService
   ) {}
@@ -122,18 +120,14 @@ export class ChatService {
     try {
       this.logger.log(`Handling database query: "${message}"`);
 
-      // Check if this is a complex query that should use dynamic SQL
-      const shouldUseDynamicSQL = this.shouldUseDynamicSQL(message);
-      this.logger.log(`Should use dynamic SQL: ${shouldUseDynamicSQL}`);
+      console.log('\n🔀 ===== SIMPLIFIED QUERY ROUTING =====');
+      console.log('📝 Query:', message);
+      console.log('🤖 Using: DynamicSQLService (AI-powered) - ALWAYS');
+      console.log('✅ Predefined queries removed - Pure LLM approach');
 
-      if (shouldUseDynamicSQL) {
-        this.logger.log('Using dynamic SQL service');
-        return await this.handleDynamicSQLQuery(message, context, sessionId, userId);
-      }
-
-      // Fall back to predefined database queries
-      this.logger.log('Using predefined query service');
-      return await this.handlePredefinedQuery(message, context, sessionId, userId);
+      // Always use dynamic SQL service for LLM-powered queries
+      this.logger.log('Using dynamic SQL service (LLM-powered)');
+      return await this.handleDynamicSQLQuery(message, context, sessionId, userId);
     } catch (error) {
       this.logger.error('Failed to handle database query:', error);
       this.logger.error('Error stack:', error.stack);
@@ -352,75 +346,7 @@ Guidelines:
   }
 
   /**
-   * Determine if a query should use dynamic SQL generation
-   */
-  private shouldUseDynamicSQL(message: string): boolean {
-    const lowerMessage = message.toLowerCase(); // Use dynamic SQL for complex analytical queries
-    const dynamicSQLIndicators = [
-      'stock below',
-      'inventory below',
-      'quantity less than',
-      'quantity under',
-      'compare',
-      'analysis',
-      'trend',
-      'pattern',
-      'correlation',
-      'join',
-      'group by',
-      'order by',
-      'aggregate',
-      'sum',
-      'count',
-      'average',
-      'between',
-      'range',
-      'filter by',
-      'where',
-      'br002',
-      'branch code',
-      'specific branch',
-      'custom query',
-      'complex query',
-      'detailed report',
-      'last 30 days',
-      'in the last',
-      'created in',
-      'total amounts',
-      'with their',
-      'performance',
-    ];
-
-    // Use predefined queries for simple requests
-    const predefinedIndicators = [
-      'purchase requests',
-      'purchase orders',
-      'suppliers list',
-      'items list',
-      'basic inventory',
-      'simple report',
-    ];
-
-    // Check for dynamic SQL indicators first
-    const hasDynamicIndicators = dynamicSQLIndicators.some((indicator) =>
-      lowerMessage.includes(indicator)
-    );
-
-    // Check for predefined indicators
-    const hasPredefinedIndicators = predefinedIndicators.some((indicator) =>
-      lowerMessage.includes(indicator)
-    );
-
-    // Default to dynamic SQL for complex queries, predefined for simple ones
-    if (hasPredefinedIndicators && !hasDynamicIndicators) {
-      return false;
-    }
-
-    return hasDynamicIndicators || lowerMessage.length > 50; // Complex queries tend to be longer
-  }
-
-  /**
-   * Handle complex queries using dynamic SQL generation
+   * Handle complex queries using dynamic SQL generation (ALWAYS USED NOW)
    */ private async handleDynamicSQLQuery(
     message: string,
     context: QueryContext,
@@ -477,76 +403,18 @@ Guidelines:
       this.logger.error('Error details:', error.message);
       this.logger.error('Error stack:', error.stack);
 
-      // Try falling back to predefined queries if dynamic SQL fails
-      this.logger.warn('Falling back to predefined query handling...');
-      return await this.handlePredefinedQuery(message, context, sessionId, userId);
-    }
-  }
+      // Create error message for user
+      const errorMessage =
+        'I encountered an error while processing your query. Please try rephrasing your question or ask something else.';
 
-  /**
-   * Handle predefined database queries using the original service
-   */
-  private async handlePredefinedQuery(
-    message: string,
-    context: QueryContext,
-    sessionId: string,
-    _userId: string
-  ): Promise<AIChatResponse> {
-    try {
-      // Interpret the natural language query
-      const queryAnalysis = await this.databaseQueryService.interpretQuery(message, context);
+      await this.messageService.createMessage(sessionId, errorMessage, 'error', 'assistant');
 
-      if (!queryAnalysis.canExecute) {
-        const errorMessage = `I cannot execute this query: ${queryAnalysis.explanation}`;
-
-        await this.messageService.createMessage(sessionId, errorMessage, 'assistant', 'assistant');
-        return {
-          message: errorMessage,
-          type: 'error',
-          sessionId,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            risks: queryAnalysis.risks,
-          },
-        };
-      }
-
-      // Execute the safe query
-      const queryResult = await this.databaseQueryService.executeQuery(
-        queryAnalysis.queryType,
-        queryAnalysis.parameters,
-        context
-      );
-
-      // Generate AI response based on the data
-      const aiResponse = await this.generateDataResponse(
-        message,
-        queryResult,
-        queryAnalysis.explanation,
-        context
-      );
-
-      // Store assistant response
-      await this.messageService.createMessage(
-        sessionId,
-        aiResponse.message,
-        'assistant',
-        'assistant',
-        {
-          queryType: queryAnalysis.queryType,
-          dataIncluded: true,
-          executionTime: Date.now(),
-        }
-      );
       return {
-        ...aiResponse,
+        message: errorMessage,
+        type: 'error',
         sessionId,
         timestamp: new Date().toISOString(),
-        databaseQuery: `${queryAnalysis.queryType}: ${queryAnalysis.explanation}`, // Include predefined query info
       };
-    } catch (error) {
-      this.logger.error('Failed to handle predefined query:', error);
-      throw error; // Re-throw to be caught by parent handler
     }
   }
 }
