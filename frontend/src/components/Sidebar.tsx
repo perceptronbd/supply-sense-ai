@@ -92,7 +92,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <header className="flex items-center justify-between h-16 px-6 border-b border-divider rounded-t-xl">
-            <BrandLogo variant="primary" showText={true} />
+            <BrandLogo showText={true} />
             <div className="flex items-center gap-2">
               {/* Theme toggle icon button */}
               <Button

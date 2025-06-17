@@ -1,12 +1,9 @@
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { SupplySenseTextIcon } from '@/components/icons/SupplySenseTextIcon';
-import { Text } from '@/components/ui/Text';
-import React from 'react';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
-  variant?: 'primary' | 'secondary' | 'mono';
   logoType?: 'icon-text' | 'svg-text'; // New prop to choose logo type
   className?: string;
 }
@@ -23,10 +20,10 @@ export function BrandLogo({ size = 'md', showText = true, className = '' }: Bran
   // Default: icon + text combination
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <LogoIcon size={icon} className={'text-default-50 bg-primary p-1 rounded-md'} />
+      <LogoIcon size={icon} className="text-default bg-primary p-1 rounded-md" />
       {showText && (
         <div className={`flex items-center ${className}`}>
-          <SupplySenseTextIcon size={svgText} className={'bg-primary'} />
+          <SupplySenseTextIcon size={svgText} className="text-primary" color="currentColor" />
         </div>
       )}
     </div>
