@@ -6,8 +6,12 @@ import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
+import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
+import { markdownLookBack } from '@llm-ui/markdown';
+import { useLLMOutput } from '@llm-ui/react';
 import { format } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
+import LLMCodeBlockComponent from './LLMCodeBlockComponent';
+import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
 
 interface MessageBubbleProps {
@@ -17,6 +21,25 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps) {
   const isUser = message.type === 'user';
+
+  // Use llm-ui for AI message rendering
+  const { blockMatches } = useLLMOutput({
+    llmOutput: message.content,
+    fallbackBlock: {
+      component: LLMMarkdownComponent,
+      lookBack: markdownLookBack(),
+    },
+    blocks: [
+      {
+        component: LLMCodeBlockComponent,
+        findCompleteMatch: findCompleteCodeBlock(),
+        findPartialMatch: findPartialCodeBlock(),
+        lookBack: codeBlockLookBack(),
+      },
+    ],
+    isStreamFinished: true, // Message is complete
+  });
+
   // Safe date formatting with fallback
   const getFormattedTime = (dateString: string | undefined) => {
     if (!dateString) return 'now';
@@ -58,22 +81,32 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
         />
       </div>{' '}
       {/* Message content */}
-      <div className={`flex-1 max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
+      <div
+        className={`flex-1 max-w-[min(80%,800px)] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
+      >
         <Card
           className={`${
             isUser
               ? 'bg-primary text-primary-foreground'
               : 'bg-content2 text-foreground border border-divider'
-          }`}
+          } w-full`}
         >
-          <CardBody className="p-3">
+          <CardBody className="p-3 overflow-x-auto min-w-0">
             {isUser ? (
               <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
                 {message.content}
               </Text>
             ) : (
-              <article className="chat-markdown text-foreground">
-                <ReactMarkdown>{message.content}</ReactMarkdown>
+              <article className="chat-markdown text-foreground min-w-0 overflow-x-auto">
+                {blockMatches.map((blockMatch, index) => {
+                  const Component = blockMatch.block.component;
+                  return (
+                    <Component
+                      key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
+                      blockMatch={blockMatch}
+                    />
+                  );
+                })}
               </article>
             )}
             {!isUser &&
@@ -128,7 +161,7 @@ export function LoadingMessage() {
     <article className="flex gap-3 mb-4" aria-label="AI is processing your request">
       <div className="flex-shrink-0">
         <Avatar
-          icon={<AiIcon className="w-5 h-5" />}
+          icon={<LogoIcon size={14} className="text-primary" />}
           classNames={{
             base: 'w-8 h-8 min-w-8',
             icon: 'text-secondary-foreground',
@@ -138,7 +171,7 @@ export function LoadingMessage() {
         />
       </div>
 
-      <div className="flex-1 max-w-[80%]">
+      <div className="flex-1 max-w-[min(80%,800px)]">
         <Card className="bg-content2 border border-divider">
           <CardBody className="p-3">
             <div className="flex items-center gap-2">

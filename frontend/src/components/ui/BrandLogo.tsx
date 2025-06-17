@@ -17,20 +17,8 @@ const sizeMap = {
   lg: { icon: 48, text: 'titleLarge' as const, svgText: 150 },
 };
 
-const colorMap = {
-  primary: 'text-primary',
-  secondary: 'text-secondary',
-  mono: 'text-foreground',
-};
-
-export function BrandLogo({
-  size = 'md',
-  showText = true,
-  variant = 'primary',
-  className = '',
-}: BrandLogoProps) {
+export function BrandLogo({ size = 'md', showText = true, className = '' }: BrandLogoProps) {
   const { icon, svgText } = sizeMap[size];
-  const colorClass = colorMap[variant];
 
   // Default: icon + text combination
   return (
@@ -38,7 +26,7 @@ export function BrandLogo({
       <LogoIcon size={icon} className={'text-default-50 bg-primary p-1 rounded-md'} />
       {showText && (
         <div className={`flex items-center ${className}`}>
-          <SupplySenseTextIcon size={svgText} className={colorClass} />
+          <SupplySenseTextIcon size={svgText} className={'bg-primary'} />
         </div>
       )}
     </div>
