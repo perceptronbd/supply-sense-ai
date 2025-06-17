@@ -202,7 +202,7 @@ NEVER select raw IDs without corresponding names. ALWAYS include human-readable 
 
 🚨 ENUM VALUES - USE EXACT VALUES:
 - PRStatus: 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'CONVERTED_TO_PO' (NO 'PENDING'!)
-- POStatus: 'DRAFT', 'SENT', 'CONFIRMED', 'RECEIVED', 'CANCELLED'
+- POStatus: 'DRAFT', 'SENT_TO_SUPPLIER', 'CONFIRMED', 'CLOSED', 'CANCELLED'
 - RFStatus: 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'TRANSFERRED'
 - MRStatus: 'DRAFT', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
 - GRStatus: 'DRAFT', 'RECEIVED', 'COMPLETED'
@@ -210,6 +210,7 @@ NEVER select raw IDs without corresponding names. ALWAYS include human-readable 
 - UserRole: 'SYSTEM_ADMIN', 'BRANCH_MANAGER', 'INVENTORY_CLERK', 'PROCUREMENT_SPECIALIST', 'PRODUCTION_PLANNER'
 
 ⚠️ CRITICAL: For "pending" requests, use status IN ('DRAFT', 'SUBMITTED') - there is NO 'PENDING' status!
+⚠️ CRITICAL: For "sent" purchase orders, use status = 'SENT_TO_SUPPLIER' - NOT 'SENT'!
 
 SECURITY CONSTRAINTS:
 - ONLY generate SELECT queries. No INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or other modifications allowed.
@@ -396,7 +397,9 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
     const prompt = `
 You are a SupplySense management assistant. A user asked: "${originalQuestion}"
 
-The database query returned ${results.length} results. Here's the query explanation: ${queryExplanation}
+The database query returned ${
+      results.length
+    } results. Here's the query explanation: ${queryExplanation}
 
 Sample of the data (first 3 rows):
 ${JSON.stringify(results.slice(0, 3), null, 2)}
