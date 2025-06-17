@@ -52,6 +52,88 @@ body {
   letter-spacing: -0.025em;
 }
 
+/* Theme-aware scrollbar styling using HeroUI semantic tokens */
+@layer base {
+  /* Webkit scrollbars (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--nextui-default-100));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-400));
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--nextui-default-500));
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: hsl(var(--nextui-default-100));
+  }
+
+  /* Firefox scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--nextui-default-400)) hsl(var(--nextui-default-100));
+  }
+}
+
+/* Utility classes for custom scrollbar styling */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-track-default-100::-webkit-scrollbar-track {
+    background: hsl(var(--nextui-default-100));
+  }
+
+  .scrollbar-track-default-900::-webkit-scrollbar-track {
+    background: hsl(var(--nextui-default-900));
+  }
+
+  .scrollbar-thumb-default-400::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-400));
+  }
+
+  .scrollbar-thumb-default-500::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-500));
+  }
+
+  .scrollbar-thumb-default-600::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-600));
+  }
+
+  .hover\:scrollbar-thumb-default-500:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-500));
+  }
+
+  .dark\:scrollbar-track-default-900::-webkit-scrollbar-track {
+    background: hsl(var(--nextui-default-900));
+  }
+
+  .dark\:scrollbar-thumb-default-600::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-600));
+  }
+
+  .dark\:hover\:scrollbar-thumb-default-500:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--nextui-default-500));
+  }
+}
+
 /* Reset with HeroUI considerations */
 h1,
 h2,
