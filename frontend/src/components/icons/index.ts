@@ -1,3 +1,4 @@
+export { BanIcon } from './BanIcon';
 export { BoxIcon } from './BoxIcon';
 export { SearchIcon } from './SearchIcon';
 export { AiIcon } from './AiIcon';

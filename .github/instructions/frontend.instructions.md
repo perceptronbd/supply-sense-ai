@@ -98,6 +98,8 @@ Use semantic HTML elements to provide meaning and structure to content. This imp
 
 ## Component Development Standards
 
+- **MANDATORY: Check for existing components before creating new ones for the same use-case**
+- **MANDATORY: Use Zod for all form validation - Never implement manual validation**
 - **If a JSX block can be turned into a component for reusability in the future, then it should be extracted and converted into a component**
 - **For simple conditions with short return elements, prefer a ternary expression. But if conditions or returned JSX are complex, use if statements or switch for clarity**
 - **Convert all inline SVGs to reusable React components stored in `components/icons/` directory**
@@ -107,6 +109,82 @@ Use semantic HTML elements to provide meaning and structure to content. This imp
 - Create reusable components following component composition patterns
 - Follow React performance best practices (useMemo, useCallback when needed)
 - Maintain consistent import organization and path structures
+
+### Form Validation Requirements (MANDATORY)
+
+- **MANDATORY: Use Zod for all form validation and schema definition**
+- **REQUIRED: Create Zod schemas in `@/lib/schemas/` directory**
+- **REQUIRED: Use `ValidatedInput` component for form fields with Zod validation**
+- **FORBIDDEN: Manual validation logic in form components**
+- **REQUIRED: Use `z.infer<typeof schema>` for TypeScript types**
+
+#### Form Validation Examples
+```tsx
+// ✅ CORRECT: Zod schema definition
+import { z } from 'zod';
+
+export const createItemSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  sku: z.string().min(1, 'SKU is required'),
+  description: z.string().optional(),
+  price: z.number().min(0, 'Price must be positive'),
+});
+
+export type CreateItemFormData = z.infer<typeof createItemSchema>;
+
+// ✅ CORRECT: Using ValidatedInput with Zod
+<ValidatedInput
+  name="name"
+  label="Item Name"
+  fieldSchema={itemFieldSchemas.name}
+  wasSubmitted={wasSubmitted}
+  errors={fieldErrors.name}
+  onValueChange={handleValueChange}
+  isRequired
+/>
+
+// ❌ INCORRECT: Manual validation
+const validateField = (value: string) => {
+  if (!value) return 'Field is required';
+  if (value.length < 3) return 'Too short';
+  return null;
+};
+```
+
+### Component Reuse Requirements (MANDATORY)
+
+- **MANDATORY: Search existing components before creating new ones**
+- **REQUIRED: Check `frontend/src/components/` for existing implementations**
+- **REQUIRED: Extend existing components instead of duplicating functionality**
+- **REQUIRED: Create shared components in appropriate directories**
+
+#### Component Reuse Examples
+```tsx
+// ✅ CORRECT: Check for existing StatusChip component
+import { StatusChip } from '@/components/items/StatusChip';
+
+// Use existing component
+<StatusChip status={item.status} />
+
+// ✅ CORRECT: Extend existing component
+interface CustomStatusChipProps extends ComponentProps<typeof StatusChip> {
+  showIcon?: boolean;
+}
+
+export function CustomStatusChip({ showIcon, ...props }: CustomStatusChipProps) {
+  return (
+    <div className="flex items-center gap-2">
+      {showIcon && <StatusIcon />}
+      <StatusChip {...props} />
+    </div>
+  );
+}
+
+// ❌ INCORRECT: Creating duplicate component without checking
+export function ItemStatusBadge({ status }: { status: string }) {
+  // Duplicate of existing StatusChip functionality
+}
+```
 
 ## Conditional Rendering Guidelines
 

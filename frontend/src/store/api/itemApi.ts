@@ -38,6 +38,38 @@ export interface ItemSearchParams {
   limit?: number;
 }
 
+export interface CreateItemRequest {
+  name: string;
+  sku: string;
+  description?: string;
+  mainUnit: string;
+  buyingUnit: string;
+  transferUnit: string;
+  usingUnit: string;
+  buyingToMainRate?: number;
+  transferToMainRate?: number;
+  usingToMainRate?: number;
+  safetyStockLevel?: number;
+  reorderLevel?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateItemRequest {
+  name?: string;
+  sku?: string;
+  description?: string;
+  mainUnit?: string;
+  buyingUnit?: string;
+  transferUnit?: string;
+  usingUnit?: string;
+  buyingToMainRate?: number;
+  transferToMainRate?: number;
+  usingToMainRate?: number;
+  safetyStockLevel?: number;
+  reorderLevel?: number;
+  isActive?: boolean;
+}
+
 export interface ItemsResponse {
   data: Item[];
   pagination?: {
@@ -112,6 +144,44 @@ export const itemApi = createApi({
       transformResponse: (response: ItemsResponse) => response.data,
       providesTags: [TAG_TYPES.ITEM],
     }),
+
+    // Create new item
+    createItem: builder.mutation<Item, CreateItemRequest>({
+      query: (itemData) => ({
+        url: '',
+        method: 'POST',
+        body: itemData,
+      }),
+      invalidatesTags: [TAG_TYPES.ITEM],
+    }),
+
+    // Update existing item
+    updateItem: builder.mutation<Item, { id: string; data: UpdateItemRequest }>({
+      query: ({ id, data }) => ({
+        url: `/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [TAG_TYPES.ITEM, { type: TAG_TYPES.ITEM, id }],
+    }),
+
+    // Delete item (soft delete)
+    deleteItem: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [TAG_TYPES.ITEM, { type: TAG_TYPES.ITEM, id }],
+    }),
+
+    // Hard delete item (permanent)
+    hardDeleteItem: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `/${id}/hard`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [TAG_TYPES.ITEM],
+    }),
   }),
 });
 
@@ -121,4 +191,8 @@ export const {
   useGetItemsByBranchQuery,
   useGetItemQuery,
   useGetAllItemsQuery,
+  useCreateItemMutation,
+  useUpdateItemMutation,
+  useDeleteItemMutation,
+  useHardDeleteItemMutation,
 } = itemApi;

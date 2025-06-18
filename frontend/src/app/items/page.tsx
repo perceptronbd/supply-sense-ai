@@ -2,7 +2,7 @@
 
 import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
-import { ActionsDropdown, StatusChip, StockDisplay } from '@/components/items';
+import { ActionsDropdown, DeleteItemDialog, StatusChip, StockDisplay } from '@/components/items';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import { type Item, useGetItemsQuery } from '@/store/api/itemApi';
@@ -40,6 +40,11 @@ export default function ItemsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [includeInactive, setIncludeInactive] = useState(false);
+
+  // Dialog state (only for delete confirmation)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [deleteType, setDeleteType] = useState<'soft' | 'hard'>('soft');
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -108,6 +113,32 @@ export default function ItemsPage() {
     [router]
   );
 
+  // Handle edit item
+  const handleEditItem = useCallback(
+    (item: Item) => {
+      router.push(`/items/${item.id}/edit`);
+    },
+    [router]
+  );
+
+  // Handle delete item
+  const handleDeleteItem = useCallback((item: Item, deleteType: 'soft' | 'hard') => {
+    setSelectedItem(item);
+    setDeleteType(deleteType);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  // Handle create new item
+  const handleCreateItem = useCallback(() => {
+    router.push('/items/create');
+  }, [router]);
+
+  // Handle dialog close
+  const handleDialogClose = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setSelectedItem(null);
+  }, []);
+
   // Table row content
   const renderCell = useCallback(
     (item: Item, columnKey: string) => {
@@ -137,12 +168,19 @@ export default function ItemsPage() {
         case 'status':
           return <StatusChip isActive={item.isActive} />;
         case 'actions':
-          return <ActionsDropdown item={item} onViewDetails={handleViewDetails} />;
+          return (
+            <ActionsDropdown
+              item={item}
+              onViewDetails={handleViewDetails}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
+            />
+          );
         default:
           return null;
       }
     },
-    [handleViewDetails]
+    [handleViewDetails, handleEditItem, handleDeleteItem]
   );
 
   // Don't render anything until mounted
@@ -173,6 +211,24 @@ export default function ItemsPage() {
                 Manage your inventory items and view stock levels
               </Text>
             </div>
+            <Button
+              color="primary"
+              onPress={handleCreateItem}
+              startContent={
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              }
+            >
+              Add Item
+            </Button>
           </header>
 
           {/* Items Table and Filters */}
@@ -334,6 +390,14 @@ export default function ItemsPage() {
               </CardBody>
             </Card>
           </section>
+
+          {/* Delete Dialog */}
+          <DeleteItemDialog
+            isOpen={isDeleteDialogOpen}
+            onClose={handleDialogClose}
+            item={selectedItem}
+            deleteType={deleteType}
+          />
         </div>
       </main>
     </AuthGuard>
