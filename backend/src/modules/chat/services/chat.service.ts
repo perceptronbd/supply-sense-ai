@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GeminiService } from '../../ai/services/gemini.service';
 import { AIChatResponse, ChatMessage, QueryContext } from '../interfaces/chat.interface';
+import { DatabaseSchemaService } from './database-schema.service';
 import { DynamicSQLService } from './dynamic-sql.service';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -12,7 +13,8 @@ export class ChatService {
     private sessionService: SessionService,
     private messageService: MessageService,
     private dynamicSQLService: DynamicSQLService,
-    private geminiService: GeminiService
+    private geminiService: GeminiService,
+    private databaseSchemaService: DatabaseSchemaService
   ) {}
   async processUserMessage(
     sessionId: string,
@@ -37,13 +39,16 @@ export class ChatService {
       const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
+      // Get dynamic table list from schema service
+      const schema = await this.databaseSchemaService.getDatabaseSchema();
+
       // Build full context
       const context: QueryContext = {
         userId,
         userRole: userContext.userRole || 'user',
         branchId: userContext.branchId,
         sessionHistory,
-        availableTables: this.getAvailableTables(),
+        availableTables: schema.tables.map((table) => table.name),
         userPermissions: userContext.userPermissions || [],
       };
       this.logger.log(`Built context: role=${context.userRole}, branchId=${context.branchId}`);
@@ -311,18 +316,6 @@ Guidelines:
     }
 
     return suggestions;
-  }
-
-  private getAvailableTables(): string[] {
-    return [
-      'purchase_requests',
-      'purchase_orders',
-      'items',
-      'suppliers',
-      'branches',
-      'users',
-      'goods_receipts',
-    ];
   }
 
   async createSession(title: string, userId: string, description?: string) {

@@ -4,7 +4,13 @@ import { GeminiService } from '../../ai/services/gemini.service';
 import { DatabaseSchemaService } from './database-schema.service';
 
 interface SQLQueryResult {
-  sql: string;
+  sql: string | null;
+  values: unknown[];
+  explanation: string;
+}
+
+interface ParsedAIResponse {
+  sql: string | null;
   values: unknown[];
   explanation: string;
 }
@@ -35,20 +41,25 @@ export class DynamicSQLService {
     sql?: string;
   }> {
     try {
-      // Step 1: Get comprehensive database schema context
-      const _schemaDoc = await this.databaseSchemaService.getDatabaseSchema();
+      // Step 1: Get comprehensive database schema context for AI
       const schemaForAI = this.databaseSchemaService.formatSchemaForAI(userContext.userRole);
 
       // Log the initial request
       console.log('\n🔍 ===== AI SQL GENERATION STARTED =====');
       console.log('📝 User Question:', question);
       console.log('👤 User Context:', JSON.stringify(userContext, null, 2));
-      console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters');
+      console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters'); // Step 2: Generate SQL using AI with comprehensive schema context
+      const sqlResult = await this.generateSecureSQL(question, schemaForAI, userContext); // Check if AI could not generate SQL
+      if (sqlResult.sql === null) {
+        console.log('\n⚠️ ===== AI CANNOT GENERATE SQL FOR THIS QUERY =====');
+        console.log('💭 Returning AI explanation to user:', sqlResult.explanation);
 
-      // Step 2: Generate SQL using AI with comprehensive schema context
-      const sqlResult = await this.generateSecureSQL(question, schemaForAI, userContext);
-
-      // Enhanced logging for generated SQL
+        return {
+          result: [],
+          explanation: sqlResult.explanation, // Return the AI's explanation directly without prefix
+          sql: undefined,
+        };
+      } // Enhanced logging for generated SQL
       console.log('\n🎯 ===== AI GENERATED SQL RESULT =====');
       console.log('📊 Generated SQL Query:');
       console.log(sqlResult.sql);
@@ -59,7 +70,11 @@ export class DynamicSQLService {
       this.logger.log(sqlResult.sql);
       this.logger.log('📋 SQL Parameters:', sqlResult.values);
 
-      // Step 3: Validate and execute the SQL
+      // Step 3: Validate and execute the SQL (we know sql is not null here)
+      if (typeof sqlResult.sql !== 'string') {
+        throw new Error('Expected SQL to be a string at this point');
+      }
+
       const validationResult = this.validateSQL(sqlResult.sql);
       if (!validationResult.isValid) {
         console.log('\n❌ ===== SQL VALIDATION FAILED =====');
@@ -87,19 +102,18 @@ export class DynamicSQLService {
       console.log('\n💬 ===== FINAL AI EXPLANATION =====');
       console.log(explanation);
       console.log('\n🏁 ===== AI SQL GENERATION COMPLETED =====\n');
-
       return {
         result: rows,
         explanation,
-        sql: sqlResult.sql,
+        sql: sqlResult.sql, // We know this is not null here due to the type check above
       };
     } catch (error) {
       console.log('\n💥 ===== DYNAMIC SQL SERVICE ERROR =====');
       console.log('🚫 Error Type:', error.constructor.name);
       console.log('🚫 Error Message:', error.message);
       console.log('🚫 Error Stack:', error.stack);
-
       this.logger.error('Failed to process natural language query:', error);
+
       throw new Error(`Failed to process query: ${error.message}`);
     }
   }
@@ -249,7 +263,6 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
       console.log('='.repeat(80));
       console.log(prompt);
       console.log('='.repeat(80));
-
       const response = await this.geminiService.generateText(prompt);
 
       console.log('\n🔄 ===== RAW AI RESPONSE =====');
@@ -257,25 +270,42 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
       console.log('📤 Raw AI Response:');
       console.log(response);
 
-      // Parse the JSON response
+      // Parse the JSON response with improved error handling
       const cleanResponse = response.replace(/```json|```/g, '').trim();
 
       console.log('\n🧹 ===== CLEANED AI RESPONSE =====');
       console.log('🔧 Cleaned Response:');
       console.log(cleanResponse);
 
-      const parsed = JSON.parse(cleanResponse);
+      // Parse the JSON response with improved error handling
+      const parsed = await this.parseAIResponse(cleanResponse);
 
       console.log('\n✅ ===== PARSED AI RESPONSE =====');
       console.log('📊 Parsed SQL:', parsed.sql);
       console.log('🔧 Parsed Values:', parsed.values);
-      console.log('💬 Parsed Explanation:', parsed.explanation);
-
-      // Validate the response structure
-      if (!parsed.sql || !Array.isArray(parsed.values) || !parsed.explanation) {
+      console.log('💬 Parsed Explanation:', parsed.explanation); // Validate the response structure
+      if (!Array.isArray(parsed.values) || !parsed.explanation) {
         console.log('\n❌ ===== AI RESPONSE VALIDATION FAILED =====');
         console.log('🚫 Missing required fields in AI response');
         throw new Error('Invalid response format from AI');
+      } // Handle cases where AI cannot generate SQL (sql: null)
+      if (parsed.sql === null) {
+        console.log('\n⚠️ ===== AI CANNOT GENERATE SQL =====');
+        console.log('💭 AI Explanation:', parsed.explanation);
+
+        // Return a valid SQLQueryResult with null SQL
+        return {
+          sql: null,
+          values: [],
+          explanation: parsed.explanation,
+        };
+      }
+
+      // Validate SQL is a non-empty string when provided
+      if (typeof parsed.sql !== 'string' || parsed.sql.trim() === '') {
+        console.log('\n❌ ===== INVALID SQL FORMAT =====');
+        console.log('🚫 SQL must be a non-empty string');
+        throw new Error('Invalid SQL format from AI');
       }
 
       console.log('\n✅ AI Response Validation: PASSED');
@@ -388,8 +418,7 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
   }
   /**
    * Generate human-readable explanation of results
-   */
-  private async generateExplanation(
+   */ private async generateExplanation(
     originalQuestion: string,
     results: unknown[],
     queryExplanation: string
@@ -479,5 +508,137 @@ REMEMBER: Users should never see database IDs in your response - only human-read
       }
       return serialized;
     });
+  }
+
+  /**
+   * Parse AI response with robust error handling and fallback mechanisms
+   */
+  private async parseAIResponse(cleanResponse: string): Promise<ParsedAIResponse> {
+    try {
+      return JSON.parse(cleanResponse) as ParsedAIResponse;
+    } catch (jsonError) {
+      console.log('\n❌ ===== JSON PARSING FAILED =====');
+      console.log('🚫 JSON Parse Error:', (jsonError as Error).message);
+      console.log('🔍 Attempting to extract and fix valid JSON...');
+
+      return this.extractJsonFromResponse(cleanResponse);
+    }
+  }
+
+  /**
+   * Extract and fix JSON from malformed AI response
+   */
+  private extractJsonFromResponse(cleanResponse: string): ParsedAIResponse {
+    // Try to extract JSON from response that might contain extra text
+    const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.log('🚫 No valid JSON structure found in response');
+      throw new Error(
+        `AI response does not contain valid JSON. Response: ${cleanResponse.substring(0, 200)}...`
+      );
+    }
+
+    console.log('🔍 Found potential JSON block, attempting to fix and parse...');
+    const extractedJson = jsonMatch[0];
+
+    try {
+      // First attempt: Parse as-is
+      const parsed = JSON.parse(extractedJson) as ParsedAIResponse;
+      console.log('✅ Successfully parsed extracted JSON as-is');
+      return parsed;
+    } catch (_extractError) {
+      console.log('🔧 JSON extraction failed, attempting to fix SQL field issues...');
+      return this.fixAndParseJson(extractedJson, cleanResponse);
+    }
+  }
+
+  /**
+   * Fix common JSON issues and parse, with manual extraction fallback
+   */
+  private fixAndParseJson(extractedJson: string, cleanResponse: string): ParsedAIResponse {
+    try {
+      // Fix common issues with SQL field containing unescaped content
+      let fixedJson = extractedJson.replace(
+        /"sql":\s*"([^"]*(?:\\.[^"]*)*)"/,
+        (_match, sqlContent) => {
+          // Handle SQL with newlines, comments, and quotes
+          const fixedSql = sqlContent
+            .replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/"/g, '\\"') // Escape quotes
+            .replace(/\n/g, '\\n') // Escape newlines
+            .replace(/\r/g, '\\r') // Escape carriage returns
+            .replace(/\t/g, '\\t'); // Escape tabs
+          return `"sql": "${fixedSql}"`;
+        }
+      );
+
+      // Also fix explanation field if it has similar issues
+      fixedJson = fixedJson.replace(
+        /"explanation":\s*"([^"]*(?:\\.[^"]*)*)"/,
+        (_match, explanation) => {
+          const fixedExplanation = explanation
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+          return `"explanation": "${fixedExplanation}"`;
+        }
+      );
+
+      console.log('🔧 Fixed JSON structure:');
+      console.log(fixedJson);
+
+      const parsed = JSON.parse(fixedJson) as ParsedAIResponse;
+      console.log('✅ Successfully parsed fixed JSON');
+      return parsed;
+    } catch (fixError) {
+      console.log('🚫 Failed to fix and parse JSON:', (fixError as Error).message);
+      return this.manuallyExtractFields(cleanResponse);
+    }
+  }
+
+  /**
+   * Manual field extraction as final fallback
+   */
+  private manuallyExtractFields(cleanResponse: string): ParsedAIResponse {
+    console.log('🔧 Attempting manual field extraction...');
+    try {
+      const sqlMatch =
+        cleanResponse.match(/"sql":\s*"([^"]*(?:\\.[^"]*)*)"/) ||
+        cleanResponse.match(/SELECT[\s\S]*?(?="|$)/i);
+      const valuesMatch = cleanResponse.match(/"values":\s*(\[[^\]]*\])/);
+      const explanationMatch =
+        cleanResponse.match(/"explanation":\s*"([^"]*(?:\\.[^"]*)*)"/) ||
+        cleanResponse.match(/explanation['"]\s*:\s*['"]([^'"]*?)['"](?:\s*[,}])/);
+
+      if (sqlMatch && valuesMatch && explanationMatch) {
+        let sql = sqlMatch[1] || sqlMatch[0];
+        const valuesStr = valuesMatch[1];
+        let explanation = explanationMatch[1];
+
+        // Clean up SQL
+        sql = sql.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim();
+        explanation = explanation.replace(/\\"/g, '"').trim();
+
+        // Parse values array
+        let values: unknown[] = [];
+        try {
+          values = JSON.parse(valuesStr) as unknown[];
+        } catch {
+          values = [];
+        }
+
+        console.log('✅ Manual extraction successful');
+        return { sql, values, explanation };
+      }
+
+      throw new Error('Could not extract required fields from AI response');
+    } catch (manualError) {
+      console.log('🚫 Manual extraction failed:', (manualError as Error).message);
+      throw new Error(
+        `AI returned invalid JSON format that could not be fixed. Response: ${cleanResponse.substring(0, 300)}...`
+      );
+    }
   }
 }
