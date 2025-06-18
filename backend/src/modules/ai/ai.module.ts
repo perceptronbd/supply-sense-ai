@@ -6,8 +6,6 @@ import { AiController } from './ai.controller';
 import { AISuggestionsService } from './services/ai-suggestions.service';
 import { DemandForecastingService } from './services/demand-forecasting.service';
 import { GeminiService } from './services/gemini.service';
-import { McpConfigService } from './services/mcp-config.service';
-import { McpServerService } from './services/mcp-server.service';
 import { PurchaseOptimizationService } from './services/purchase-optimization.service';
 import { QualityAnalysisService } from './services/quality-analysis.service';
 import { StockPredictionService } from './services/stock-prediction.service';
@@ -18,8 +16,6 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
   controllers: [AiController],
   providers: [
     GeminiService,
-    McpServerService,
-    McpConfigService,
     DemandForecastingService,
     PurchaseOptimizationService,
     QualityAnalysisService,
@@ -30,7 +26,6 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
   ],
   exports: [
     GeminiService,
-    McpServerService,
     DemandForecastingService,
     PurchaseOptimizationService,
     QualityAnalysisService,
