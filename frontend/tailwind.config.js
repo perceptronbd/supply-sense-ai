@@ -122,14 +122,9 @@ module.exports = {
               medium: '2px',
               large: '3px',
             },
+            disabledOpacity: '0.5',
           },
           colors: {
-            background: '#FCFAF5', // pavlova.50 for warm, clean background
-            foreground: '#0A2538', // bigStone.500 for readable text
-            content1: '#F9F5EB', // pavlova.100
-            content2: '#F3EBD7', // pavlova.200
-            content3: '#EEE0C4', // pavlova.300
-            content4: '#E8D6B0', // pavlova.400            default: {
             default: {
               50: '#FCFAF5', // pavlova.50
               100: '#F9F5EB', // pavlova.100
@@ -141,8 +136,8 @@ module.exports = {
               700: '#A28F66', // pavlova.700
               800: '#83714A', // pavlova.800
               900: '#63522F', // pavlova.900
-              DEFAULT: '#E2CC9C', // pavlova.500
               foreground: '#0A2538', // bigStone.500
+              DEFAULT: '#E2CC9C', // pavlova.500
             },
             primary: {
               50: '#75AFD7', // bigStone.50
@@ -155,8 +150,8 @@ module.exports = {
               700: '#061622', // bigStone.700
               800: '#040F16', // bigStone.800
               900: '#02070B', // bigStone.900
-              DEFAULT: '#0A2538', // bigStone.500
               foreground: '#FCFAF5', // pavlova.50
+              DEFAULT: '#0A2538', // bigStone.500
             },
             secondary: {
               50: '#FDEDEA', // pomegranate.50
@@ -169,9 +164,71 @@ module.exports = {
               700: '#8B2C1C', // pomegranate.700
               800: '#5D1E12', // pomegranate.800
               900: '#2E0F09', // pomegranate.900
-              DEFAULT: '#E84A2E', // pomegranate.500
               foreground: '#FCFAF5', // pavlova.50
+              DEFAULT: '#E84A2E', // pomegranate.500
             },
+            success: {
+              50: '#eff8f0',
+              100: '#d9eeda',
+              200: '#c3e4c5',
+              300: '#addbaf',
+              400: '#97d19a',
+              500: '#81c784',
+              600: '#6aa46d',
+              700: '#548156',
+              800: '#3d5f3f',
+              900: '#273c28',
+              foreground: '#000',
+              DEFAULT: '#81c784',
+            },
+            warning: {
+              50: '#fff6e9',
+              100: '#ffe9ca',
+              200: '#ffddaa',
+              300: '#ffd08b',
+              400: '#ffc46c',
+              500: '#ffb74d',
+              600: '#d29740',
+              700: '#a67732',
+              800: '#795725',
+              900: '#4d3717',
+              foreground: '#000',
+              DEFAULT: '#ffb74d',
+            },
+            danger: {
+              50: '#fceeee',
+              100: '#f7d5d5',
+              200: '#f3bdbd',
+              300: '#eea4a4',
+              400: '#ea8c8c',
+              500: '#e57373',
+              600: '#bd5f5f',
+              700: '#954b4b',
+              800: '#6d3737',
+              900: '#452323',
+              foreground: '#000',
+              DEFAULT: '#e57373',
+            },
+            background: '#FCFAF5', // pavlova.50 for warm, clean background
+            foreground: '#0A2538', // bigStone.500 for readable text
+            content1: {
+              DEFAULT: '#F9F5EB', // pavlova.100
+              foreground: '#0A2538',
+            },
+            content2: {
+              DEFAULT: '#F3EBD7', // pavlova.200
+              foreground: '#0A2538',
+            },
+            content3: {
+              DEFAULT: '#EEE0C4', // pavlova.300
+              foreground: '#0A2538',
+            },
+            content4: {
+              DEFAULT: '#E8D6B0', // pavlova.400
+              foreground: '#0A2538',
+            },
+            focus: '#db924b',
+            overlay: '#000000',
           },
         },
         dark: {
@@ -198,14 +255,9 @@ module.exports = {
               medium: '2px',
               large: '3px',
             },
+            disabledOpacity: '0.5',
           },
           colors: {
-            background: '#02070B', // bigStone.900 for dark background
-            foreground: '#F9F5EB', // pavlova.100 for readable text
-            content1: '#040F16', // bigStone.800
-            content2: '#061622', // bigStone.700
-            content3: '#081E2D', // bigStone.600
-            content4: '#0A2538', // bigStone.500
             default: {
               50: '#02070B', // bigStone.900 (inverted)
               100: '#040F16', // bigStone.800
@@ -217,8 +269,8 @@ module.exports = {
               700: '#5181A2', // bigStone.200
               800: '#699FC6', // bigStone.100
               900: '#75AFD7', // bigStone.50
-              DEFAULT: '#22445B', // bigStone.400
               foreground: '#F9F5EB', // pavlova.100
+              DEFAULT: '#22445B', // bigStone.400
             },
             primary: {
               50: '#63522F', // pavlova.900 (inverted for dark)
@@ -231,8 +283,8 @@ module.exports = {
               700: '#F3EBD7', // pavlova.200
               800: '#F9F5EB', // pavlova.100
               900: '#FCFAF5', // pavlova.50
-              DEFAULT: '#C2AE81', // pavlova.600
               foreground: '#63522F', // pavlova.900
+              DEFAULT: '#C2AE81', // pavlova.600
             },
             secondary: {
               50: '#2E0F09', // pomegranate.900 (inverted for dark)
@@ -245,9 +297,71 @@ module.exports = {
               700: '#F6B7AB', // pomegranate.200
               800: '#FADBD5', // pomegranate.100
               900: '#FDEDEA', // pomegranate.50
-              DEFAULT: '#BA3B25', // pomegranate.600
               foreground: '#FDEDEA', // pomegranate.50
+              DEFAULT: '#BA3B25', // pomegranate.600
             },
+            success: {
+              50: '#112b12',
+              100: '#1b431d',
+              200: '#245c27',
+              300: '#2e7532',
+              400: '#388e3c',
+              500: '#5ba25e',
+              600: '#7eb680',
+              700: '#a0c9a2',
+              800: '#c3ddc5',
+              900: '#e6f1e7',
+              foreground: '#000',
+              DEFAULT: '#388e3c',
+            },
+            warning: {
+              50: '#4a2500',
+              100: '#743b00',
+              200: '#9f5100',
+              300: '#ca6600',
+              400: '#f57c00',
+              500: '#f7932d',
+              600: '#f9aa59',
+              700: '#fac186',
+              800: '#fcd8b3',
+              900: '#feefdf',
+              foreground: '#000',
+              DEFAULT: '#f57c00',
+            },
+            danger: {
+              50: '#3f0e0e',
+              100: '#641616',
+              200: '#891f1f',
+              300: '#ae2727',
+              400: '#d32f2f',
+              500: '#db5353',
+              600: '#e27878',
+              700: '#ea9c9c',
+              800: '#f2c1c1',
+              900: '#fae5e5',
+              foreground: '#fff',
+              DEFAULT: '#d32f2f',
+            },
+            background: '#02070B', // bigStone.900 for dark background
+            foreground: '#F9F5EB', // pavlova.100 for readable text
+            content1: {
+              DEFAULT: '#040F16', // bigStone.800
+              foreground: '#F9F5EB',
+            },
+            content2: {
+              DEFAULT: '#061622', // bigStone.700
+              foreground: '#F9F5EB',
+            },
+            content3: {
+              DEFAULT: '#081E2D', // bigStone.600
+              foreground: '#F9F5EB',
+            },
+            content4: {
+              DEFAULT: '#0A2538', // bigStone.500
+              foreground: '#F9F5EB',
+            },
+            focus: '#000000',
+            overlay: '#ffffff',
           },
         },
       },
