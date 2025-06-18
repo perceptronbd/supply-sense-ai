@@ -5,16 +5,32 @@
 import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CreateItemDto } from './dto/create-item.dto';
 import { QueryItemDto } from './dto/query-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 import { ItemEntity } from './entities/item.entity';
 import { ItemService } from './item.service';
 
@@ -24,6 +40,30 @@ import { ItemService } from './item.service';
 @ApiBearerAuth()
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
+
+  @Post()
+  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @ApiOperation({
+    summary: 'Create a new item',
+    description: 'Creates a new item in the system with unit management and conversion rates',
+  })
+  @ApiBody({ type: CreateItemDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Item created successfully',
+    type: ItemEntity,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - validation failed',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - SKU already exists',
+  })
+  async create(@Body() createItemDto: CreateItemDto) {
+    return this.itemService.create(createItemDto);
+  }
 
   @Get()
   @Roles(
@@ -254,5 +294,93 @@ export class ItemController {
     @Query('includeStock') includeStock?: boolean
   ) {
     return this.itemService.findOne(id, branchId, includeStock);
+  }
+
+  @Put(':id')
+  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @ApiOperation({
+    summary: 'Update an existing item',
+    description: 'Updates an existing item with the provided data',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Item UUID',
+    example: 'uuid',
+  })
+  @ApiBody({ type: UpdateItemDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Item updated successfully',
+    type: ItemEntity,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Item not found',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - SKU already exists',
+  })
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateItemDto: UpdateItemDto) {
+    return this.itemService.update(id, updateItemDto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SYSTEM_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Soft delete an item',
+    description:
+      'Deactivates an item (sets isActive to false). Only system admins can delete items.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Item UUID',
+    example: 'uuid',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Item deleted successfully',
+    type: ItemEntity,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Item not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete item - it is being used in active records',
+  })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.itemService.remove(id);
+  }
+
+  @Delete(':id/hard')
+  @Roles(UserRole.SYSTEM_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Permanently delete an item',
+    description:
+      'Permanently deletes an item from the system. Only possible if no references exist.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Item UUID',
+    example: 'uuid',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Item permanently deleted',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Item not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete item - it has references in the system',
+  })
+  async hardDelete(@Param('id', ParseUUIDPipe) id: string) {
+    await this.itemService.hardDelete(id);
   }
 }

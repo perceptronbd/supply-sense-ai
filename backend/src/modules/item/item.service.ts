@@ -1,7 +1,14 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { CreateItemDto } from './dto/create-item.dto';
 import { QueryItemDto } from './dto/query-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 
 type ItemWithOptionalStock = Prisma.ItemGetPayload<Record<string, never>> & {
   stock?: Array<{
@@ -317,5 +324,194 @@ export class ItemService {
       ...item,
       stock: null as null,
     }));
+  }
+
+  /**
+   * Create a new item
+   */
+  async create(createItemDto: CreateItemDto): Promise<TransformedItem> {
+    try {
+      const item = await this.prisma.item.create({
+        data: {
+          name: createItemDto.name,
+          sku: createItemDto.sku,
+          description: createItemDto.description,
+          mainUnit: createItemDto.mainUnit,
+          buyingUnit: createItemDto.buyingUnit,
+          transferUnit: createItemDto.transferUnit,
+          usingUnit: createItemDto.usingUnit,
+          buyingToMainRate: createItemDto.buyingToMainRate ?? 1,
+          transferToMainRate: createItemDto.transferToMainRate ?? 1,
+          usingToMainRate: createItemDto.usingToMainRate ?? 1,
+          safetyStockLevel: createItemDto.safetyStockLevel ?? 0,
+          reorderLevel: createItemDto.reorderLevel ?? 0,
+          isActive: createItemDto.isActive ?? true,
+        },
+      });
+
+      return this.transformSingleItem(item, false);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('An item with this SKU already exists');
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing item
+   */
+  async update(id: string, updateItemDto: UpdateItemDto): Promise<TransformedItem> {
+    // Check if item exists
+    const existingItem = await this.prisma.item.findUnique({
+      where: { id },
+    });
+
+    if (!existingItem) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    try {
+      const updateData = this.buildUpdateData(updateItemDto);
+      const item = await this.prisma.item.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return this.transformSingleItem(item, false);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('An item with this SKU already exists');
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Build update data object from DTO
+   */
+  private buildUpdateData(updateItemDto: UpdateItemDto) {
+    return {
+      ...(updateItemDto.name && { name: updateItemDto.name }),
+      ...(updateItemDto.sku && { sku: updateItemDto.sku }),
+      ...(updateItemDto.description !== undefined && {
+        description: updateItemDto.description,
+      }),
+      ...(updateItemDto.mainUnit && { mainUnit: updateItemDto.mainUnit }),
+      ...(updateItemDto.buyingUnit && { buyingUnit: updateItemDto.buyingUnit }),
+      ...(updateItemDto.transferUnit && { transferUnit: updateItemDto.transferUnit }),
+      ...(updateItemDto.usingUnit && { usingUnit: updateItemDto.usingUnit }),
+      ...(updateItemDto.buyingToMainRate !== undefined && {
+        buyingToMainRate: updateItemDto.buyingToMainRate,
+      }),
+      ...(updateItemDto.transferToMainRate !== undefined && {
+        transferToMainRate: updateItemDto.transferToMainRate,
+      }),
+      ...(updateItemDto.usingToMainRate !== undefined && {
+        usingToMainRate: updateItemDto.usingToMainRate,
+      }),
+      ...(updateItemDto.safetyStockLevel !== undefined && {
+        safetyStockLevel: updateItemDto.safetyStockLevel,
+      }),
+      ...(updateItemDto.reorderLevel !== undefined && {
+        reorderLevel: updateItemDto.reorderLevel,
+      }),
+      ...(updateItemDto.isActive !== undefined && { isActive: updateItemDto.isActive }),
+    };
+  }
+
+  /**
+   * Soft delete an item (set isActive to false)
+   */
+  async remove(id: string): Promise<TransformedItem> {
+    // Check if item exists
+    const existingItem = await this.prisma.item.findUnique({
+      where: { id },
+    });
+
+    if (!existingItem) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    // Check if item is being used in any active records
+    const hasActiveReferences = await this.checkItemReferences(id);
+
+    if (hasActiveReferences) {
+      throw new BadRequestException('Cannot delete item as it is being used in active records');
+    }
+
+    const item = await this.prisma.item.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    return this.transformSingleItem(item, false);
+  }
+
+  /**
+   * Hard delete an item (only if no references exist)
+   */
+  async hardDelete(id: string): Promise<void> {
+    // Check if item exists
+    const existingItem = await this.prisma.item.findUnique({
+      where: { id },
+    });
+
+    if (!existingItem) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    // Check if item has any references
+    const hasReferences = await this.checkItemReferences(id);
+
+    if (hasReferences) {
+      throw new BadRequestException(
+        'Cannot permanently delete item as it has references in the system'
+      );
+    }
+
+    await this.prisma.item.delete({
+      where: { id },
+    });
+  }
+
+  /**
+   * Check if item has any references in other tables
+   */
+  private async checkItemReferences(itemId: string): Promise<boolean> {
+    const [
+      stockCount,
+      supplierCount,
+      prItemCount,
+      poItemCount,
+      rfItemCount,
+      mrItemCount,
+      grItemCount,
+      formulaItemCount,
+    ] = await Promise.all([
+      this.prisma.stock.count({ where: { itemId } }),
+      this.prisma.itemSupplier.count({ where: { itemId } }),
+      this.prisma.pRItem.count({ where: { itemId } }),
+      this.prisma.pOItem.count({ where: { itemId } }),
+      this.prisma.rFItem.count({ where: { itemId } }),
+      this.prisma.mRItem.count({ where: { itemId } }),
+      this.prisma.gRItem.count({ where: { itemId } }),
+      this.prisma.formulaItem.count({ where: { itemId } }),
+    ]);
+
+    return (
+      stockCount > 0 ||
+      supplierCount > 0 ||
+      prItemCount > 0 ||
+      poItemCount > 0 ||
+      rfItemCount > 0 ||
+      mrItemCount > 0 ||
+      grItemCount > 0 ||
+      formulaItemCount > 0
+    );
   }
 }

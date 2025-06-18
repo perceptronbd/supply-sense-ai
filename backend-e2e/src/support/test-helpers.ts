@@ -263,6 +263,21 @@ export class TestHelpers {
   }
 
   /**
+   * Login as system admin for testing
+   */
+  static async loginAsSystemAdmin(): Promise<AuthTokens> {
+    const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
+      email: 'admin@supplychain.com',
+      password: 'admin123',
+    });
+
+    return {
+      accessToken: response.data.access_token,
+      user: response.data.user,
+    };
+  }
+
+  /**
    * Login as procurement specialist for testing
    */
   static async loginAsProcurementSpecialist(): Promise<AuthTokens> {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TestHelpers, type TestUser } from '../../support/test-helpers';
+import { type AxiosErrorResponse, TestHelpers, type TestUser } from '../../support/test-helpers';
 
 describe('Item API (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -569,6 +569,298 @@ describe('Item API (E2E)', () => {
           // Costs should be non-negative
           expect(item.stock.averageCost).toBeGreaterThanOrEqual(0);
           expect(item.stock.lastCost).toBeGreaterThanOrEqual(0);
+        }
+      });
+    });
+  });
+
+  describe('CRUD Operations', () => {
+    let createdItemId: string;
+    let systemAdminToken: string;
+
+    beforeAll(async () => {
+      // Get system admin token for CRUD operations
+      const adminAuth = await TestHelpers.loginAsSystemAdmin();
+      systemAdminToken = adminAuth.accessToken;
+    });
+
+    describe('Create Item', () => {
+      it('should create a new item with valid data', async () => {
+        const itemData = {
+          name: 'Test Steel Rod',
+          sku: `TEST-STEEL-${Date.now()}`,
+          description: 'Test steel rod for e2e testing',
+          mainUnit: 'kg',
+          buyingUnit: 'ton',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+          buyingToMainRate: 1000,
+          transferToMainRate: 1,
+          usingToMainRate: 1,
+          safetyStockLevel: 100,
+          reorderLevel: 50,
+          isActive: true,
+        };
+
+        const response = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        expect(response.status).toBe(201);
+        expect(response.data).toMatchObject({
+          name: itemData.name,
+          sku: itemData.sku,
+          description: itemData.description,
+          mainUnit: itemData.mainUnit,
+          buyingUnit: itemData.buyingUnit,
+          transferUnit: itemData.transferUnit,
+          usingUnit: itemData.usingUnit,
+          buyingToMainRate: itemData.buyingToMainRate,
+          transferToMainRate: itemData.transferToMainRate,
+          usingToMainRate: itemData.usingToMainRate,
+          safetyStockLevel: itemData.safetyStockLevel,
+          reorderLevel: itemData.reorderLevel,
+          isActive: itemData.isActive,
+        });
+
+        expect(response.data.id).toBeDefined();
+        expect(response.data.createdAt).toBeDefined();
+        expect(response.data.updatedAt).toBeDefined();
+
+        createdItemId = response.data.id;
+      });
+
+      it('should reject duplicate SKU', async () => {
+        const itemData = {
+          name: 'Another Test Item',
+          sku: `TEST-STEEL-${Date.now()}`, // Will use the same SKU as above
+          description: 'Another test item',
+          mainUnit: 'pieces',
+          buyingUnit: 'pieces',
+          transferUnit: 'pieces',
+          usingUnit: 'pieces',
+        };
+
+        // First, get the SKU of the created item
+        const existingItem = await axios.get(`${API_BASE_URL}/api/items/${createdItemId}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        itemData.sku = existingItem.data.sku;
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown conflict error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(409);
+        }
+      });
+
+      it('should require authentication for create', async () => {
+        const timestamp = Date.now();
+        const itemData = {
+          name: `Unauthorized Item ${timestamp}`,
+          sku: `UNAUTH-${timestamp}`,
+          mainUnit: 'kg',
+          buyingUnit: 'kg',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+        };
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/items`, itemData);
+          fail('Should have thrown 401 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(401);
+        }
+      });
+
+      it('should require system admin or branch manager role for create', async () => {
+        const timestamp = Date.now();
+        const itemData = {
+          name: `Forbidden Item ${timestamp}`,
+          sku: `FORBID-${timestamp}`,
+          mainUnit: 'kg',
+          buyingUnit: 'kg',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+        };
+
+        // Use regular branch manager token (should work)
+        const response = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(201);
+
+        // Clean up
+        await axios.delete(`${API_BASE_URL}/api/items/${response.data.id}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+      });
+
+      it('should validate required fields', async () => {
+        const invalidData = {
+          description: 'Missing required fields',
+        };
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/items`, invalidData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown validation error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(400);
+        }
+      });
+    });
+
+    describe('Update Item', () => {
+      it('should update item with valid data', async () => {
+        const updateData = {
+          name: 'Updated Test Steel Rod',
+          description: 'Updated description for e2e testing',
+          safetyStockLevel: 150,
+          reorderLevel: 75,
+        };
+
+        const response = await axios.put(`${API_BASE_URL}/api/items/${createdItemId}`, updateData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data).toMatchObject(updateData);
+        expect(response.data.id).toBe(createdItemId);
+      });
+
+      it('should return 404 for non-existent item', async () => {
+        const updateData = {
+          name: 'Non-existent Item',
+        };
+
+        try {
+          await axios.put(
+            `${API_BASE_URL}/api/items/00000000-0000-0000-0000-000000000999`,
+            updateData,
+            {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            }
+          );
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+
+      it('should require authentication for update', async () => {
+        const updateData = {
+          name: 'Unauthorized Update',
+        };
+
+        try {
+          await axios.put(`${API_BASE_URL}/api/items/${createdItemId}`, updateData);
+          fail('Should have thrown 401 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(401);
+        }
+      });
+    });
+
+    describe('Delete Item', () => {
+      it('should soft delete item (deactivate)', async () => {
+        const response = await axios.delete(`${API_BASE_URL}/api/items/${createdItemId}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.isActive).toBe(false);
+        expect(response.data.id).toBe(createdItemId);
+      });
+
+      it('should require system admin role for delete', async () => {
+        // Create a new item for this test
+        const itemData = {
+          name: 'Delete Test Item',
+          sku: `DELETE-TEST-${Date.now()}`,
+          mainUnit: 'kg',
+          buyingUnit: 'kg',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+        };
+
+        const createResponse = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        // Try to delete with branch manager token (should fail)
+        try {
+          await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+            headers: getAuthHeaders(),
+          });
+          fail('Should have thrown 403 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(403);
+        }
+
+        // Clean up with system admin
+        await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+      });
+
+      it('should return 404 for non-existent item delete', async () => {
+        try {
+          await axios.delete(`${API_BASE_URL}/api/items/00000000-0000-0000-0000-000000000999`, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+
+      it('should hard delete item when no references exist', async () => {
+        // Create a new item for hard delete test
+        const itemData = {
+          name: 'Hard Delete Test Item',
+          sku: `HARD-DELETE-${Date.now()}`,
+          mainUnit: 'kg',
+          buyingUnit: 'kg',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+        };
+
+        const createResponse = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        const hardDeleteResponse = await axios.delete(
+          `${API_BASE_URL}/api/items/${createResponse.data.id}/hard`,
+          {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          }
+        );
+
+        expect(hardDeleteResponse.status).toBe(204);
+
+        // Verify item is gone
+        try {
+          await axios.get(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(404);
         }
       });
     });

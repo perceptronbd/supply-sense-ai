@@ -307,4 +307,252 @@ describe('Branch API (E2E)', () => {
       expect(responseTime).toBeLessThan(2000); // Should respond within 2 seconds
     });
   });
+
+  describe('CRUD Operations', () => {
+    let createdBranchId: string;
+    let systemAdminToken: string;
+
+    beforeAll(async () => {
+      // Get system admin token for CRUD operations
+      const adminAuth = await TestHelpers.loginAsSystemAdmin();
+      systemAdminToken = adminAuth.accessToken;
+    });
+
+    describe('Create Branch', () => {
+      it('should create a new branch with valid data', async () => {
+        const branchData = {
+          name: 'Test Branch E2E',
+          code: `TEST-E2E-${Date.now()}`,
+          address: '123 Test Street, Test City, Test State 12345',
+          email: 'test.branch@company.com',
+          isActive: true,
+        };
+
+        const response = await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        expect(response.status).toBe(201);
+        expect(response.data).toMatchObject({
+          name: branchData.name,
+          code: branchData.code,
+          address: branchData.address,
+          email: branchData.email,
+          isActive: branchData.isActive,
+        });
+
+        expect(response.data.id).toBeDefined();
+        expect(response.data.createdAt).toBeDefined();
+        expect(response.data.updatedAt).toBeDefined();
+
+        createdBranchId = response.data.id;
+      });
+
+      it('should reject duplicate branch code', async () => {
+        const branchData = {
+          name: 'Another Test Branch',
+          code: `TEST-E2E-${Date.now()}`, // Will use the same code as above
+          address: '456 Another Street',
+          isActive: true,
+        };
+
+        // First, get the code of the created branch
+        const existingBranch = await axios.get(`${API_BASE_URL}/api/branches/${createdBranchId}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        branchData.code = existingBranch.data.code;
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown conflict error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(409);
+        }
+      });
+
+      it('should require system admin role for create', async () => {
+        const branchData = {
+          name: 'Forbidden Branch',
+          code: 'FORBID-001',
+          isActive: true,
+        };
+
+        // Use branch manager token (should fail)
+        try {
+          await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
+            headers: getAuthHeaders(),
+          });
+          fail('Should have thrown 403 error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(403);
+        }
+      });
+
+      it('should validate required fields', async () => {
+        const invalidData = {
+          address: 'Missing required fields',
+        };
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/branches`, invalidData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown validation error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(400);
+        }
+      });
+    });
+
+    describe('Update Branch', () => {
+      it('should update branch with valid data', async () => {
+        const updateData = {
+          name: 'Updated Test Branch E2E',
+          address: '789 Updated Street, Updated City, Updated State 67890',
+          email: 'updated.branch@company.com',
+        };
+
+        const response = await axios.put(
+          `${API_BASE_URL}/api/branches/${createdBranchId}`,
+          updateData,
+          {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          }
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.data).toMatchObject(updateData);
+        expect(response.data.id).toBe(createdBranchId);
+      });
+
+      it('should allow branch managers to update their own branch', async () => {
+        const updateData = {
+          name: 'Manager Updated Branch',
+        };
+
+        const response = await axios.put(
+          `${API_BASE_URL}/api/branches/${createdBranchId}`,
+          updateData,
+          {
+            headers: getAuthHeaders(),
+          }
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.data.name).toBe(updateData.name);
+      });
+
+      it('should return 404 for non-existent branch', async () => {
+        const updateData = {
+          name: 'Non-existent Branch',
+        };
+
+        try {
+          await axios.put(
+            `${API_BASE_URL}/api/branches/00000000-0000-0000-0000-000000000999`,
+            updateData,
+            {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            }
+          );
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+    });
+
+    describe('Delete Branch', () => {
+      it('should soft delete branch (deactivate)', async () => {
+        const response = await axios.delete(`${API_BASE_URL}/api/branches/${createdBranchId}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.isActive).toBe(false);
+        expect(response.data.id).toBe(createdBranchId);
+      });
+
+      it('should require system admin role for delete', async () => {
+        // Create a new branch for this test
+        const branchData = {
+          name: 'Delete Test Branch',
+          code: `DELETE-TEST-${Date.now()}`,
+          isActive: true,
+        };
+
+        const createResponse = await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        // Try to delete with branch manager token (should fail)
+        try {
+          await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+            headers: getAuthHeaders(),
+          });
+          fail('Should have thrown 403 error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(403);
+        }
+
+        // Clean up with system admin
+        await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+      });
+
+      it('should return 404 for non-existent branch delete', async () => {
+        try {
+          await axios.delete(`${API_BASE_URL}/api/branches/00000000-0000-0000-0000-000000000999`, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+
+      it('should hard delete branch when no references exist', async () => {
+        // Create a new branch for hard delete test
+        const branchData = {
+          name: 'Hard Delete Test Branch',
+          code: `HARD-DELETE-${Date.now()}`,
+          isActive: true,
+        };
+
+        const createResponse = await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        const hardDeleteResponse = await axios.delete(
+          `${API_BASE_URL}/api/branches/${createResponse.data.id}/hard`,
+          {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          }
+        );
+
+        expect(hardDeleteResponse.status).toBe(204);
+
+        // Verify branch is gone
+        try {
+          await axios.get(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as { response: { status: number } };
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+    });
+  });
 });
