@@ -10,6 +10,7 @@ import { Badge, Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  BoxIcon,
   ChatIcon,
   ClipboardIcon,
   CloseIcon,
@@ -51,6 +52,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'AI Chat',
       href: ROUTE_PATHS.CHAT,
       icon: <ChatIcon className="w-5 h-5" />,
+    },
+    {
+      name: 'Items',
+      href: ROUTE_PATHS.ITEMS,
+      icon: <BoxIcon className="w-5 h-5" />,
     },
     {
       name: 'Purchase Requests',

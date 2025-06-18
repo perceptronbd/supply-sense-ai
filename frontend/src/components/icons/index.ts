@@ -1,3 +1,5 @@
+export { BoxIcon } from './BoxIcon';
+export { SearchIcon } from './SearchIcon';
 export { AiIcon } from './AiIcon';
 export { ArrowLeftIcon } from './ArrowLeftIcon';
 export { PlusIcon } from './PlusIcon';
