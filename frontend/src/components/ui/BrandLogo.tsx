@@ -20,7 +20,7 @@ export function BrandLogo({ size = 'md', showText = true, className = '' }: Bran
   // Default: icon + text combination
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <LogoIcon size={icon} className="text-default bg-primary p-1 rounded-md" />
+      <LogoIcon size={icon} className="text-primary p-1 rounded-md" />
       {showText && (
         <div className={`flex items-center ${className}`}>
           <SupplySenseTextIcon size={svgText} className="text-primary" color="currentColor" />

@@ -35,9 +35,6 @@ export function SupplierSelect({
         variant="bordered"
         isLoading={isLoading}
         selectedKeys={selectedSupplierId ? new Set([selectedSupplierId]) : new Set()}
-        classNames={{
-          popoverContent: 'bg-default-200',
-        }}
         onSelectionChange={(keys) => {
           const selected = Array.from(keys)[0] as string;
           onSelectionChange(selected || '');
@@ -48,16 +45,10 @@ export function SupplierSelect({
         {activeSuppliers.map((supplier) => (
           <SelectItem key={supplier.id} textValue={supplier.name}>
             <div className="flex flex-col">
-              <Text variant="bodyMedium" weight="medium" as="span">
-                {supplier.name}
-              </Text>
-              <Text variant="bodyXSmall" className="text-default-600" as="span">
-                Code: {supplier.code}
-              </Text>
+              <span className="font-medium">{supplier.name}</span>
+              <span className="text-sm opacity-60">Code: {supplier.code}</span>
               {supplier.contactPerson && (
-                <Text variant="bodyXSmall" className="text-default-700" as="span">
-                  Contact: {supplier.contactPerson}
-                </Text>
+                <span className="text-sm opacity-70">Contact: {supplier.contactPerson}</span>
               )}
             </div>
           </SelectItem>

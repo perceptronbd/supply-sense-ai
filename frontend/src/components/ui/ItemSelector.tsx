@@ -93,7 +93,7 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
         <AutocompleteItem key={item.id} textValue={item.name}>
           <div className="flex flex-col">
             <span className="font-medium">{item.name}</span>
-            <span className="text-sm text-default-500">
+            <span className="text-sm opacity-60">
               SKU: {item.sku} | Unit: {item.mainUnit}
               {item.stock && (
                 <span className="ml-2">

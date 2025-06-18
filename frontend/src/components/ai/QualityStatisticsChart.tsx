@@ -1,6 +1,7 @@
 'use client';
 
 import { ReloadIcon } from '@/components/icons/ReloadIcon';
+import DrawingLogo from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import { useGetQualityReportQuery } from '@/store/api/aiApi';
 import { useGetAllBranchesQuery } from '@/store/api/branchApi';
@@ -675,7 +676,13 @@ export function QualityStatisticsChart({ className = '' }: QualityStatisticsChar
       <CardBody>
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Spinner size="lg" color="primary" />
+            <DrawingLogo
+              size={60}
+              variant="primary"
+              speed="fast"
+              showFill={true}
+              id="app-loading"
+            />
           </div>
         )}
         {isError && (
