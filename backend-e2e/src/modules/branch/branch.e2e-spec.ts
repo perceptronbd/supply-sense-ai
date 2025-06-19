@@ -1,6 +1,14 @@
 import axios from 'axios';
 import { TestHelpers, type TestUser } from '../../support/test-helpers';
 
+// Type for Axios error responses
+interface AxiosErrorResponse {
+  response: {
+    status: number;
+    data?: any;
+  };
+}
+
 describe('Branch API (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
   let authToken: string;
@@ -30,7 +38,7 @@ describe('Branch API (E2E)', () => {
           await axios.get(`${API_BASE_URL}${endpoint}`);
           fail(`Should have thrown 401 error for ${endpoint}`);
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(401);
         }
       }
@@ -45,7 +53,7 @@ describe('Branch API (E2E)', () => {
         });
         fail('Should have thrown 401 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(401);
       }
     });
@@ -59,10 +67,10 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('data');
-      expect(response.data).toHaveProperty('pagination');
-      expect(Array.isArray(response.data.data)).toBe(true);
-      expect(response.data.pagination).toMatchObject({
+      expect(response.data.data).toHaveProperty('data');
+      expect(response.data.data).toHaveProperty('pagination');
+      expect(Array.isArray(response.data.data.data)).toBe(true);
+      expect(response.data.data.pagination).toMatchObject({
         page: 1,
         limit: 10,
         total: expect.any(Number),
@@ -78,13 +86,13 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('data');
-      expect(response.data.pagination).toBeNull();
-      expect(Array.isArray(response.data.data)).toBe(true);
-      expect(response.data.data.length).toBeGreaterThan(0);
+      expect(response.data.data).toHaveProperty('data');
+      expect(response.data.data.pagination).toBeNull();
+      expect(Array.isArray(response.data.data.data)).toBe(true);
+      expect(response.data.data.data.length).toBeGreaterThan(0);
 
       // Verify branch structure
-      const branch = response.data.data[0];
+      const branch = response.data.data.data[0];
       expect(branch).toMatchObject({
         id: expect.any(String),
         name: expect.any(String),
@@ -102,7 +110,7 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.data).toEqual(
+      expect(response.data.data.data).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             name: expect.stringContaining('Branch'),
@@ -118,7 +126,7 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('data');
+      expect(response.data.data).toHaveProperty('data');
       // Should include branches regardless of isActive status
     });
     it('should handle invalid pagination parameters gracefully', async () => {
@@ -129,7 +137,7 @@ describe('Branch API (E2E)', () => {
         });
         fail('Should have thrown 400 error for invalid parameters');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -142,7 +150,7 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         data: expect.arrayContaining([
           expect.objectContaining({
             id: TEST_BRANCH_ID,
@@ -161,8 +169,8 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.data).toHaveLength(1);
-      expect(response.data.data[0].id).toBe(TEST_BRANCH_ID);
+      expect(response.data.data.data).toHaveLength(1);
+      expect(response.data.data.data[0].id).toBe(TEST_BRANCH_ID);
     });
   });
 
@@ -173,7 +181,7 @@ describe('Branch API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         id: TEST_BRANCH_ID,
         name: expect.any(String),
         code: expect.any(String),
@@ -183,14 +191,14 @@ describe('Branch API (E2E)', () => {
       });
 
       // Optional fields that may or may not be present
-      if (response.data.address) {
-        expect(response.data.address).toEqual(expect.any(String));
+      if (response.data.data.address) {
+        expect(response.data.data.address).toEqual(expect.any(String));
       }
-      if (response.data.phone) {
-        expect(response.data.phone).toEqual(expect.any(String));
+      if (response.data.data.phone) {
+        expect(response.data.data.phone).toEqual(expect.any(String));
       }
-      if (response.data.email) {
-        expect(response.data.email).toEqual(expect.any(String));
+      if (response.data.data.email) {
+        expect(response.data.data.email).toEqual(expect.any(String));
       }
     });
 
@@ -203,7 +211,7 @@ describe('Branch API (E2E)', () => {
         });
         fail('Should have thrown 404 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(404);
       }
     });
@@ -216,7 +224,7 @@ describe('Branch API (E2E)', () => {
         });
         fail('Should have thrown 400 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -255,7 +263,7 @@ describe('Branch API (E2E)', () => {
           },
         });
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         // Should not crash the server, might return 400 or 406
         expect([400, 406, 415]).toContain(axiosError.response.status);
       }
@@ -272,7 +280,7 @@ describe('Branch API (E2E)', () => {
         });
         fail('Should have thrown 400 error for invalid parameters');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -290,7 +298,7 @@ describe('Branch API (E2E)', () => {
 
       responses.forEach((response) => {
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('data');
+        expect(response.data.data).toHaveProperty('data');
       });
     });
 
@@ -333,7 +341,7 @@ describe('Branch API (E2E)', () => {
         });
 
         expect(response.status).toBe(201);
-        expect(response.data).toMatchObject({
+        expect(response.data.data).toMatchObject({
           name: branchData.name,
           code: branchData.code,
           address: branchData.address,
@@ -341,11 +349,11 @@ describe('Branch API (E2E)', () => {
           isActive: branchData.isActive,
         });
 
-        expect(response.data.id).toBeDefined();
-        expect(response.data.createdAt).toBeDefined();
-        expect(response.data.updatedAt).toBeDefined();
+        expect(response.data.data.id).toBeDefined();
+        expect(response.data.data.createdAt).toBeDefined();
+        expect(response.data.data.updatedAt).toBeDefined();
 
-        createdBranchId = response.data.id;
+        createdBranchId = response.data.data.id;
       });
 
       it('should reject duplicate branch code', async () => {
@@ -361,7 +369,7 @@ describe('Branch API (E2E)', () => {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
 
-        branchData.code = existingBranch.data.code;
+        branchData.code = existingBranch.data.data.code;
 
         try {
           await axios.post(`${API_BASE_URL}/api/branches`, branchData, {
@@ -369,7 +377,7 @@ describe('Branch API (E2E)', () => {
           });
           fail('Should have thrown conflict error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(409);
         }
       });
@@ -388,7 +396,7 @@ describe('Branch API (E2E)', () => {
           });
           fail('Should have thrown 403 error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(403);
         }
       });
@@ -404,7 +412,7 @@ describe('Branch API (E2E)', () => {
           });
           fail('Should have thrown validation error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(400);
         }
       });
@@ -427,8 +435,8 @@ describe('Branch API (E2E)', () => {
         );
 
         expect(response.status).toBe(200);
-        expect(response.data).toMatchObject(updateData);
-        expect(response.data.id).toBe(createdBranchId);
+        expect(response.data.data).toMatchObject(updateData);
+        expect(response.data.data.id).toBe(createdBranchId);
       });
 
       it('should allow branch managers to update their own branch', async () => {
@@ -445,7 +453,7 @@ describe('Branch API (E2E)', () => {
         );
 
         expect(response.status).toBe(200);
-        expect(response.data.name).toBe(updateData.name);
+        expect(response.data.data.name).toBe(updateData.name);
       });
 
       it('should return 404 for non-existent branch', async () => {
@@ -463,7 +471,7 @@ describe('Branch API (E2E)', () => {
           );
           fail('Should have thrown 404 error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(404);
         }
       });
@@ -476,8 +484,8 @@ describe('Branch API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data.isActive).toBe(false);
-        expect(response.data.id).toBe(createdBranchId);
+        expect(response.data.data.isActive).toBe(false);
+        expect(response.data.data.id).toBe(createdBranchId);
       });
 
       it('should require system admin role for delete', async () => {
@@ -494,17 +502,17 @@ describe('Branch API (E2E)', () => {
 
         // Try to delete with branch manager token (should fail)
         try {
-          await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+          await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.data.id}`, {
             headers: getAuthHeaders(),
           });
           fail('Should have thrown 403 error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(403);
         }
 
         // Clean up with system admin
-        await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+        await axios.delete(`${API_BASE_URL}/api/branches/${createResponse.data.data.id}`, {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
       });
@@ -516,7 +524,7 @@ describe('Branch API (E2E)', () => {
           });
           fail('Should have thrown 404 error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(404);
         }
       });
@@ -534,7 +542,7 @@ describe('Branch API (E2E)', () => {
         });
 
         const hardDeleteResponse = await axios.delete(
-          `${API_BASE_URL}/api/branches/${createResponse.data.id}/hard`,
+          `${API_BASE_URL}/api/branches/${createResponse.data.data.id}/hard`,
           {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           }
@@ -544,12 +552,12 @@ describe('Branch API (E2E)', () => {
 
         // Verify branch is gone
         try {
-          await axios.get(`${API_BASE_URL}/api/branches/${createResponse.data.id}`, {
+          await axios.get(`${API_BASE_URL}/api/branches/${createResponse.data.data.id}`, {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           });
           fail('Should have thrown 404 error');
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(404);
         }
       });
