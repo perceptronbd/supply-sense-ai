@@ -1,5 +1,6 @@
 export { BanIcon } from './BanIcon';
 export { BoxIcon } from './BoxIcon';
+export { BuildingIcon } from './BuildingIcon';
 export { SearchIcon } from './SearchIcon';
 export { AiIcon } from './AiIcon';
 export { ArrowLeftIcon } from './ArrowLeftIcon';

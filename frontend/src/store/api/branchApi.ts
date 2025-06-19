@@ -31,6 +31,26 @@ export interface BranchQueryParams {
   includeInactive?: boolean;
 }
 
+export interface CreateBranchRequest {
+  name: string;
+  code: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateBranchRequest {
+  name?: string;
+  code?: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  isActive?: boolean;
+}
+
 export interface BranchesResponse {
   data: Branch[];
   pagination?: {
@@ -80,6 +100,47 @@ export const branchApi = createApi({
       transformResponse: (response: BranchesResponse) => response.data,
       providesTags: [TAG_TYPES.BRANCH],
     }),
+
+    // Create new branch
+    createBranch: builder.mutation<Branch, CreateBranchRequest>({
+      query: (data) => ({
+        url: '',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: [TAG_TYPES.BRANCH],
+    }),
+
+    // Update branch
+    updateBranch: builder.mutation<Branch, { id: string; data: UpdateBranchRequest }>({
+      query: ({ id, data }) => ({
+        url: `/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        TAG_TYPES.BRANCH,
+        { type: TAG_TYPES.BRANCH, id },
+      ],
+    }),
+
+    // Delete branch (soft delete)
+    deleteBranch: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [TAG_TYPES.BRANCH, { type: TAG_TYPES.BRANCH, id }],
+    }),
+
+    // Hard delete branch
+    hardDeleteBranch: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/${id}/hard`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [TAG_TYPES.BRANCH, { type: TAG_TYPES.BRANCH, id }],
+    }),
   }),
 });
 
@@ -88,4 +149,8 @@ export const {
   useGetUserBranchQuery,
   useGetBranchQuery,
   useGetAllBranchesQuery,
+  useCreateBranchMutation,
+  useUpdateBranchMutation,
+  useDeleteBranchMutation,
+  useHardDeleteBranchMutation,
 } = branchApi;

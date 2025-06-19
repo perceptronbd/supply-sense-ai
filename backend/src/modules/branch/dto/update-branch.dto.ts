@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, IsPhoneNumber, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export class UpdateBranchDto {
   @ApiPropertyOptional({
@@ -23,6 +31,7 @@ export class UpdateBranchDto {
     example: '123 Main Street, City, State 12345',
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   address?: string;
 
@@ -31,6 +40,8 @@ export class UpdateBranchDto {
     example: '+1-555-0123',
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @ValidateIf((o) => o.phone !== undefined && o.phone !== '')
   @IsPhoneNumber()
   phone?: string;
 
@@ -39,6 +50,8 @@ export class UpdateBranchDto {
     example: 'main@company.com',
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @ValidateIf((o) => o.email !== undefined && o.email !== '')
   @IsEmail()
   email?: string;
 

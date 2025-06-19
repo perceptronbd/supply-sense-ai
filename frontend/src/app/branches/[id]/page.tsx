@@ -4,18 +4,18 @@ import AuthGuard from '@/components/AuthGuard';
 import { ArrowLeftIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
-import { type Item, useGetItemQuery } from '@/store/api/itemApi';
+import { type Branch, useGetBranchQuery } from '@/store/api/branchApi';
 import { Button, Card, CardBody, CardHeader, Chip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-interface ItemDetailsPageProps {
+interface BranchDetailsPageProps {
   params: Promise<{
     id: string;
   }>;
 }
 
-export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
+export default function BranchDetailsPage({ params }: BranchDetailsPageProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null);
@@ -32,14 +32,13 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
 
   // API query
   const {
-    data: item,
+    data: branch,
     isLoading,
     error,
     refetch,
-  } = useGetItemQuery(
-    { id: resolvedParams?.id || '', includeStock: true },
-    { skip: !isMounted || !resolvedParams }
-  );
+  } = useGetBranchQuery(resolvedParams?.id || '', {
+    skip: !isMounted || !resolvedParams,
+  });
 
   // Status chip component
   const StatusChip = ({ isActive }: { isActive: boolean }) => (
@@ -47,77 +46,6 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
       {isActive ? 'Active' : 'Inactive'}
     </Chip>
   );
-  // Stock display component
-  const StockSection = ({ stock }: { stock?: Item['stock'] }) => {
-    if (!stock) {
-      return (
-        <Card>
-          <CardHeader>
-            <Text variant="titleMedium" weight="semiBold">
-              Stock Information
-            </Text>
-          </CardHeader>
-          <CardBody>
-            <Text variant="bodyMedium" color="muted">
-              No stock data available
-            </Text>
-          </CardBody>
-        </Card>
-      );
-    }
-
-    return (
-      <Card>
-        <CardHeader>
-          <Text variant="titleMedium" weight="semiBold">
-            Stock Information
-          </Text>
-        </CardHeader>
-        <CardBody>
-          <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <dt>
-                <Text variant="bodySmall" color="muted">
-                  Total Quantity
-                </Text>
-              </dt>
-              <dd>
-                <Text variant="bodyLarge" weight="semiBold" color="primary">
-                  {stock.quantity}
-                </Text>
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <Text variant="bodySmall" color="muted">
-                  Available Quantity
-                </Text>
-              </dt>
-              <dd>
-                <Text variant="bodyLarge" weight="semiBold" color="success">
-                  {stock.availableQty}
-                </Text>
-              </dd>
-            </div>
-            {stock.reservedQty && stock.reservedQty > 0 && (
-              <div>
-                <dt>
-                  <Text variant="bodySmall" color="muted">
-                    Reserved Quantity
-                  </Text>
-                </dt>
-                <dd>
-                  <Text variant="bodyLarge" weight="semiBold" color="warning">
-                    {stock.reservedQty}
-                  </Text>
-                </dd>
-              </div>
-            )}
-          </dl>
-        </CardBody>
-      </Card>
-    );
-  };
 
   // Don't render anything until mounted and params are resolved
   if (!isMounted || !resolvedParams) {
@@ -166,7 +94,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
               <CardBody>
                 <div className="text-center py-12">
                   <Text variant="bodyLarge" color="danger" className="mb-4">
-                    Failed to load item details
+                    Failed to load branch details
                   </Text>
                   <Button color="primary" variant="flat" onPress={() => refetch()}>
                     Try Again
@@ -176,25 +104,25 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
             </Card>
           )}
 
-          {/* Item Details */}
-          {!isLoading && !error && item && (
+          {/* Branch Details */}
+          {!isLoading && !error && branch && (
             <div className="space-y-6">
               {/* Header */}
               <header>
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <Text variant="headerMedium" weight="bold" color="default" as="h1">
-                      {item.name}
+                      {branch.name}
                     </Text>
                     <Text variant="bodyLarge" color="muted" className="mt-1" as="p">
-                      SKU: {item.sku}
+                      Code: {branch.code}
                     </Text>
                   </div>
-                  <StatusChip isActive={item.isActive} />
+                  <StatusChip isActive={branch.isActive} />
                 </div>
-                {item.description && (
+                {branch.description && (
                   <Text variant="bodyMedium" color="default" as="p">
-                    {item.description}
+                    {branch.description}
                   </Text>
                 )}
               </header>
@@ -211,36 +139,24 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                     <section>
                       <dt>
                         <Text variant="bodySmall" color="muted">
-                          Item Name
+                          Branch Name
                         </Text>
                       </dt>
                       <dd>
                         <Text variant="bodyMedium" weight="medium">
-                          {item.name}
+                          {branch.name}
                         </Text>
                       </dd>
                     </section>
                     <section>
                       <dt>
                         <Text variant="bodySmall" color="muted">
-                          SKU
+                          Branch Code
                         </Text>
                       </dt>
                       <dd>
                         <Text variant="bodyMedium" weight="medium">
-                          {item.sku}
-                        </Text>
-                      </dd>
-                    </section>
-                    <section>
-                      <dt>
-                        <Text variant="bodySmall" color="muted">
-                          Main Unit
-                        </Text>
-                      </dt>
-                      <dd>
-                        <Text variant="bodyMedium" weight="medium">
-                          {item.mainUnit}
+                          {branch.code}
                         </Text>
                       </dd>
                     </section>
@@ -251,10 +167,10 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                         </Text>
                       </dt>
                       <dd>
-                        <StatusChip isActive={item.isActive} />
+                        <StatusChip isActive={branch.isActive} />
                       </dd>
                     </section>
-                    {item.description && (
+                    {branch.description && (
                       <section className="md:col-span-2">
                         <dt>
                           <Text variant="bodySmall" color="muted">
@@ -262,7 +178,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                           </Text>
                         </dt>
                         <dd>
-                          <Text variant="bodyMedium">{item.description}</Text>
+                          <Text variant="bodyMedium">{branch.description}</Text>
                         </dd>
                       </section>
                     )}
@@ -270,75 +186,86 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                 </CardBody>
               </Card>
 
-              {/* Units Information */}
+              {/* Contact Information */}
               <Card>
                 <CardHeader>
                   <Text variant="titleMedium" weight="semiBold">
-                    Units Information
+                    Contact Information
                   </Text>
                 </CardHeader>
                 <CardBody>
                   <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <section>
-                      <dt>
-                        <Text variant="bodySmall" color="muted">
-                          Main Unit
-                        </Text>
-                      </dt>
-                      <dd>
-                        <Text variant="bodyMedium" weight="medium">
-                          {item.mainUnit}
-                        </Text>
-                      </dd>
-                    </section>
-                    {item.buyingUnit && (
-                      <section>
+                    {branch.address && (
+                      <section className="md:col-span-2">
                         <dt>
                           <Text variant="bodySmall" color="muted">
-                            Buying Unit
+                            Address
                           </Text>
                         </dt>
                         <dd>
                           <Text variant="bodyMedium" weight="medium">
-                            {item.buyingUnit}
+                            {branch.address}
                           </Text>
                         </dd>
                       </section>
                     )}
-                    {item.transferUnit && (
+                    {branch.phone && (
                       <section>
                         <dt>
                           <Text variant="bodySmall" color="muted">
-                            Transfer Unit
+                            Phone
                           </Text>
                         </dt>
                         <dd>
                           <Text variant="bodyMedium" weight="medium">
-                            {item.transferUnit}
+                            {branch.phone}
                           </Text>
                         </dd>
                       </section>
                     )}
-                    {item.usingUnit && (
+                    {branch.email && (
                       <section>
                         <dt>
                           <Text variant="bodySmall" color="muted">
-                            Using Unit
+                            Email
                           </Text>
                         </dt>
                         <dd>
                           <Text variant="bodyMedium" weight="medium">
-                            {item.usingUnit}
+                            {branch.email}
                           </Text>
                         </dd>
+                      </section>
+                    )}
+                    {branch.manager && (
+                      <section className="md:col-span-2">
+                        <dt>
+                          <Text variant="bodySmall" color="muted">
+                            Manager
+                          </Text>
+                        </dt>
+                        <dd>
+                          <Text variant="bodyMedium" weight="medium">
+                            {branch.manager.firstName} {branch.manager.lastName}
+                          </Text>
+                          {branch.manager.email && (
+                            <Text variant="bodySmall" color="muted" className="mt-1">
+                              {branch.manager.email}
+                            </Text>
+                          )}
+                        </dd>
+                      </section>
+                    )}
+                    {!branch.address && !branch.phone && !branch.email && !branch.manager && (
+                      <section className="md:col-span-2">
+                        <Text variant="bodyMedium" color="muted" className="italic">
+                          No contact information available
+                        </Text>
                       </section>
                     )}
                   </dl>
                 </CardBody>
               </Card>
-
-              {/* Stock Information */}
-              <StockSection stock={item.stock} />
 
               {/* Metadata */}
               <Card>
@@ -357,13 +284,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                       </dt>
                       <dd>
                         <Text variant="bodyMedium">
-                          {new Date(item.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {new Date(branch.createdAt).toLocaleString()}
                         </Text>
                       </dd>
                     </section>
@@ -375,13 +296,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                       </dt>
                       <dd>
                         <Text variant="bodyMedium">
-                          {new Date(item.updatedAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {new Date(branch.updatedAt).toLocaleString()}
                         </Text>
                       </dd>
                     </section>
@@ -389,22 +304,6 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                 </CardBody>
               </Card>
             </div>
-          )}
-
-          {/* Not Found State */}
-          {!isLoading && !error && !item && (
-            <Card>
-              <CardBody>
-                <div className="text-center py-12">
-                  <Text variant="bodyLarge" color="muted" className="mb-2">
-                    Item not found
-                  </Text>
-                  <Text variant="bodyMedium" color="muted">
-                    The item you're looking for doesn't exist or has been removed.
-                  </Text>
-                </div>
-              </CardBody>
-            </Card>
           )}
         </div>
       </main>

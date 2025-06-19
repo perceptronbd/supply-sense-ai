@@ -1,3 +1,4 @@
+import { Text } from '@/components/ui/Text';
 import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
 import { purchaseRequestSchema } from '@/lib/schemas/purchase-request.schema';
 import { Card, CardBody, CardHeader } from '@heroui/react';
@@ -15,7 +16,9 @@ export function TemplateSelection({ templateOptions, onLoadTemplate }: TemplateS
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-xl font-semibold">Templates</h3>
+        <Text variant="titleLarge" weight="semiBold" as="h3">
+          Templates
+        </Text>
       </CardHeader>
       <CardBody>
         <div className="flex gap-4 items-end">

@@ -1,6 +1,7 @@
 'use client';
 
 import { ItemSelector } from '@/components/ui/ItemSelector';
+import { Text } from '@/components/ui/Text';
 import { ValidatedDateInput } from '@/components/ui/ValidatedDateInput';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
@@ -95,7 +96,9 @@ export function PurchaseRequestItemForm({
   return (
     <div className="space-y-4 bg-content1 p-6 rounded-lg border border-divider">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground">{item ? 'Edit Item' : 'Add Item'}</h3>
+        <Text variant="titleMedium" weight="semiBold" as="h3">
+          {item ? 'Edit Item' : 'Add Item'}
+        </Text>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

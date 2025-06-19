@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   BoxIcon,
+  BuildingIcon,
   ChatIcon,
   ClipboardIcon,
   CloseIcon,
@@ -57,6 +58,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Items',
       href: ROUTE_PATHS.ITEMS,
       icon: <BoxIcon className="w-5 h-5" />,
+    },
+    {
+      name: 'Branches',
+      href: ROUTE_PATHS.BRANCHES,
+      icon: <BuildingIcon className="w-5 h-5" />,
     },
     {
       name: 'Purchase Requests',

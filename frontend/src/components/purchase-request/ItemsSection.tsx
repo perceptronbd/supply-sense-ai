@@ -1,5 +1,6 @@
 import { AiIcon, PlusIcon } from '@/components/icons';
 import { ItemCard } from '@/components/ui/ItemCard';
+import { Text } from '@/components/ui/Text';
 import {
   type PurchaseRequestFormData,
   type PurchaseRequestItemFormData,
@@ -42,7 +43,9 @@ export function ItemsSection({
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center w-full">
-          <h3 className="text-xl font-semibold">Items</h3>
+          <Text variant="titleLarge" weight="semiBold" as="h3">
+            Items
+          </Text>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -65,7 +68,9 @@ export function ItemsSection({
         {errors.items && (
           <div className="mb-4 text-danger text-sm">
             {errors.items.map((error) => (
-              <p key={error}>{error}</p>
+              <Text key={error} variant="bodySmall" color="danger" as="p">
+                {error}
+              </Text>
             ))}
           </div>
         )}
@@ -101,9 +106,9 @@ export function ItemsSection({
             {/* Total Amount */}
             <div className="border-t border-divider pt-4">
               <div className="text-right">
-                <p className="text-lg font-semibold">
+                <Text variant="titleMedium" weight="semiBold" as="p">
                   Total Estimated Amount: ${calculateTotalAmount().toFixed(2)}
-                </p>
+                </Text>
               </div>
             </div>
           </div>
