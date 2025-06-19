@@ -82,12 +82,12 @@ describe('Item API (E2E)', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('data');
-      expect(response.data.pagination).toBeNull();
-      expect(Array.isArray(response.data.data)).toBe(true);
-      expect(response.data.data.length).toBeGreaterThan(0);
+      expect(response.data.data.pagination).toBeNull();
+      expect(Array.isArray(response.data.data.data)).toBe(true);
+      expect(response.data.data.data.length).toBeGreaterThan(0);
 
       // Verify item structure
-      const item = response.data.data[0];
+      const item = response.data.data.data[0];
       expect(item).toMatchObject({
         id: expect.any(String),
         name: expect.any(String),

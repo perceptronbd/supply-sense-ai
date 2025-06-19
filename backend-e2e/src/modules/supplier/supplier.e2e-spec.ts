@@ -1,5 +1,6 @@
+import type { Supplier } from '@prisma/client';
 import axios from 'axios';
-import { type AxiosErrorResponse, TestHelpers, type TestUser } from '../../support/test-helpers';
+import { type AxiosErrorResponse, TestHelpers } from '../../support/test-helpers';
 
 describe('Supplier API (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -57,9 +58,9 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('data');
-        expect(response.data).toHaveProperty('pagination');
-        expect(Array.isArray(response.data.data)).toBe(true);
+        expect(response.data.data).toHaveProperty('data');
+        expect(response.data.data).toHaveProperty('pagination');
+        expect(Array.isArray(response.data.data.data)).toBe(true);
       });
 
       it('should support search functionality', async () => {
@@ -69,8 +70,8 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('data');
-        expect(Array.isArray(response.data.data)).toBe(true);
+        expect(response.data.data).toHaveProperty('data');
+        expect(Array.isArray(response.data.data.data)).toBe(true);
       });
 
       it('should support pagination', async () => {
@@ -80,13 +81,13 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('data');
-        expect(response.data).toHaveProperty('pagination');
-        expect(response.data.pagination).toMatchObject({
+        expect(response.data.data).toHaveProperty('data');
+        expect(response.data.data).toHaveProperty('pagination');
+        expect(response.data.data.pagination).toMatchObject({
           page: 1,
           limit: 5,
         });
-        expect(response.data.data.length).toBeLessThanOrEqual(5);
+        expect(response.data.data.data.length).toBeLessThanOrEqual(5);
       });
 
       it('should include inactive suppliers when requested', async () => {
@@ -96,8 +97,8 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('data');
-        expect(Array.isArray(response.data.data)).toBe(true);
+        expect(response.data.data).toHaveProperty('data');
+        expect(Array.isArray(response.data.data.data)).toBe(true);
       });
 
       it('should validate pagination parameters', async () => {
@@ -125,14 +126,14 @@ describe('Supplier API (E2E)', () => {
           headers: getAuthHeaders(),
         });
 
-        if (response.data.data.length > 0) {
-          testSupplierId = response.data.data[0].id;
+        if (response.data.data.data.length > 0) {
+          testSupplierId = response.data.data.data[0].id;
         }
       });
 
       it('should return detailed supplier information', async () => {
         if (!testSupplierId) {
-          pending('No suppliers available for testing');
+          console.log('No suppliers available for testing, skipping test');
           return;
         }
 
@@ -141,14 +142,14 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('id');
-        expect(response.data).toHaveProperty('name');
-        expect(response.data).toHaveProperty('code');
-        expect(response.data).toHaveProperty('isActive');
-        expect(response.data).toHaveProperty('items');
-        expect(response.data).toHaveProperty('purchaseOrders');
-        expect(Array.isArray(response.data.items)).toBe(true);
-        expect(Array.isArray(response.data.purchaseOrders)).toBe(true);
+        expect(response.data.data).toHaveProperty('id');
+        expect(response.data.data).toHaveProperty('name');
+        expect(response.data.data).toHaveProperty('code'); // Back to code
+        expect(response.data.data).toHaveProperty('isActive');
+        expect(response.data.data).toHaveProperty('items');
+        expect(response.data.data).toHaveProperty('purchaseOrders');
+        expect(Array.isArray(response.data.data.items)).toBe(true);
+        expect(Array.isArray(response.data.data.purchaseOrders)).toBe(true);
       });
 
       it('should return 404 for non-existent supplier', async () => {
@@ -170,7 +171,7 @@ describe('Supplier API (E2E)', () => {
       it('should create a new supplier with valid data', async () => {
         const supplierData = {
           name: 'Test Supplier E2E',
-          code: `TEST-SUP-${Date.now()}`,
+          code: `TEST-SUP-${Date.now()}`, // Back to code
           contactPerson: 'John Test',
           email: 'john.test@testsupplier.com',
           address: '123 Test Supplier Street, Test City, Test State 12345',
@@ -183,9 +184,9 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(201);
-        expect(response.data).toMatchObject({
+        expect(response.data.data).toMatchObject({
           name: supplierData.name,
-          code: supplierData.code,
+          code: supplierData.code, // Back to code
           contactPerson: supplierData.contactPerson,
           email: supplierData.email,
           address: supplierData.address,
@@ -193,17 +194,17 @@ describe('Supplier API (E2E)', () => {
           isActive: supplierData.isActive,
         });
 
-        expect(response.data.id).toBeDefined();
-        expect(response.data.createdAt).toBeDefined();
-        expect(response.data.updatedAt).toBeDefined();
+        expect(response.data.data.id).toBeDefined();
+        expect(response.data.data.createdAt).toBeDefined();
+        expect(response.data.data.updatedAt).toBeDefined();
 
-        createdSupplierId = response.data.id;
+        createdSupplierId = response.data.data.id;
       });
 
       it('should reject duplicate supplier code', async () => {
         const supplierData = {
           name: 'Another Test Supplier',
-          code: `TEST-SUP-${Date.now()}`, // Will use the same code as above
+          code: `TEST-SUP-${Date.now()}`, // Back to code
           contactPerson: 'Jane Test',
           isActive: true,
         };
@@ -216,7 +217,7 @@ describe('Supplier API (E2E)', () => {
           }
         );
 
-        supplierData.code = existingSupplier.data.code;
+        supplierData.code = existingSupplier.data.data.code;
 
         try {
           await axios.post(`${API_BASE_URL}/api/suppliers`, supplierData, {
@@ -232,7 +233,7 @@ describe('Supplier API (E2E)', () => {
       it('should allow branch managers and procurement specialists to create suppliers', async () => {
         const supplierData = {
           name: 'Branch Manager Supplier',
-          code: `BM-SUP-${Date.now()}`,
+          code: `BM-SUP-${Date.now()}`, // Back to code
           contactPerson: 'Branch Manager',
           isActive: true,
         };
@@ -244,7 +245,7 @@ describe('Supplier API (E2E)', () => {
         expect(response.status).toBe(201);
 
         // Clean up
-        await axios.delete(`${API_BASE_URL}/api/suppliers/${response.data.id}`, {
+        await axios.delete(`${API_BASE_URL}/api/suppliers/${response.data.data.id}`, {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
       });
@@ -252,7 +253,7 @@ describe('Supplier API (E2E)', () => {
       it('should require authentication for create', async () => {
         const supplierData = {
           name: 'Unauthorized Supplier',
-          code: 'UNAUTH-SUP-001',
+          code: 'UNAUTH-SUP-001', // Back to code
           isActive: true,
         };
 
@@ -284,7 +285,7 @@ describe('Supplier API (E2E)', () => {
       it('should validate email format', async () => {
         const invalidData = {
           name: 'Invalid Email Supplier',
-          code: `INVALID-EMAIL-${Date.now()}`,
+          code: `INVALID-EMAIL-${Date.now()}`, // Back to code
           email: 'invalid-email-format',
           isActive: true,
         };
@@ -320,8 +321,8 @@ describe('Supplier API (E2E)', () => {
         );
 
         expect(response.status).toBe(200);
-        expect(response.data).toMatchObject(updateData);
-        expect(response.data.id).toBe(createdSupplierId);
+        expect(response.data.data).toMatchObject(updateData);
+        expect(response.data.data.id).toBe(createdSupplierId);
       });
       it('should return 404 for non-existent supplier', async () => {
         const updateData = {
@@ -357,7 +358,7 @@ describe('Supplier API (E2E)', () => {
         );
 
         expect(response.status).toBe(200);
-        expect(response.data.name).toBe(updateData.name);
+        expect(response.data.data.name).toBe(updateData.name);
       });
 
       it('should validate email format on update', async () => {
@@ -384,15 +385,15 @@ describe('Supplier API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data.isActive).toBe(false);
-        expect(response.data.id).toBe(createdSupplierId);
+        expect(response.data.data.isActive).toBe(false);
+        expect(response.data.data.id).toBe(createdSupplierId);
       });
 
       it('should require system admin role for delete', async () => {
         // Create a new supplier for this test
         const supplierData = {
           name: 'Delete Test Supplier',
-          code: `DELETE-TEST-${Date.now()}`,
+          code: `DELETE-TEST-${Date.now()}`, // Back to code
           isActive: true,
         };
 
@@ -402,7 +403,7 @@ describe('Supplier API (E2E)', () => {
 
         // Try to delete with branch manager token (should fail)
         try {
-          await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.id}`, {
+          await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}`, {
             headers: getAuthHeaders(),
           });
           fail('Should have thrown 403 error');
@@ -412,7 +413,7 @@ describe('Supplier API (E2E)', () => {
         }
 
         // Clean up with system admin
-        await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.id}`, {
+        await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}`, {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
       });
@@ -432,7 +433,7 @@ describe('Supplier API (E2E)', () => {
         // Create a new supplier for hard delete test
         const supplierData = {
           name: 'Hard Delete Test Supplier',
-          code: `HARD-DELETE-${Date.now()}`,
+          code: `HARD-DELETE-${Date.now()}`, // Back to code
           isActive: true,
         };
 
@@ -441,7 +442,7 @@ describe('Supplier API (E2E)', () => {
         });
 
         const hardDeleteResponse = await axios.delete(
-          `${API_BASE_URL}/api/suppliers/${createResponse.data.id}/hard`,
+          `${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}/hard`,
           {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           }
@@ -451,7 +452,7 @@ describe('Supplier API (E2E)', () => {
 
         // Verify supplier is gone
         try {
-          await axios.get(`${API_BASE_URL}/api/suppliers/${createResponse.data.id}`, {
+          await axios.get(`${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}`, {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           });
           fail('Should have thrown 404 error');
@@ -472,10 +473,10 @@ describe('Supplier API (E2E)', () => {
 
       expect(response.status).toBe(200);
 
-      response.data.data.forEach((supplier: any) => {
+      response.data.data.data.forEach((supplier: Supplier) => {
         expect(supplier).toHaveProperty('id');
         expect(supplier).toHaveProperty('name');
-        expect(supplier).toHaveProperty('code');
+        expect(supplier).toHaveProperty('code'); // Back to code
         expect(supplier).toHaveProperty('isActive');
         expect(supplier).toHaveProperty('createdAt');
         expect(supplier).toHaveProperty('updatedAt');
@@ -487,7 +488,7 @@ describe('Supplier API (E2E)', () => {
       // Create a test supplier
       const supplierData = {
         name: 'Consistency Test Supplier',
-        code: `CONSISTENCY-${Date.now()}`,
+        code: `CONSISTENCY-${Date.now()}`, // Back to code
         isActive: true,
       };
 
@@ -501,22 +502,22 @@ describe('Supplier API (E2E)', () => {
       };
 
       const updateResponse = await axios.put(
-        `${API_BASE_URL}/api/suppliers/${createResponse.data.id}`,
+        `${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}`,
         updateData,
         {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         }
       );
 
-      expect(updateResponse.data.id).toBe(createResponse.data.id);
-      expect(updateResponse.data.code).toBe(createResponse.data.code);
-      expect(updateResponse.data.name).toBe(updateData.name);
-      expect(new Date(updateResponse.data.updatedAt).getTime()).toBeGreaterThan(
-        new Date(createResponse.data.updatedAt).getTime()
+      expect(updateResponse.data.data.id).toBe(createResponse.data.data.id);
+      expect(updateResponse.data.data.code).toBe(createResponse.data.data.code); // Back to code
+      expect(updateResponse.data.data.name).toBe(updateData.name);
+      expect(new Date(updateResponse.data.data.updatedAt).getTime()).toBeGreaterThan(
+        new Date(createResponse.data.data.updatedAt).getTime()
       );
 
       // Clean up
-      await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.id}`, {
+      await axios.delete(`${API_BASE_URL}/api/suppliers/${createResponse.data.data.id}`, {
         headers: TestHelpers.getAuthHeaders(systemAdminToken),
       });
     });

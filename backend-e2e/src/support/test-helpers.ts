@@ -257,8 +257,8 @@ export class TestHelpers {
     });
 
     return {
-      accessToken: response.data.access_token,
-      user: response.data.user,
+      accessToken: response.data.data.access_token,
+      user: response.data.data.user,
     };
   }
 
@@ -272,8 +272,8 @@ export class TestHelpers {
     });
 
     return {
-      accessToken: response.data.access_token,
-      user: response.data.user,
+      accessToken: response.data.data.access_token,
+      user: response.data.data.user,
     };
   }
 
@@ -287,8 +287,8 @@ export class TestHelpers {
     });
 
     return {
-      accessToken: response.data.access_token,
-      user: response.data.user,
+      accessToken: response.data.data.access_token,
+      user: response.data.data.user,
     };
   }
 

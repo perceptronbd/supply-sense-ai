@@ -12,13 +12,17 @@ describe('Authentication (E2E)', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toMatchObject({
-        access_token: expect.any(String),
-        user: expect.objectContaining({
-          id: expect.any(String),
-          email: 'manager.a@supplychain.com',
-          role: 'BRANCH_MANAGER',
-          branchId: expect.any(String),
-        }),
+        success: true,
+        statusCode: 200,
+        data: {
+          access_token: expect.any(String),
+          user: expect.objectContaining({
+            id: expect.any(String),
+            email: 'manager.a@supplychain.com',
+            role: 'BRANCH_MANAGER',
+            branchId: expect.any(String),
+          }),
+        },
       });
     });
 

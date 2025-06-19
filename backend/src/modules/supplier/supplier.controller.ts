@@ -1,6 +1,7 @@
 ﻿import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { ApiErrorResponseDto, ApiResponseDto, PaginatedResponseDto } from '@modules/common';
 import {
   Body,
   Controller,
@@ -24,10 +25,48 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Supplier } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { QuerySupplierDto } from './dto/query-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SupplierService } from './supplier.service';
+
+// Type definitions for responses using Prisma generated types
+type SupplierWithRelations = Prisma.SupplierGetPayload<{
+  include: {
+    items: {
+      include: {
+        item: {
+          select: {
+            id: true;
+            name: true;
+            sku: true;
+          };
+        };
+      };
+    };
+    purchaseOrders: {
+      select: {
+        id: true;
+        poNumber: true;
+        status: true;
+        orderDate: true;
+        totalAmount: true;
+      };
+    };
+  };
+}>;
+
+type PaginatedSuppliersResponse = {
+  data: Supplier[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+};
 
 @ApiTags('suppliers')
 @Controller('suppliers')
@@ -46,32 +85,19 @@ export class SupplierController {
   @ApiResponse({
     status: 201,
     description: 'Supplier created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', example: 'uuid' },
-        name: { type: 'string', example: 'Premium Materials Inc.' },
-        code: { type: 'string', example: 'SUP001' },
-        contactPerson: { type: 'string', example: 'John Smith' },
-        email: { type: 'string', example: 'orders@premiummaterials.com' },
-        phone: { type: 'string', example: '+1-555-2001' },
-        address: { type: 'string', example: '100 Supplier Street, Industrial Park' },
-        averageLeadTime: { type: 'number', example: 7 },
-        isActive: { type: 'boolean', example: true },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-      },
-    },
+    type: ApiResponseDto<Supplier>,
   })
   @ApiResponse({
     status: 400,
     description: 'Bad request - validation failed',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
     description: 'Conflict - supplier code already exists',
+    type: ApiErrorResponseDto,
   })
-  async create(@Body() createSupplierDto: CreateSupplierDto) {
+  async create(@Body() createSupplierDto: CreateSupplierDto): Promise<Supplier> {
     return this.supplierService.create(createSupplierDto);
   }
 
@@ -114,46 +140,21 @@ export class SupplierController {
   @ApiResponse({
     status: 200,
     description: 'Suppliers retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string', example: 'uuid' },
-              name: { type: 'string', example: 'Premium Materials Inc.' },
-              code: { type: 'string', example: 'SUP001' },
-              contactPerson: { type: 'string', example: 'John Smith' },
-              email: { type: 'string', example: 'orders@premiummaterials.com' },
-              phone: { type: 'string', example: '+1-555-2001' },
-              address: { type: 'string', example: '100 Supplier Street, Industrial Park' },
-              isActive: { type: 'boolean', example: true },
-            },
-          },
-        },
-        pagination: {
-          type: 'object',
-          nullable: true,
-          properties: {
-            page: { type: 'number', example: 1 },
-            limit: { type: 'number', example: 10 },
-            total: { type: 'number', example: 25 },
-            totalPages: { type: 'number', example: 3 },
-            hasNext: { type: 'boolean', example: true },
-            hasPrev: { type: 'boolean', example: false },
-          },
-        },
-      },
-    },
+    type: PaginatedResponseDto<Supplier>,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ApiErrorResponseDto,
+  })
   @ApiResponse({
     status: 403,
     description: 'Forbidden - insufficient permissions',
+    type: ApiErrorResponseDto,
   })
-  async findAll(@Query() query: QuerySupplierDto) {
+  async findAll(
+    @Query() query: QuerySupplierDto
+  ): Promise<PaginatedSuppliersResponse | Supplier[]> {
     return this.supplierService.findAll(query);
   }
 
@@ -177,49 +178,14 @@ export class SupplierController {
   @ApiResponse({
     status: 200,
     description: 'Supplier retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', example: 'uuid' },
-        name: { type: 'string', example: 'Premium Materials Inc.' },
-        code: { type: 'string', example: 'SUP001' },
-        contactPerson: { type: 'string', example: 'John Smith' },
-        email: { type: 'string', example: 'orders@premiummaterials.com' },
-        phone: { type: 'string', example: '+1-555-2001' },
-        address: { type: 'string', example: '100 Supplier Street, Industrial Park' },
-        averageLeadTime: { type: 'number', example: 7 },
-        isActive: { type: 'boolean', example: true },
-        items: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              item: { type: 'object' },
-              unitPrice: { type: 'number' },
-              minOrderQty: { type: 'number' },
-              leadTimeDays: { type: 'number' },
-            },
-          },
-        },
-        purchaseOrders: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              poNumber: { type: 'string' },
-              status: { type: 'string' },
-              orderDate: { type: 'string', format: 'date-time' },
-              totalAmount: { type: 'number' },
-            },
-          },
-        },
-      },
-    },
+    type: ApiResponseDto<Supplier>,
   })
-  @ApiResponse({ status: 404, description: 'Supplier not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiResponse({
+    status: 404,
+    description: 'Supplier not found',
+    type: ApiErrorResponseDto,
+  })
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<SupplierWithRelations> {
     return this.supplierService.findOne(id);
   }
 
@@ -238,35 +204,22 @@ export class SupplierController {
   @ApiResponse({
     status: 200,
     description: 'Supplier updated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', example: 'uuid' },
-        name: { type: 'string', example: 'Premium Materials Inc.' },
-        code: { type: 'string', example: 'SUP001' },
-        contactPerson: { type: 'string', example: 'John Smith' },
-        email: { type: 'string', example: 'orders@premiummaterials.com' },
-        phone: { type: 'string', example: '+1-555-2001' },
-        address: { type: 'string', example: '100 Supplier Street, Industrial Park' },
-        averageLeadTime: { type: 'number', example: 7 },
-        isActive: { type: 'boolean', example: true },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-      },
-    },
+    type: ApiResponseDto<Supplier>,
   })
   @ApiResponse({
     status: 404,
     description: 'Supplier not found',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
     description: 'Conflict - supplier code already exists',
+    type: ApiErrorResponseDto,
   })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSupplierDto: UpdateSupplierDto
-  ) {
+  ): Promise<Supplier> {
     return this.supplierService.update(id, updateSupplierDto);
   }
 
@@ -286,32 +239,19 @@ export class SupplierController {
   @ApiResponse({
     status: 200,
     description: 'Supplier deleted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', example: 'uuid' },
-        name: { type: 'string', example: 'Premium Materials Inc.' },
-        code: { type: 'string', example: 'SUP001' },
-        contactPerson: { type: 'string', example: 'John Smith' },
-        email: { type: 'string', example: 'orders@premiummaterials.com' },
-        phone: { type: 'string', example: '+1-555-2001' },
-        address: { type: 'string', example: '100 Supplier Street, Industrial Park' },
-        averageLeadTime: { type: 'number', example: 7 },
-        isActive: { type: 'boolean', example: false },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-      },
-    },
+    type: ApiResponseDto<Supplier>,
   })
   @ApiResponse({
     status: 404,
     description: 'Supplier not found',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: 'Cannot delete supplier - it has active records',
+    type: ApiErrorResponseDto,
   })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<Supplier> {
     return this.supplierService.remove(id);
   }
 
@@ -335,12 +275,14 @@ export class SupplierController {
   @ApiResponse({
     status: 404,
     description: 'Supplier not found',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: 'Cannot delete supplier - it has references in the system',
+    type: ApiErrorResponseDto,
   })
-  async hardDelete(@Param('id', ParseUUIDPipe) id: string) {
+  async hardDelete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.supplierService.hardDelete(id);
   }
 }
