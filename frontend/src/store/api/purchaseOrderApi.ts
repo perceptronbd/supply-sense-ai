@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
@@ -127,6 +128,7 @@ export const purchaseOrderApi = createApi({
         method: 'POST',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.PURCHASE_ORDER],
     }),
     getPurchaseOrders: builder.query<PurchaseOrder[], { branchId?: string }>({
@@ -134,10 +136,12 @@ export const purchaseOrderApi = createApi({
         url: '',
         params: branchId ? { branchId } : {},
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder[]>) => transformApiResponse(response),
       providesTags: [TAG_TYPES.PURCHASE_ORDER],
     }),
     getPurchaseOrder: builder.query<PurchaseOrder, string>({
       query: (id) => `/${id}`,
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       providesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -150,6 +154,7 @@ export const purchaseOrderApi = createApi({
         method: 'PATCH',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, { id }) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -167,6 +172,7 @@ export const purchaseOrderApi = createApi({
         url: `/${id}/send-to-supplier`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -175,6 +181,7 @@ export const purchaseOrderApi = createApi({
         url: `/${id}/confirm`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -183,6 +190,7 @@ export const purchaseOrderApi = createApi({
         url: `/${id}/cancel`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -191,6 +199,7 @@ export const purchaseOrderApi = createApi({
         url: `/${id}/close`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_ORDER, id }],
     }),
 
@@ -204,6 +213,7 @@ export const purchaseOrderApi = createApi({
         method: 'POST',
         body: { supplierId },
       }),
+      transformResponse: (response: ApiResponse<PurchaseOrder>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, { prId }) => [
         TAG_TYPES.PURCHASE_ORDER,
         TAG_TYPES.PURCHASE_REQUEST,
@@ -251,6 +261,7 @@ export const purchaseOrderApi = createApi({
       query: () => ({
         url: '/branches',
       }),
+      transformResponse: (response: ApiResponse<Branch[]>) => transformApiResponse(response),
       providesTags: [TAG_TYPES.BRANCH],
     }),
   }),

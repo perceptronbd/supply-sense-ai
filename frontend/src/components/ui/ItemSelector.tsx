@@ -23,13 +23,13 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
   const shouldSearch = searchTerm.length > 0;
 
   // Get all items for initial display (when no search term)
-  const { data: allItems = [], isLoading: isLoadingAll } = useGetAllItemsQuery(
+  const { data: allItemsData, isLoading: isLoadingAll } = useGetAllItemsQuery(
     { branchId },
     { skip: shouldSearch }
   );
 
   // Search items when user types
-  const { data: searchResults = [], isLoading: isSearching } = useSearchItemsQuery(
+  const { data: searchResultsData, isLoading: isSearching } = useSearchItemsQuery(
     {
       q: searchTerm,
       branchId,
@@ -38,13 +38,31 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
     { skip: !shouldSearch }
   );
 
+  // Ensure we always have arrays to work with, with debugging
+  const allItems = Array.isArray(allItemsData) ? allItemsData : [];
+  const searchResults = Array.isArray(searchResultsData) ? searchResultsData : [];
+
+  // Debug logging for ItemSelector data
+  console.log('=== ITEMSELECTOR DEBUG ===');
+  console.log('allItemsData:', allItemsData, 'isArray:', Array.isArray(allItemsData));
+  console.log(
+    'searchResultsData:',
+    searchResultsData,
+    'isArray:',
+    Array.isArray(searchResultsData)
+  );
+  console.log('allItems:', allItems, 'length:', allItems.length);
+  console.log('searchResults:', searchResults, 'length:', searchResults.length);
+  console.log('shouldSearch:', shouldSearch);
+  console.log('=== END DEBUG ===');
+
   // Use search results when searching, otherwise use all items
   const items = shouldSearch ? searchResults : allItems;
   const isLoading = shouldSearch ? isSearching : isLoadingAll;
 
   // Find the selected item to display its name
   const selectedItem = useMemo(() => {
-    return items.find((item) => item.id === value);
+    return Array.isArray(items) ? items.find((item) => item.id === value) : undefined;
   }, [items, value]);
 
   // Set the input value when an item is selected externally
@@ -63,7 +81,9 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
 
   const handleSelectionChange = (itemId: string | null) => {
     if (itemId) {
-      const selectedItem = items.find((item) => item.id === itemId);
+      const selectedItem = Array.isArray(items)
+        ? items.find((item) => item.id === itemId)
+        : undefined;
       onChange(itemId, selectedItem);
       if (selectedItem) {
         setInputValue(selectedItem.name);
@@ -89,7 +109,7 @@ export function ItemSelector({ value, onChange, branchId, ...props }: ItemSelect
       }}
       {...props}
     >
-      {items.map((item) => (
+      {(Array.isArray(items) ? items : []).map((item) => (
         <AutocompleteItem key={item.id} textValue={item.name}>
           <div className="flex flex-col">
             <span className="font-medium">{item.name}</span>

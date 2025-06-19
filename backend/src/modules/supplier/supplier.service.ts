@@ -85,14 +85,10 @@ export class SupplierService {
 
       return {
         data: suppliers,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
+        page,
+        limit,
+        total,
+        pages: totalPages,
       };
     }
 
@@ -104,10 +100,7 @@ export class SupplierService {
       },
     });
 
-    return {
-      data: suppliers,
-      pagination: null,
-    };
+    return suppliers;
   }
 
   /**

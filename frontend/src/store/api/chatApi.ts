@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';
@@ -65,12 +66,13 @@ export const chatApi = createApi({
   }),
   tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE],
   endpoints: (builder) => ({
-    // Health check
+    // Health check - temporarily disable transform to test
     getHealth: builder.query<
-      { status: string; timestamp: string; services: Record<string, string> },
+      ApiResponse<{ status: string; timestamp: string; services: Record<string, string> }>,
       void
     >({
       query: () => '/health',
+      // Temporarily removed transformResponse for testing
     }),
 
     // Session management
@@ -80,6 +82,7 @@ export const chatApi = createApi({
         method: 'POST',
         body: sessionData,
       }),
+      transformResponse: (response: ApiResponse<ChatSession>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.CHAT_SESSION],
     }),
 
@@ -88,11 +91,13 @@ export const chatApi = createApi({
         url: '/sessions',
         params: { limit, offset },
       }),
+      transformResponse: (response: ApiResponse<ChatSession[]>) => transformApiResponse(response),
       providesTags: [TAG_TYPES.CHAT_SESSION],
     }),
 
     getSession: builder.query<ChatSession, string>({
       query: (sessionId) => `/sessions/${sessionId}`,
+      transformResponse: (response: ApiResponse<ChatSession>) => transformApiResponse(response),
       providesTags: (_result, _error, sessionId) => [
         { type: TAG_TYPES.CHAT_SESSION, id: sessionId },
       ],
@@ -115,6 +120,7 @@ export const chatApi = createApi({
         url: `/sessions/${sessionId}/messages`,
         params: { limit, offset },
       }),
+      transformResponse: (response: ApiResponse<ChatMessage[]>) => transformApiResponse(response),
       providesTags: (_result, _error, { sessionId }) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],
@@ -127,6 +133,8 @@ export const chatApi = createApi({
         method: 'POST',
         body: queryData,
       }),
+      // Chat endpoint bypasses ResponseInterceptor, so we handle raw response
+      transformResponse: (response: ChatQueryResponse) => response,
       invalidatesTags: (_result, _error, { sessionId }) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],

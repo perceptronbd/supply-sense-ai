@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
@@ -41,6 +42,7 @@ export const authApi = createApi({
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response: ApiResponse<LoginResponse>) => transformApiResponse(response),
     }),
     register: builder.mutation<LoginResponse, LoginRequest & { name: string }>({
       query: (userData) => ({
@@ -48,9 +50,12 @@ export const authApi = createApi({
         method: 'POST',
         body: userData,
       }),
+      transformResponse: (response: ApiResponse<LoginResponse>) => transformApiResponse(response),
     }),
     getProfile: builder.query<LoginResponse['user'], void>({
       query: () => '/profile',
+      transformResponse: (response: ApiResponse<LoginResponse['user']>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AUTH],
     }),
   }),

@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';
@@ -141,6 +142,8 @@ export const aiApi = createApi({
         url: `/auto-purchase-requests/${branchId}`,
         params: createActualPRs ? { createActualPRs: 'true' } : {},
       }),
+      transformResponse: (response: ApiResponse<AutoPurchaseRequestsResponse>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
 
@@ -154,6 +157,8 @@ export const aiApi = createApi({
         method: 'POST',
         body: params,
       }),
+      transformResponse: (response: ApiResponse<SupplierRecommendation[]>) =>
+        transformApiResponse(response),
     }),
 
     // Get demand forecast
@@ -162,6 +167,8 @@ export const aiApi = createApi({
         url: '/demand-forecast',
         params,
       }),
+      transformResponse: (response: ApiResponse<DemandForecast[]>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
 
@@ -171,6 +178,8 @@ export const aiApi = createApi({
         url: `/stock-prediction/${branchId}`,
         params: { itemId, daysAhead },
       }),
+      transformResponse: (response: ApiResponse<StockPrediction[]>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
 
@@ -179,6 +188,8 @@ export const aiApi = createApi({
       query: ({ branchId }) => ({
         url: `/reorder-recommendations/${branchId}`,
       }),
+      transformResponse: (response: ApiResponse<PurchaseRecommendation[]>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
 
@@ -192,6 +203,8 @@ export const aiApi = createApi({
         method: 'GET',
         params: createActualPRs ? { createActualPRs: 'true' } : {},
       }),
+      transformResponse: (response: ApiResponse<AutoPurchaseRequestsResponse>) =>
+        transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
 
@@ -201,6 +214,8 @@ export const aiApi = createApi({
         url: '/quality-report',
         params,
       }),
+      transformResponse: (response: ApiResponse<QualityReportResponse>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.AI_RECOMMENDATION],
     }),
   }),

@@ -136,9 +136,21 @@ export default function BranchesPage() {
   const [deleteBranch, { isLoading: isDeleting }] = useDeleteBranchMutation();
   const [hardDeleteBranch, { isLoading: isHardDeleting }] = useHardDeleteBranchMutation();
 
-  const branches = branchesResponse?.data || [];
+  // Ensure branches is always an array, with detailed debugging
+  const branches = Array.isArray(branchesResponse?.data) ? branchesResponse.data : [];
   const pagination = branchesResponse?.pagination;
-  const totalPages = pagination?.totalPages || 1;
+
+  // Enhanced debug logging to see what we're actually getting
+  console.log('=== BRANCHES DEBUG ===');
+  console.log('branchesResponse:', branchesResponse);
+  console.log('branchesResponse?.data:', branchesResponse?.data);
+  console.log('branchesResponse?.data type:', typeof branchesResponse?.data);
+  console.log('branchesResponse?.data isArray:', Array.isArray(branchesResponse?.data));
+  console.log('final branches:', branches);
+  console.log('final branches isArray:', Array.isArray(branches));
+  console.log('branches length:', branches.length);
+  console.log('=== END DEBUG ===');
+  const totalPages = pagination?.pages || 1;
   // Action handlers
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
@@ -327,7 +339,7 @@ export default function BranchesPage() {
                       size="sm"
                       startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
                     >
-                      Total: {pagination?.total || branches.length}
+                      Total: {pagination?.total || (Array.isArray(branches) ? branches.length : 0)}
                     </Chip>
                     <Chip
                       color="success"
@@ -335,7 +347,10 @@ export default function BranchesPage() {
                       size="sm"
                       startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
                     >
-                      Active: {branches.filter((branch) => branch.isActive).length}
+                      Active:{' '}
+                      {Array.isArray(branches)
+                        ? branches.filter((branch) => branch.isActive).length
+                        : 0}
                     </Chip>
                     <Chip
                       color="default"
@@ -343,7 +358,10 @@ export default function BranchesPage() {
                       size="sm"
                       startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
                     >
-                      Inactive: {branches.filter((branch) => !branch.isActive).length}
+                      Inactive:{' '}
+                      {Array.isArray(branches)
+                        ? branches.filter((branch) => !branch.isActive).length
+                        : 0}
                     </Chip>
                   </div>
                 </div>
@@ -390,7 +408,7 @@ export default function BranchesPage() {
                   </div>
                 )}
                 {/* Table */}
-                {!isLoading && !error && branches.length > 0 && (
+                {!isLoading && !error && Array.isArray(branches) && branches.length > 0 && (
                   <>
                     <Table
                       aria-label="Branches table"
@@ -462,7 +480,7 @@ export default function BranchesPage() {
                     )}
                   </>
                 )}
-                {!isLoading && !error && branches.length === 0 && (
+                {!isLoading && !error && (!Array.isArray(branches) || branches.length === 0) && (
                   <div className="text-center py-8">
                     <Text variant="bodyLarge" className="text-default-400">
                       No branches found

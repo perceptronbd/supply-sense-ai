@@ -1,3 +1,9 @@
+import {
+  ApiResponse,
+  PaginatedResponse,
+  transformApiResponse,
+  transformPaginatedResponse,
+} from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';
@@ -22,9 +28,7 @@ export interface SuppliersResponse {
     page: number;
     limit: number;
     total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    pages: number;
   } | null;
 }
 
@@ -49,12 +53,15 @@ export const supplierApi = createApi({
         url: '',
       }),
       providesTags: [TAG_TYPES.SUPPLIER],
-      transformResponse: (response: SuppliersResponse) => response.data,
+      transformResponse: (response: ApiResponse<Supplier[]>) => {
+        return transformApiResponse(response);
+      },
     }),
 
     // Get specific supplier by ID
     getSupplier: builder.query<Supplier, string>({
       query: (id) => `/${id}`,
+      transformResponse: (response: ApiResponse<Supplier>) => transformApiResponse(response),
       providesTags: (_result, _error, id) => [{ type: TAG_TYPES.SUPPLIER, id }],
     }),
   }),

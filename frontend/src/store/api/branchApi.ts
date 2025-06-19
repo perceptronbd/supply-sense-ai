@@ -1,3 +1,10 @@
+import {
+  ApiResponse,
+  PaginatedResponse,
+  transformApiResponse,
+  transformFlexibleResponse,
+  transformPaginatedResponse,
+} from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';
@@ -51,18 +58,6 @@ export interface UpdateBranchRequest {
   isActive?: boolean;
 }
 
-export interface BranchesResponse {
-  data: Branch[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
 export const branchApi = createApi({
   reducerPath: 'branchApi',
   baseQuery: fetchBaseQuery({
@@ -78,26 +73,39 @@ export const branchApi = createApi({
   tagTypes: [TAG_TYPES.BRANCH],
   endpoints: (builder) => ({
     // Get all branches with optional pagination and search
-    getBranches: builder.query<BranchesResponse, BranchQueryParams | undefined>({
+    getBranches: builder.query<
+      { data: Branch[]; pagination?: PaginatedResponse<Branch>['metadata']['pagination'] },
+      BranchQueryParams | undefined
+    >({
       query: (params = {}) => ({
         url: '',
         params: params || {},
       }),
+      transformResponse: (response: PaginatedResponse<Branch> | ApiResponse<Branch[]>) =>
+        transformFlexibleResponse(response),
       providesTags: [TAG_TYPES.BRANCH],
-    }), // Get current user's branch
-    getUserBranch: builder.query<BranchesResponse, undefined>({
+    }),
+
+    // Get current user's branch
+    getUserBranch: builder.query<
+      { data: Branch[]; pagination?: PaginatedResponse<Branch>['metadata']['pagination'] },
+      undefined
+    >({
       query: () => '/my-branch',
+      transformResponse: (response: PaginatedResponse<Branch> | ApiResponse<Branch[]>) =>
+        transformFlexibleResponse(response),
       providesTags: [TAG_TYPES.BRANCH],
     }),
 
     // Get specific branch by ID
     getBranch: builder.query<Branch, string>({
       query: (id) => `/${id}`,
+      transformResponse: (response: ApiResponse<Branch>) => transformApiResponse(response),
       providesTags: (_result, _error, id) => [{ type: TAG_TYPES.BRANCH, id }],
     }), // Get all branches (simplified for dropdowns)
     getAllBranches: builder.query<Branch[], undefined>({
       query: () => '',
-      transformResponse: (response: BranchesResponse) => response.data,
+      transformResponse: (response: ApiResponse<Branch[]>) => transformApiResponse(response),
       providesTags: [TAG_TYPES.BRANCH],
     }),
 
@@ -108,6 +116,7 @@ export const branchApi = createApi({
         method: 'POST',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<Branch>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.BRANCH],
     }),
 
@@ -118,6 +127,7 @@ export const branchApi = createApi({
         method: 'PUT',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<Branch>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, { id }) => [
         TAG_TYPES.BRANCH,
         { type: TAG_TYPES.BRANCH, id },

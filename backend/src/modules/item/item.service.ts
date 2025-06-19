@@ -170,14 +170,10 @@ export class ItemService {
 
       return {
         data: transformedItems,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          totalPages: Math.ceil(total / limitNum),
-          hasNext: pageNum * limitNum < total,
-          hasPrev: pageNum > 1,
-        },
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
       };
     } // Handle non-paginated queries (with optional limit)
     const queryOptions: {
@@ -200,10 +196,7 @@ export class ItemService {
 
     const transformedItems = this.transformItems(items, includeStock);
 
-    return {
-      data: transformedItems,
-      pagination: null,
-    };
+    return transformedItems;
   }
 
   /**

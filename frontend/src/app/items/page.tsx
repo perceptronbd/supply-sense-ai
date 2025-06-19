@@ -68,8 +68,20 @@ export default function ItemsPage() {
     { skip: !isMounted }
   );
 
-  const items = itemsResponse?.data || [];
+  // Ensure items is always an array, with detailed debugging
+  const items = Array.isArray(itemsResponse?.data) ? itemsResponse.data : [];
   const pagination = itemsResponse?.pagination;
+
+  // Enhanced debug logging to see what we're actually getting
+  console.log('=== ITEMS DEBUG ===');
+  console.log('itemsResponse:', itemsResponse);
+  console.log('itemsResponse?.data:', itemsResponse?.data);
+  console.log('itemsResponse?.data type:', typeof itemsResponse?.data);
+  console.log('itemsResponse?.data isArray:', Array.isArray(itemsResponse?.data));
+  console.log('final items:', items);
+  console.log('final items isArray:', Array.isArray(items));
+  console.log('items length:', items.length);
+  console.log('=== END DEBUG ===');
 
   // Handle search with debouncing
   const handleSearchChange = useCallback((value: string) => {
@@ -247,7 +259,7 @@ export default function ItemsPage() {
                       size="sm"
                       startContent={<div className="bg-primary rounded-full w-1.5 h-1.5" />}
                     >
-                      Total: {pagination?.total || items.length}
+                      Total: {pagination?.total || (Array.isArray(items) ? items.length : 0)}
                     </Chip>
                     <Chip
                       color="success"
@@ -255,7 +267,8 @@ export default function ItemsPage() {
                       size="sm"
                       startContent={<div className="bg-success rounded-full w-1.5 h-1.5" />}
                     >
-                      Active: {items.filter((item) => item.isActive).length}
+                      Active:{' '}
+                      {Array.isArray(items) ? items.filter((item) => item.isActive).length : 0}
                     </Chip>
                     <Chip
                       color="default"
@@ -263,7 +276,8 @@ export default function ItemsPage() {
                       size="sm"
                       startContent={<div className="bg-default-500 rounded-full w-1.5 h-1.5" />}
                     >
-                      Inactive: {items.filter((item) => !item.isActive).length}
+                      Inactive:{' '}
+                      {Array.isArray(items) ? items.filter((item) => !item.isActive).length : 0}
                     </Chip>
                   </div>{' '}
                 </div>
@@ -308,7 +322,7 @@ export default function ItemsPage() {
                   </div>
                 )}
                 {/* Empty State */}
-                {!isLoading && !error && items.length === 0 && (
+                {!isLoading && !error && (!Array.isArray(items) || items.length === 0) && (
                   <div className="text-center py-12">
                     <Text variant="bodyLarge" color="muted" className="mb-2">
                       {searchTerm ? 'No items found matching your search' : 'No items found'}
@@ -321,7 +335,7 @@ export default function ItemsPage() {
                   </div>
                 )}{' '}
                 {/* Items Table */}
-                {!isLoading && !error && items.length > 0 && (
+                {!isLoading && !error && Array.isArray(items) && items.length > 0 && (
                   <>
                     <Table
                       aria-label="Items table"
@@ -348,7 +362,7 @@ export default function ItemsPage() {
                       </TableBody>
                     </Table>{' '}
                     {/* Pagination */}
-                    {pagination && pagination.totalPages > 1 && (
+                    {pagination && pagination.pages > 1 && (
                       <div className="flex justify-between items-center mt-6 pt-4 border-t border-divider">
                         <div className="flex items-center gap-4">
                           <Select
@@ -378,7 +392,7 @@ export default function ItemsPage() {
                         </div>
                         <Pagination
                           page={currentPage}
-                          total={pagination.totalPages}
+                          total={pagination.pages}
                           onChange={handlePageChange}
                           showControls
                           color="primary"

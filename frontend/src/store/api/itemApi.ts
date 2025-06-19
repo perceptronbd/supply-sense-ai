@@ -1,3 +1,10 @@
+import {
+  ApiResponse,
+  PaginatedResponse,
+  transformApiResponse,
+  transformFlexibleResponse,
+  transformPaginatedResponse,
+} from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';
@@ -81,9 +88,7 @@ export interface ItemsResponse {
     page: number;
     limit: number;
     total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    pages: number;
   };
 }
 
@@ -102,11 +107,16 @@ export const itemApi = createApi({
   tagTypes: [TAG_TYPES.ITEM],
   endpoints: (builder) => ({
     // Get all items with optional pagination and search
-    getItems: builder.query<ItemsResponse, ItemQueryParams | undefined>({
+    getItems: builder.query<
+      { data: Item[]; pagination?: PaginatedResponse<Item>['metadata']['pagination'] },
+      ItemQueryParams | undefined
+    >({
       query: (params = {}) => ({
         url: '',
         params: params || {},
       }),
+      transformResponse: (response: PaginatedResponse<Item> | ApiResponse<Item[]>) =>
+        transformFlexibleResponse(response),
       providesTags: [TAG_TYPES.ITEM],
     }),
 
@@ -116,18 +126,24 @@ export const itemApi = createApi({
         url: '/search',
         params,
       }),
+      transformResponse: (response: ApiResponse<Item[]>) => {
+        const transformed = transformApiResponse(response);
+        return transformed;
+      },
       providesTags: [TAG_TYPES.ITEM],
     }),
 
     // Get items by branch with stock information
     getItemsByBranch: builder.query<
-      ItemsResponse,
+      { data: Item[]; pagination?: PaginatedResponse<Item>['metadata']['pagination'] },
       { branchId: string } & Omit<ItemQueryParams, 'branchId'>
     >({
       query: ({ branchId, ...params }) => ({
         url: `/by-branch/${branchId}`,
         params,
       }),
+      transformResponse: (response: PaginatedResponse<Item> | ApiResponse<Item[]>) =>
+        transformFlexibleResponse(response),
       providesTags: [TAG_TYPES.ITEM],
     }),
 
@@ -137,6 +153,7 @@ export const itemApi = createApi({
         url: `/${id}`,
         params: { branchId, includeStock },
       }),
+      transformResponse: (response: ApiResponse<Item>) => transformApiResponse(response),
       providesTags: (_result, _error, { id }) => [{ type: TAG_TYPES.ITEM, id }],
     }),
 
@@ -146,7 +163,9 @@ export const itemApi = createApi({
         url: '',
         params: branchId ? { branchId } : {},
       }),
-      transformResponse: (response: ItemsResponse) => response.data,
+      transformResponse: (response: ApiResponse<Item[]>) => {
+        return transformApiResponse(response);
+      },
       providesTags: [TAG_TYPES.ITEM],
     }),
 
@@ -157,6 +176,7 @@ export const itemApi = createApi({
         method: 'POST',
         body: itemData,
       }),
+      transformResponse: (response: ApiResponse<Item>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.ITEM],
     }),
 
@@ -167,6 +187,7 @@ export const itemApi = createApi({
         method: 'PUT',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<Item>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, { id }) => [TAG_TYPES.ITEM, { type: TAG_TYPES.ITEM, id }],
     }),
 
@@ -176,6 +197,8 @@ export const itemApi = createApi({
         url: `/${id}`,
         method: 'DELETE',
       }),
+      transformResponse: (response: ApiResponse<{ message: string }>) =>
+        transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [TAG_TYPES.ITEM, { type: TAG_TYPES.ITEM, id }],
     }),
 
@@ -185,6 +208,8 @@ export const itemApi = createApi({
         url: `/${id}/hard`,
         method: 'DELETE',
       }),
+      transformResponse: (response: ApiResponse<{ message: string }>) =>
+        transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.ITEM],
     }),
   }),

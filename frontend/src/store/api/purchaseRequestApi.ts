@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
@@ -118,6 +119,7 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.PURCHASE_REQUEST],
     }),
     getPurchaseRequests: builder.query<PurchaseRequest[], { branchId?: string }>({
@@ -125,10 +127,13 @@ export const purchaseRequestApi = createApi({
         url: '',
         params: branchId ? { branchId } : {},
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest[]>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.PURCHASE_REQUEST],
     }),
     getPurchaseRequest: builder.query<PurchaseRequest, string>({
       query: (id) => `/${id}`,
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       providesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
 
@@ -141,6 +146,7 @@ export const purchaseRequestApi = createApi({
         method: 'PATCH',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, { id }) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
 
@@ -156,6 +162,7 @@ export const purchaseRequestApi = createApi({
         url: `/${id}/submit`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
     approvePurchaseRequest: builder.mutation<PurchaseRequest, string>({
@@ -163,6 +170,7 @@ export const purchaseRequestApi = createApi({
         url: `/${id}/approve`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
 
@@ -171,6 +179,7 @@ export const purchaseRequestApi = createApi({
         url: `/${id}/reject`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
     }),
 
@@ -179,6 +188,8 @@ export const purchaseRequestApi = createApi({
         url: '/templates', // This might need to be adjusted based on your backend
         params: branchId ? { branchId } : {},
       }),
+      transformResponse: (response: ApiResponse<PurchaseRequestTemplate[]>) =>
+        transformApiResponse(response),
       providesTags: [TAG_TYPES.PURCHASE_REQUEST_TEMPLATE],
     }),
   }),

@@ -1,3 +1,4 @@
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
@@ -101,11 +102,13 @@ export const goodsReceiptApi = createApi({
         url: '',
         params,
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt[]>) => transformApiResponse(response),
       providesTags: [TAG_TYPES.GOODS_RECEIPT],
     }),
 
     getGoodsReceiptById: builder.query<GoodsReceipt, string>({
       query: (id: string) => `/${id}`,
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       providesTags: (_result, _error, id: string) => [{ type: TAG_TYPES.GOODS_RECEIPT, id }],
     }),
 
@@ -115,6 +118,7 @@ export const goodsReceiptApi = createApi({
         method: 'POST',
         body: data,
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       invalidatesTags: [TAG_TYPES.GOODS_RECEIPT],
     }),
 
@@ -125,6 +129,7 @@ export const goodsReceiptApi = createApi({
           method: 'PATCH',
           body: data,
         }),
+        transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
         invalidatesTags: (_result, _error, { id }: { id: string }) => [
           { type: TAG_TYPES.GOODS_RECEIPT, id },
           TAG_TYPES.GOODS_RECEIPT,
@@ -145,6 +150,7 @@ export const goodsReceiptApi = createApi({
         url: `/${id}/post`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id: string) => [
         { type: TAG_TYPES.GOODS_RECEIPT, id },
         TAG_TYPES.GOODS_RECEIPT,
@@ -156,6 +162,7 @@ export const goodsReceiptApi = createApi({
         url: `/${id}/cancel`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, id: string) => [
         { type: TAG_TYPES.GOODS_RECEIPT, id },
         TAG_TYPES.GOODS_RECEIPT,
@@ -166,6 +173,7 @@ export const goodsReceiptApi = createApi({
         url: `/from-po/${poId}`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       invalidatesTags: (_result, _error, poId: string) => [
         TAG_TYPES.GOODS_RECEIPT,
         { type: TAG_TYPES.PURCHASE_ORDER, id: poId },
@@ -177,6 +185,7 @@ export const goodsReceiptApi = createApi({
         url: `/from-mr/${mrId}`,
         method: 'POST',
       }),
+      transformResponse: (response: ApiResponse<GoodsReceipt>) => transformApiResponse(response),
       invalidatesTags: [
         TAG_TYPES.GOODS_RECEIPT,
         // Add material requisition cache invalidation when that API is implemented

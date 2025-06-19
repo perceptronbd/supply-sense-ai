@@ -76,14 +76,10 @@ export class BranchService {
 
       return {
         data: branches,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          totalPages: Math.ceil(total / limitNum),
-          hasNext: pageNum * limitNum < total,
-          hasPrev: pageNum > 1,
-        },
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
       };
     }
 
@@ -104,10 +100,7 @@ export class BranchService {
 
     const branches = await this.prisma.branch.findMany(queryOptions);
 
-    return {
-      data: branches,
-      pagination: null,
-    };
+    return branches;
   }
   /**
    * Get a single branch by ID
@@ -137,17 +130,7 @@ export class BranchService {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    return {
-      data: [user.branch],
-      pagination: null as {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-        hasNext: boolean;
-        hasPrev: boolean;
-      } | null,
-    };
+    return [user.branch];
   }
 
   /**
