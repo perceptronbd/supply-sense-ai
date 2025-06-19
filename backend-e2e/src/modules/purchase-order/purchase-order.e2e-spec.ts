@@ -1,5 +1,10 @@
 import axios from 'axios';
-import { type PurchaseOrder, TestHelpers, type TestUser } from '../../support/test-helpers';
+import {
+  type AxiosErrorResponse,
+  type PurchaseOrder,
+  TestHelpers,
+  type TestUser,
+} from '../../support/test-helpers';
 
 describe('Purchase Order API (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -24,10 +29,10 @@ describe('Purchase Order API (E2E)', () => {
     });
 
     expect(loginResponse.status).toBe(200);
-    expect(loginResponse.data.access_token).toBeDefined();
+    expect(loginResponse.data.data.access_token).toBeDefined();
 
-    authToken = loginResponse.data.access_token;
-    testUser = loginResponse.data.user;
+    authToken = loginResponse.data.data.access_token;
+    testUser = loginResponse.data.data.user;
 
     // Create a purchase request and PO for testing
     const timestamp = Date.now();
@@ -53,7 +58,7 @@ describe('Purchase Order API (E2E)', () => {
     });
 
     expect(prResponse.status).toBe(201);
-    testPurchaseRequestId = prResponse.data.id;
+    testPurchaseRequestId = prResponse.data.data.id;
 
     // Submit and approve the purchase request
     await axios.post(
@@ -80,7 +85,7 @@ describe('Purchase Order API (E2E)', () => {
     );
 
     expect(poResponse.status).toBe(201);
-    testPurchaseOrderId = poResponse.data.id;
+    testPurchaseOrderId = poResponse.data.data.id;
   });
 
   const getAuthHeaders = () => ({
@@ -100,7 +105,7 @@ describe('Purchase Order API (E2E)', () => {
         await axios.get(`${API_BASE_URL}/api/purchase-order`);
         fail('Should have thrown an error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(401);
       }
     });
@@ -117,7 +122,7 @@ describe('Purchase Order API (E2E)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         id: expect.any(String),
         poNumber: expect.stringMatching(/^PO\d{9}$/),
         status: 'DRAFT',
@@ -160,7 +165,7 @@ describe('Purchase Order API (E2E)', () => {
         headers: getAuthHeaders(),
       });
 
-      const nonApprovedPrId = prResponse.data.id;
+      const nonApprovedPrId = prResponse.data.data.id;
 
       try {
         await axios.post(
@@ -170,7 +175,7 @@ describe('Purchase Order API (E2E)', () => {
         );
         fail('Should have thrown an error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -182,10 +187,12 @@ describe('Purchase Order API (E2E)', () => {
         headers: getAuthHeaders(),
       });
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.data)).toBe(true);
-      expect(response.data.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.data.data)).toBe(true);
+      expect(response.data.data.length).toBeGreaterThan(0);
 
-      const createdPO = response.data.find((po: PurchaseOrder) => po.id === testPurchaseOrderId);
+      const createdPO = response.data.data.find(
+        (po: PurchaseOrder) => po.id === testPurchaseOrderId
+      );
       expect(createdPO).toBeDefined();
     });
 
@@ -196,7 +203,7 @@ describe('Purchase Order API (E2E)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         id: testPurchaseOrderId,
         poNumber: expect.stringMatching(/^PO\d{9}$/),
         status: 'DRAFT',
@@ -211,10 +218,10 @@ describe('Purchase Order API (E2E)', () => {
         { headers: getAuthHeaders() }
       );
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.data)).toBe(true);
+      expect(Array.isArray(response.data.data)).toBe(true);
 
       // All returned POs should belong to the user's branch
-      response.data.forEach((po: PurchaseOrder) => {
+      response.data.data.forEach((po: PurchaseOrder) => {
         expect(po.branchId).toBe(testUser.branchId);
       });
     });
@@ -245,7 +252,7 @@ describe('Purchase Order API (E2E)', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         id: expect.any(String),
         poNumber: expect.stringMatching(/^PO\d{9}$/),
         status: 'DRAFT',
@@ -267,8 +274,8 @@ describe('Purchase Order API (E2E)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.data.status).toBe('SENT_TO_SUPPLIER');
-      expect(response.data.sentToSupplierAt).toBeDefined();
+      expect(response.data.data.status).toBe('SENT_TO_SUPPLIER');
+      expect(response.data.data.sentToSupplierAt).toBeDefined();
     });
 
     it('should confirm purchase order', async () => {
@@ -279,8 +286,8 @@ describe('Purchase Order API (E2E)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.data.status).toBe('CONFIRMED');
-      expect(response.data.confirmedAt).toBeDefined();
+      expect(response.data.data.status).toBe('CONFIRMED');
+      expect(response.data.data.confirmedAt).toBeDefined();
     });
 
     it('should close purchase order', async () => {
@@ -291,8 +298,8 @@ describe('Purchase Order API (E2E)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.data.status).toBe('CLOSED');
-      expect(response.data.closedAt).toBeDefined();
+      expect(response.data.data.status).toBe('CLOSED');
+      expect(response.data.data.closedAt).toBeDefined();
     });
 
     it('should not allow invalid status transitions', async () => {
@@ -305,7 +312,7 @@ describe('Purchase Order API (E2E)', () => {
         );
         fail('Should have thrown an error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -321,7 +328,7 @@ describe('Purchase Order API (E2E)', () => {
         });
         fail('Should have thrown an error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(404);
       }
     });
@@ -332,7 +339,7 @@ describe('Purchase Order API (E2E)', () => {
         });
         fail('Should have thrown an error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(404);
       }
     });
