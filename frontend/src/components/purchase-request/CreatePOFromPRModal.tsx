@@ -42,12 +42,17 @@ export default function CreatePOFromPRModal({
   // API hooks
   const { data: suppliers, isLoading: suppliersLoading } = useGetSuppliersQuery();
   const [createPOFromPR, { isLoading: isCreating }] = useCreatePurchaseOrderFromPRMutation();
+
   // Check if user has required role
   const hasRequiredRole =
     user?.role === 'BRANCH_MANAGER' || user?.role === 'PROCUREMENT_SPECIALIST';
 
-  // Check if there are any active suppliers
-  const hasActiveSuppliers = suppliers?.some((supplier) => supplier.isActive) ?? false; // Helper function to handle API errors
+  // Check if there are any active suppliers with proper type checking
+  const hasActiveSuppliers = Array.isArray(suppliers)
+    ? suppliers.some((supplier) => supplier.isActive)
+    : false;
+
+  // Helper function to handle API errors
   const getErrorMessage = (error: unknown): string => {
     const defaultMessage = 'Failed to create purchase order. Please try again.';
 
@@ -146,7 +151,7 @@ export default function CreatePOFromPRModal({
             <WhatHappensNextSection />
 
             <SupplierSelect
-              suppliers={suppliers || []}
+              suppliers={Array.isArray(suppliers) ? suppliers : []}
               isLoading={suppliersLoading}
               selectedSupplierId={selectedSupplierId}
               onSelectionChange={setSelectedSupplierId}

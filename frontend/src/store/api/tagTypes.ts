@@ -84,6 +84,7 @@ export const TAG_TYPE_GROUPS = {
   PURCHASE_ORDER_MODULE: getTagTypes([
     'PURCHASE_ORDER',
     'PURCHASE_ORDER_TEMPLATE',
+    'PURCHASE_REQUEST', // Added because PO can be created from PR
     'SUPPLIER',
     'ITEM',
     'BRANCH',

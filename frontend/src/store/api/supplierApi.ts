@@ -16,6 +16,18 @@ export interface Supplier {
   updatedAt: string;
 }
 
+export interface SuppliersResponse {
+  data: Supplier[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  } | null;
+}
+
 export const supplierApi = createApi({
   reducerPath: 'supplierApi',
   baseQuery: fetchBaseQuery({
@@ -37,6 +49,7 @@ export const supplierApi = createApi({
         url: '',
       }),
       providesTags: [TAG_TYPES.SUPPLIER],
+      transformResponse: (response: SuppliersResponse) => response.data,
     }),
 
     // Get specific supplier by ID
