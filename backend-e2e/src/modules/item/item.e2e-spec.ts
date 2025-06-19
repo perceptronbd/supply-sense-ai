@@ -33,7 +33,7 @@ describe('Item API (E2E)', () => {
           await axios.get(`${API_BASE_URL}${endpoint}`);
           fail(`Should have thrown 401 error for ${endpoint}`);
         } catch (error: unknown) {
-          const axiosError = error as { response: { status: number } };
+          const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(401);
         }
       }
@@ -48,7 +48,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 401 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(401);
       }
     });
@@ -62,10 +62,10 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('data');
-      expect(response.data).toHaveProperty('pagination');
-      expect(Array.isArray(response.data.data)).toBe(true);
-      expect(response.data.pagination).toMatchObject({
+      expect(response.data.data).toHaveProperty('data');
+      expect(response.data.data).toHaveProperty('pagination');
+      expect(Array.isArray(response.data.data.data)).toBe(true);
+      expect(response.data.data.pagination).toMatchObject({
         page: 1,
         limit: 10,
         total: expect.any(Number),
@@ -109,11 +109,11 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.data.length).toBeGreaterThanOrEqual(0);
+      expect(response.data.data.data.length).toBeGreaterThanOrEqual(0);
 
-      if (response.data.data.length > 0) {
+      if (response.data.data.data.length > 0) {
         // At least one item should match the search term
-        const hasMatchingItem = response.data.data.some(
+        const hasMatchingItem = response.data.data.data.some(
           (item: any) =>
             item.name.toLowerCase().includes('material') ||
             item.sku.toLowerCase().includes('material') ||
@@ -134,9 +134,9 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.data.length).toBeGreaterThan(0);
+      expect(response.data.data.data.length).toBeGreaterThan(0);
 
-      const itemWithStock = response.data.data.find((item: any) => item.stock !== undefined);
+      const itemWithStock = response.data.data.data.find((item: any) => item.stock !== undefined);
       if (itemWithStock) {
         expect(itemWithStock.stock).toMatchObject({
           quantity: expect.any(Number),
@@ -165,7 +165,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 400 error for invalid parameters');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -179,10 +179,10 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.data)).toBe(true);
+      expect(Array.isArray(response.data.data)).toBe(true);
 
-      if (response.data.length > 0) {
-        const item = response.data[0];
+      if (response.data.data.length > 0) {
+        const item = response.data.data[0];
         expect(item).toMatchObject({
           id: expect.any(String),
           name: expect.any(String),
@@ -207,8 +207,8 @@ describe('Item API (E2E)', () => {
 
       expect(response.status).toBe(200);
 
-      if (response.data.length > 0) {
-        const item = response.data[0];
+      if (response.data.data.length > 0) {
+        const item = response.data.data[0];
         // Stock may be null if no stock record exists for this branch
         if (item.stock) {
           expect(item.stock).toMatchObject({
@@ -229,7 +229,7 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.length).toBeLessThanOrEqual(3);
+      expect(response.data.data.length).toBeLessThanOrEqual(3);
     });
 
     it('should require query parameter', async () => {
@@ -239,7 +239,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown an error for missing query parameter');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect([400, 422]).toContain(axiosError.response.status);
       }
     });
@@ -251,7 +251,7 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toEqual([]);
+      expect(response.data.data).toEqual([]);
     });
   });
 
@@ -262,12 +262,12 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('data');
-      expect(response.data).toHaveProperty('pagination');
-      expect(Array.isArray(response.data.data)).toBe(true);
+      expect(response.data.data).toHaveProperty('data');
+      expect(response.data.data).toHaveProperty('pagination');
+      expect(Array.isArray(response.data.data.data)).toBe(true);
 
-      if (response.data.data.length > 0) {
-        const item = response.data.data[0];
+      if (response.data.data.data.length > 0) {
+        const item = response.data.data.data[0];
         expect(item).toMatchObject({
           id: expect.any(String),
           name: expect.any(String),
@@ -295,7 +295,7 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.pagination).toMatchObject({
+      expect(response.data.data.pagination).toMatchObject({
         page: 1,
         limit: 5,
         total: expect.any(Number),
@@ -313,8 +313,8 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 400 error');
       } catch (error: unknown) {
-        const axiosError = error as { response?: { status: number } };
-        expect(axiosError.response?.status).toBe(400);
+        const axiosError = error as AxiosErrorResponse;
+        expect(axiosError.response.status).toBe(400);
       }
     });
   });
@@ -326,7 +326,7 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data).toMatchObject({
+      expect(response.data.data).toMatchObject({
         id: TEST_ITEM_ID,
         name: expect.any(String),
         sku: expect.any(String),
@@ -340,13 +340,13 @@ describe('Item API (E2E)', () => {
       });
 
       // Verify conversion rates
-      expect(response.data.buyingToMainRate).toEqual(expect.any(Number));
-      expect(response.data.transferToMainRate).toEqual(expect.any(Number));
-      expect(response.data.usingToMainRate).toEqual(expect.any(Number));
+      expect(response.data.data.buyingToMainRate).toEqual(expect.any(Number));
+      expect(response.data.data.transferToMainRate).toEqual(expect.any(Number));
+      expect(response.data.data.usingToMainRate).toEqual(expect.any(Number));
 
       // Verify stock levels
-      expect(response.data.safetyStockLevel).toEqual(expect.any(Number));
-      expect(response.data.reorderLevel).toEqual(expect.any(Number));
+      expect(response.data.data.safetyStockLevel).toEqual(expect.any(Number));
+      expect(response.data.data.reorderLevel).toEqual(expect.any(Number));
     });
 
     it('should include stock information when requested with branchId', async () => {
@@ -360,8 +360,8 @@ describe('Item API (E2E)', () => {
 
       expect(response.status).toBe(200);
 
-      if (response.data.stock) {
-        expect(response.data.stock).toMatchObject({
+      if (response.data.data.stock) {
+        expect(response.data.data.stock).toMatchObject({
           quantity: expect.any(Number),
           reservedQty: expect.any(Number),
           availableQty: expect.any(Number),
@@ -380,7 +380,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 404 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(404);
       }
     });
@@ -393,7 +393,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 400 error');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -430,9 +430,9 @@ describe('Item API (E2E)', () => {
       expect(response.status).toBe(200);
 
       // All rates should be positive numbers
-      expect(response.data.buyingToMainRate).toBeGreaterThan(0);
-      expect(response.data.transferToMainRate).toBeGreaterThan(0);
-      expect(response.data.usingToMainRate).toBeGreaterThan(0);
+      expect(response.data.data.buyingToMainRate).toBeGreaterThan(0);
+      expect(response.data.data.transferToMainRate).toBeGreaterThan(0);
+      expect(response.data.data.usingToMainRate).toBeGreaterThan(0);
     });
 
     it('should include proper stock level thresholds', async () => {
@@ -443,8 +443,8 @@ describe('Item API (E2E)', () => {
       expect(response.status).toBe(200);
 
       // Stock levels should be non-negative
-      expect(response.data.safetyStockLevel).toBeGreaterThanOrEqual(0);
-      expect(response.data.reorderLevel).toBeGreaterThanOrEqual(0);
+      expect(response.data.data.safetyStockLevel).toBeGreaterThanOrEqual(0);
+      expect(response.data.data.reorderLevel).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -458,7 +458,7 @@ describe('Item API (E2E)', () => {
           },
         });
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect([200, 400, 406, 415]).toContain(axiosError.response.status);
       }
     });
@@ -475,7 +475,7 @@ describe('Item API (E2E)', () => {
         });
         fail('Should have thrown 400 error for invalid parameters');
       } catch (error: unknown) {
-        const axiosError = error as { response: { status: number } };
+        const axiosError = error as AxiosErrorResponse;
         expect(axiosError.response.status).toBe(400);
       }
     });
@@ -522,7 +522,7 @@ describe('Item API (E2E)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.data.data.length).toBeLessThanOrEqual(100);
+      expect(response.data.data.data.length).toBeLessThanOrEqual(100);
     });
   });
 
@@ -534,8 +534,8 @@ describe('Item API (E2E)', () => {
         headers: getAuthHeaders(),
       });
 
-      if (listResponse.data.data.length > 0) {
-        const itemFromList = listResponse.data.data[0];
+      if (listResponse.data.data.data.length > 0) {
+        const itemFromList = listResponse.data.data.data[0];
 
         // Get same item from detail endpoint
         const detailResponse = await axios.get(`${API_BASE_URL}/api/items/${itemFromList.id}`, {
@@ -543,10 +543,10 @@ describe('Item API (E2E)', () => {
         });
 
         // Basic fields should match
-        expect(detailResponse.data.id).toBe(itemFromList.id);
-        expect(detailResponse.data.name).toBe(itemFromList.name);
-        expect(detailResponse.data.sku).toBe(itemFromList.sku);
-        expect(detailResponse.data.mainUnit).toBe(itemFromList.mainUnit);
+        expect(detailResponse.data.data.id).toBe(itemFromList.id);
+        expect(detailResponse.data.data.name).toBe(itemFromList.name);
+        expect(detailResponse.data.data.sku).toBe(itemFromList.sku);
+        expect(detailResponse.data.data.mainUnit).toBe(itemFromList.mainUnit);
       }
     });
 
@@ -558,7 +558,7 @@ describe('Item API (E2E)', () => {
 
       expect(response.status).toBe(200);
 
-      response.data.data.forEach((item: any) => {
+      response.data.data.data.forEach((item: any) => {
         if (item.stock) {
           // Available quantity should not exceed total quantity
           expect(item.stock.availableQty).toBeLessThanOrEqual(item.stock.quantity);
@@ -607,7 +607,7 @@ describe('Item API (E2E)', () => {
         });
 
         expect(response.status).toBe(201);
-        expect(response.data).toMatchObject({
+        expect(response.data.data).toMatchObject({
           name: itemData.name,
           sku: itemData.sku,
           description: itemData.description,
@@ -623,11 +623,11 @@ describe('Item API (E2E)', () => {
           isActive: itemData.isActive,
         });
 
-        expect(response.data.id).toBeDefined();
-        expect(response.data.createdAt).toBeDefined();
-        expect(response.data.updatedAt).toBeDefined();
+        expect(response.data.data.id).toBeDefined();
+        expect(response.data.data.createdAt).toBeDefined();
+        expect(response.data.data.updatedAt).toBeDefined();
 
-        createdItemId = response.data.id;
+        createdItemId = response.data.data.id;
       });
 
       it('should reject duplicate SKU', async () => {
@@ -646,7 +646,7 @@ describe('Item API (E2E)', () => {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
 
-        itemData.sku = existingItem.data.sku;
+        itemData.sku = existingItem.data.data.sku;
 
         try {
           await axios.post(`${API_BASE_URL}/api/items`, itemData, {
@@ -698,7 +698,7 @@ describe('Item API (E2E)', () => {
         expect(response.status).toBe(201);
 
         // Clean up
-        await axios.delete(`${API_BASE_URL}/api/items/${response.data.id}`, {
+        await axios.delete(`${API_BASE_URL}/api/items/${response.data.data.id}`, {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
       });
@@ -734,8 +734,8 @@ describe('Item API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toMatchObject(updateData);
-        expect(response.data.id).toBe(createdItemId);
+        expect(response.data.data).toMatchObject(updateData);
+        expect(response.data.data.id).toBe(createdItemId);
       });
 
       it('should return 404 for non-existent item', async () => {
@@ -780,8 +780,8 @@ describe('Item API (E2E)', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.data.isActive).toBe(false);
-        expect(response.data.id).toBe(createdItemId);
+        expect(response.data.data.isActive).toBe(false);
+        expect(response.data.data.id).toBe(createdItemId);
       });
 
       it('should require system admin role for delete', async () => {
@@ -801,7 +801,7 @@ describe('Item API (E2E)', () => {
 
         // Try to delete with branch manager token (should fail)
         try {
-          await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+          await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.data.id}`, {
             headers: getAuthHeaders(),
           });
           fail('Should have thrown 403 error');
@@ -811,7 +811,7 @@ describe('Item API (E2E)', () => {
         }
 
         // Clean up with system admin
-        await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+        await axios.delete(`${API_BASE_URL}/api/items/${createResponse.data.data.id}`, {
           headers: TestHelpers.getAuthHeaders(systemAdminToken),
         });
       });
@@ -844,7 +844,7 @@ describe('Item API (E2E)', () => {
         });
 
         const hardDeleteResponse = await axios.delete(
-          `${API_BASE_URL}/api/items/${createResponse.data.id}/hard`,
+          `${API_BASE_URL}/api/items/${createResponse.data.data.id}/hard`,
           {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           }
@@ -854,7 +854,7 @@ describe('Item API (E2E)', () => {
 
         // Verify item is gone
         try {
-          await axios.get(`${API_BASE_URL}/api/items/${createResponse.data.id}`, {
+          await axios.get(`${API_BASE_URL}/api/items/${createResponse.data.data.id}`, {
             headers: TestHelpers.getAuthHeaders(systemAdminToken),
           });
           fail('Should have thrown 404 error');
