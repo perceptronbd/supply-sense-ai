@@ -12,6 +12,11 @@ export interface Item {
   buyingUnit?: string;
   transferUnit?: string;
   usingUnit?: string;
+  buyingToMainRate?: number;
+  transferToMainRate?: number;
+  usingToMainRate?: number;
+  safetyStockLevel?: number;
+  reorderLevel?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

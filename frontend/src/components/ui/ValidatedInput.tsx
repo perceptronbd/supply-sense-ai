@@ -1,7 +1,7 @@
 'use client';
 
 import { Input, type InputProps } from '@heroui/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 
 interface ValidatedInputProps
@@ -28,6 +28,11 @@ export function ValidatedInput({
 }: ValidatedInputProps) {
   const [value, setValue] = useState(defaultValue?.toString() || '');
   const [touched, setTouched] = useState(false);
+
+  // Update the internal value when defaultValue changes (for edit mode)
+  useEffect(() => {
+    setValue(defaultValue?.toString() || '');
+  }, [defaultValue]);
 
   const getErrors = useCallback(() => {
     // For number inputs, convert the string value to number for validation
@@ -56,7 +61,6 @@ export function ValidatedInput({
       name={name}
       type={type}
       value={value}
-      defaultValue={defaultValue}
       onValueChange={handleValueChange}
       onBlur={handleBlur}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}

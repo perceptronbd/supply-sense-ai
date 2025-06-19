@@ -65,11 +65,11 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
         buyingUnit: item.buyingUnit || '',
         transferUnit: item.transferUnit || '',
         usingUnit: item.usingUnit || '',
-        buyingToMainRate: 1, // These rates might not be in the Item type
-        transferToMainRate: 1,
-        usingToMainRate: 1,
-        safetyStockLevel: 0,
-        reorderLevel: 0,
+        buyingToMainRate: item.buyingToMainRate ?? 1,
+        transferToMainRate: item.transferToMainRate ?? 1,
+        usingToMainRate: item.usingToMainRate ?? 1,
+        safetyStockLevel: item.safetyStockLevel ?? 0,
+        reorderLevel: item.reorderLevel ?? 0,
         isActive: item.isActive,
       });
     }
@@ -224,7 +224,6 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
   return (
     <main className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
-        {' '}
         {/* Header with back button */}
         <header className="mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -241,10 +240,10 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
             </Button>
           </div>
         </header>
-        {/* Basic Information Card */}
+        {/* Card 1: Basic Information (name, sku, description) */}
         <Card>
           <CardHeader>
-            <Text variant="titleSmall" as="h2">
+            <Text variant="titleMedium" className="font-medium">
               Basic Information
             </Text>
           </CardHeader>
@@ -275,7 +274,6 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
                 isRequired
               />
             </div>
-
             <ValidatedInput
               name="description"
               label="Description"
@@ -289,21 +287,20 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
             />
           </CardBody>
         </Card>
-        {/* Units & Conversion Rates Card */}
+        {/* Card 2: Units & Conversion Rates */}
         <Card>
           <CardHeader>
-            <Text variant="titleSmall" as="h2">
+            <Text variant="titleMedium" className="font-medium">
               Units & Conversion Rates
             </Text>
           </CardHeader>
           <CardBody className="space-y-6">
-            {/* Units Section */}
-            <div className="space-y-4">
-              <Text variant="bodyXSmall" weight={'light'}>
-                Unit Management
+            {/* Main Unit at the top */}
+            <div>
+              <Text variant="titleSmall" className="text-sm font-medium mb-3">
+                Main Unit
               </Text>
-              {/* Main Unit - Full Width */}
-              <div className="w-full md:w-1/2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ValidatedInput
                   name="mainUnit"
                   label="Main Unit"
@@ -317,7 +314,13 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
                   isRequired
                 />
               </div>
-              {/* Other Units - Grouped Together */}
+            </div>
+
+            {/* Other Units grouped together */}
+            <div>
+              <Text variant="titleSmall" className="text-sm font-medium mb-3">
+                Other Units
+              </Text>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ValidatedInput
                   name="buyingUnit"
@@ -357,9 +360,10 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
                 />
               </div>
             </div>
+
             {/* Conversion Rates */}
-            <div className="space-y-4">
-              <Text variant="bodyXSmall" weight={'light'}>
+            <div>
+              <Text variant="titleSmall" className="text-sm font-medium mb-3">
                 Conversion Rates
               </Text>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -409,56 +413,45 @@ export function ItemForm({ item, mode, onSuccess }: ItemFormProps) {
             </div>
           </CardBody>
         </Card>
-        {/* Stock & Status Card */}
+        {/* Card 3: Stock & Active Status */}
         <Card>
           <CardHeader>
-            <Text variant="titleSmall" as="h2">
+            <Text variant="titleMedium" className="font-medium">
               Stock & Status
             </Text>
           </CardHeader>
-          <CardBody className="space-y-6">
-            {/* Stock Management */}
-            <div className="space-y-4">
-              <Text variant="bodyXSmall" weight={'light'}>
-                Stock Management
-              </Text>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ValidatedInput
-                  name="safetyStockLevel"
-                  type="number"
-                  label="Safety Stock Level"
-                  placeholder="0"
-                  defaultValue={formData.safetyStockLevel?.toString()}
-                  fieldSchema={itemFieldSchemas.safetyStockLevel}
-                  wasSubmitted={wasSubmitted}
-                  errors={fieldErrors.safetyStockLevel}
-                  onValueChange={handleValueChange}
-                  variant="bordered"
-                  step="0.001"
-                  min="0"
-                />
-                <ValidatedInput
-                  name="reorderLevel"
-                  type="number"
-                  label="Reorder Level"
-                  placeholder="0"
-                  defaultValue={formData.reorderLevel?.toString()}
-                  fieldSchema={itemFieldSchemas.reorderLevel}
-                  wasSubmitted={wasSubmitted}
-                  errors={fieldErrors.reorderLevel}
-                  onValueChange={handleValueChange}
-                  variant="bordered"
-                  step="0.001"
-                  min="0"
-                />
-              </div>
+          <CardBody className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ValidatedInput
+                name="safetyStockLevel"
+                type="number"
+                label="Safety Stock Level"
+                placeholder="0"
+                defaultValue={formData.safetyStockLevel?.toString()}
+                fieldSchema={itemFieldSchemas.safetyStockLevel}
+                wasSubmitted={wasSubmitted}
+                errors={fieldErrors.safetyStockLevel}
+                onValueChange={handleValueChange}
+                variant="bordered"
+                step="0.001"
+                min="0"
+              />
+              <ValidatedInput
+                name="reorderLevel"
+                type="number"
+                label="Reorder Level"
+                placeholder="0"
+                defaultValue={formData.reorderLevel?.toString()}
+                fieldSchema={itemFieldSchemas.reorderLevel}
+                wasSubmitted={wasSubmitted}
+                errors={fieldErrors.reorderLevel}
+                onValueChange={handleValueChange}
+                variant="bordered"
+                step="0.001"
+                min="0"
+              />
             </div>
-
-            {/* Status */}
-            <div className="space-y-4">
-              <Text variant="bodyXSmall" weight={'light'}>
-                Item Status
-              </Text>
+            <div>
               <Checkbox
                 isSelected={formData.isActive}
                 onValueChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
