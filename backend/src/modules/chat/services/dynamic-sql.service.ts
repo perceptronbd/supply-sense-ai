@@ -1,5 +1,5 @@
 import { PrismaService } from '@app/prisma.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseSchemaService } from './database-schema.service';
 import { McpClientService } from './mcp-client.service';
 
@@ -20,9 +20,9 @@ export class DynamicSQLService {
   private readonly logger = new Logger(DynamicSQLService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private mcpClientService: McpClientService,
-    private databaseSchemaService: DatabaseSchemaService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(McpClientService) private mcpClientService: McpClientService,
+    @Inject(DatabaseSchemaService) private databaseSchemaService: DatabaseSchemaService
   ) {}
 
   /**

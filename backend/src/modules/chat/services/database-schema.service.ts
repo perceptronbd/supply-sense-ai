@@ -1,5 +1,5 @@
 import { PrismaService } from '@app/prisma.service';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 export interface SchemaColumn {
   name: string;
@@ -48,7 +48,7 @@ export class DatabaseSchemaService implements OnModuleInit {
   private schemaCache: DatabaseSchemaInfo | null = null;
   private isInitialized = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
     if (!this.prisma) {
