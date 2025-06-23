@@ -12,6 +12,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -36,7 +37,9 @@ import { PurchaseRequestService } from './purchase-request.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class PurchaseRequestController {
-  constructor(private readonly purchaseRequestService: PurchaseRequestService) {}
+  constructor(
+    @Inject(PurchaseRequestService) private readonly purchaseRequestService: PurchaseRequestService
+  ) {}
 
   @Get('debug-user')
   @Roles(

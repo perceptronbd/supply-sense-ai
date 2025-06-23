@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseIntPipe,
   Patch,
@@ -19,7 +20,7 @@ import { FormulaService } from './formula.service';
 @ApiTags('formula')
 @Controller('formula')
 export class FormulaController {
-  constructor(private readonly formulaService: FormulaService) {}
+  constructor(@Inject(FormulaService) private readonly formulaService: FormulaService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

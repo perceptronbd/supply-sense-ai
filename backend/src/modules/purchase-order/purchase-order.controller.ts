@@ -12,6 +12,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -36,7 +37,9 @@ import { PurchaseOrderService } from './purchase-order.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class PurchaseOrderController {
-  constructor(private readonly purchaseOrderService: PurchaseOrderService) {}
+  constructor(
+    @Inject(PurchaseOrderService) private readonly purchaseOrderService: PurchaseOrderService
+  ) {}
   @Post()
   @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
   @ApiOperation({ summary: 'Create a new purchase order' })

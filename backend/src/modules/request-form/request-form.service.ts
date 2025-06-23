@@ -1,5 +1,5 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
@@ -15,6 +15,7 @@ enum RFStatus {
 
 @Injectable()
 export class RequestFormService {
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
   // Helper to avoid circular dependencies with branch relations
   private readonly branchSelect = {
     select: {
@@ -30,8 +31,6 @@ export class RequestFormService {
       // Explicitly exclude users to prevent circular dependency
     },
   };
-
-  constructor(private prisma: PrismaService) {}
 
   async create(createRequestFormDto: CreateRequestFormDto, userId: string) {
     // Generate RF number

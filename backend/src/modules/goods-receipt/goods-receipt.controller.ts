@@ -12,6 +12,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -36,7 +37,9 @@ import { GoodsReceiptService } from './goods-receipt.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class GoodsReceiptController {
-  constructor(private readonly goodsReceiptService: GoodsReceiptService) {}
+  constructor(
+    @Inject(GoodsReceiptService) private readonly goodsReceiptService: GoodsReceiptService
+  ) {}
 
   @Post()
   @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)

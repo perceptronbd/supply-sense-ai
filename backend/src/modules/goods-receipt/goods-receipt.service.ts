@@ -1,6 +1,6 @@
 ﻿import { PrismaService } from '@app/prisma.service';
 import { PrismaTransaction } from '@common/interfaces/prisma.interface';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
@@ -14,7 +14,7 @@ enum GRStatus {
 
 @Injectable()
 export class GoodsReceiptService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createGoodsReceiptDto: CreateGoodsReceiptDto, userId: string) {
     // Generate GR number

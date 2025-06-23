@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -18,7 +19,10 @@ import { ManufacturingListService } from './manufacturing-list.service';
 @ApiTags('manufacturing-list')
 @Controller('manufacturing-list')
 export class ManufacturingListController {
-  constructor(private readonly manufacturingListService: ManufacturingListService) {}
+  constructor(
+    @Inject(ManufacturingListService)
+    private readonly manufacturingListService: ManufacturingListService
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

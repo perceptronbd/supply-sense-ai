@@ -2,6 +2,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Injectable()
 export class BranchService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
   /**
    * Get branches with optional pagination and search
    * If no pagination params provided, returns all branches

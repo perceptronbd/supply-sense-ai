@@ -1,6 +1,17 @@
 ﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AISuggestionFiltersDto,
@@ -24,12 +35,13 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
 @ApiBearerAuth()
 export class AiController {
   constructor(
-    private demandForecastingService: DemandForecastingService,
+    @Inject(DemandForecastingService) private demandForecastingService: DemandForecastingService,
+    @Inject(PurchaseOptimizationService)
     private purchaseOptimizationService: PurchaseOptimizationService,
-    private qualityAnalysisService: QualityAnalysisService,
-    private stockPredictionService: StockPredictionService,
-    private workflowAutomationService: WorkflowAutomationService,
-    private aiSuggestionsService: AISuggestionsService
+    @Inject(QualityAnalysisService) private qualityAnalysisService: QualityAnalysisService,
+    @Inject(StockPredictionService) private stockPredictionService: StockPredictionService,
+    @Inject(WorkflowAutomationService) private workflowAutomationService: WorkflowAutomationService,
+    @Inject(AISuggestionsService) private aiSuggestionsService: AISuggestionsService
   ) {}
 
   // Demand Forecasting Endpoints

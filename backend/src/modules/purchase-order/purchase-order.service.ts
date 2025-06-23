@@ -1,5 +1,5 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
@@ -15,7 +15,7 @@ enum POStatus {
 
 @Injectable()
 export class PurchaseOrderService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createPurchaseOrderDto: CreatePurchaseOrderDto, userId: string) {
     // Generate unique PO number using timestamp and random number

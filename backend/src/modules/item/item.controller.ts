@@ -8,6 +8,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -35,7 +36,7 @@ import { ItemService } from './item.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ItemController {
-  constructor(private readonly itemService: ItemService) {}
+  constructor(@Inject(ItemService) private readonly itemService: ItemService) {}
 
   @Post()
   @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)

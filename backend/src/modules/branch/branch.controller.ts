@@ -12,6 +12,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -39,7 +40,7 @@ import { BranchEntity } from './entities/branch.entity';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class BranchController {
-  constructor(private readonly branchService: BranchService) {}
+  constructor(@Inject(BranchService) private readonly branchService: BranchService) {}
 
   @Post()
   @Roles(UserRole.SYSTEM_ADMIN)

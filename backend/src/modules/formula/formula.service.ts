@@ -1,12 +1,12 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
 
 @Injectable()
 export class FormulaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createFormulaDto: CreateFormulaDto, userId: string) {
     // Check if code is unique

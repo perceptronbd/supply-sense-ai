@@ -1,6 +1,6 @@
 ﻿import { PrismaService } from '@app/prisma.service';
 import { type ItemForDeduction, type PrismaTransaction } from '@common/interfaces/prisma.interface';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
@@ -15,7 +15,7 @@ enum MRStatus {
 
 @Injectable()
 export class MaterialRequisitionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createMaterialRequisitionDto: CreateMaterialRequisitionDto, userId: string) {
     // Generate MR number

@@ -2,6 +2,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -46,7 +47,7 @@ type TransformedItem = Omit<
 
 @Injectable()
 export class ItemService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
   /**
    * Transform items with proper Decimal to number conversion
    */

@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -18,7 +19,10 @@ import { MaterialRequisitionService } from './material-requisition.service';
 @ApiTags('material-requisition')
 @Controller('material-requisition')
 export class MaterialRequisitionController {
-  constructor(private readonly materialRequisitionService: MaterialRequisitionService) {}
+  constructor(
+    @Inject(MaterialRequisitionService)
+    private readonly materialRequisitionService: MaterialRequisitionService
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

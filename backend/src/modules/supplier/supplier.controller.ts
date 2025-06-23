@@ -9,6 +9,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -73,7 +74,7 @@ type PaginatedSuppliersResponse = {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class SupplierController {
-  constructor(private readonly supplierService: SupplierService) {}
+  constructor(@Inject(SupplierService) private readonly supplierService: SupplierService) {}
 
   @Post()
   @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)

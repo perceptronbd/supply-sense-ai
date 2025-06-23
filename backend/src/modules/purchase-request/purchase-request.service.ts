@@ -1,5 +1,5 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
 import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
@@ -15,7 +15,7 @@ enum PRStatus {
 
 @Injectable()
 export class PurchaseRequestService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createPurchaseRequestDto: CreatePurchaseRequestDto, userId: string) {
     // Generate PR number

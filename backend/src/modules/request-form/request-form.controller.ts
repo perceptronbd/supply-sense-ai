@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -18,7 +19,9 @@ import { RequestFormService } from './request-form.service';
 @ApiTags('request-form')
 @Controller('request-form')
 export class RequestFormController {
-  constructor(private readonly requestFormService: RequestFormService) {}
+  constructor(
+    @Inject(RequestFormService) private readonly requestFormService: RequestFormService
+  ) {}
 
   @Post()
   @ApiOperation({
