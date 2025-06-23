@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "mcp-server:serve": "npx nx serve mastra-mcp-server",
+    "mcp-server:build": "npx nx build mastra-mcp-server",
     "backend:serve": "npx nx serve backend",
     "backend:build": "npx nx build backend",
     "backend:test": "npx nx test backend",
