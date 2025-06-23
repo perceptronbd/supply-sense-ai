@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { GeminiService } from '../../ai/services/gemini.service';
 import { AIChatResponse, ChatMessage, QueryContext } from '../interfaces/chat.interface';
 import { DatabaseSchemaService } from './database-schema.service';
 import { DynamicSQLService } from './dynamic-sql.service';
@@ -14,11 +13,10 @@ export class ChatService {
     @Inject(SessionService) private readonly sessionService: SessionService,
     @Inject(MessageService) private readonly messageService: MessageService,
     @Inject(DynamicSQLService) private readonly dynamicSQLService: DynamicSQLService,
-    @Inject(GeminiService) private readonly geminiService: GeminiService,
     @Inject(DatabaseSchemaService) private readonly databaseSchemaService: DatabaseSchemaService,
     @Inject(McpClientService) private readonly mcpClientService: McpClientService
   ) {
-    this.logger.log('ChatService constructor called - dependencies restored');
+    this.logger.log('ChatService constructor called - using MCP for all AI queries');
   }
   async processUserMessage(
     sessionId: string,
@@ -324,21 +322,40 @@ export class ChatService {
     try {
       // Build context for the AI
       const systemPrompt = this.buildSystemPrompt(context);
-      const conversationHistory = this.buildConversationHistory(context.sessionHistory); // Get AI response using Gemini
-      const aiResponse = await this.geminiService.generateText(
-        `${systemPrompt}\n\nConversation History:\n${conversationHistory}\n\nUser: ${message}\n\nAssistant:`
-      );
+      const conversationHistory = this.buildConversationHistory(context.sessionHistory);
+
+      // Use MCP client for general queries instead of GeminiService
+      const response = await this.mcpClientService.queryGeneralAgent(message, {
+        systemPrompt,
+        conversationHistory,
+        userId: context.userId,
+        userRole: context.userRole,
+        branchId: context.branchId,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to get response from AI agent');
+      }
+
+      const aiResponse = response.response || 'I apologize, but I could not generate a response.';
 
       // Store assistant response
       await this.messageService.createMessage(sessionId, aiResponse, 'assistant', 'assistant', {
         isGeneralQuery: true,
         executionTime: Date.now(),
+        mcpPowered: true,
       });
 
       return {
         message: aiResponse,
         type: 'text',
         suggestions: this.generateSuggestions(message),
+        sessionId,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          mcpPowered: true,
+          isGeneralQuery: true,
+        },
       };
     } catch (error) {
       this.logger.error('Failed to handle general query:', error);
@@ -351,6 +368,8 @@ export class ChatService {
       return {
         message: errorMessage,
         type: 'error',
+        sessionId,
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -381,16 +400,25 @@ Please provide a helpful, conversational response that:
 
 Response:`;
 
-      const aiResponse = await this.geminiService.generateText(prompt);
+      // Use MCP client for data analysis instead of GeminiService
+      const response = await this.mcpClientService.queryGeneralAgent(prompt);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to generate data analysis');
+      }
+
+      const aiResponse = response.response || `Here's the data for your query: ${explanation}`;
 
       return {
         message: aiResponse,
         type: 'data',
         data: data,
         suggestions: this.generateDataSuggestions(originalQuery, data),
+        timestamp: new Date().toISOString(),
         metadata: {
           dataType: typeof data,
           recordCount: Array.isArray(data) ? data.length : 1,
+          mcpPowered: true,
         },
       };
     } catch (error) {
@@ -691,5 +719,71 @@ Guidelines:
         message: 'MCP workflow test failed',
       };
     }
+  }
+
+  private isWorkflowQuery(message: string): boolean {
+    const workflowKeywords = [
+      'run workflow',
+      'execute workflow',
+      'process workflow',
+      'start workflow',
+      'monitor supply chain',
+      'check stock levels',
+      'analyze inventory',
+    ];
+
+    const lowerMessage = message.toLowerCase();
+    return workflowKeywords.some((keyword) => lowerMessage.includes(keyword));
+  }
+
+  private extractWorkflowInput(message: string, context: QueryContext): Record<string, unknown> {
+    // Extract relevant parameters from the message for workflow execution
+    const input: Record<string, unknown> = {
+      userQuery: message,
+      userId: context.userId,
+      branchId: context.branchId,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Try to extract specific parameters
+    const _lowerMessage = message.toLowerCase();
+
+    // Extract item SKU if mentioned
+    const skuMatch = message.match(/SKU[:\s]+([A-Z0-9-]+)/i);
+    if (skuMatch) {
+      input.itemSku = skuMatch[1];
+    }
+
+    // Extract threshold if mentioned
+    const thresholdMatch = message.match(/threshold[:\s]+(\d+)/i);
+    if (thresholdMatch) {
+      input.threshold = Number.parseInt(thresholdMatch[1]);
+    } else {
+      input.threshold = 10; // Default threshold
+    }
+
+    return input;
+  }
+
+  private generateMcpSuggestions(_query: string, response: Record<string, unknown>): string[] {
+    const suggestions = [
+      'Ask about supply chain risks',
+      'Get inventory optimization recommendations',
+      'Analyze supplier performance',
+      'Check lead time predictions',
+    ];
+
+    // Add dynamic suggestions based on response
+    const toolsAvailable = response.toolsAvailable as string[] | undefined;
+    if (Array.isArray(toolsAvailable)) {
+      if (toolsAvailable.includes('ask_supplyChainAgent')) {
+        suggestions.push('Ask the AI for more supply chain insights');
+      }
+      if (toolsAvailable.includes('run_supplyChainWorkflow')) {
+        suggestions.push('Run automated supply chain monitoring');
+      }
+    }
+
+    return suggestions.slice(0, 4); // Limit to 4 suggestions
   }
 }

@@ -334,4 +334,61 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       hasClient: this.mcpClient !== null,
     };
   }
+
+  /**
+   * Handle general AI queries through the agent without specific tool requirements
+   */
+  async queryGeneralAgent(
+    query: string,
+    context?: {
+      systemPrompt?: string;
+      conversationHistory?: string;
+      userId?: string;
+      userRole?: string;
+      branchId?: string;
+    }
+  ): Promise<AgentResponse> {
+    if (!this.agent || !this.mcpClient || !this.isConnected) {
+      throw new Error('MCP client or agent not initialized');
+    }
+
+    try {
+      this.logger.log(`🤖 Processing general query with AI agent: "${query}"`);
+
+      // Build the full prompt with context
+      let fullPrompt = query;
+      if (context?.systemPrompt) {
+        fullPrompt = `${context.systemPrompt}\n\n`;
+      }
+      if (context?.conversationHistory) {
+        fullPrompt += `Conversation History:\n${context.conversationHistory}\n\n`;
+      }
+      fullPrompt += `User: ${query}\n\nAssistant:`;
+
+      // Use the agent to generate a response for general queries
+      const response = await this.agent.generate([
+        {
+          role: 'user',
+          content: fullPrompt,
+        },
+      ]);
+
+      this.logger.log('✅ General agent query processed successfully');
+      return {
+        success: true,
+        response: response.text,
+        context,
+        timestamp: new Date().toISOString(),
+        usage: response.usage,
+      };
+    } catch (error) {
+      this.logger.error('Failed to query general agent:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        context,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
 }

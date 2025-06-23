@@ -1,5 +1,4 @@
 ﻿import { PrismaModule } from '@app/prisma.module';
-import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -17,7 +16,6 @@ import { SessionService } from './services/session.service';
   imports: [
     ConfigModule,
     PrismaModule,
-    AiModule,
     AuthModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',

@@ -1,7 +1,7 @@
 import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { GeminiService } from '../../ai/services/gemini.service';
 import { DatabaseSchemaService } from './database-schema.service';
+import { McpClientService } from './mcp-client.service';
 
 interface SQLQueryResult {
   sql: string | null;
@@ -21,7 +21,7 @@ export class DynamicSQLService {
 
   constructor(
     private prisma: PrismaService,
-    private geminiService: GeminiService,
+    private mcpClientService: McpClientService,
     private databaseSchemaService: DatabaseSchemaService
   ) {}
 
@@ -263,15 +263,21 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
       console.log('='.repeat(80));
       console.log(prompt);
       console.log('='.repeat(80));
-      const response = await this.geminiService.generateText(prompt);
+      const response = await this.mcpClientService.queryGeneralAgent(prompt);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to generate SQL query');
+      }
+
+      const aiResponseText = response.response || '';
 
       console.log('\n🔄 ===== RAW AI RESPONSE =====');
-      console.log('📤 Raw Response Length:', response.length, 'characters');
+      console.log('📤 Raw Response Length:', aiResponseText.length, 'characters');
       console.log('📤 Raw AI Response:');
-      console.log(response);
+      console.log(aiResponseText);
 
       // Parse the JSON response with improved error handling
-      const cleanResponse = response.replace(/```json|```/g, '').trim();
+      const cleanResponse = aiResponseText.replace(/```json|```/g, '').trim();
 
       console.log('\n🧹 ===== CLEANED AI RESPONSE =====');
       console.log('🔧 Cleaned Response:');
@@ -482,10 +488,14 @@ REMEMBER: Users should never see database IDs in your response - only human-read
     `.trim();
 
     try {
-      return await this.geminiService.generateText(prompt);
+      const response = await this.mcpClientService.queryGeneralAgent(prompt);
+      return response.success
+        ? response.response || `Found ${results.length} results for your query: ${queryExplanation}`
+        : `Found ${results.length} results for your query: ${queryExplanation}`;
     } catch (error) {
       this.logger.error('Failed to generate explanation:', error);
-      // Fallback to basic explanation      return `Found ${results.length} results for your query: ${queryExplanation}`;
+      // Fallback to basic explanation
+      return `Found ${results.length} results for your query: ${queryExplanation}`;
     }
   }
 
