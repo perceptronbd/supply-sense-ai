@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { BranchModule } from '../modules/branch/branch.module';
 import { ChatModule } from '../modules/chat/chat.module';
@@ -36,7 +35,6 @@ import { PrismaModule } from './prisma.module';
     MaterialRequisitionModule,
     ManufacturingListModule,
     FormulaModule,
-    AiModule,
     ChatModule,
   ],
   controllers: [AppController],

@@ -657,7 +657,6 @@ Guidelines:
   async testMcpIntegration(query: string) {
     try {
       this.logger.log(`Testing MCP integration with query: "${query}"`);
-      this.logger.log(`McpClientService available: ${!!this.mcpClientService}`);
 
       if (!this.mcpClientService) {
         throw new Error('McpClientService is not available');

@@ -1,15 +1,15 @@
-﻿import { PrismaService } from '@app/prisma.service';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+﻿import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import { PrismaService } from '../../app/prisma.service';
 import { UserResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly prisma: PrismaService
+    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
   async login(

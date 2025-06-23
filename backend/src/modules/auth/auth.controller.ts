@@ -26,7 +26,6 @@ export class AuthController {
     description: 'Invalid credentials',
   })
   async login(@Body() loginDto: LoginDto) {
-    console.log('Login request received:', loginDto);
     return this.authService.login(loginDto.email, loginDto.password);
   }
 }
