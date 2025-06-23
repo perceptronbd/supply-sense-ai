@@ -1,5 +1,5 @@
+import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../../../app/prisma.service';
 
 export interface SchemaColumn {
   name: string;
@@ -48,9 +48,14 @@ export class DatabaseSchemaService implements OnModuleInit {
   private schemaCache: DatabaseSchemaInfo | null = null;
   private isInitialized = false;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
+    if (!this.prisma) {
+      this.logger.error('PrismaService not injected properly');
+      return;
+    }
+
     try {
       await this.loadDatabaseSchema();
       this.isInitialized = true;
@@ -64,6 +69,10 @@ export class DatabaseSchemaService implements OnModuleInit {
    * Get complete database schema information (memoized)
    */
   async getDatabaseSchema(): Promise<DatabaseSchemaInfo> {
+    if (!this.prisma) {
+      throw new Error('PrismaService not available');
+    }
+
     if (!this.schemaCache) {
       await this.loadDatabaseSchema();
     }

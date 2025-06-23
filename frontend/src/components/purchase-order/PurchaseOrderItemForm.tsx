@@ -8,7 +8,6 @@ import {
   type PurchaseOrderItemFormData,
   purchaseOrderItemSchema,
 } from '@/lib/schemas/purchase-order.schema';
-import type { Item } from '@/store/api/itemApi';
 import { Button } from '@heroui/react';
 import { useState } from 'react';
 

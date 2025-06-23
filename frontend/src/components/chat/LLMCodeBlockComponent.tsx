@@ -1,8 +1,7 @@
 import type { CodeToHtmlOptions } from '@llm-ui/code';
-import { allLangs, allLangsAlias, loadHighlighter, useCodeBlockToHtml } from '@llm-ui/code';
+import { loadHighlighter, useCodeBlockToHtml } from '@llm-ui/code';
 import { type LLMOutputComponent } from '@llm-ui/react';
 import parseHtml from 'html-react-parser';
-import React from 'react';
 import { createHighlighter } from 'shiki';
 
 // Load the highlighter with basic setup

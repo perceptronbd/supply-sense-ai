@@ -6,6 +6,8 @@ import {
   Delete,
   Get,
   HttpStatus,
+  Inject,
+  Logger,
   Param,
   Post,
   Query,
@@ -16,11 +18,20 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
+import { McpClientService } from './services/mcp-client.service';
 
 @ApiTags('chat')
 @Controller('chat')
 export class ChatController {
-  constructor(private chatService: ChatService) {}
+  private readonly logger = new Logger(ChatController.name);
+
+  constructor(
+    @Inject(ChatService) private readonly chatService: ChatService,
+    @Inject(McpClientService) private readonly mcpClientService: McpClientService
+  ) {
+    this.logger.log('ChatController constructor - explicit injection');
+  }
+
   @Get('health')
   @ApiOperation({ summary: 'Check chat service health' })
   @ApiResponse({ status: 200, description: 'Service is healthy' })
@@ -36,6 +47,69 @@ export class ChatController {
       },
     };
   }
+
+  @Get('mcp/health')
+  @ApiOperation({ summary: 'Check MCP client health and connection status' })
+  @ApiResponse({ status: 200, description: 'MCP health check completed' })
+  async mcpHealth() {
+    try {
+      // Wait a moment for service initialization if needed
+      if (!this.mcpClientService) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (!this.mcpClientService) {
+        return {
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          error: 'McpClientService is not available',
+          mcp: {
+            connected: false,
+            toolsCount: 0,
+            availableTools: [] as string[],
+            error: 'Service not initialized',
+          },
+        };
+      }
+
+      const mcpHealth = await this.mcpClientService.healthCheck();
+      const connectionStatus = this.mcpClientService.getConnectionStatus();
+
+      return {
+        status: mcpHealth.connected ? 'healthy' : 'disconnected',
+        timestamp: new Date().toISOString(),
+        mcp: {
+          connected: mcpHealth.connected,
+          toolsCount: mcpHealth.toolsCount,
+          availableTools: mcpHealth.availableTools,
+          hasClient: connectionStatus.hasClient,
+          error: mcpHealth.error,
+        },
+        server: {
+          name: 'SupplySense Supply Chain Server',
+          capabilities: [
+            'Supply Chain Agent (ask_supplyChainAgent)',
+            'Supply Chain Workflow (run_supplyChainWorkflow)',
+            'Supply Chain Status Tool',
+          ],
+        },
+      };
+    } catch (error) {
+      this.logger.error('MCP health check error:', error);
+      return {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        mcp: {
+          connected: false,
+          toolsCount: 0,
+          availableTools: [] as string[],
+          error: 'Failed to check MCP health',
+        },
+      };
+    }
+  }
+
   @Post('sessions')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -144,5 +218,19 @@ export class ChatController {
         userPermissions: [], // TODO: Implement user permissions system
       }
     );
+  }
+
+  @Post('mcp/test')
+  @ApiOperation({ summary: 'Test MCP integration without authentication' })
+  @ApiResponse({ status: 200, description: 'MCP test completed' })
+  async testMcp(@Body() testDto: { query: string }) {
+    return this.chatService.testMcpIntegration(testDto.query);
+  }
+
+  @Post('mcp/test-workflow')
+  @ApiOperation({ summary: 'Test MCP workflow integration without authentication' })
+  @ApiResponse({ status: 200, description: 'MCP workflow test completed' })
+  async testMcpWorkflow(@Body() testDto: { workflowInput: Record<string, unknown> }) {
+    return this.chatService.testMcpWorkflow(testDto.workflowInput);
   }
 }

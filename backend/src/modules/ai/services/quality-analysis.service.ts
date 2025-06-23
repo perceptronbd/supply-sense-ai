@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../app/prisma.service';
 import {
-  GRItemWithReceiptAccess,
-  GoodsReceiptData,
   type QualityWhereClause,
-  SupplierData,
   type SupplierWithQualityData,
 } from '../interfaces/ai-service.interface';
 import { GeminiService } from './gemini.service';

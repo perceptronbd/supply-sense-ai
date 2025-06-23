@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ChartLineIconProps {
   size?: number;
   className?: string;

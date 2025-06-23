@@ -1,8 +1,4 @@
-﻿import {
-  type AuthenticatedUser,
-  CurrentUser,
-} from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+﻿import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import {

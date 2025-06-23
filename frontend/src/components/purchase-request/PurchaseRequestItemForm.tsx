@@ -4,13 +4,11 @@ import { ItemSelector } from '@/components/ui/ItemSelector';
 import { Text } from '@/components/ui/Text';
 import { ValidatedDateInput } from '@/components/ui/ValidatedDateInput';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
-import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
 import { ValidatedTextarea } from '@/components/ui/ValidatedTextarea';
 import {
   type PurchaseRequestItemFormData,
   purchaseRequestItemSchema,
 } from '@/lib/schemas/purchase-request.schema';
-import type { Item } from '@/store/api/itemApi';
 import { Button } from '@heroui/react';
 import { useState } from 'react';
 

@@ -44,7 +44,9 @@
       },
       "correctness": {
         "noUnusedVariables": "error",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        "noUnusedImports": "error",
+        "noUnusedPrivateClassMembers": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn",
@@ -54,7 +56,11 @@
       "suspicious": {
         "noExplicitAny": "warn",
         "noArrayIndexKey": "warn",
-        "noEmptyBlock": "warn"
+        "noEmptyBlock": "warn",
+        "noFallthroughSwitchClause": "error",
+        "noImplicitAnyLet": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "useValidTypeof": "error"
       },
       "a11y": {
         "noSvgWithoutTitle": "off"
@@ -103,6 +109,16 @@
           },
           "a11y": {
             "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["backend/**/*.ts", "mastra-mcp-server/**/*.ts"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "off"
           }
         }
       }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
@@ -15,10 +16,15 @@ import { RequestFormModule } from '../modules/request-form/request-form.module';
 import { SupplierModule } from '../modules/supplier/supplier.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma.service';
+import { PrismaModule } from './prisma.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    PrismaModule,
     AuthModule,
     BranchModule,
     ItemModule,
@@ -34,7 +40,6 @@ import { PrismaService } from './prisma.service';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, Reflector],
-  exports: [PrismaService],
+  providers: [AppService, Reflector],
 })
 export class AppModule {}

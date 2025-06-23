@@ -1,5 +1,5 @@
+import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../app/prisma.service';
 import { GeminiService } from '../../ai/services/gemini.service';
 import { DatabaseSchemaService } from './database-schema.service';
 

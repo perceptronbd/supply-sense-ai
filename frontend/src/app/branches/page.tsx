@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AuthGuard from '@/components/AuthGuard';
 import { ActionsDropdown } from '@/components/branches';

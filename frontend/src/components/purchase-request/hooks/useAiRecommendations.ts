@@ -7,7 +7,6 @@ import {
   useGeneratePurchaseRecommendationsMutation,
 } from '@/store/api/aiApi';
 import { addToast } from '@heroui/react';
-import { useState } from 'react';
 
 interface UseAiRecommendationsProps {
   formData: Partial<PurchaseRequestFormData>;

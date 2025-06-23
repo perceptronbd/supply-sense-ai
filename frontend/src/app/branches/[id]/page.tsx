@@ -4,7 +4,7 @@ import AuthGuard from '@/components/AuthGuard';
 import { ArrowLeftIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
-import { type Branch, useGetBranchQuery } from '@/store/api/branchApi';
+import { useGetBranchQuery } from '@/store/api/branchApi';
 import { Button, Card, CardBody, CardHeader, Chip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

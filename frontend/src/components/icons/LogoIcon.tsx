@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface LogoIconProps {
   size?: number;
   className?: string;

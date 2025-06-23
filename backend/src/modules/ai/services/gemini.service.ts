@@ -1,5 +1,5 @@
 import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EquipmentData, SupplierRequirements } from '../interfaces/ai-service.interface';
 
@@ -74,16 +74,25 @@ export interface AIAnalysisResult {
 }
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements OnModuleInit {
   private readonly logger = new Logger(GeminiService.name);
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
 
   constructor(private configService: ConfigService) {
+    // Delay initialization to allow DI to complete
+  }
+
+  onModuleInit() {
     this.initializeGemini();
   }
 
   private initializeGemini() {
+    if (!this.configService) {
+      this.logger.warn('ConfigService not available. Gemini AI features will be limited.');
+      return;
+    }
+
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     const modelName = this.configService.get<string>('GEMINI_MODEL', 'gemini-1.5-flash');
 

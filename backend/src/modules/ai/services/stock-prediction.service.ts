@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../../app/prisma.service';
 import { ConsumptionRecord, StockData, StockWhereClause } from '../interfaces/ai-service.interface';
 import { GeminiService } from './gemini.service';

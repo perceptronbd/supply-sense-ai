@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ReloadIconProps {
   size?: number;
   className?: string;

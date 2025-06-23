@@ -5,18 +5,11 @@ import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import {
   type CreateItemFormData,
-  type UpdateItemFormData,
   createItemSchema,
   itemFieldSchemas,
   updateItemSchema,
 } from '@/lib/schemas/item.schema';
-import {
-  type CreateItemRequest,
-  type Item,
-  type UpdateItemRequest,
-  useCreateItemMutation,
-  useUpdateItemMutation,
-} from '@/store/api/itemApi';
+import { type Item, useCreateItemMutation, useUpdateItemMutation } from '@/store/api/itemApi';
 import { Button } from '@heroui/button';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Checkbox } from '@heroui/checkbox';

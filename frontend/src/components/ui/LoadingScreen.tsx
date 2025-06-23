@@ -1,6 +1,5 @@
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { Text } from '@/components/ui/Text';
-import React from 'react';
 
 interface LoadingScreenProps {
   loadingText?: string;

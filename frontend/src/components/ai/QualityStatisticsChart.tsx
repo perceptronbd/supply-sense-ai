@@ -34,7 +34,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import type { TooltipItem } from 'chart.js';
-import React, { useState, useMemo, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 

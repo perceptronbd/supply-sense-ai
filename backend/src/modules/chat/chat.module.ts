@@ -1,4 +1,4 @@
-﻿import { PrismaService } from '@app/prisma.service';
+﻿import { PrismaModule } from '@app/prisma.module';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { Module } from '@nestjs/common';
@@ -9,12 +9,14 @@ import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
 import { DatabaseSchemaService } from './services/database-schema.service';
 import { DynamicSQLService } from './services/dynamic-sql.service';
+import { McpClientService } from './services/mcp-client.service';
 import { MessageService } from './services/message.service';
 import { SessionService } from './services/session.service';
 
 @Module({
   imports: [
     ConfigModule,
+    PrismaModule,
     AiModule,
     AuthModule,
     JwtModule.register({
@@ -25,13 +27,13 @@ import { SessionService } from './services/session.service';
   controllers: [ChatController],
   providers: [
     ChatGateway,
-    ChatService,
     MessageService,
     SessionService,
     DynamicSQLService,
     DatabaseSchemaService,
-    PrismaService,
+    McpClientService,
+    ChatService, // Move ChatService after McpClientService
   ],
-  exports: [ChatService, MessageService, SessionService],
+  exports: [ChatService, MessageService, SessionService, McpClientService],
 })
 export class ChatModule {}

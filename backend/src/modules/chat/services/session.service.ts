@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../app/prisma.service';
 import { ChatSession } from '../interfaces/chat.interface';
 
 @Injectable()

@@ -6,9 +6,7 @@ import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ValidatedSelect } from '@/components/ui/ValidatedSelect';
 import { ValidatedTextarea } from '@/components/ui/ValidatedTextarea';
 import {
-  type PurchaseRequestActionState,
   type PurchaseRequestFormData,
-  type PurchaseRequestItemFormData,
   purchaseRequestSchema,
 } from '@/lib/schemas/purchase-request.schema';
 import { useGetAllBranchesQuery } from '@/store/api/branchApi';

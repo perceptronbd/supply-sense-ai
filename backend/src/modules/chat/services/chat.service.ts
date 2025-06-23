@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { GeminiService } from '../../ai/services/gemini.service';
 import { AIChatResponse, ChatMessage, QueryContext } from '../interfaces/chat.interface';
 import { DatabaseSchemaService } from './database-schema.service';
 import { DynamicSQLService } from './dynamic-sql.service';
+import { McpClientService } from './mcp-client.service';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
 
@@ -10,12 +11,15 @@ import { SessionService } from './session.service';
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
   constructor(
-    private sessionService: SessionService,
-    private messageService: MessageService,
-    private dynamicSQLService: DynamicSQLService,
-    private geminiService: GeminiService,
-    private databaseSchemaService: DatabaseSchemaService
-  ) {}
+    @Inject(SessionService) private readonly sessionService: SessionService,
+    @Inject(MessageService) private readonly messageService: MessageService,
+    @Inject(DynamicSQLService) private readonly dynamicSQLService: DynamicSQLService,
+    @Inject(GeminiService) private readonly geminiService: GeminiService,
+    @Inject(DatabaseSchemaService) private readonly databaseSchemaService: DatabaseSchemaService,
+    @Inject(McpClientService) private readonly mcpClientService: McpClientService
+  ) {
+    this.logger.log('ChatService constructor called - dependencies restored');
+  }
   async processUserMessage(
     sessionId: string,
     message: string,
@@ -51,12 +55,17 @@ export class ChatService {
         availableTables: schema.tables.map((table) => table.name),
         userPermissions: userContext.userPermissions || [],
       };
-      this.logger.log(`Built context: role=${context.userRole}, branchId=${context.branchId}`);
-
-      // Analyze if the message requires database access
+      this.logger.log(`Built context: role=${context.userRole}, branchId=${context.branchId}`); // Analyze message type and route to appropriate handler
       const requiresDatabase = await this.analyzeDatabaseRequirement(message, context);
-      this.logger.log(`Database requirement analysis: ${requiresDatabase}`);
+      const requiresMcp = await this.analyzeMcpRequirement(message, context);
 
+      this.logger.log(`Analysis: database=${requiresDatabase}, mcp=${requiresMcp}`);
+
+      // Priority: MCP > Database > General
+      if (requiresMcp) {
+        this.logger.log('Handling as MCP-powered supply chain query');
+        return await this.handleMcpQuery(message, context, sessionId, userId);
+      }
       if (requiresDatabase) {
         this.logger.log('Handling as database query');
         return await this.handleDatabaseQuery(message, context, sessionId, userId);
@@ -116,6 +125,163 @@ export class ChatService {
 
     return dbKeywords.some((keyword) => lowerMessage.includes(keyword));
   }
+
+  private async analyzeMcpRequirement(message: string, _context: QueryContext): Promise<boolean> {
+    const lowerMessage = message.toLowerCase();
+
+    // Keywords that indicate supply chain AI/workflow queries that should use MCP
+    const mcpKeywords = [
+      'supply chain',
+      'analyze supply',
+      'predict demand',
+      'optimize inventory',
+      'forecast',
+      'supply risk',
+      'vendor performance',
+      'lead time',
+      'reorder point',
+      'safety stock',
+      'ai analysis',
+      'ai insight',
+      'recommend',
+      'suggest',
+      'workflow',
+      'automation',
+      'smart',
+      'intelligent',
+    ];
+
+    return mcpKeywords.some((keyword) => lowerMessage.includes(keyword));
+  }
+
+  private async handleMcpQuery(
+    message: string,
+    context: QueryContext,
+    sessionId: string,
+    userId: string
+  ): Promise<AIChatResponse> {
+    try {
+      this.logger.log(`🤖 Handling MCP-powered supply chain query: "${message}"`);
+
+      // Check MCP client health
+      const mcpHealth = await this.mcpClientService.healthCheck();
+      if (!mcpHealth.connected) {
+        this.logger.warn('MCP client not connected, falling back to regular AI query');
+        return await this.handleGeneralQuery(message, context, sessionId, userId);
+      }
+
+      this.logger.log(
+        `🔗 MCP connected with ${mcpHealth.toolsCount} tools: ${mcpHealth.availableTools.join(', ')}`
+      );
+
+      // Execute MCP query or workflow
+      const response = await this.executeMcpRequest(message, context);
+
+      // Process response and create chat response
+      const chatResponse = await this.processMcpResponse(response, message, sessionId);
+
+      this.logger.log('✅ MCP query processed successfully');
+      return chatResponse;
+    } catch (error) {
+      this.logger.error('❌ Failed to handle MCP query:', error);
+      // Fallback to general query if MCP fails
+      this.logger.log('🔄 Falling back to general AI query...');
+      return await this.handleGeneralQuery(message, context, sessionId, userId);
+    }
+  }
+
+  private async executeMcpRequest(message: string, context: QueryContext) {
+    const isWorkflowQuery = this.isWorkflowQuery(message);
+
+    if (isWorkflowQuery) {
+      this.logger.log('🔄 Executing supply chain workflow via MCP...');
+      const workflowInput = this.extractWorkflowInput(message, context);
+      return await this.mcpClientService.executeSupplyChainWorkflow(workflowInput);
+    }
+    this.logger.log('🧠 Querying supply chain agent via MCP...');
+    return await this.mcpClientService.querySupplyChainAgent(message, {
+      userId: context.userId,
+      userRole: context.userRole,
+      branchId: context.branchId,
+      sessionHistory: context.sessionHistory.slice(-5), // Last 5 messages for context
+    });
+  }
+
+  private async processMcpResponse(
+    response: {
+      success: boolean;
+      response?: string;
+      result?: unknown;
+      error?: string;
+      toolsAvailable?: string[];
+      [key: string]: unknown;
+    },
+    message: string,
+    sessionId: string
+  ): Promise<AIChatResponse> {
+    const { responseMessage, suggestions } = this.buildMcpResponseMessage(response, message);
+    const isWorkflowQuery = this.isWorkflowQuery(message);
+
+    // Create assistant message
+    await this.messageService.createMessage(sessionId, responseMessage, 'assistant', 'assistant', {
+      type: 'mcp_response',
+      mcpSuccess: response.success,
+      toolsUsed: response.toolsAvailable || [],
+      workflowExecuted: isWorkflowQuery,
+    });
+
+    return {
+      message: responseMessage,
+      type: 'text',
+      sessionId,
+      timestamp: new Date().toISOString(),
+      suggestions,
+      metadata: {
+        mcpPowered: true,
+        toolsUsed: response.toolsAvailable || [],
+        workflowExecuted: isWorkflowQuery,
+      },
+    };
+  }
+
+  private buildMcpResponseMessage(
+    response: {
+      success: boolean;
+      response?: string;
+      result?: unknown;
+      error?: string;
+      toolsAvailable?: string[];
+      [key: string]: unknown;
+    },
+    message: string
+  ): { responseMessage: string; suggestions: string[] } {
+    let responseMessage = '';
+    let suggestions: string[] = [];
+
+    if (response.success) {
+      responseMessage =
+        (response.response as string) ||
+        String(response.result) ||
+        'Supply chain analysis completed successfully.';
+
+      // Add contextual information
+      if (response.toolsAvailable && response.toolsAvailable.length > 0) {
+        responseMessage += `\n\n🔧 Available tools: ${response.toolsAvailable.join(', ')}`;
+      }
+
+      // Generate suggestions based on the MCP response
+      suggestions = this.generateMcpSuggestions(message, response);
+    } else {
+      responseMessage = `I encountered an issue with the supply chain analysis: ${response.error || 'Unknown error'}`;
+
+      if (response.toolsAvailable && response.toolsAvailable.length > 0) {
+        responseMessage += `\n\nAvailable tools: ${response.toolsAvailable.join(', ')}`;
+      }
+    }
+
+    return { responseMessage, suggestions };
+  }
+
   private async handleDatabaseQuery(
     message: string,
     context: QueryContext,
@@ -401,12 +567,128 @@ Guidelines:
         'I encountered an error while processing your query. Please try rephrasing your question or ask something else.';
 
       await this.messageService.createMessage(sessionId, errorMessage, 'error', 'assistant');
-
       return {
         message: errorMessage,
         type: 'error',
         sessionId,
         timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
+   * Get MCP client health status for API endpoints
+   */
+  async getMcpHealth() {
+    try {
+      const mcpHealth = await this.mcpClientService.healthCheck();
+      const connectionStatus = this.mcpClientService.getConnectionStatus();
+
+      return {
+        status: mcpHealth.connected ? 'healthy' : 'disconnected',
+        timestamp: new Date().toISOString(),
+        mcp: {
+          connected: mcpHealth.connected,
+          toolsCount: mcpHealth.toolsCount,
+          availableTools: mcpHealth.availableTools,
+          hasClient: connectionStatus.hasClient,
+          error: mcpHealth.error,
+        },
+        server: {
+          name: 'SupplySense Supply Chain Server',
+          capabilities: [
+            'Supply Chain Agent (ask_supplyChainAgent)',
+            'Supply Chain Workflow (run_supplyChainWorkflow)',
+            'Supply Chain Status Tool',
+          ],
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to get MCP health:', error);
+      return {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        mcp: {
+          connected: false,
+          toolsCount: 0,
+          availableTools: [],
+          hasClient: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        server: {
+          name: 'SupplySense Supply Chain Server',
+          capabilities: [],
+        },
+      };
+    }
+  }
+
+  /**
+   * Test MCP integration without authentication
+   */
+  async testMcpIntegration(query: string) {
+    try {
+      this.logger.log(`Testing MCP integration with query: "${query}"`);
+      this.logger.log(`McpClientService available: ${!!this.mcpClientService}`);
+
+      if (!this.mcpClientService) {
+        throw new Error('McpClientService is not available');
+      }
+
+      this.logger.log(
+        `McpClientService querySupplyChainAgent method: ${typeof this.mcpClientService.querySupplyChainAgent}`
+      );
+
+      // Try to execute the supply chain agent query
+      const result = await this.mcpClientService.querySupplyChainAgent(query, {
+        testMode: true,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        query,
+        mcpResult: result,
+        timestamp: new Date().toISOString(),
+        message: 'MCP integration test completed successfully',
+      };
+    } catch (error) {
+      this.logger.error('MCP integration test failed:', error);
+      return {
+        success: false,
+        query,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+        message: 'MCP integration test failed',
+      };
+    }
+  }
+
+  /**
+   * Test MCP workflow integration without authentication
+   */
+  async testMcpWorkflow(workflowInput: Record<string, unknown>) {
+    try {
+      this.logger.log(`Testing MCP workflow with input: ${JSON.stringify(workflowInput)}`);
+
+      // Try to execute the supply chain workflow
+      const result = await this.mcpClientService.executeSupplyChainWorkflow(workflowInput);
+
+      return {
+        success: true,
+        workflowInput,
+        mcpResult: result,
+        timestamp: new Date().toISOString(),
+        message: 'MCP workflow test completed successfully',
+      };
+    } catch (error) {
+      this.logger.error('MCP workflow test failed:', error);
+      return {
+        success: false,
+        workflowInput,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+        message: 'MCP workflow test failed',
       };
     }
   }

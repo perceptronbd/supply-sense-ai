@@ -5,7 +5,6 @@
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
 import { GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
 
@@ -38,7 +37,8 @@ async function bootstrap() {
   // Apply global response interceptor for consistent success responses
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Setup Swagger documentation
+  // Setup Swagger documentation - temporarily disabled due to circular dependency
+  /*
   const config = new DocumentBuilder()
     .setTitle('SupplySense Management API')
     .setDescription(
@@ -59,8 +59,39 @@ async function bootstrap() {
     .addServer(`http://localhost:${process.env.PORT || 3000}/`, 'Development server')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  const document = SwaggerModule.createDocument(app, config, {
+    ignoreGlobalPrefix: false,
+    include: [],
+    deepScanRoutes: true,
+    // Options to handle circular dependencies
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+  });
+
+  // Clean up circular references in schema
+  const cleanCircularReferences = (obj: any, seen = new WeakSet()): any => {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (seen.has(obj)) return '[Circular Reference]';
+    
+    seen.add(obj);
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => cleanCircularReferences(item, seen));
+    }
+    
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        cleaned[key] = cleanCircularReferences(obj[key], seen);
+      }
+    }
+    
+    seen.delete(obj);
+    return cleaned;
+  };
+
+  // Apply cleaning to the document
+  const cleanedDocument = cleanCircularReferences(document);
+  SwaggerModule.setup('api/docs', app, cleanedDocument, {
     customSiteTitle: 'SupplySense API Documentation',
     customfavIcon: '/favicon.ico',
     customCss: '.swagger-ui .topbar { display: none }',
@@ -69,11 +100,12 @@ async function bootstrap() {
       displayRequestDuration: true,
     },
   });
+  */
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
-  Logger.log(`📚 API Documentation is available at: http://localhost:${port}/api/docs`);
+  // Logger.log(`📚 API Documentation is available at: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

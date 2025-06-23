@@ -1,5 +1,5 @@
+import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../app/prisma.service';
 
 export interface TableMetadata {
   tableName: string;

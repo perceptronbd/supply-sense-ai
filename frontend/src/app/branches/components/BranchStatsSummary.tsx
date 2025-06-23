@@ -1,4 +1,3 @@
-import { Text } from '@/components/ui/Text';
 import type { Branch } from '@/store/api/branchApi';
 import { Chip } from '@heroui/react';
 

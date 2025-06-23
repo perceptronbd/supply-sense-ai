@@ -1,11 +1,11 @@
 'use client';
 
-import { AiIcon, UserIcon } from '@/components/icons';
+import { UserIcon } from '@/components/icons';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
-import { Avatar, Button, Card, CardBody, Spinner } from '@heroui/react';
+import { Avatar, Button, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';

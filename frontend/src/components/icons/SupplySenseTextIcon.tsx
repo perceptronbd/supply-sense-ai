@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * SupplySense text logo component that responds to theme changes
  * Now properly uses the color prop for theme-aware rendering

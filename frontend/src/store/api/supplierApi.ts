@@ -1,9 +1,4 @@
-import {
-  ApiResponse,
-  PaginatedResponse,
-  transformApiResponse,
-  transformPaginatedResponse,
-} from '@/lib/utils/api-response';
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TAG_TYPES } from './tagTypes';

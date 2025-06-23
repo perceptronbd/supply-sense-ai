@@ -15,6 +15,22 @@ enum RFStatus {
 
 @Injectable()
 export class RequestFormService {
+  // Helper to avoid circular dependencies with branch relations
+  private readonly branchSelect = {
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      address: true,
+      phone: true,
+      email: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
+      // Explicitly exclude users to prevent circular dependency
+    },
+  };
+
   constructor(private prisma: PrismaService) {}
 
   async create(createRequestFormDto: CreateRequestFormDto, userId: string) {
@@ -48,8 +64,8 @@ export class RequestFormService {
             item: true,
           },
         },
-        fromBranch: true,
-        toBranch: true,
+        fromBranch: this.branchSelect,
+        toBranch: this.branchSelect,
         createdBy: {
           select: {
             id: true,

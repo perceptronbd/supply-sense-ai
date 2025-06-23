@@ -4,7 +4,6 @@
 
 import {
   ROUTE_PATHS,
-  type RouteConfig,
   type RoutePath,
   getRouteConfig,
   isAuthRoute,
