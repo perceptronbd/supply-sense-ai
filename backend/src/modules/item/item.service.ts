@@ -64,6 +64,7 @@ export class ItemService {
       name: item.name,
       sku: item.sku,
       description: item.description,
+      companyId: item.companyId, // Add missing companyId
       mainUnit: item.mainUnit,
       buyingUnit: item.buyingUnit,
       transferUnit: item.transferUnit,
@@ -133,7 +134,8 @@ export class ItemService {
 
   /**
    * Get items with optional pagination, search, and stock information
-   */ async findAll(query: QueryItemDto) {
+   */
+  async findAll(query: QueryItemDto, companyId: string) {
     const { page, limit, includeStock = false } = query;
 
     // Only validate pagination constraints if page is provided
@@ -148,7 +150,11 @@ export class ItemService {
     if (limit && (limit < 1 || limit > 100)) {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
+
     const { where, include } = this.buildQueryOptions(query);
+
+    // Add company isolation
+    where.companyId = companyId;
 
     // Handle paginated queries (both page and limit provided)
     if (page && limit) {
@@ -203,7 +209,7 @@ export class ItemService {
   /**
    * Get a single item by ID with optional stock information
    */
-  async findOne(id: string, branchId?: string, includeStock = false) {
+  async findOne(id: string, companyId: string, branchId?: string, includeStock = false) {
     const include: Prisma.ItemInclude = {};
     if (includeStock && branchId) {
       include.stock = {
@@ -218,8 +224,11 @@ export class ItemService {
       };
     }
 
-    const item = await this.prisma.item.findUnique({
-      where: { id },
+    const item = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
       include,
     });
 
@@ -232,17 +241,20 @@ export class ItemService {
   /**
    * Get items for a specific branch with stock information
    */
-  async findByBranch(branchId: string, query: Omit<QueryItemDto, 'branchId'>) {
-    return this.findAll({
-      ...query,
-      branchId,
-      includeStock: true,
-    });
+  async findByBranch(branchId: string, query: Omit<QueryItemDto, 'branchId'>, companyId: string) {
+    return this.findAll(
+      {
+        ...query,
+        branchId,
+        includeStock: true,
+      },
+      companyId
+    );
   }
   /**
    * Search items by name or SKU (simplified search for dropdowns)
    */
-  async searchItems(searchTerm: string, branchId?: string, limit = 20) {
+  async searchItems(searchTerm: string, companyId: string, branchId?: string, limit = 20) {
     // Validate inputs
     if (!searchTerm) {
       throw new BadRequestException('Search term is required');
@@ -255,6 +267,7 @@ export class ItemService {
     }
 
     const where: Prisma.ItemWhereInput = {
+      companyId, // Add company isolation
       isActive: true,
       OR: [
         { name: { contains: searchTerm, mode: 'insensitive' } },
@@ -323,7 +336,7 @@ export class ItemService {
   /**
    * Create a new item
    */
-  async create(createItemDto: CreateItemDto): Promise<TransformedItem> {
+  async create(createItemDto: CreateItemDto, companyId: string): Promise<TransformedItem> {
     try {
       const item = await this.prisma.item.create({
         data: {
@@ -340,6 +353,7 @@ export class ItemService {
           safetyStockLevel: createItemDto.safetyStockLevel ?? 0,
           reorderLevel: createItemDto.reorderLevel ?? 0,
           isActive: createItemDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 
@@ -357,10 +371,17 @@ export class ItemService {
   /**
    * Update an existing item
    */
-  async update(id: string, updateItemDto: UpdateItemDto): Promise<TransformedItem> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async update(
+    id: string,
+    updateItemDto: UpdateItemDto,
+    companyId: string
+  ): Promise<TransformedItem> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {
@@ -421,10 +442,13 @@ export class ItemService {
   /**
    * Soft delete an item (set isActive to false)
    */
-  async remove(id: string): Promise<TransformedItem> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async remove(id: string, companyId: string): Promise<TransformedItem> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {
@@ -449,10 +473,13 @@ export class ItemService {
   /**
    * Hard delete an item (only if no references exist)
    */
-  async hardDelete(id: string): Promise<void> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async hardDelete(id: string, companyId: string): Promise<void> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {

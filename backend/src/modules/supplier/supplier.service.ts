@@ -142,7 +142,7 @@ export class SupplierService {
   /**
    * Create a new supplier
    */
-  async create(createSupplierDto: CreateSupplierDto) {
+  async create(createSupplierDto: CreateSupplierDto, companyId: string) {
     try {
       const supplier = await this.prisma.supplier.create({
         data: {
@@ -154,6 +154,7 @@ export class SupplierService {
           address: createSupplierDto.address,
           averageLeadTime: createSupplierDto.averageLeadTime,
           isActive: createSupplierDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 

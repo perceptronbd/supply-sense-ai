@@ -2,6 +2,7 @@
 import { PrismaTransaction } from '@common/interfaces/prisma.interface';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
@@ -16,7 +17,7 @@ enum GRStatus {
 export class GoodsReceiptService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async create(createGoodsReceiptDto: CreateGoodsReceiptDto, userId: string) {
+  async create(createGoodsReceiptDto: CreateGoodsReceiptDto, user: AuthenticatedUser) {
     // Generate GR number
     const count = await this.prisma.goodsReceipt.count();
     const grNumber = `GR${String(count + 1).padStart(9, '0')}`;
@@ -37,8 +38,9 @@ export class GoodsReceiptService {
           ? new Date(createGoodsReceiptDto.receiptDate)
           : new Date(),
         documentNumber: createGoodsReceiptDto.documentNumber,
+        companyId: user.companyId, // Add company isolation
         branchId: createGoodsReceiptDto.branchId,
-        receivedById: userId,
+        receivedById: user.id,
         remarks: createGoodsReceiptDto.remarks,
         status: GRStatus.DRAFT,
         items: {
@@ -404,7 +406,7 @@ export class GoodsReceiptService {
   }
 
   // Create GR from PO
-  async createFromPO(poId: string, userId: string) {
+  async createFromPO(poId: string, user: AuthenticatedUser) {
     const po = await this.prisma.purchaseOrder.findUnique({
       where: { id: poId },
       include: {
@@ -441,11 +443,11 @@ export class GoodsReceiptService {
       items: grItems,
     };
 
-    return this.create(createDto, userId);
+    return this.create(createDto, user);
   }
 
   // Create GR from MR
-  async createFromMR(mrId: string, userId: string) {
+  async createFromMR(mrId: string, user: AuthenticatedUser) {
     const mr = await this.prisma.materialRequisition.findUnique({
       where: { id: mrId },
       include: {
@@ -480,6 +482,6 @@ export class GoodsReceiptService {
       items: grItems,
     };
 
-    return this.create(createDto, userId);
+    return this.create(createDto, user);
   }
 }

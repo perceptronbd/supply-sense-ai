@@ -24,6 +24,7 @@ import {
 } from '@nestjs/swagger';
 import { Supplier } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -98,8 +99,11 @@ export class SupplierController {
     description: 'Conflict - supplier code already exists',
     type: ApiErrorResponseDto,
   })
-  async create(@Body() createSupplierDto: CreateSupplierDto): Promise<Supplier> {
-    return this.supplierService.create(createSupplierDto);
+  async create(
+    @Body() createSupplierDto: CreateSupplierDto,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<Supplier> {
+    return this.supplierService.create(createSupplierDto, user.companyId);
   }
 
   @Get()

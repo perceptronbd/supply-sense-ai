@@ -59,7 +59,7 @@ export class GoodsReceiptController {
     @Body() createGoodsReceiptDto: CreateGoodsReceiptDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.goodsReceiptService.create(createGoodsReceiptDto, user.id);
+    return await this.goodsReceiptService.create(createGoodsReceiptDto, user);
   }
 
   @Get()
@@ -226,7 +226,7 @@ export class GoodsReceiptController {
     description: 'Forbidden - insufficient permissions',
   })
   async createFromPO(@Param('poId') poId: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.goodsReceiptService.createFromPO(poId, user.id);
+    return await this.goodsReceiptService.createFromPO(poId, user);
   }
 
   @Post('from-mr/:mrId')
@@ -248,6 +248,6 @@ export class GoodsReceiptController {
     description: 'Forbidden - insufficient permissions',
   })
   async createFromMR(@Param('mrId') mrId: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.goodsReceiptService.createFromMR(mrId, user.id);
+    return await this.goodsReceiptService.createFromMR(mrId, user);
   }
 }

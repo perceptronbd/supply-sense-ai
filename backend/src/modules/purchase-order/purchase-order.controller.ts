@@ -79,8 +79,8 @@ export class PurchaseOrderController {
     status: 200,
     description: 'List of purchase orders retrieved successfully',
   })
-  async findAll(@Query('branchId') branchId?: string, @CurrentUser() user?: AuthenticatedUser) {
-    return this.purchaseOrderService.findAll(user!, branchId);
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query('branchId') branchId?: string) {
+    return this.purchaseOrderService.findAll(user, branchId);
   }
   @Get(':id')
   @Roles(

@@ -62,8 +62,8 @@ export class BranchController {
     status: 409,
     description: 'Conflict - branch code already exists',
   })
-  async create(@Body() createBranchDto: CreateBranchDto) {
-    return this.branchService.create(createBranchDto);
+  async create(@Body() createBranchDto: CreateBranchDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.branchService.create(createBranchDto, user.companyId);
   }
 
   @Get()

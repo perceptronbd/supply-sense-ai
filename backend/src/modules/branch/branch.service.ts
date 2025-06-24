@@ -124,20 +124,29 @@ export class BranchService {
   async findUserBranches(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { branch: true },
+      include: {
+        userBranches: {
+          include: {
+            branch: true,
+          },
+          where: {
+            isActive: true,
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    return [user.branch];
+    return user.userBranches.map((ub) => ub.branch);
   }
 
   /**
    * Create a new branch
    */
-  async create(createBranchDto: CreateBranchDto) {
+  async create(createBranchDto: CreateBranchDto, companyId: string) {
     try {
       const branch = await this.prisma.branch.create({
         data: {
@@ -147,6 +156,7 @@ export class BranchService {
           phone: createBranchDto.phone,
           email: createBranchDto.email,
           isActive: createBranchDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 
@@ -212,7 +222,7 @@ export class BranchService {
     }
 
     // Check if branch has active users
-    const activeUsersCount = await this.prisma.user.count({
+    const activeUsersCount = await this.prisma.userBranch.count({
       where: {
         branchId: id,
         isActive: true,
@@ -254,7 +264,7 @@ export class BranchService {
     }
 
     // Check if branch has any users
-    const usersCount = await this.prisma.user.count({
+    const usersCount = await this.prisma.userBranch.count({
       where: { branchId: id },
     });
 

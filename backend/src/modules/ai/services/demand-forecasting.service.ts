@@ -532,19 +532,60 @@ export class DemandForecastingService {
     totalAmount: number;
   }> {
     // Validate that the user exists, if not, find a system admin or branch manager as fallback
-    let validUserId = userId;
+    let validUser: {
+      id: string;
+      email: string;
+      username: string;
+      companyId: string;
+      firstName: string;
+      lastName: string;
+      userRoles: Array<{ role: { id: string; name: string } }>;
+      userBranches: Array<{ branchId: string; branch: { id: string; name: string } }>;
+    } | null = null;
     const userExists = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+        userBranches: {
+          include: {
+            branch: true,
+          },
+        },
+      },
     });
 
-    if (!userExists) {
+    if (userExists) {
+      validUser = userExists;
+    } else {
       this.logger.warn(`User with ID ${userId} not found, looking for fallback user`);
 
       // Try to find a system admin first
       let fallbackUser = await this.prisma.user.findFirst({
         where: {
-          role: 'SYSTEM_ADMIN',
           isActive: true,
+          userRoles: {
+            some: {
+              role: {
+                name: 'System Admin',
+              },
+            },
+          },
+        },
+        include: {
+          userRoles: {
+            include: {
+              role: true,
+            },
+          },
+          userBranches: {
+            include: {
+              branch: true,
+            },
+          },
         },
       });
 
@@ -552,9 +593,32 @@ export class DemandForecastingService {
       if (!fallbackUser) {
         fallbackUser = await this.prisma.user.findFirst({
           where: {
-            branchId,
-            role: 'BRANCH_MANAGER',
             isActive: true,
+            userBranches: {
+              some: {
+                branchId,
+                isActive: true,
+              },
+            },
+            userRoles: {
+              some: {
+                role: {
+                  name: 'Branch Manager',
+                },
+              },
+            },
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true,
+              },
+            },
+            userBranches: {
+              include: {
+                branch: true,
+              },
+            },
           },
         });
       }
@@ -563,8 +627,25 @@ export class DemandForecastingService {
       if (!fallbackUser) {
         fallbackUser = await this.prisma.user.findFirst({
           where: {
-            branchId,
             isActive: true,
+            userBranches: {
+              some: {
+                branchId,
+                isActive: true,
+              },
+            },
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true,
+              },
+            },
+            userBranches: {
+              include: {
+                branch: true,
+              },
+            },
           },
         });
       }
@@ -573,9 +654,27 @@ export class DemandForecastingService {
         throw new Error(`No valid user found to create purchase request for branch ${branchId}`);
       }
 
-      validUserId = fallbackUser.id;
+      validUser = fallbackUser;
       this.logger.log(`Using fallback user: ${fallbackUser.email} (${fallbackUser.id})`);
     }
+
+    // Create AuthenticatedUser object
+    const authenticatedUser = {
+      id: validUser.id,
+      email: validUser.email,
+      username: validUser.username,
+      companyId: validUser.companyId,
+      roles: validUser.userRoles.map((ur: { role: { id: string; name: string } }) => ur.role.name),
+      permissions: [] as string[], // TODO: Implement permission fetching
+      branchIds: validUser.userBranches.map(
+        (ub: { branchId: string; branch: { id: string; name: string } }) => ub.branchId
+      ),
+      firstName: validUser.firstName,
+      lastName: validUser.lastName,
+      isSuperAdmin: validUser.userRoles.some(
+        (ur: { role: { id: string; name: string } }) => ur.role.name === 'System Admin'
+      ),
+    };
 
     // Calculate required date (7 days from now for high priority, 14 days for medium)
     const isHighPriority = title.includes('HIGH PRIORITY');
@@ -597,7 +696,7 @@ export class DemandForecastingService {
       })),
     };
 
-    const createdPR = await this.purchaseRequestService.create(createPRDto, validUserId);
+    const createdPR = await this.purchaseRequestService.create(createPRDto, authenticatedUser);
 
     return {
       id: createdPR.id,

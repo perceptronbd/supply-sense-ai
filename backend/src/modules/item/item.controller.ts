@@ -1,4 +1,8 @@
-﻿import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+﻿import {
+  type AuthenticatedUser,
+  CurrentUser,
+} from '@modules/auth/decorators/current-user.decorator';
+import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import {
@@ -58,8 +62,8 @@ export class ItemController {
     status: 409,
     description: 'Conflict - SKU already exists',
   })
-  async create(@Body() createItemDto: CreateItemDto) {
-    return this.itemService.create(createItemDto);
+  async create(@Body() createItemDto: CreateItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.itemService.create(createItemDto, user.companyId);
   }
 
   @Get()
@@ -136,8 +140,8 @@ export class ItemController {
       },
     },
   })
-  async findAll(@Query() query: QueryItemDto) {
-    return this.itemService.findAll(query);
+  async findAll(@Query() query: QueryItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.itemService.findAll(query, user.companyId);
   }
 
   @Get('search')
@@ -199,12 +203,13 @@ export class ItemController {
   })
   async searchItems(
     @Query('q') searchTerm: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('branchId') branchId?: string,
     @Query('limit') limit?: string | number
   ) {
     // Convert limit to number if it's a string
     const numericLimit = limit ? Number(limit) : undefined;
-    return this.itemService.searchItems(searchTerm, branchId, numericLimit);
+    return this.itemService.searchItems(searchTerm, user.companyId, branchId, numericLimit);
   }
 
   @Get('by-branch/:branchId')
@@ -243,9 +248,10 @@ export class ItemController {
   })
   async findByBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,
-    @Query() query: Omit<QueryItemDto, 'branchId'>
+    @Query() query: Omit<QueryItemDto, 'branchId'>,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.itemService.findByBranch(branchId, query);
+    return this.itemService.findByBranch(branchId, query, user.companyId);
   }
 
   @Get(':id')
@@ -287,10 +293,11 @@ export class ItemController {
   })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('branchId') branchId?: string,
     @Query('includeStock') includeStock?: boolean
   ) {
-    return this.itemService.findOne(id, branchId, includeStock);
+    return this.itemService.findOne(id, user.companyId, branchId, includeStock);
   }
 
   @Put(':id')
@@ -318,8 +325,12 @@ export class ItemController {
     status: 409,
     description: 'Conflict - SKU already exists',
   })
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateItemDto: UpdateItemDto) {
-    return this.itemService.update(id, updateItemDto);
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateItemDto: UpdateItemDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.itemService.update(id, updateItemDto, user.companyId);
   }
 
   @Delete(':id')
@@ -348,8 +359,8 @@ export class ItemController {
     status: 400,
     description: 'Cannot delete item - it is being used in active records',
   })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.itemService.remove(id);
+  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.itemService.remove(id, user.companyId);
   }
 
   @Delete(':id/hard')
@@ -377,7 +388,7 @@ export class ItemController {
     status: 400,
     description: 'Cannot delete item - it has references in the system',
   })
-  async hardDelete(@Param('id', ParseUUIDPipe) id: string) {
-    await this.itemService.hardDelete(id);
+  async hardDelete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    await this.itemService.hardDelete(id, user.companyId);
   }
 }

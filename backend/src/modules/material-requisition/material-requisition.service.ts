@@ -18,6 +18,16 @@ export class MaterialRequisitionService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createMaterialRequisitionDto: CreateMaterialRequisitionDto, userId: string) {
+    // Get user's company information
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     // Generate MR number
     const count = await this.prisma.materialRequisition.count();
     const mrNumber = `MR${String(count + 1).padStart(6, '0')}`;
@@ -44,6 +54,7 @@ export class MaterialRequisitionService {
         type: createMaterialRequisitionDto.type,
         fromBranchId: createMaterialRequisitionDto.fromBranchId,
         toBranchId: createMaterialRequisitionDto.toBranchId,
+        companyId: user.companyId, // Add company isolation
         branchId: createMaterialRequisitionDto.branchId,
         transferDate: createMaterialRequisitionDto.transferDate
           ? new Date(createMaterialRequisitionDto.transferDate)

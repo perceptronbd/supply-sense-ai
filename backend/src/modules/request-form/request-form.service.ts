@@ -33,6 +33,16 @@ export class RequestFormService {
   };
 
   async create(createRequestFormDto: CreateRequestFormDto, userId: string) {
+    // Get user's company information
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     // Generate RF number
     const count = await this.prisma.requestForm.count();
     const rfNumber = `RF${String(count + 1).padStart(6, '0')}`;
@@ -45,6 +55,7 @@ export class RequestFormService {
         fromBranchId: createRequestFormDto.fromBranchId,
         toBranchId: createRequestFormDto.toBranchId,
         requiredDate: new Date(createRequestFormDto.requiredDate),
+        companyId: user.companyId, // Add company isolation
         createdById: userId,
         rfTemplateId: createRequestFormDto.rfTemplateId,
         reason: createRequestFormDto.reason,

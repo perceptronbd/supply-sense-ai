@@ -11,6 +11,16 @@ export class ManufacturingListService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createManufacturingListDto: CreateManufacturingListDto, userId: string) {
+    // Get user's company information
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     // Generate ML number
     const count = await this.prisma.manufacturingList.count();
     const mlNumber = `ML${String(count + 1).padStart(6, '0')}`;
@@ -79,6 +89,7 @@ export class ManufacturingListService {
         title: createManufacturingListDto.title,
         formulaId: createManufacturingListDto.formulaId,
         outputQuantity: new Decimal(createManufacturingListDto.outputQuantity),
+        companyId: user.companyId, // Add company isolation
         branchId: createManufacturingListDto.branchId,
         plannedDate: createManufacturingListDto.plannedDate
           ? new Date(createManufacturingListDto.plannedDate)

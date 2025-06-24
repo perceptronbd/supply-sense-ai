@@ -36,12 +36,23 @@ export class AISuggestionsService {
    */
   async createSuggestion(data: CreateAISuggestionDto) {
     try {
+      // Get user's company information
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { companyId: true },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${data.userId} not found`);
+      }
+
       const suggestion = await this.prisma.aISuggestion.create({
         data: {
           type: data.type,
           title: data.title,
           description: data.description,
           userId: data.userId,
+          companyId: user.companyId, // Add company isolation
           suggestionData: data.suggestionData as Prisma.InputJsonValue,
           reasoning: data.reasoning,
           confidence: data.confidence,

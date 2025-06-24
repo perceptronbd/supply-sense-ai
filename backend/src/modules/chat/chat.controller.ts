@@ -191,9 +191,9 @@ export class ChatController {
       queryDto.query,
       user.id,
       {
-        userRole: user.role,
-        branchId: user.branchId,
-        userPermissions: [], // TODO: Implement user permissions system
+        userRole: user.roles[0] || 'USER', // Use first role or default
+        branchId: user.branchIds[0] || '', // Use first branch or empty
+        userPermissions: user.permissions, // Use actual permissions
       }
     );
     return res.status(HttpStatus.OK).json(result);
@@ -213,9 +213,9 @@ export class ChatController {
       sendMessageDto.content,
       user.id,
       {
-        userRole: user.role,
-        branchId: user.branchId,
-        userPermissions: [], // TODO: Implement user permissions system
+        userRole: user.roles[0] || 'USER', // Use first role or default
+        branchId: user.branchIds[0] || '', // Use first branch or empty
+        userPermissions: user.permissions, // Use actual permissions
       }
     );
   }
