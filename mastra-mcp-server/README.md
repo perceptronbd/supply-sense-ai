@@ -188,15 +188,106 @@ console.log('Workflow Result:', result);
 ```
 
 ### Using the Agent
+
+The agent is consumed through the MCP client service, which creates an agent instance with MCP tools and handles queries through the Mastra framework.
+
+#### MCP Client Service Integration
 ```typescript
-import { mastra } from './mastra';
+import { MCPClient } from '@mastra/mcp';
+import { Agent } from '@mastra/core/agent';
+import { google } from '@ai-sdk/google';
 
-// Get agent
-const agent = mastra.getAgent('supplyChainAgent');
+// Initialize MCP client with server configuration
+const mcpClient = new MCPClient({
+  servers: {
+    supplySense: {
+      url: new URL('http://localhost:3002/mcp'),
+      timeout: 30000,
+    },
+  },
+  timeout: 60000,
+});
 
-// Generate response
-const response = await agent.generate('What is the current inventory status?');
+// Get tools from MCP server
+const tools = await mcpClient.getTools();
+
+// Create agent with MCP tools
+const agent = new Agent({
+  name: 'SupplyChainAgent',
+  description: 'AI assistant specialized in supply chain management and logistics',
+  instructions: 'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
+  model: google('gemini-2.0-flash'),
+  tools, // Pass MCP tools directly to the agent
+});
+```
+
+#### Query Supply Chain Agent
+```typescript
+// Query the agent with natural language
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'What is the current inventory status for item SKU-001?'
+  }
+], {
+  toolsets: await mcpClient.getToolsets() // Dynamic toolsets for each request
+});
+
 console.log(response.text);
+```
+
+#### Execute Supply Chain Workflows
+```typescript
+// Execute workflow through the agent
+const workflowQuery = `Execute a supply chain workflow with the following parameters: ${JSON.stringify({
+  itemSku: 'ITEM-001',
+  threshold: 20
+}, null, 2)}`;
+
+const workflowResponse = await agent.generate([
+  {
+    role: 'user',
+    content: workflowQuery
+  }
+], {
+  toolsets: await mcpClient.getToolsets()
+});
+
+console.log('Workflow Result:', workflowResponse.text);
+```
+
+#### Advanced Usage with Context
+```typescript
+// Query with additional context
+const contextualQuery = 'Check inventory levels for critical items';
+const userContext = {
+  userId: 'user123',
+  userRole: 'inventory_manager',
+  branchId: 'branch001'
+};
+
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: `${contextualQuery}\n\nAdditional context: ${JSON.stringify(userContext)}`
+  }
+], {
+  toolsets: await mcpClient.getToolsets()
+});
+```
+
+#### Health Check and Connection Management
+```typescript
+// Check MCP connection status
+const tools = await mcpClient.getTools();
+console.log(`Connected with ${Object.keys(tools).length} tools available`);
+
+// Health check response
+const healthCheck = {
+  connected: true,
+  toolsCount: Object.keys(tools).length,
+  availableTools: Object.keys(tools)
+};
 ```
 
 ## Next Steps
