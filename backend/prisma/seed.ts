@@ -1,6 +1,6 @@
-import { PrismaClient, UserRole } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
-import * as argon2 from "argon2";
+import { PrismaClient } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
@@ -10,706 +10,757 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function main() {
-  console.log("Starting database seeding...");
+  console.log("Starting multi-tenant SaaS database seeding...");
 
-  // Create branches
-  const branches = await Promise.all([
-    prisma.branch.upsert({
-      where: { code: "HQ001" },
-      update: {},
-      create: {
-        name: "Headquarters",
-        code: "HQ001",
-        address: "123 Main Street, Business District",
-        phone: "+1-555-0100",
-        email: "headquarters@supplychain.com",
-        isActive: true,
-      },
-    }),
-    prisma.branch.upsert({
-      where: { code: "BR001" },
-      update: {},
-      create: {
-        name: "Manufacturing Branch A",
-        code: "BR001",
-        address: "456 Industrial Ave, Manufacturing Zone",
-        phone: "+1-555-0101",
-        email: "branch-a@supplychain.com",
-        isActive: true,
-      },
-    }),
-    prisma.branch.upsert({
-      where: { code: "BR002" },
-      update: {},
-      create: {
-        name: "Manufacturing Branch B",
-        code: "BR002",
-        address: "789 Factory Road, Production Area",
-        phone: "+1-555-0102",
-        email: "branch-b@supplychain.com",
-        isActive: true,
-      },
-    }),
-  ]);
+  // 1. Create default permissions for the system
+  console.log("Creating default permissions...");
+  const permissions = await createDefaultPermissions();
+  console.log(`Created ${permissions.length} permissions`);
 
-  console.log(
-    "Created branches:",
-    branches.map((b) => b.name)
+  // 2. Create demo companies
+  console.log("Creating demo companies...");
+  const companies = await createDemoCompanies();
+  console.log(`Created ${companies.length} companies`);
+
+  // 3. For each company, create complete data
+  for (const company of companies) {
+    console.log(`\nSeeding data for company: ${(company as any).name}`);
+    
+    // Create default roles for the company
+    const roles = await createDefaultRoles((company as any).id, permissions);
+    console.log(`Created ${roles.length} roles for ${(company as any).name}`);
+
+    // Create branches
+    const branches = await createBranches((company as any).id);
+    console.log(`Created ${branches.length} branches for ${(company as any).name}`);
+
+    // Create users and assign roles/branches
+    const users = await createUsers((company as any).id, branches, roles);
+    console.log(`Created ${users.length} users for ${(company as any).name}`);
+
+    // Create items
+    const items = await createItems((company as any).id);
+    console.log(`Created ${items.length} items for ${(company as any).name}`);
+
+    // Create suppliers
+    const suppliers = await createSuppliers((company as any).id);
+    console.log(`Created ${suppliers.length} suppliers for ${(company as any).name}`);
+
+    // Create initial stock
+    const stockCount = await createInitialStock(branches, items);
+    console.log(`Created ${stockCount} stock records for ${(company as any).name}`);
+
+    // Create item-supplier relationships
+    const itemSuppliers = await createItemSupplierRelationships(items, suppliers);
+    console.log(`Created ${itemSuppliers.length} item-supplier relationships for ${(company as any).name}`);
+
+    // Create historical data for AI
+    await createHistoricalData((company as any).id, branches, items, suppliers, users);
+    console.log(`Created historical data for AI analysis for ${(company as any).name}`);
+  }
+
+  console.log("\nMulti-tenant SaaS database seeding completed successfully!");
+}
+
+// Create default permissions that all companies will use
+async function createDefaultPermissions() {
+  const permissionData = [
+    // Purchase Requests
+    { module: "PURCHASE_REQUESTS", action: "CREATE", description: "Create purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "VIEW", description: "View purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "EDIT", description: "Edit purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "DELETE", description: "Delete purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "APPROVE", description: "Approve purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "SUBMIT", description: "Submit purchase requests" },
+
+    // Purchase Orders
+    { module: "PURCHASE_ORDERS", action: "CREATE", description: "Create purchase orders" },
+    { module: "PURCHASE_ORDERS", action: "VIEW", description: "View purchase orders" },
+    { module: "PURCHASE_ORDERS", action: "EDIT", description: "Edit purchase orders" },
+    { module: "PURCHASE_ORDERS", action: "DELETE", description: "Delete purchase orders" },
+
+    // Inventory Management
+    { module: "INVENTORY_MANAGEMENT", action: "VIEW", description: "View inventory" },
+    { module: "INVENTORY_MANAGEMENT", action: "EDIT", description: "Edit inventory" },
+
+    // Request Forms
+    { module: "REQUEST_FORMS", action: "CREATE", description: "Create request forms" },
+    { module: "REQUEST_FORMS", action: "VIEW", description: "View request forms" },
+    { module: "REQUEST_FORMS", action: "EDIT", description: "Edit request forms" },
+    { module: "REQUEST_FORMS", action: "APPROVE", description: "Approve request forms" },
+
+    // Material Requisitions
+    { module: "MATERIAL_REQUISITIONS", action: "CREATE", description: "Create material requisitions" },
+    { module: "MATERIAL_REQUISITIONS", action: "VIEW", description: "View material requisitions" },
+    { module: "MATERIAL_REQUISITIONS", action: "EDIT", description: "Edit material requisitions" },
+    { module: "MATERIAL_REQUISITIONS", action: "APPROVE", description: "Approve material requisitions" },
+
+    // Goods Receipts
+    { module: "GOODS_RECEIPTS", action: "CREATE", description: "Create goods receipts" },
+    { module: "GOODS_RECEIPTS", action: "VIEW", description: "View goods receipts" },
+    { module: "GOODS_RECEIPTS", action: "EDIT", description: "Edit goods receipts" },
+
+    // Formulas
+    { module: "FORMULAS", action: "CREATE", description: "Create formulas" },
+    { module: "FORMULAS", action: "VIEW", description: "View formulas" },
+    { module: "FORMULAS", action: "EDIT", description: "Edit formulas" },
+    { module: "FORMULAS", action: "DELETE", description: "Delete formulas" },
+
+    // Manufacturing Lists
+    { module: "MANUFACTURING_LISTS", action: "CREATE", description: "Create manufacturing lists" },
+    { module: "MANUFACTURING_LISTS", action: "VIEW", description: "View manufacturing lists" },
+    { module: "MANUFACTURING_LISTS", action: "EDIT", description: "Edit manufacturing lists" },
+
+    // User Management
+    { module: "USER_MANAGEMENT", action: "CREATE", description: "Create users" },
+    { module: "USER_MANAGEMENT", action: "VIEW", description: "View users" },
+    { module: "USER_MANAGEMENT", action: "EDIT", description: "Edit users" },
+    { module: "USER_MANAGEMENT", action: "DELETE", description: "Delete users" },
+
+    // Branch Management
+    { module: "BRANCH_MANAGEMENT", action: "CREATE", description: "Create branches" },
+    { module: "BRANCH_MANAGEMENT", action: "VIEW", description: "View branches" },
+    { module: "BRANCH_MANAGEMENT", action: "EDIT", description: "Edit branches" },
+
+    // Supplier Management
+    { module: "SUPPLIER_MANAGEMENT", action: "CREATE", description: "Create suppliers" },
+    { module: "SUPPLIER_MANAGEMENT", action: "VIEW", description: "View suppliers" },
+    { module: "SUPPLIER_MANAGEMENT", action: "EDIT", description: "Edit suppliers" },
+
+    // Reports
+    { module: "REPORTS", action: "VIEW", description: "View reports" },
+    { module: "REPORTS", action: "EXPORT", description: "Export reports" },
+
+    // System Settings
+    { module: "SYSTEM_SETTINGS", action: "VIEW", description: "View system settings" },
+    { module: "SYSTEM_SETTINGS", action: "EDIT", description: "Edit system settings" },
+
+    // AI Suggestions
+    { module: "AI_SUGGESTIONS", action: "VIEW", description: "View AI suggestions" },
+  ];
+
+  const permissions = [];
+  for (const permData of permissionData) {
+    const permission = await (prisma as any).permission.upsert({
+      where: { module_action: { module: permData.module, action: permData.action } },
+      update: {},
+      create: permData,
+    });
+    permissions.push(permission);
+  }
+
+  return permissions;
+}
+
+// Create demo companies for testing
+async function createDemoCompanies() {
+  const companies = [];
+
+  // Company 1: Manufacturing Corp
+  const company1 = await (prisma as any).company.upsert({
+    where: { contactEmail: "admin@manufacturingcorp.com" },
+    update: {},
+    create: {
+      name: "Manufacturing Corp",
+      taxId: "TC001234567",
+      businessAddress: "123 Industrial Boulevard, Manufacturing District",
+      contactPhone: "+1-555-1000",
+      contactEmail: "admin@manufacturingcorp.com",
+      defaultCurrency: "USD",
+      timezone: "America/New_York",
+      isActive: true,
+    },
+  });
+  companies.push(company1);
+
+  // Company 2: Tech Solutions Ltd
+  const company2 = await (prisma as any).company.upsert({
+    where: { contactEmail: "contact@techsolutions.com" },
+    update: {},
+    create: {
+      name: "Tech Solutions Ltd",
+      taxId: "TS987654321",
+      businessAddress: "456 Technology Park, Innovation Center",
+      contactPhone: "+1-555-2000",
+      contactEmail: "contact@techsolutions.com",
+      defaultCurrency: "USD",
+      timezone: "America/Los_Angeles",
+      isActive: true,
+    },
+  });
+  companies.push(company2);
+
+  return companies;
+}
+
+// Create default roles for a company
+async function createDefaultRoles(companyId: string, permissions: any[]) {
+  const roles = [];
+
+  // Super Admin Role - Full access
+  const superAdminRole = await (prisma as any).role.create({
+    data: {
+      name: "Super Admin",
+      description: "Full system access and company management",
+      companyId,
+      isActive: true,
+    },
+  });
+
+  // Assign all permissions to Super Admin
+  for (const permission of permissions) {
+    await (prisma as any).rolePermission.create({
+      data: {
+        roleId: superAdminRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  roles.push(superAdminRole);
+
+  // Branch Manager Role
+  const branchManagerRole = await (prisma as any).role.create({
+    data: {
+      name: "Branch Manager",
+      description: "Manage branch operations, approve requests",
+      companyId,
+      isActive: true,
+    },
+  });
+
+  // Assign specific permissions to Branch Manager
+  const branchManagerPermissions = permissions.filter((p: any) => 
+    (p.module === "PURCHASE_REQUESTS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
+    (p.module === "REQUEST_FORMS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
+    (p.module === "INVENTORY_MANAGEMENT" && ["VIEW", "EDIT"].includes(p.action)) ||
+    (p.module === "REPORTS" && p.action === "VIEW") ||
+    (p.module === "USER_MANAGEMENT" && p.action === "VIEW")
   );
 
-  // Create items
-  const items = await Promise.all([
-    prisma.item.upsert({
-      where: { sku: "RM001" },
-      update: {},
-      create: {
-        name: "Raw Material A - Premium Grade",
-        sku: "RM001",
-        description: "High-grade raw material for manufacturing processes",
-        mainUnit: "kg",
-        buyingUnit: "kg",
-        transferUnit: "kg",
-        usingUnit: "g",
-        buyingToMainRate: new Decimal(1),
-        transferToMainRate: new Decimal(1),
-        usingToMainRate: new Decimal(0.001),
-        safetyStockLevel: new Decimal(100),
-        reorderLevel: new Decimal(50),
-        isActive: true,
+  for (const permission of branchManagerPermissions) {
+    await (prisma as any).rolePermission.create({
+      data: {
+        roleId: branchManagerRole.id,
+        permissionId: permission.id,
       },
-    }),
-    prisma.item.upsert({
-      where: { sku: "RM002" },
-      update: {},
-      create: {
-        name: "Raw Material B - Standard Grade",
-        sku: "RM002",
-        description: "Standard raw material for general production",
-        mainUnit: "pieces",
-        buyingUnit: "pieces",
-        transferUnit: "pieces",
-        usingUnit: "pieces",
-        buyingToMainRate: new Decimal(1),
-        transferToMainRate: new Decimal(1),
-        usingToMainRate: new Decimal(1),
-        safetyStockLevel: new Decimal(500),
-        reorderLevel: new Decimal(250),
-        isActive: true,
-      },
-    }),
-    prisma.item.upsert({
-      where: { sku: "RM003" },
-      update: {},
-      create: {
-        name: "Chemical Component X",
-        sku: "RM003",
-        description: "Specialized chemical component for advanced formulations",
-        mainUnit: "liters",
-        buyingUnit: "liters",
-        transferUnit: "ml",
-        usingUnit: "ml",
-        buyingToMainRate: new Decimal(1),
-        transferToMainRate: new Decimal(0.001),
-        usingToMainRate: new Decimal(0.001),
-        safetyStockLevel: new Decimal(20),
-        reorderLevel: new Decimal(10),
-        isActive: true,
-      },
-    }),
-    prisma.item.upsert({
-      where: { sku: "FG001" },
-      update: {},
-      create: {
-        name: "Finished Product Alpha",
-        sku: "FG001",
-        description: "Premium finished product manufactured from raw materials",
-        mainUnit: "units",
-        buyingUnit: "units",
-        transferUnit: "units",
-        usingUnit: "units",
-        buyingToMainRate: new Decimal(1),
-        transferToMainRate: new Decimal(1),
-        usingToMainRate: new Decimal(1),
-        safetyStockLevel: new Decimal(25),
-        reorderLevel: new Decimal(10),
-        isActive: true,
-      },
-    }),
-    prisma.item.upsert({
-      where: { sku: "PKG001" },
-      update: {},
-      create: {
-        name: "Packaging Material - Boxes",
-        sku: "PKG001",
-        description: "Standard cardboard boxes for product packaging",
-        mainUnit: "pieces",
-        buyingUnit: "pieces",
-        transferUnit: "pieces",
-        usingUnit: "pieces",
-        buyingToMainRate: new Decimal(1),
-        transferToMainRate: new Decimal(1),
-        usingToMainRate: new Decimal(1),
-        safetyStockLevel: new Decimal(200),
-        reorderLevel: new Decimal(100),
-        isActive: true,
-      },
-    }),
-  ]);
+    });
+  }
+  roles.push(branchManagerRole);
 
-  console.log(
-    "Created items:",
-    items.map((i) => i.name)
+  // Inventory Clerk Role
+  const inventoryClerkRole = await (prisma as any).role.create({
+    data: {
+      name: "Inventory Clerk",
+      description: "Handle inventory operations and goods receipts",
+      companyId,
+      isActive: true,
+    },
+  });
+
+  const inventoryClerkPermissions = permissions.filter((p: any) => 
+    (p.module === "INVENTORY_MANAGEMENT" && ["VIEW", "EDIT"].includes(p.action)) ||
+    (p.module === "GOODS_RECEIPTS" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
+    (p.module === "MATERIAL_REQUISITIONS" && ["CREATE", "VIEW", "EDIT"].includes(p.action))
   );
 
-  // Create suppliers
-  const suppliers = await Promise.all([
-    prisma.supplier.upsert({
-      where: { code: "SUP001" },
-      update: {},
-      create: {
-        name: "Premium Materials Inc.",
-        code: "SUP001",
-        contactPerson: "John Smith",
-        email: "orders@premiummaterials.com",
-        phone: "+1-555-2001",
-        address: "100 Supplier Street, Industrial Park",
-        isActive: true,
+  for (const permission of inventoryClerkPermissions) {
+    await (prisma as any).rolePermission.create({
+      data: {
+        roleId: inventoryClerkRole.id,
+        permissionId: permission.id,
       },
-    }),
-    prisma.supplier.upsert({
-      where: { code: "SUP002" },
-      update: {},
-      create: {
-        name: "Chemical Solutions Ltd.",
-        code: "SUP002",
-        contactPerson: "Sarah Johnson",
-        email: "sales@chemsolutions.com",
-        phone: "+1-555-2002",
-        address: "200 Chemical Lane, Science District",
-        isActive: true,
-      },
-    }),
-    prisma.supplier.upsert({
-      where: { code: "SUP003" },
-      update: {},
-      create: {
-        name: "Packaging World Corp.",
-        code: "SUP003",
-        contactPerson: "Mike Wilson",
-        email: "info@packagingworld.com",
-        phone: "+1-555-2003",
-        address: "300 Packaging Blvd, Commerce Center",
-        isActive: true,
-      },
-    }),
-  ]);
+    });
+  }
+  roles.push(inventoryClerkRole);
 
-  console.log(
-    "Created suppliers:",
-    suppliers.map((s) => s.name)
-  ); // Create users with properly hashed passwords
-  const users = await Promise.all([
-    prisma.user.upsert({
-      where: { email: "admin@supplychain.com" },
-      update: {},
-      create: {
-        email: "admin@supplychain.com",
-        username: "admin",
-        firstName: "System",
-        lastName: "Administrator",
-        password: await hashPassword("admin123"),
-        role: UserRole.SYSTEM_ADMIN,
-        branchId: branches[0].id, // Assign to HQ
-        isActive: true,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "manager.a@supplychain.com" },
-      update: {},
-      create: {
-        email: "manager.a@supplychain.com",
-        username: "manager_a",
-        firstName: "Alice",
-        lastName: "Manager",
-        password: await hashPassword("manager123"),
-        role: UserRole.BRANCH_MANAGER,
-        branchId: branches[1].id, // Assign to Branch A
-        isActive: true,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "clerk.a@supplychain.com" },
-      update: {},
-      create: {
-        email: "clerk.a@supplychain.com",
-        username: "clerk_a",
-        firstName: "Anna",
-        lastName: "Clerk",
-        password: await hashPassword("clerk123"),
-        role: UserRole.INVENTORY_CLERK,
-        branchId: branches[1].id, // Assign to Branch A
-        isActive: true,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "clerk.b@supplychain.com" },
-      update: {},
-      create: {
-        email: "clerk.b@supplychain.com",
-        username: "clerk_b",
-        firstName: "Bob",
-        lastName: "Clerk",
-        password: await hashPassword("clerk123"),
-        role: UserRole.INVENTORY_CLERK,
-        branchId: branches[2].id, // Assign to Branch B
-        isActive: true,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "specialist.a@supplychain.com" },
-      update: {},
-      create: {
-        email: "specialist.a@supplychain.com",
-        username: "specialist_a",
-        firstName: "Sam",
-        lastName: "Specialist",
-        password: await hashPassword("specialist123"),
-        role: UserRole.PROCUREMENT_SPECIALIST,
-        branchId: branches[1].id, // Assign to Branch A
-        isActive: true,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "user.a@supplychain.com" },
-      update: {},
-      create: {
-        email: "user.a@supplychain.com",
-        username: "user_a",
-        firstName: "John",
-        lastName: "User",
-        password: await hashPassword("user123"),
-        role: UserRole.PRODUCTION_PLANNER,
-        branchId: branches[1].id, // Assign to Branch A
-        isActive: true,
-      },
-    }),
-  ]);
+  // Procurement Specialist Role
+  const procurementRole = await (prisma as any).role.create({
+    data: {
+      name: "Procurement Specialist",
+      description: "Handle purchase orders and supplier management",
+      companyId,
+      isActive: true,
+    },
+  });
 
-  console.log(
-    "Created users:",
-    users.map((u) => u.email)
-  ); // Create initial stock records
+  const procurementPermissions = permissions.filter((p: any) => 
+    (p.module === "PURCHASE_ORDERS" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
+    (p.module === "PURCHASE_REQUESTS" && ["VIEW"].includes(p.action)) ||
+    (p.module === "SUPPLIER_MANAGEMENT" && ["CREATE", "VIEW", "EDIT"].includes(p.action))
+  );
+
+  for (const permission of procurementPermissions) {
+    await (prisma as any).rolePermission.create({
+      data: {
+        roleId: procurementRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  roles.push(procurementRole);
+
+  return roles;
+}
+
+// Create branches for a company
+async function createBranches(companyId: string) {
+  const branches = [];
+  const companyPrefix = companyId.slice(-4); // Use last 4 chars of company ID as prefix
+
+  // HQ Branch
+  const hqBranch = await (prisma as any).branch.create({
+    data: {
+      name: "Headquarters",
+      code: `HQ${companyPrefix}`,
+      address: "123 Main Street, Business District",
+      phone: "+1-555-0100",
+      email: "headquarters@company.com",
+      isActive: true,
+      isHQ: true,
+      companyId,
+    },
+  });
+  branches.push(hqBranch);
+
+  // Manufacturing Branch A
+  const branchA = await (prisma as any).branch.create({
+    data: {
+      name: "Manufacturing Branch A",
+      code: `BR1${companyPrefix}`,
+      address: "456 Industrial Ave, Manufacturing Zone",
+      phone: "+1-555-0101",
+      email: "branch-a@company.com",
+      isActive: true,
+      isHQ: false,
+      companyId,
+    },
+  });
+  branches.push(branchA);
+
+  // Manufacturing Branch B
+  const branchB = await (prisma as any).branch.create({
+    data: {
+      name: "Manufacturing Branch B",
+      code: `BR2${companyPrefix}`,
+      address: "789 Factory Road, Production Area",
+      phone: "+1-555-0102",
+      email: "branch-b@company.com",
+      isActive: true,
+      isHQ: false,
+      companyId,
+    },
+  });
+  branches.push(branchB);
+
+  return branches;
+}
+
+// Create users for a company and assign roles/branches
+async function createUsers(companyId: string, branches: any[], roles: any[]) {
+  const users = [];
+
+  // Find roles
+  const superAdminRole = roles.find((r: any) => r.name === "Super Admin");
+  const branchManagerRole = roles.find((r: any) => r.name === "Branch Manager");
+  const inventoryClerkRole = roles.find((r: any) => r.name === "Inventory Clerk");
+  const procurementRole = roles.find((r: any) => r.name === "Procurement Specialist");
+
+  // Super Admin User
+  const superAdmin = await (prisma as any).user.create({
+    data: {
+      email: `admin@company${companyId.slice(-4)}.com`,
+      username: `admin_${companyId.slice(-4)}`,
+      firstName: "System",
+      lastName: "Administrator",
+      password: await hashPassword("admin123"),
+      isSuperAdmin: true,
+      companyId,
+      isActive: true,
+    },
+  });
+
+  // Assign Super Admin role
+  await (prisma as any).userRole.create({
+    data: {
+      userId: superAdmin.id,
+      roleId: superAdminRole.id,
+    },
+  });
+
+  // Assign to HQ branch
+  await (prisma as any).userBranch.create({
+    data: {
+      userId: superAdmin.id,
+      branchId: branches.find((b: any) => b.isHQ).id,
+      isActive: true,
+    },
+  });
+  users.push(superAdmin);
+
+  // Branch Manager for Branch A
+  const managerA = await (prisma as any).user.create({
+    data: {
+      email: `manager.a@company${companyId.slice(-4)}.com`,
+      username: `manager_a_${companyId.slice(-4)}`,
+      firstName: "Alice",
+      lastName: "Manager",
+      password: await hashPassword("manager123"),
+      companyId,
+      isActive: true,
+    },
+  });
+
+  await (prisma as any).userRole.create({
+    data: {
+      userId: managerA.id,
+      roleId: branchManagerRole.id,
+    },
+  });
+
+  await (prisma as any).userBranch.create({
+    data: {
+      userId: managerA.id,
+      branchId: branches.find((b: any) => b.code === `BR1${companyId.slice(-4)}`).id,
+      isActive: true,
+    },
+  });
+  users.push(managerA);
+
+  // Inventory Clerk for Branch A
+  const clerkA = await (prisma as any).user.create({
+    data: {
+      email: `clerk.a@company${companyId.slice(-4)}.com`,
+      username: `clerk_a_${companyId.slice(-4)}`,
+      firstName: "Anna",
+      lastName: "Clerk",
+      password: await hashPassword("clerk123"),
+      companyId,
+      isActive: true,
+    },
+  });
+
+  await (prisma as any).userRole.create({
+    data: {
+      userId: clerkA.id,
+      roleId: inventoryClerkRole.id,
+    },
+  });
+
+  await (prisma as any).userBranch.create({
+    data: {
+      userId: clerkA.id,
+      branchId: branches.find((b: any) => b.code === `BR1${companyId.slice(-4)}`).id,
+      isActive: true,
+    },
+  });
+  users.push(clerkA);
+
+  // Procurement Specialist
+  const procurementUser = await (prisma as any).user.create({
+    data: {
+      email: `procurement@company${companyId.slice(-4)}.com`,
+      username: `procurement_${companyId.slice(-4)}`,
+      firstName: "Sam",
+      lastName: "Specialist",
+      password: await hashPassword("specialist123"),
+      companyId,
+      isActive: true,
+    },
+  });
+
+  await (prisma as any).userRole.create({
+    data: {
+      userId: procurementUser.id,
+      roleId: procurementRole.id,
+    },
+  });
+
+  await (prisma as any).userBranch.create({
+    data: {
+      userId: procurementUser.id,
+      branchId: branches.find((b: any) => b.isHQ).id,
+      isActive: true,
+    },
+  });
+  users.push(procurementUser);
+
+  return users;
+}
+
+// Create items for a company
+async function createItems(companyId: string) {
+  const items = [];
+  const companyPrefix = companyId.slice(-4);
+
+  const itemsData = [
+    {
+      name: "Raw Material A - Premium Grade",
+      sku: `RM001-${companyPrefix}`,
+      description: "High-grade raw material for manufacturing processes",
+      mainUnit: "kg",
+      buyingUnit: "kg",
+      transferUnit: "kg",
+      usingUnit: "g",
+      buyingToMainRate: new Decimal(1),
+      transferToMainRate: new Decimal(1),
+      usingToMainRate: new Decimal(0.001),
+      safetyStockLevel: new Decimal(100),
+      reorderLevel: new Decimal(50),
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Raw Material B - Standard Grade",
+      sku: `RM002-${companyPrefix}`,
+      description: "Standard raw material for general production",
+      mainUnit: "pieces",
+      buyingUnit: "pieces",
+      transferUnit: "pieces",
+      usingUnit: "pieces",
+      buyingToMainRate: new Decimal(1),
+      transferToMainRate: new Decimal(1),
+      usingToMainRate: new Decimal(1),
+      safetyStockLevel: new Decimal(500),
+      reorderLevel: new Decimal(250),
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Chemical Component X",
+      sku: `RM003-${companyPrefix}`,
+      description: "Specialized chemical component for advanced formulations",
+      mainUnit: "liters",
+      buyingUnit: "liters",
+      transferUnit: "ml",
+      usingUnit: "ml",
+      buyingToMainRate: new Decimal(1),
+      transferToMainRate: new Decimal(0.001),
+      usingToMainRate: new Decimal(0.001),
+      safetyStockLevel: new Decimal(20),
+      reorderLevel: new Decimal(10),
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Finished Product Alpha",
+      sku: `FG001-${companyPrefix}`,
+      description: "Premium finished product manufactured from raw materials",
+      mainUnit: "units",
+      buyingUnit: "units",
+      transferUnit: "units",
+      usingUnit: "units",
+      buyingToMainRate: new Decimal(1),
+      transferToMainRate: new Decimal(1),
+      usingToMainRate: new Decimal(1),
+      safetyStockLevel: new Decimal(25),
+      reorderLevel: new Decimal(10),
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Packaging Material - Boxes",
+      sku: `PKG001-${companyPrefix}`,
+      description: "Standard cardboard boxes for product packaging",
+      mainUnit: "pieces",
+      buyingUnit: "pieces",
+      transferUnit: "pieces",
+      usingUnit: "pieces",
+      buyingToMainRate: new Decimal(1),
+      transferToMainRate: new Decimal(1),
+      usingToMainRate: new Decimal(1),
+      safetyStockLevel: new Decimal(200),
+      reorderLevel: new Decimal(100),
+      companyId,
+      isActive: true,
+    },
+  ];
+
+  for (const itemData of itemsData) {
+    const item = await (prisma as any).item.create({
+      data: itemData,
+    });
+    items.push(item);
+  }
+
+  return items;
+}
+
+// Create suppliers for a company
+async function createSuppliers(companyId: string) {
+  const suppliers = [];
+  const companyPrefix = companyId.slice(-4);
+
+  const suppliersData = [
+    {
+      name: "Premium Materials Inc.",
+      code: `SUP001-${companyPrefix}`,
+      contactPerson: "John Smith",
+      email: "orders@premiummaterials.com",
+      phone: "+1-555-2001",
+      address: "100 Supplier Street, Industrial Park",
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Chemical Solutions Ltd.",
+      code: `SUP002-${companyPrefix}`,
+      contactPerson: "Sarah Johnson",
+      email: "sales@chemsolutions.com",
+      phone: "+1-555-2002",
+      address: "200 Chemical Lane, Science District",
+      companyId,
+      isActive: true,
+    },
+    {
+      name: "Packaging World Corp.",
+      code: `SUP003-${companyPrefix}`,
+      contactPerson: "Mike Wilson",
+      email: "info@packagingworld.com",
+      phone: "+1-555-2003",
+      address: "300 Packaging Blvd, Commerce Center",
+      companyId,
+      isActive: true,
+    },
+  ];
+
+  for (const supplierData of suppliersData) {
+    const supplier = await (prisma as any).supplier.create({
+      data: supplierData,
+    });
+    suppliers.push(supplier);
+  }
+
+  return suppliers;
+}
+
+// Create initial stock for all items in all branches
+async function createInitialStock(branches: any[], items: any[]) {
   let stockCount = 0;
+
   for (const branch of branches) {
     for (const item of items) {
-      await prisma.stock.upsert({
-        where: {
-          itemId_branchId: {
-            itemId: item.id,
-            branchId: branch.id,
-          },
-        },
-        update: {},
-        create: {
+      // Generate random stock quantities based on item type
+      let quantity = new Decimal(0);
+      if (item.sku.includes("RM")) {
+        quantity = new Decimal(Math.floor(Math.random() * 200) + 50); // 50-250
+      } else if (item.sku.includes("FG")) {
+        quantity = new Decimal(Math.floor(Math.random() * 50) + 10); // 10-60
+      } else if (item.sku.includes("PKG")) {
+        quantity = new Decimal(Math.floor(Math.random() * 500) + 100); // 100-600
+      }
+
+      await (prisma as any).stock.create({
+        data: {
           itemId: item.id,
           branchId: branch.id,
-          quantity: new Decimal(Math.floor(Math.random() * 500) + 100), // Random initial stock
+          quantity,
           reservedQty: new Decimal(0),
-          availableQty: new Decimal(Math.floor(Math.random() * 500) + 100),
-          averageCost: new Decimal(Math.floor(Math.random() * 50) + 10), // Random cost between 10-60
-          lastCost: new Decimal(Math.floor(Math.random() * 50) + 10),
-          lastStockDate: new Date(),
+          availableQty: quantity,
+          averageCost: new Decimal(Math.random() * 100 + 10), // Random cost between 10-110
+          lastCost: new Decimal(Math.random() * 100 + 10),
         },
       });
       stockCount++;
     }
   }
 
-  console.log(`Created ${stockCount} stock records`);
+  return stockCount;
+}
 
-  // Create item-supplier relationships
-  const itemSuppliers = await Promise.all([
-    prisma.itemSupplier.upsert({
-      where: {
-        itemId_supplierId: {
-          itemId: items[0].id, // Raw Material A
-          supplierId: suppliers[0].id, // Premium Materials Inc.
-        },
-      },
-      update: {},
-      create: {
-        itemId: items[0].id,
-        supplierId: suppliers[0].id,
-        leadTimeDays: 7,
-        unitPrice: new Decimal(25.5),
-        isActive: true,
-      },
-    }),
-    prisma.itemSupplier.upsert({
-      where: {
-        itemId_supplierId: {
-          itemId: items[2].id, // Chemical Component X
-          supplierId: suppliers[1].id, // Chemical Solutions Ltd.
-        },
-      },
-      update: {},
-      create: {
-        itemId: items[2].id,
-        supplierId: suppliers[1].id,
-        leadTimeDays: 14,
-        unitPrice: new Decimal(89.99),
-        isActive: true,
-      },
-    }),
-    prisma.itemSupplier.upsert({
-      where: {
-        itemId_supplierId: {
-          itemId: items[4].id, // Packaging Material
-          supplierId: suppliers[2].id, // Packaging World Corp.
-        },
-      },
-      update: {},
-      create: {
-        itemId: items[4].id,
-        supplierId: suppliers[2].id,
-        leadTimeDays: 3,
-        unitPrice: new Decimal(2.75),
-        isActive: true,
-      },
-    }),
-  ]);
-  console.log("Created item-supplier relationships:", itemSuppliers.length);
+// Create item-supplier relationships
+async function createItemSupplierRelationships(items: any[], suppliers: any[]) {
+  const relationships = [];
+  const companyPrefix = suppliers[0].code.split('-')[1]; // Extract company prefix from supplier code
 
-  // Create historical purchase requests (past 12 months) for AI demand forecasting
-  console.log("Creating historical purchase requests...");
-  const purchaseRequests: any[] = [];
+  // Raw Material A -> Premium Materials Inc.
+  const rel1 = await (prisma as any).itemSupplier.create({
+    data: {
+      itemId: items.find((i: any) => i.sku === `RM001-${companyPrefix}`).id,
+      supplierId: suppliers.find((s: any) => s.code === `SUP001-${companyPrefix}`).id,
+      unitPrice: new Decimal(25.5),
+      leadTimeDays: 7,
+      isActive: true,
+    },
+  });
+  relationships.push(rel1);
+
+  // Chemical Component X -> Chemical Solutions Ltd.
+  const rel2 = await (prisma as any).itemSupplier.create({
+    data: {
+      itemId: items.find((i: any) => i.sku === `RM003-${companyPrefix}`).id,
+      supplierId: suppliers.find((s: any) => s.code === `SUP002-${companyPrefix}`).id,
+      unitPrice: new Decimal(89.99),
+      leadTimeDays: 14,
+      isActive: true,
+    },
+  });
+  relationships.push(rel2);
+
+  // Packaging Material -> Packaging World Corp.
+  const rel3 = await (prisma as any).itemSupplier.create({
+    data: {
+      itemId: items.find((i: any) => i.sku === `PKG001-${companyPrefix}`).id,
+      supplierId: suppliers.find((s: any) => s.code === `SUP003-${companyPrefix}`).id,
+      unitPrice: new Decimal(2.75),
+      leadTimeDays: 3,
+      isActive: true,
+    },
+  });
+  relationships.push(rel3);
+
+  return relationships;
+}
+
+// Create historical data for AI analysis
+async function createHistoricalData(
+  companyId: string, 
+  branches: any[], 
+  items: any[], 
+  suppliers: any[], 
+  users: any[]
+) {
+  // Create some sample purchase requests, purchase orders, etc.
+  // This is a simplified version - you can expand this as needed
+  
   const currentDate = new Date();
-
-  for (let monthsBack = 12; monthsBack >= 1; monthsBack--) {
+  
+  // Create a few purchase requests
+  for (let i = 0; i < 5; i++) {
     const requestDate = new Date(currentDate);
-    requestDate.setMonth(requestDate.getMonth() - monthsBack);
+    requestDate.setMonth(requestDate.getMonth() - i);
 
-    // Create 2-4 purchase requests per month per branch
-    for (const branch of branches) {
-      const requestsThisMonth = Math.floor(Math.random() * 3) + 2; // 2-4 requests
-
-      for (let i = 0; i < requestsThisMonth; i++) {
-        const prDate = new Date(requestDate);
-        prDate.setDate(Math.floor(Math.random() * 28) + 1); // Random day in month
-
-        const pr = await prisma.purchaseRequest.create({
-          data: {
-            prNumber: `PR${branch.code}-${prDate.getFullYear()}${String(
-              prDate.getMonth() + 1
-            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
-            requestDate: prDate,
-            requiredDate: prDate, // Set required date same as request date for historical data
-            branchId: branch.id,
-            createdById: users[Math.floor(Math.random() * users.length)].id,
-            totalAmount: new Decimal(0), // Will be updated after items
-            status: "APPROVED",
-            createdAt: prDate,
-            updatedAt: prDate,
-          },
-        });
-
-        purchaseRequests.push(pr);
-
-        // Add 1-3 items per purchase request
-        const itemsInPR = Math.floor(Math.random() * 3) + 1;
-        let totalAmount = new Decimal(0);
-
-        for (let j = 0; j < itemsInPR; j++) {
-          const randomItem = items[Math.floor(Math.random() * items.length)];
-          const quantity = Math.floor(Math.random() * 100) + 20; // 20-120 units
-          const unitPrice = new Decimal(Math.floor(Math.random() * 50) + 10);
-          const itemTotal = unitPrice.mul(quantity);
-          totalAmount = totalAmount.add(itemTotal);
-
-          await prisma.pRItem.create({
-            data: {
-              prId: pr.id,
-              itemId: randomItem.id,
-              requestedQty: new Decimal(quantity),
-              estimatedPrice: unitPrice,
-              totalAmount: itemTotal,
-              requiredDate: prDate,
-              createdAt: prDate,
-            },
-          });
-        }
-
-        // Update total amount
-        await prisma.purchaseRequest.update({
-          where: { id: pr.id },
-          data: { totalAmount },
-        });
-      }
-    }
-  }
-
-  console.log(
-    `Created ${purchaseRequests.length} historical purchase requests`
-  );
-
-  // Create historical goods receipts for demand analysis
-  console.log("Creating historical goods receipts...");
-  const goodsReceipts: any[] = [];
-
-  for (let monthsBack = 11; monthsBack >= 0; monthsBack--) {
-    const receiptDate = new Date(currentDate);
-    receiptDate.setMonth(receiptDate.getMonth() - monthsBack);
-
-    for (const branch of branches) {
-      const receiptsThisMonth = Math.floor(Math.random() * 4) + 2; // 2-5 receipts
-
-      for (let i = 0; i < receiptsThisMonth; i++) {
-        const grDate = new Date(receiptDate);
-        grDate.setDate(Math.floor(Math.random() * 28) + 1);
-
-        const gr = await prisma.goodsReceipt.create({
-          data: {
-            grNumber: `GR${branch.code}-${grDate.getFullYear()}${String(
-              grDate.getMonth() + 1
-            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
-            receiptDate: grDate,
-            branchId: branch.id,
-            receivedById: users[Math.floor(Math.random() * users.length)].id,
-            status: "POSTED",
-            remarks: `Historical receipt - Month ${monthsBack} back`,
-            createdAt: grDate,
-            updatedAt: grDate,
-          },
-        });
-
-        goodsReceipts.push(gr);
-
-        // Add items to goods receipt
-        const itemsInGR = Math.floor(Math.random() * 3) + 1;
-
-        for (let j = 0; j < itemsInGR; j++) {
-          const randomItem = items[Math.floor(Math.random() * items.length)];
-          const quantity = Math.floor(Math.random() * 80) + 15; // 15-95 units
-          const unitPrice = new Decimal(Math.floor(Math.random() * 45) + 8);
-          const itemTotal = unitPrice.mul(quantity);
-
-          await prisma.gRItem.create({
-            data: {
-              grId: gr.id,
-              itemId: randomItem.id,
-              orderedQty: new Decimal(quantity),
-              receivedQty: new Decimal(quantity),
-              unitPrice: unitPrice,
-              totalCost: itemTotal,
-              createdAt: grDate,
-            },
-          });
-        }
-      }
-    }
-  }
-
-  console.log(`Created ${goodsReceipts.length} historical goods receipts`);
-
-  // Create historical material requisitions for consumption tracking
-  console.log("Creating historical material requisitions...");
-  const materialRequisitions: any[] = [];
-
-  for (let monthsBack = 10; monthsBack >= 0; monthsBack--) {
-    const reqDate = new Date(currentDate);
-    reqDate.setMonth(reqDate.getMonth() - monthsBack);
-
-    for (const branch of branches) {
-      const reqsThisMonth = Math.floor(Math.random() * 6) + 3; // 3-8 requisitions
-
-      for (let i = 0; i < reqsThisMonth; i++) {
-        const mrDate = new Date(reqDate);
-        mrDate.setDate(Math.floor(Math.random() * 28) + 1);
-
-        const mr = await prisma.materialRequisition.create({
-          data: {
-            mrNumber: `MR${branch.code}-${mrDate.getFullYear()}${String(
-              mrDate.getMonth() + 1
-            ).padStart(2, "0")}-${String(i + 1).padStart(3, "0")}`,
-            type: "TRIM_WASTE",
-            branchId: branch.id,
-            createdById: users[Math.floor(Math.random() * users.length)].id,
-            status: "COMPLETED",
-            notes: `Historical consumption - Month ${monthsBack} back`,
-            createdAt: mrDate,
-            updatedAt: mrDate,
-          },
-        });
-
-        materialRequisitions.push(mr);
-
-        // Add items to material requisition
-        const itemsInMR = Math.floor(Math.random() * 4) + 2;
-
-        for (let j = 0; j < itemsInMR; j++) {
-          const randomItem = items[Math.floor(Math.random() * items.length)];
-          const quantity = Math.floor(Math.random() * 50) + 10; // 10-60 units
-
-          await prisma.mRItem.create({
-            data: {
-              mrId: mr.id,
-              itemId: randomItem.id,
-              quantity: new Decimal(quantity),
-              wasteType: "TRIM",
-              createdAt: mrDate,
-            },
-          });
-        }
-      }
-    }
-  }
-
-  console.log(
-    `Created ${materialRequisitions.length} historical material requisitions`
-  );
-
-  // Update stock quantities to reflect low stock for some items (for AI testing)
-  console.log("Updating stock levels for AI testing scenarios...");
-  const lowStockUpdates: string[] = [];
-
-  for (const branch of branches) {
-    // Make 2-3 items have low stock in each branch
-    const itemsToMakeLowStock = items.slice(0, 3);
-
-    for (const item of itemsToMakeLowStock) {
-      const lowQuantity = Math.floor(Math.random() * 8) + 2; // 2-9 units (below reorder level)
-
-      await prisma.stock.update({
-        where: {
-          itemId_branchId: {
-            itemId: item.id,
-            branchId: branch.id,
-          },
-        },
-        data: {
-          quantity: new Decimal(lowQuantity),
-          availableQty: new Decimal(lowQuantity),
-          lastStockDate: new Date(),
-        },
-      });
-
-      lowStockUpdates.push(
-        `${item.name} in ${branch.name}: ${lowQuantity} units`
-      );
-    }
-  }
-
-  console.log(`Updated ${lowStockUpdates.length} items to low stock levels`);
-
-  // Create some AI suggestions for testing
-  console.log("Creating AI suggestions for testing...");
-  const aiSuggestions: any[] = [];
-
-  for (const branch of branches) {
-    // Create a few AI suggestions per branch
-    for (let i = 0; i < 3; i++) {
-      const suggestion = await prisma.aISuggestion.create({
-        data: {
-          type:
-            i === 0
-              ? "STOCK_REORDER"
-              : i === 1
-              ? "TRANSFER_REQUEST"
-              : "COST_VARIANCE",
-          title: `AI Suggestion ${i + 1} for ${branch.name}`,
-          description: `This is an AI-generated suggestion for optimizing operations in ${branch.name}`,
-          status: "PENDING",
-          confidence: new Decimal(0.85 + Math.random() * 0.1), // 0.85-0.95
-          reasoning: `AI analysis indicates optimization opportunity for ${branch.name}`,
-          suggestionData: JSON.stringify({
-            branchId: branch.id,
-            itemIds: items.slice(0, 2).map((item) => item.id),
-            analysisDate: new Date().toISOString(),
-          }),
-          entityType: "Branch",
-          entityId: branch.id,
-          userId: users[0].id, // System admin
-        },
-      });
-
-      aiSuggestions.push(suggestion);
-    }
-  }
-
-  console.log(`Created ${aiSuggestions.length} AI suggestions`);
-
-  // Create additional specific low stock scenarios for AI module testing
-  console.log("Creating specific low stock scenarios for AI module testing...");
-
-  // Find the "Finished Product Alpha" item and make it very low stock in one branch
-  const finishedProductAlpha = items.find((item) => item.sku === "FG001");
-  if (finishedProductAlpha) {
-    const testBranch = branches[1]; // Manufacturing Branch A
-
-    await prisma.stock.update({
-      where: {
-        itemId_branchId: {
-          itemId: finishedProductAlpha.id,
-          branchId: testBranch.id,
-        },
-      },
+    const pr = await (prisma as any).purchaseRequest.create({
       data: {
-        quantity: new Decimal(3), // Very low stock - should trigger high urgency
-        availableQty: new Decimal(3),
-        averageCost: new Decimal(45.5), // Set a reasonable cost for testing
-        lastCost: new Decimal(47.25),
-        lastStockDate: new Date(),
+        prNumber: `PR${companyId.slice(-4)}-${String(i + 1).padStart(3, '0')}`,
+        title: `Purchase Request ${i + 1}`,
+        description: `Sample purchase request for testing`,
+        status: "APPROVED",
+        requestDate,
+        requiredDate: new Date(requestDate.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days later
+        totalAmount: new Decimal(Math.random() * 10000 + 1000),
+        companyId,
+        branchId: branches[Math.floor(Math.random() * branches.length)].id,
+        createdById: users[Math.floor(Math.random() * users.length)].id,
       },
     });
 
-    console.log(
-      `Set ${finishedProductAlpha.name} to 3 units in ${testBranch.name} for high-priority AI testing`
-    );
-  }
-
-  // Make Raw Material A medium priority (6-10 units)
-  const rawMaterialA = items.find((item) => item.sku === "RM001");
-  if (rawMaterialA) {
-    const testBranch = branches[1];
-
-    await prisma.stock.update({
-      where: {
-        itemId_branchId: {
-          itemId: rawMaterialA.id,
-          branchId: testBranch.id,
+    // Add items to the PR
+    for (let j = 0; j < Math.floor(Math.random() * 3) + 1; j++) {
+      const item = items[Math.floor(Math.random() * items.length)];
+      await (prisma as any).pRItem.create({
+        data: {
+          prId: pr.id,
+          itemId: item.id,
+          requestedQty: new Decimal(Math.floor(Math.random() * 50) + 1),
+          estimatedPrice: new Decimal(Math.random() * 100 + 10),
+          totalAmount: new Decimal(Math.random() * 1000 + 100),
+          requiredDate: new Date(requestDate.getTime() + 14 * 24 * 60 * 60 * 1000),
         },
-      },
-      data: {
-        quantity: new Decimal(8), // Medium stock - should trigger medium urgency
-        availableQty: new Decimal(8),
-        averageCost: new Decimal(25.75),
-        lastCost: new Decimal(26.0),
-        lastStockDate: new Date(),
-      },
-    });
-
-    console.log(
-      `Set ${rawMaterialA.name} to 8 units in ${testBranch.name} for medium-priority AI testing`
-    );
+      });
+    }
   }
 
-  console.log("Database seeding completed successfully!");
-  console.log("\nSeed data summary:");
-  console.log(`- Branches: ${branches.length}`);
-  console.log(`- Items: ${items.length}`);
-  console.log(`- Suppliers: ${suppliers.length}`);
-  console.log(`- Users: ${users.length}`);
-  console.log(`- Stock records: ${stockCount}`);
-  console.log(`- Item-supplier relationships: ${itemSuppliers.length}`);
-  console.log(`- Historical purchase requests: ${purchaseRequests.length}`);
-  console.log(`- Historical goods receipts: ${goodsReceipts.length}`);
-  console.log(
-    `- Historical material requisitions: ${materialRequisitions.length}`
-  );
-  console.log(`- Low stock items updated: ${lowStockUpdates.length}`);
-  console.log(`- AI suggestions: ${aiSuggestions.length}`);
-  console.log("\nLow stock items for AI testing:");
-  lowStockUpdates.forEach((update) => console.log(`  - ${update}`));
+  console.log("Created sample historical data for AI analysis");
 }
 
 main()

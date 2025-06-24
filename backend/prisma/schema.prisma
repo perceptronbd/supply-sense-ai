@@ -14,31 +14,156 @@ datasource db {
 }
 
 // ============================================================================
-// CORE SYSTEM MODELS - Based on MVP Requirements
+// CORE SYSTEM MODELS - Multi-Tenant SaaS Architecture
 // ============================================================================
 
-// User Management & Authentication - Based on MVP user roles
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  firstName String?
-  lastName  String?
-  password  String
-  role      UserRole @default(INVENTORY_CLERK)
-  avatar    String?
-  isActive  Boolean  @default(true)
+// Company - Top-level tenant for complete data isolation
+model Company {
+  id              String  @id @default(uuid())
+  name            String
+  taxId           String? @unique // Business registration number
+  businessAddress String?
+  contactPhone    String?
+  contactEmail    String  @unique
+  isActive        Boolean @default(true)
 
-  // Branch assignment (users are assigned to specific branches)
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
+  // Company settings
+  defaultCurrency String @default("USD")
+  timezone        String @default("UTC")
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships - All company-owned entities
+  users                User[]
+  branches             Branch[]
+  roles                Role[]
+  items                Item[]
+  suppliers            Supplier[]
+  purchaseRequests     PurchaseRequest[]
+  purchaseOrders       PurchaseOrder[]
+  requestForms         RequestForm[]
+  materialRequisitions MaterialRequisition[]
+  goodsReceipts        GoodsReceipt[]
+  formulas             Formula[]
+  manufacturingLists   ManufacturingList[]
+  prTemplates          PRTemplate[]
+  rfTemplates          RFTemplate[]
+  aiSuggestions        AISuggestion[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@map("companies")
+}
+
+// Custom Role - Discord-like role system with granular permissions
+model Role {
+  id          String  @id @default(uuid())
+  name        String // e.g., "Branch Manager", "Senior Inventory Clerk"
+  description String?
+  isActive    Boolean @default(true)
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  permissions RolePermission[]
+  userRoles   UserRole[]
+
+  @@unique([companyId, name])
+  @@map("roles")
+}
+
+// Permission modules enum
+enum PermissionModule {
+  PURCHASE_REQUESTS
+  PURCHASE_ORDERS
+  INVENTORY_MANAGEMENT
+  REQUEST_FORMS
+  MATERIAL_REQUISITIONS
+  GOODS_RECEIPTS
+  FORMULAS
+  MANUFACTURING_LISTS
+  USER_MANAGEMENT
+  BRANCH_MANAGEMENT
+  SUPPLIER_MANAGEMENT
+  REPORTS
+  SYSTEM_SETTINGS
+  AI_SUGGESTIONS
+}
+
+// Permission actions enum
+enum PermissionAction {
+  CREATE
+  VIEW
+  EDIT
+  DELETE
+  APPROVE
+  REJECT
+  SUBMIT
+  CANCEL
+  EXPORT
+  IMPORT
+}
+
+// Permission - Module-level permissions
+model Permission {
+  id          String           @id @default(uuid())
+  module      PermissionModule
+  action      PermissionAction
+  description String?
+
+  // Relationships
+  rolePermissions RolePermission[]
+
+  @@unique([module, action])
+  @@map("permissions")
+}
+
+// Role-Permission junction table
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// User Management & Authentication - Multi-tenant with custom roles
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  username     String  @unique
+  firstName    String?
+  lastName     String?
+  phone        String?
+  governmentId String? // Employee ID or government ID
+  password     String
+  avatar       String?
+  isActive     Boolean @default(true)
+  isSuperAdmin Boolean @default(false) // Company Super Admin flag
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Timestamps
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   lastLogin DateTime?
 
-  // Relationships - Based on MVP functional requirements
+  // Relationships - Multi-tenant with role-based access
+  userRoles            UserRole[] // Multiple roles per user
+  userBranches         UserBranch[] // Multiple branch assignments
   purchaseRequests     PurchaseRequest[]     @relation("PRCreator")
   purchaseOrders       PurchaseOrder[]       @relation("POCreator")
   requestForms         RequestForm[]         @relation("RFCreator")
@@ -53,16 +178,40 @@ model User {
   @@map("users")
 }
 
-// MVP User Roles based on requirements
-enum UserRole {
-  SYSTEM_ADMIN // Manages user accounts and company-wide settings
-  BRANCH_MANAGER // Creates and approves PRs, RFs, MRs for their branch
-  INVENTORY_CLERK // Executes GR and updates physical stock counts
-  PROCUREMENT_SPECIALIST // Generates POs based on approved PRs
-  PRODUCTION_PLANNER // Defines formulas and creates ML entries
+// User-Role junction table for multiple role assignments
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  assignedAt DateTime @default(now())
+  assignedBy String? // User ID of who assigned this role
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
 }
 
-// Branch Management - Core to MVP (items stored per branch)
+// User-Branch junction table for multiple branch assignments
+model UserBranch {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  // Assignment details
+  isActive   Boolean  @default(true)
+  assignedAt DateTime @default(now())
+  assignedBy String? // User ID of who assigned this branch
+
+  @@unique([userId, branchId])
+  @@map("user_branches")
+}
+
+// Branch Management - Company-scoped branches
 model Branch {
   id       String  @id @default(uuid())
   name     String
@@ -71,13 +220,18 @@ model Branch {
   phone    String?
   email    String?
   isActive Boolean @default(true)
+  isHQ     Boolean @default(false) // Mark if this is the HQ branch
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relationships
-  users                    User[]
+  // Relationships - Multi-tenant aware
+  userBranches             UserBranch[]
   stock                    Stock[]
   purchaseRequests         PurchaseRequest[]
   purchaseOrders           PurchaseOrder[]
@@ -88,14 +242,15 @@ model Branch {
   goodsReceipts            GoodsReceipt[]
   manufacturingLists       ManufacturingList[]
 
+  @@unique([companyId, code])
   @@map("branches")
 }
 
-// Item Master - Core to MVP with unit management (FR-1, FR-2, FR-3)
+// Item Master - Company-scoped with unit management (FR-1, FR-2, FR-3)
 model Item {
   id          String  @id @default(uuid())
   name        String
-  sku         String  @unique
+  sku         String
   description String?
 
   // Unit Management - MVP Core Feature
@@ -116,6 +271,10 @@ model Item {
   // Status
   isActive Boolean @default(true)
 
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,6 +291,7 @@ model Item {
   prTemplateItems PRTemplateItem[]
   rfTemplateItems RFTemplateItem[]
 
+  @@unique([companyId, sku])
   @@map("items")
 }
 
@@ -161,11 +321,11 @@ model Stock {
   @@map("stock")
 }
 
-// Supplier Management - Basic supplier info (FR-5)
+// Supplier Management - Company-scoped supplier info (FR-5)
 model Supplier {
   id            String  @id @default(uuid())
   name          String
-  code          String  @unique
+  code          String
   contactPerson String?
   email         String?
   phone         String?
@@ -175,6 +335,10 @@ model Supplier {
   // Performance tracking
   averageLeadTime Int? // Days
 
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -183,6 +347,7 @@ model Supplier {
   items          ItemSupplier[]
   purchaseOrders PurchaseOrder[]
 
+  @@unique([companyId, code])
   @@map("suppliers")
 }
 
@@ -214,10 +379,10 @@ model ItemSupplier {
 // PURCHASE REQUEST (PR) MODULE - FR-6 to FR-9
 // ============================================================================
 
-// Purchase Request - FR-6, FR-8
+// Purchase Request - Company-scoped (FR-6, FR-8)
 model PurchaseRequest {
   id          String  @id @default(uuid())
-  prNumber    String  @unique
+  prNumber    String
   title       String?
   description String?
 
@@ -231,6 +396,10 @@ model PurchaseRequest {
 
   // Financial
   totalAmount Decimal @default(0)
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Branch and Creator
   branchId    String
@@ -257,6 +426,7 @@ model PurchaseRequest {
   items          PRItem[]
   purchaseOrders PurchaseOrder[]
 
+  @@unique([companyId, prNumber])
   @@map("purchase_requests")
 }
 
@@ -291,7 +461,7 @@ model PRItem {
   @@map("pr_items")
 }
 
-// PR Templates - FR-7
+// PR Templates - Company-scoped (FR-7)
 model PRTemplate {
   id          String  @id @default(uuid())
   name        String
@@ -299,6 +469,10 @@ model PRTemplate {
 
   // For which branch this template is designed
   branchId String?
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Status
   isActive   Boolean @default(true)
@@ -312,6 +486,7 @@ model PRTemplate {
   items            PRTemplateItem[]
   purchaseRequests PurchaseRequest[]
 
+  @@unique([companyId, name])
   @@map("pr_templates")
 }
 
@@ -336,10 +511,10 @@ model PRTemplateItem {
 // PURCHASE ORDER (PO) MODULE - FR-10 to FR-12
 // ============================================================================
 
-// Purchase Order - FR-10, FR-11
+// Purchase Order - Company-scoped (FR-10, FR-11)
 model PurchaseOrder {
   id       String  @id @default(uuid())
-  poNumber String  @unique
+  poNumber String
   title    String?
 
   // Source PR
@@ -369,6 +544,10 @@ model PurchaseOrder {
   paymentTerms  String?
   deliveryTerms String?
 
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Branch and Creator
   branchId    String
   branch      Branch @relation(fields: [branchId], references: [id])
@@ -386,6 +565,7 @@ model PurchaseOrder {
   items         POItem[]
   goodsReceipts GoodsReceipt[]
 
+  @@unique([companyId, poNumber])
   @@map("purchase_orders")
 }
 
@@ -427,15 +607,19 @@ model POItem {
 // REQUEST FORM (RF) MODULE - FR-13 to FR-15
 // ============================================================================
 
-// Request Form - Inter-branch transfer requests - FR-13, FR-15
+// Request Form - Company-scoped inter-branch transfer requests (FR-13, FR-15)
 model RequestForm {
   id          String  @id @default(uuid())
-  rfNumber    String  @unique
+  rfNumber    String
   title       String?
   description String?
 
   // Status: Draft → Submitted → Approved → Ready for MR
   status RFStatus @default(DRAFT)
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Transfer details
   fromBranchId String
@@ -471,6 +655,7 @@ model RequestForm {
   items                RFItem[]
   materialRequisitions MaterialRequisition[]
 
+  @@unique([companyId, rfNumber])
   @@map("request_forms")
 }
 
@@ -501,7 +686,7 @@ model RFItem {
   @@map("rf_items")
 }
 
-// RF Templates - FR-14
+// RF Templates - Company-scoped (FR-14)
 model RFTemplate {
   id          String  @id @default(uuid())
   name        String
@@ -510,6 +695,10 @@ model RFTemplate {
   // Common transfer patterns
   fromBranchId String?
   toBranchId   String?
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Status
   isActive   Boolean @default(true)
@@ -523,6 +712,7 @@ model RFTemplate {
   items        RFTemplateItem[]
   requestForms RequestForm[]
 
+  @@unique([companyId, name])
   @@map("rf_templates")
 }
 
@@ -547,10 +737,10 @@ model RFTemplateItem {
 // MATERIAL REQUISITION (MR) MODULE - FR-16 to FR-19
 // ============================================================================
 
-// Material Requisition - FR-16, FR-17, FR-18, FR-19
+// Material Requisition - Company-scoped (FR-16, FR-17, FR-18, FR-19)
 model MaterialRequisition {
   id       String  @id @default(uuid())
-  mrNumber String  @unique
+  mrNumber String
   title    String?
 
   // Source RF
@@ -559,6 +749,10 @@ model MaterialRequisition {
 
   // Type of MR
   type MRType @default(TRANSFER)
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Transfer details (for TRANSFER type)
   fromBranchId String?
@@ -595,6 +789,7 @@ model MaterialRequisition {
   items         MRItem[]
   goodsReceipts GoodsReceipt[]
 
+  @@unique([companyId, mrNumber])
   @@map("material_requisitions")
 }
 
@@ -638,15 +833,20 @@ model MRItem {
 // ============================================================================
 
 // Goods Receipt - FR-20, FR-21, FR-22
+// Goods Receipt - Company-scoped (FR-20, FR-21)
 model GoodsReceipt {
   id       String @id @default(uuid())
-  grNumber String @unique
+  grNumber String
 
   // Source (either PO or MR)
   poId                String?
   purchaseOrder       PurchaseOrder?       @relation(fields: [poId], references: [id])
   mrId                String?
   materialRequisition MaterialRequisition? @relation(fields: [mrId], references: [id])
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Receipt details
   receiptDate    DateTime @default(now())
@@ -676,6 +876,7 @@ model GoodsReceipt {
   // Relationships
   items GRItem[]
 
+  @@unique([companyId, grNumber])
   @@map("goods_receipts")
 }
 
@@ -716,16 +917,21 @@ model GRItem {
 // ============================================================================
 
 // Formula - Production recipes - FR-23, FR-24
+// Formula Management - Company-scoped (FR-22, FR-23)
 model Formula {
   id          String  @id @default(uuid())
   name        String
-  code        String  @unique
+  code        String
   description String?
   version     String  @default("1.0")
 
   // Output specification
   outputItem     String? // If this formula produces a specific item
   outputQuantity Decimal @default(1) // Standard batch size in using unit
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Status
   isActive Boolean @default(true)
@@ -742,6 +948,7 @@ model Formula {
   items              FormulaItem[]
   manufacturingLists ManufacturingList[]
 
+  @@unique([companyId, code])
   @@map("formulas")
 }
 
@@ -769,15 +976,20 @@ model FormulaItem {
 // ============================================================================
 
 // Manufacturing List - Production execution - FR-25, FR-26, FR-27, FR-28
+// Manufacturing List - Company-scoped (FR-24, FR-25, FR-26)
 model ManufacturingList {
   id       String  @id @default(uuid())
-  mlNumber String  @unique
+  mlNumber String
   title    String?
 
   // Formula and output
   formulaId      String
   formula        Formula @relation(fields: [formulaId], references: [id])
   outputQuantity Decimal // Desired output quantity
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Status workflow
   status        MLStatus  @default(DRAFT)
@@ -800,6 +1012,7 @@ model ManufacturingList {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([companyId, mlNumber])
   @@map("manufacturing_lists")
 }
 
@@ -815,11 +1028,16 @@ enum MLStatus {
 // ============================================================================
 
 // AI Suggestions - AI-generated recommendations
+// AI Suggestions - Company-scoped (FR-27, FR-28, FR-29)
 model AISuggestion {
   id          String           @id @default(uuid())
   type        AISuggestionType
   title       String
   description String
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Target user
   userId String
@@ -868,10 +1086,15 @@ enum SuggestionStatus {
 // ============================================================================
 
 // Notifications - System and user notifications
+// Notifications - Company-scoped
 model Notification {
   id     String @id @default(uuid())
   userId String
   user   User   @relation(fields: [userId], references: [id])
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   type    NotificationType
   title   String
@@ -915,11 +1138,15 @@ enum Priority {
 // AUDIT TRAIL
 // ============================================================================
 
-// Audit Log - Simple audit trail with timestamps
+// Audit Log - Company-scoped audit trail with timestamps
 model AuditLog {
   id     String @id @default(uuid())
   userId String
   user   User   @relation(fields: [userId], references: [id])
+
+  // Company isolation
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   action   String // CREATE, UPDATE, DELETE, APPROVE, etc.
   entity   String // Table/Model name
@@ -939,3 +1166,27 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+// ============================================================================
+// SEED DATA - Default Permissions for SaaS System
+// ============================================================================
+
+// These permissions should be seeded into the database when creating the system
+// They represent module-level permissions that can be assigned to custom roles
+
+// PERMISSION MODULES AND ACTIONS:
+// - user_management: create, view, edit, delete, assign_roles, assign_branches
+// - branch_management: create, view, edit, delete, manage_stock
+// - item_management: create, view, edit, delete, manage_units
+// - supplier_management: create, view, edit, delete
+// - purchase_requests: create, view, edit, delete, approve, submit
+// - purchase_orders: create, view, edit, delete, send_to_supplier, confirm
+// - request_forms: create, view, edit, delete, approve, submit
+// - material_requisitions: create, view, edit, delete, approve, execute
+// - goods_receipts: create, view, edit, delete, post
+// - formulas: create, view, edit, delete
+// - manufacturing_lists: create, view, edit, delete, start, complete
+// - inventory_reports: view, generate, export
+// - ai_suggestions: view, accept, reject
+// - system_settings: view, edit
+// - audit_logs: view, export
