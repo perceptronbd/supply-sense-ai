@@ -13,7 +13,8 @@ describe('Purchase Request Integration with Branch/Item APIs (E2E)', () => {
     const auth = await TestHelpers.loginAsBranchManager();
     authToken = auth.accessToken;
     testUser = auth.user;
-    TEST_BRANCH_ID = testUser.branchId;
+    // Use the first branch ID from the array
+    TEST_BRANCH_ID = testUser.branchIds[0];
     _TEST_ITEM_ID = await TestHelpers.getTestItemId();
   });
 
@@ -206,14 +207,14 @@ describe('Purchase Request Integration with Branch/Item APIs (E2E)', () => {
 
       // But branch-specific stock information should be different
       const managerBranchItems = await axios.get(
-        `${API_BASE_URL}/api/items/by-branch/${testUser.branchId}`,
+        `${API_BASE_URL}/api/items/by-branch/${testUser.branchIds[0]}`,
         {
           headers: getAuthHeaders(),
         }
       );
 
       const procurementBranchItems = await axios.get(
-        `${API_BASE_URL}/api/items/by-branch/${procurementAuth.user.branchId}`,
+        `${API_BASE_URL}/api/items/by-branch/${procurementAuth.user.branchIds[0]}`,
         {
           headers: procurementHeaders,
         }
@@ -223,9 +224,9 @@ describe('Purchase Request Integration with Branch/Item APIs (E2E)', () => {
       expect(procurementBranchItems.status).toBe(200);
 
       // If users are from different branches, they should see different stock data
-      if (testUser.branchId !== procurementAuth.user.branchId) {
+      if (testUser.branchIds[0] !== procurementAuth.user.branchIds[0]) {
         // Stock context should be different for different branches
-        expect(testUser.branchId).not.toBe(procurementAuth.user.branchId);
+        expect(testUser.branchIds[0]).not.toBe(procurementAuth.user.branchIds[0]);
       }
     });
   });

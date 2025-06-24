@@ -6,8 +6,10 @@ export interface TestUser {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  branchId: string;
+  roles: string[]; // Updated to array
+  branchIds: string[]; // Updated to array
+  companyId: string; // Added for multi-tenant support
+  permissions: string[]; // Added for permission-based access
 }
 
 export interface AuthTokens {

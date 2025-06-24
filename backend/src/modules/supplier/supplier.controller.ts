@@ -1,8 +1,4 @@
-﻿import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import { ApiErrorResponseDto, ApiResponseDto, PaginatedResponseDto } from '@modules/common';
-import {
+﻿import {
   Body,
   Controller,
   Delete,
@@ -28,6 +24,10 @@ import {
 } from '@nestjs/swagger';
 import { Supplier } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { Roles, UserRole } from '../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { ApiErrorResponseDto, ApiResponseDto, PaginatedResponseDto } from '../common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { QuerySupplierDto } from './dto/query-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';

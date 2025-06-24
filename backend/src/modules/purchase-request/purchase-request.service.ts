@@ -1,25 +1,37 @@
-﻿import { PrismaService } from '@app/prisma.service';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+﻿import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PRStatus, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../../app/prisma.service';
+import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
 import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 
-// Define status enum locally to avoid import issues
-enum PRStatus {
-  DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  CONVERTED_TO_PO = 'CONVERTED_TO_PO',
-}
-
 @Injectable()
 export class PurchaseRequestService {
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(createPurchaseRequestDto: CreatePurchaseRequestDto, userId: string) {
+  async create(createPurchaseRequestDto: CreatePurchaseRequestDto, user: AuthenticatedUser) {
+    // Validate that the branch belongs to the user's company
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        id: createPurchaseRequestDto.branchId,
+        companyId: user.companyId,
+      },
+    });
+
+    if (!branch) {
+      throw new ForbiddenException('Branch does not belong to your company');
+    }
+
+    // Check if user has access to this branch
+    if (!user.branchIds.includes(createPurchaseRequestDto.branchId)) {
+      throw new ForbiddenException('You do not have access to this branch');
+    }
+
     // Generate PR number
-    const count = await this.prisma.purchaseRequest.count();
+    const count = await this.prisma.purchaseRequest.count({
+      where: { companyId: user.companyId },
+    });
     const prNumber = `PR${String(count + 1).padStart(6, '0')}`;
 
     // Calculate total amount
@@ -29,14 +41,28 @@ export class PurchaseRequestService {
       totalAmount = totalAmount.add(itemTotal);
     }
 
+    // Validate that all items belong to the company
+    const itemIds = createPurchaseRequestDto.items.map((item) => item.itemId);
+    const items = await this.prisma.item.findMany({
+      where: {
+        id: { in: itemIds },
+        companyId: user.companyId,
+      },
+    });
+
+    if (items.length !== itemIds.length) {
+      throw new ForbiddenException('Some items do not belong to your company');
+    }
+
     return this.prisma.purchaseRequest.create({
       data: {
         prNumber,
         title: createPurchaseRequestDto.title,
         description: createPurchaseRequestDto.description,
         requiredDate: new Date(createPurchaseRequestDto.requiredDate),
+        companyId: user.companyId,
         branchId: createPurchaseRequestDto.branchId,
-        createdById: userId,
+        createdById: user.id,
         prTemplateId: createPurchaseRequestDto.prTemplateId,
         justification: createPurchaseRequestDto.justification,
         totalAmount,
@@ -53,11 +79,7 @@ export class PurchaseRequestService {
         },
       },
       include: {
-        items: {
-          include: {
-            item: true,
-          },
-        },
+        company: true,
         branch: true,
         createdBy: {
           select: {
@@ -68,19 +90,36 @@ export class PurchaseRequestService {
           },
         },
         prTemplate: true,
+        items: {
+          include: {
+            item: true,
+          },
+        },
       },
     });
   }
 
-  async findAll(branchId?: string) {
+  async findAll(user: AuthenticatedUser, branchId?: string) {
+    // Apply company isolation and branch access control
+    const whereClause: Prisma.PurchaseRequestWhereInput = {
+      companyId: user.companyId,
+    };
+
+    // If branchId is specified, validate user has access to it
+    if (branchId) {
+      if (!user.branchIds.includes(branchId)) {
+        throw new ForbiddenException('You do not have access to this branch');
+      }
+      whereClause.branchId = branchId;
+    } else {
+      // Limit to branches user has access to
+      whereClause.branchId = { in: user.branchIds };
+    }
+
     return this.prisma.purchaseRequest.findMany({
-      where: branchId ? { branchId } : undefined,
+      where: whereClause,
       include: {
-        items: {
-          include: {
-            item: true,
-          },
-        },
+        company: true,
         branch: true,
         createdBy: {
           select: {
@@ -91,6 +130,11 @@ export class PurchaseRequestService {
           },
         },
         prTemplate: true,
+        items: {
+          include: {
+            item: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -98,15 +142,15 @@ export class PurchaseRequestService {
     });
   }
 
-  async findOne(id: string) {
-    const purchaseRequest = await this.prisma.purchaseRequest.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const purchaseRequest = await this.prisma.purchaseRequest.findFirst({
+      where: {
+        id,
+        companyId: user.companyId,
+        branchId: { in: user.branchIds },
+      },
       include: {
-        items: {
-          include: {
-            item: true,
-          },
-        },
+        company: true,
         branch: true,
         createdBy: {
           select: {
@@ -117,6 +161,11 @@ export class PurchaseRequestService {
           },
         },
         prTemplate: true,
+        items: {
+          include: {
+            item: true,
+          },
+        },
       },
     });
 
@@ -127,8 +176,12 @@ export class PurchaseRequestService {
     return purchaseRequest;
   }
 
-  async update(id: string, updatePurchaseRequestDto: UpdatePurchaseRequestDto) {
-    const existingPR = await this.findOne(id);
+  async update(
+    id: string,
+    updatePurchaseRequestDto: UpdatePurchaseRequestDto,
+    user: AuthenticatedUser
+  ) {
+    const existingPR = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingPR.status !== PRStatus.DRAFT) {
@@ -191,12 +244,12 @@ export class PurchaseRequestService {
     });
   }
 
-  async remove(id: string) {
-    const existingPR = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingPR = await this.findOne(id, user);
 
     // Only allow deletion if status is DRAFT
     if (existingPR.status !== PRStatus.DRAFT) {
-      throw new Error('Can only delete Purchase Requests in DRAFT status');
+      throw new ForbiddenException('Can only delete Purchase Requests in DRAFT status');
     }
 
     return this.prisma.purchaseRequest.delete({
@@ -204,12 +257,16 @@ export class PurchaseRequestService {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, _userId: string) {
-    const existingPR = await this.findOne(id);
+  async approve(id: string, user: AuthenticatedUser) {
+    const existingPR = await this.findOne(id, user);
 
     if (existingPR.status !== PRStatus.SUBMITTED) {
-      throw new Error('Can only approve Purchase Requests in SUBMITTED status');
+      throw new ForbiddenException('Can only approve Purchase Requests in SUBMITTED status');
+    }
+
+    // Check if user has approval permissions
+    if (!user.permissions.includes('PURCHASE_REQUESTS:APPROVE')) {
+      throw new ForbiddenException('You do not have permission to approve purchase requests');
     }
 
     return this.prisma.purchaseRequest.update({
@@ -237,11 +294,11 @@ export class PurchaseRequestService {
     });
   }
 
-  async submit(id: string) {
-    const existingPR = await this.findOne(id);
+  async submit(id: string, user: AuthenticatedUser) {
+    const existingPR = await this.findOne(id, user);
 
     if (existingPR.status !== PRStatus.DRAFT) {
-      throw new Error('Can only submit Purchase Requests in DRAFT status');
+      throw new ForbiddenException('Can only submit Purchase Requests in DRAFT status');
     }
 
     return this.prisma.purchaseRequest.update({
@@ -269,33 +326,23 @@ export class PurchaseRequestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async reject(id: string, _userId: string) {
-    const existingPR = await this.findOne(id);
+  async reject(id: string, user: AuthenticatedUser) {
+    const existingPR = await this.findOne(id, user);
 
     if (existingPR.status !== PRStatus.SUBMITTED) {
-      throw new Error('Can only reject Purchase Requests in SUBMITTED status');
+      throw new ForbiddenException('Can only reject Purchase Requests in SUBMITTED status');
+    }
+
+    // Check if user has approval permissions
+    if (!user.permissions.includes('PURCHASE_REQUESTS:APPROVE')) {
+      throw new ForbiddenException('You do not have permission to reject purchase requests');
     }
 
     return this.prisma.purchaseRequest.update({
       where: { id },
       data: {
         status: PRStatus.REJECTED,
-      },
-      include: {
-        items: {
-          include: {
-            item: true,
-          },
-        },
-        branch: true,
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        rejectedAt: new Date(),
       },
     });
   }

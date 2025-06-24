@@ -1,0 +1,17 @@
+{
+  "displayName": "Purchase Request Verification",
+  "testMatch": ["**/purchase-request-verification.spec.ts"],
+  "testEnvironment": "node",
+  "transform": {
+    "^.+\\.(t|j)sx?$": [
+      "ts-jest",
+      {
+        "tsconfig": "tsconfig.spec.json"
+      }
+    ]
+  },
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx"],
+  "coverageDirectory": "../../../coverage/backend-e2e",
+  "collectCoverageFrom": ["**/*.(t|j)s"],
+  "testTimeout": 10000
+}
