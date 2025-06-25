@@ -172,8 +172,39 @@ export function handleApiError(error: unknown): {
   message: string;
   statusCode?: number;
   details?: unknown;
+  error?: string;
+  correlationId?: string;
 } {
-  // Handle RTK Query error
+  // Handle RTK Query error with backend ApiErrorResponseDto structure
+  if (error && typeof error === 'object' && 'data' in error) {
+    const rtkError = error as {
+      data: {
+        success: false;
+        statusCode: number;
+        message: string;
+        error?: string;
+        details?: Record<string, unknown> | string[];
+        metadata: {
+          timestamp: string;
+          path: string;
+          correlationId: string;
+        };
+      };
+      status: number;
+    };
+
+    if (rtkError.data) {
+      return {
+        message: rtkError.data.message || 'An error occurred',
+        statusCode: rtkError.data.statusCode || rtkError.status,
+        details: rtkError.data.details,
+        error: rtkError.data.error,
+        correlationId: rtkError.data.metadata?.correlationId,
+      };
+    }
+  }
+
+  // Handle legacy RTK Query error format (fallback)
   if (error && typeof error === 'object' && 'data' in error) {
     const rtkError = error as { data: ApiError; status: number };
     return {
@@ -249,12 +280,44 @@ export function isApiError(response: unknown): response is ApiError {
 export function getToastErrorMessage(error: unknown): {
   title: string;
   description: string;
+  correlationId?: string;
 } {
   const errorInfo = handleApiError(error);
 
+  // Customize title based on status code
+  let title = 'Error';
+  if (errorInfo.statusCode) {
+    switch (errorInfo.statusCode) {
+      case 400:
+        title = 'Invalid Request';
+        break;
+      case 401:
+        title = 'Authentication Failed';
+        break;
+      case 403:
+        title = 'Access Denied';
+        break;
+      case 404:
+        title = 'Not Found';
+        break;
+      case 429:
+        title = 'Too Many Requests';
+        break;
+      case 500:
+        title = 'Server Error';
+        break;
+      case 503:
+        title = 'Service Unavailable';
+        break;
+      default:
+        title = 'Error';
+    }
+  }
+
   return {
-    title: 'Error',
+    title,
     description: errorInfo.message,
+    correlationId: errorInfo.correlationId,
   };
 }
 

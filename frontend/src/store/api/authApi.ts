@@ -43,6 +43,27 @@ export const authApi = createApi({
         body: credentials,
       }),
       transformResponse: (response: ApiResponse<LoginResponse>) => transformApiResponse(response),
+      transformErrorResponse: (response: { status: number; data: unknown }) => {
+        // The backend global error handler sends errors in ApiErrorResponseDto format
+        if (response.data && typeof response.data === 'object') {
+          return {
+            status: response.status,
+            data: response.data as {
+              success: false;
+              statusCode: number;
+              message: string;
+              error?: string;
+              details?: Record<string, unknown> | string[];
+              metadata: {
+                timestamp: string;
+                path: string;
+                correlationId: string;
+              };
+            },
+          };
+        }
+        return response;
+      },
     }),
     register: builder.mutation<LoginResponse, LoginRequest & { name: string }>({
       query: (userData) => ({
@@ -51,6 +72,27 @@ export const authApi = createApi({
         body: userData,
       }),
       transformResponse: (response: ApiResponse<LoginResponse>) => transformApiResponse(response),
+      transformErrorResponse: (response: { status: number; data: unknown }) => {
+        // The backend global error handler sends errors in ApiErrorResponseDto format
+        if (response.data && typeof response.data === 'object') {
+          return {
+            status: response.status,
+            data: response.data as {
+              success: false;
+              statusCode: number;
+              message: string;
+              error?: string;
+              details?: Record<string, unknown> | string[];
+              metadata: {
+                timestamp: string;
+                path: string;
+                correlationId: string;
+              };
+            },
+          };
+        }
+        return response;
+      },
     }),
     getProfile: builder.query<LoginResponse['user'], void>({
       query: () => '/profile',
