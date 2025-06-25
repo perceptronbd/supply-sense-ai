@@ -9,22 +9,23 @@ import {
   type PurchaseOrderFormData,
   purchaseOrderSchema,
 } from '@/lib/schemas/purchase-order.schema';
+import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useGetAllBranchesQuery } from '@/store/api/branchApi';
 import { type PurchaseOrder } from '@/store/api/purchaseOrderApi';
 import { useGetSuppliersQuery } from '@/store/api/supplierApi';
 import type { RootState } from '@/store/store';
-import { Button, Card, CardBody, CardHeader } from '@heroui/react';
+import { Button, Card, CardBody, CardHeader, addToast } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ItemsSection } from './ItemsSection';
 import { useFormSubmission, useItemManagement } from './hooks';
 
 interface PurchaseOrderFormProps {
-  id?: string; // Purchase Order ID for editing
-  initialData?: Partial<PurchaseOrderFormData>;
-  mode?: 'create' | 'edit';
-  onSuccess?: (purchaseOrder: PurchaseOrder) => void;
+  readonly id?: string; // Purchase Order ID for editing
+  readonly initialData?: Partial<PurchaseOrderFormData>;
+  readonly mode?: 'create' | 'edit';
+  readonly onSuccess?: (purchaseOrder: PurchaseOrder) => void;
 }
 
 export function PurchaseOrderForm({
@@ -35,6 +36,7 @@ export function PurchaseOrderForm({
 }: PurchaseOrderFormProps) {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
+
   // Helper function to normalize initial data
   const normalizeInitialData = (data?: Partial<PurchaseOrderFormData>) => {
     // Default expected delivery date to tomorrow
@@ -59,7 +61,7 @@ export function PurchaseOrderForm({
     return {
       ...data,
       // Ensure expectedDeliveryDate has a default value if not provided
-      expectedDeliveryDate: data.expectedDeliveryDate || defaultExpectedDeliveryDate,
+      expectedDeliveryDate: data.expectedDeliveryDate ?? defaultExpectedDeliveryDate,
       items:
         data.items?.map((item) => ({
           ...item,
@@ -77,20 +79,22 @@ export function PurchaseOrderForm({
 
   // API queries
   const { data: branches = [] } = useGetAllBranchesQuery(undefined);
-  const { data: suppliers = [] } = useGetSuppliersQuery();
+  const { data: suppliers = [], error: suppliersError } = useGetSuppliersQuery();
 
-  // Create branch and supplier options
-  const branchOptions = branches.map((branch) => ({
-    value: branch.id,
-    label: `${branch.code} - ${branch.name}`,
-  }));
+  // Handle suppliers API errors with toast
+  useEffect(() => {
+    if (suppliersError) {
+      const toastError = getToastErrorMessage(suppliersError);
+      addToast({
+        title: toastError.title,
+        description: 'Failed to load suppliers. Some features may not work properly.',
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
+  }, [suppliersError]);
 
-  const supplierOptions = suppliers.map((supplier) => ({
-    value: supplier.id,
-    label: `${supplier.code} - ${supplier.name}`,
-  }));
-
-  // Use custom hooks
+  // Use custom hooks (MUST be before any conditional returns)
   const { handleSubmit, isCreating, isUpdating } = useFormSubmission({
     mode,
     id,
@@ -113,6 +117,7 @@ export function PurchaseOrderForm({
     errors,
     setErrors,
   });
+
   // Helper functions
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -121,6 +126,18 @@ export function PurchaseOrderForm({
       setErrors((prev) => ({ ...prev, [name]: [] }));
     }
   };
+
+  // Create branch and supplier options
+  const branchOptions = branches.map((branch) => ({
+    value: branch.id,
+    label: `${branch.code} - ${branch.name}`,
+  }));
+
+  // Create supplier options
+  const supplierOptions = suppliers.map((supplier) => ({
+    value: supplier.id,
+    label: `${supplier.code} - ${supplier.name}`,
+  }));
 
   return (
     <section className="max-w-6xl mx-auto p-6 space-y-6">
@@ -136,18 +153,6 @@ export function PurchaseOrderForm({
           </Text>
         </div>
       </header>
-
-      {errors._form && (
-        <section className="bg-danger-50 border border-danger-200 rounded-md p-4">
-          <div className="text-danger-800">
-            {errors._form.map((error) => (
-              <Text variant="bodyBase" key={error} as="p">
-                {error}
-              </Text>
-            ))}
-          </div>
-        </section>
-      )}
 
       <form className="space-y-6" onSubmit={(e) => handleSubmit(e, setErrors, setWasSubmitted)}>
         {/* Basic Information */}

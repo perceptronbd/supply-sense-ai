@@ -1,9 +1,11 @@
 ﻿import type { PurchaseOrderFormData } from '@/lib/schemas/purchase-order.schema';
+import { getToastErrorMessage, getToastSuccessMessage } from '@/lib/utils/api-response';
 import {
   type PurchaseOrder,
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderMutation,
 } from '@/store/api/purchaseOrderApi';
+import { addToast } from '@heroui/react';
 import { type FormEvent } from 'react';
 
 interface UseFormSubmissionProps {
@@ -51,48 +53,6 @@ function convertToISOString(dateString: string): string {
   return date.toISOString();
 }
 
-// Helper function to extract error message from RTK Query errors
-function extractErrorMessage(error: unknown): string {
-  const defaultMessage = 'Failed to save purchase order. Please check your data and try again.';
-
-  if (!error || typeof error !== 'object') {
-    return typeof error === 'string' ? error : defaultMessage;
-  }
-
-  // Handle RTK Query FetchBaseQueryError
-  if ('status' in error) {
-    const rtkError = error as {
-      status: number | string;
-      data?: {
-        message?: string | string[];
-        error?: string;
-      };
-      error?: string;
-    };
-
-    if (rtkError.data?.message) {
-      return Array.isArray(rtkError.data.message)
-        ? rtkError.data.message.join(', ')
-        : rtkError.data.message;
-    }
-
-    if (rtkError.data?.error) {
-      return rtkError.data.error;
-    }
-
-    if (rtkError.error) {
-      return rtkError.error;
-    }
-  }
-
-  // Handle regular Error objects
-  if ('message' in error) {
-    return (error as Error).message;
-  }
-
-  return defaultMessage;
-}
-
 export function useFormSubmission({ mode, id, formData, onSuccess }: UseFormSubmissionProps) {
   const [createPurchaseOrder, { isLoading: isCreating }] = useCreatePurchaseOrderMutation();
   const [updatePurchaseOrder, { isLoading: isUpdating }] = useUpdatePurchaseOrderMutation();
@@ -104,30 +64,58 @@ export function useFormSubmission({ mode, id, formData, onSuccess }: UseFormSubm
   ) => {
     e.preventDefault();
     setWasSubmitted(true);
+
     try {
       const submissionData = prepareSubmissionData(formData);
 
       let result: PurchaseOrder;
       if (mode === 'create') {
         result = await createPurchaseOrder(submissionData).unwrap();
+
+        // Show success toast
+        addToast({
+          ...getToastSuccessMessage(
+            `Purchase order "${result.title}" created successfully with ID ${result.poNumber}`,
+            'created'
+          ),
+          color: 'success',
+        });
       } else {
         if (!id) {
           throw new Error('Purchase Order ID is required for editing');
         }
         result = await updatePurchaseOrder({ id, data: submissionData }).unwrap();
+
+        // Show success toast
+        addToast({
+          ...getToastSuccessMessage(
+            `Purchase order "${result.title}" updated successfully`,
+            'updated'
+          ),
+          color: 'success',
+        });
       }
+
+      // Clear any existing errors
+      setErrors({});
 
       // Call success handler
       onSuccess?.(result);
     } catch (error: unknown) {
       console.error('Failed to save purchase order:', error);
 
-      const errorMessage = extractErrorMessage(error);
+      // Use the centralized error handling utilities
+      const toastError = getToastErrorMessage(error);
 
-      setErrors((prev) => ({
-        ...prev,
-        _form: [errorMessage],
-      }));
+      // Show error toast using the structured error from backend
+      addToast({
+        title: toastError.title,
+        description: toastError.description,
+        color: 'danger',
+      });
+
+      // Set form error for display (using the structured message from backend)
+      setErrors({ _form: [toastError.description] });
     }
   };
 
