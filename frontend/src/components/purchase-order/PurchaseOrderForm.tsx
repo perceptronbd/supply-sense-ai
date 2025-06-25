@@ -47,13 +47,13 @@ export function PurchaseOrderForm({
     if (!data) {
       return {
         title: '',
-        prId: '',
+        prId: undefined, // Optional field should be undefined, not empty string
         supplierId: '',
         expectedDeliveryDate: defaultExpectedDeliveryDate,
-        paymentTerms: '',
-        deliveryTerms: '',
+        paymentTerms: undefined, // Optional field should be undefined, not empty string
+        deliveryTerms: undefined, // Optional field should be undefined, not empty string
         branchId: user?.branchId || '',
-        notes: '',
+        notes: undefined, // Optional field should be undefined, not empty string
         items: [],
       };
     }
@@ -62,6 +62,11 @@ export function PurchaseOrderForm({
       ...data,
       // Ensure expectedDeliveryDate has a default value if not provided
       expectedDeliveryDate: data.expectedDeliveryDate ?? defaultExpectedDeliveryDate,
+      // Convert empty strings to undefined for optional fields
+      prId: data.prId || undefined,
+      paymentTerms: data.paymentTerms || undefined,
+      deliveryTerms: data.deliveryTerms || undefined,
+      notes: data.notes || undefined,
       items:
         data.items?.map((item) => ({
           ...item,
@@ -120,7 +125,13 @@ export function PurchaseOrderForm({
 
   // Helper functions
   const handleFieldChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Convert empty strings to undefined for optional fields
+    const processedValue =
+      ['prId', 'paymentTerms', 'deliveryTerms', 'notes'].includes(name) && value === ''
+        ? undefined
+        : value;
+
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
     // Clear errors for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: [] }));

@@ -1,4 +1,5 @@
 ﻿import type { PurchaseOrderFormData } from '@/lib/schemas/purchase-order.schema';
+import { purchaseOrderSchema } from '@/lib/schemas/purchase-order.schema';
 import { getToastErrorMessage, getToastSuccessMessage } from '@/lib/utils/api-response';
 import {
   type PurchaseOrder,
@@ -66,7 +67,37 @@ export function useFormSubmission({ mode, id, formData, onSuccess }: UseFormSubm
     setWasSubmitted(true);
 
     try {
+      // Debug: Log the form data before validation
+      console.log('Form data before validation:', JSON.stringify(formData, null, 2));
+
+      // Validate the form data with Zod schema before submission
+      const validation = purchaseOrderSchema.safeParse(formData);
+
+      if (!validation.success) {
+        const fieldErrors = validation.error.flatten().fieldErrors;
+        console.error('Validation errors:', fieldErrors);
+        console.error('Detailed validation issues:', validation.error.issues);
+
+        setErrors(fieldErrors);
+
+        // Create a more specific error message based on the actual validation issues
+        const errorMessages = validation.error.issues
+          .map((issue) => `${issue.path.join('.')} - ${issue.message}`)
+          .join('; ');
+
+        // Show error toast for validation failure with specific details
+        addToast({
+          title: 'Validation Error',
+          description: `Please correct the following errors: ${errorMessages}`,
+          color: 'danger',
+        });
+
+        return;
+      }
+
+      console.log('Validation passed, proceeding with submission');
       const submissionData = prepareSubmissionData(formData);
+      console.log('Prepared submission data:', JSON.stringify(submissionData, null, 2));
 
       let result: PurchaseOrder;
       if (mode === 'create') {
