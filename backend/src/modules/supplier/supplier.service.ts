@@ -107,14 +107,13 @@ export class SupplierService {
 
       const totalPages = Math.ceil(total / limit);
 
+      // Return suppliers with pagination metadata - the ResponseInterceptor will format it properly
       return {
         data: suppliers,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: totalPages,
-        },
+        page,
+        limit,
+        total,
+        pages: totalPages,
       };
     }
 
@@ -126,10 +125,7 @@ export class SupplierService {
       },
     });
 
-    return {
-      data: suppliers,
-      pagination: null,
-    };
+    return suppliers;
   }
 
   /**

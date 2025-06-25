@@ -61,14 +61,13 @@ type SupplierWithRelations = Prisma.SupplierGetPayload<{
   };
 }>;
 
+// Response type for paginated suppliers - handled by ResponseInterceptor
 type PaginatedSuppliersResponse = {
   data: Supplier[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
 };
 
 @ApiTags('suppliers')
@@ -140,7 +139,8 @@ export class SupplierController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Suppliers retrieved successfully',
+    description:
+      'Suppliers retrieved successfully. Returns array when no pagination, or paginated response when page/limit provided.',
     type: PaginatedResponseDto<Supplier>,
   })
   @ApiResponse({
@@ -156,7 +156,7 @@ export class SupplierController {
   async findAll(
     @Query() query: QuerySupplierDto,
     @CurrentUser() user: AuthenticatedUser
-  ): Promise<PaginatedSuppliersResponse> {
+  ): Promise<Supplier[] | PaginatedSuppliersResponse> {
     return this.supplierService.findAll(user.companyId, query);
   }
 
