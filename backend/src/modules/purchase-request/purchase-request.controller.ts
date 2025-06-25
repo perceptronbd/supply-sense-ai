@@ -3,8 +3,6 @@
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Inject,
   Param,
   Patch,
@@ -46,21 +44,18 @@ export class PurchaseRequestController {
     status: 201,
     description: 'Purchase request created successfully',
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: 'Forbidden - insufficient permissions or access denied',
   })
+  @ApiResponse({ status: 404, description: 'Branch or items not found' })
   async create(
     @Body() createPurchaseRequestDto: CreatePurchaseRequestDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    try {
-      return await this.purchaseRequestService.create(createPurchaseRequestDto, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.create(createPurchaseRequestDto, user);
   }
 
   @Get()
@@ -85,6 +80,28 @@ export class PurchaseRequestController {
     return await this.purchaseRequestService.findAll(user);
   }
 
+  @Get('templates')
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.READ)
+  @ApiOperation({ summary: 'Get purchase request templates' })
+  @ApiQuery({
+    name: 'branchId',
+    required: false,
+    description: 'Filter templates by branch ID',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of purchase request templates retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async getTemplates(@CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.getTemplates(user);
+  }
+
   @Get(':id')
   @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a purchase request by ID' })
@@ -104,11 +121,7 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.findOne(id, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-    }
+    return await this.purchaseRequestService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -135,11 +148,7 @@ export class PurchaseRequestController {
     @Body() updatePurchaseRequestDto: UpdatePurchaseRequestDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    try {
-      return await this.purchaseRequestService.update(id, updatePurchaseRequestDto, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.update(id, updatePurchaseRequestDto, user);
   }
 
   @Delete(':id')
@@ -161,11 +170,7 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.remove(id, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.remove(id, user);
   }
 
   @Post(':id/submit')
@@ -187,11 +192,7 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async submit(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.submit(id, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.submit(id, user);
   }
 
   @Post(':id/approve')
@@ -213,11 +214,7 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.approve(id, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.approve(id, user);
   }
 
   @Post(':id/reject')
@@ -239,10 +236,6 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.reject(id, user);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.reject(id, user);
   }
 }

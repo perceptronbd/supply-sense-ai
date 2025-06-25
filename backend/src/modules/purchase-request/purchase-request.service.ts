@@ -28,6 +28,48 @@ export class PurchaseRequestService {
       throw new ForbiddenException('You do not have access to this branch');
     }
 
+    // Validate that items array is not empty
+    if (!createPurchaseRequestDto.items || createPurchaseRequestDto.items.length === 0) {
+      throw new ForbiddenException('Purchase request must contain at least one item');
+    }
+
+    // Validate that all items belong to the company
+    const itemIds = createPurchaseRequestDto.items.map((item) => item.itemId);
+    const items = await this.prisma.item.findMany({
+      where: {
+        id: { in: itemIds },
+        companyId: user.companyId,
+      },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+      },
+    });
+
+    if (items.length !== itemIds.length) {
+      const foundItemIds = items.map((item) => item.id);
+      const missingItemIds = itemIds.filter((id) => !foundItemIds.includes(id));
+      throw new ForbiddenException(
+        `Some items do not belong to your company. Invalid item IDs: ${missingItemIds.join(', ')}`
+      );
+    }
+
+    // Validate item quantities and prices
+    const validationErrors: string[] = [];
+    createPurchaseRequestDto.items.forEach((item, index) => {
+      if (item.requestedQty <= 0) {
+        validationErrors.push(`Item ${index + 1}: Requested quantity must be greater than 0`);
+      }
+      if (item.estimatedPrice !== undefined && item.estimatedPrice < 0) {
+        validationErrors.push(`Item ${index + 1}: Estimated price cannot be negative`);
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      throw new ForbiddenException(`Validation errors: ${validationErrors.join('; ')}`);
+    }
+
     // Generate PR number
     const count = await this.prisma.purchaseRequest.count({
       where: { companyId: user.companyId },
@@ -41,62 +83,60 @@ export class PurchaseRequestService {
       totalAmount = totalAmount.add(itemTotal);
     }
 
-    // Validate that all items belong to the company
-    const itemIds = createPurchaseRequestDto.items.map((item) => item.itemId);
-    const items = await this.prisma.item.findMany({
-      where: {
-        id: { in: itemIds },
-        companyId: user.companyId,
-      },
-    });
-
-    if (items.length !== itemIds.length) {
-      throw new ForbiddenException('Some items do not belong to your company');
+    try {
+      return await this.prisma.purchaseRequest.create({
+        data: {
+          prNumber,
+          title: createPurchaseRequestDto.title,
+          description: createPurchaseRequestDto.description,
+          requiredDate: new Date(createPurchaseRequestDto.requiredDate),
+          companyId: user.companyId,
+          branchId: createPurchaseRequestDto.branchId,
+          createdById: user.id,
+          prTemplateId: createPurchaseRequestDto.prTemplateId,
+          justification: createPurchaseRequestDto.justification,
+          totalAmount,
+          status: PRStatus.DRAFT,
+          items: {
+            create: createPurchaseRequestDto.items.map((item) => ({
+              itemId: item.itemId,
+              requestedQty: new Decimal(item.requestedQty),
+              estimatedPrice: new Decimal(item.estimatedPrice || 0),
+              totalAmount: new Decimal(item.requestedQty).mul(item.estimatedPrice || 0),
+              requiredDate: new Date(item.requiredDate),
+              remarks: item.remarks,
+            })),
+          },
+        },
+        include: {
+          company: true,
+          branch: true,
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          prTemplate: true,
+          items: {
+            include: {
+              item: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      // Handle database errors
+      if (error.code === 'P2002') {
+        throw new ForbiddenException('A purchase request with this information already exists');
+      }
+      if (error.code === 'P2003') {
+        throw new ForbiddenException('Referenced item or template does not exist');
+      }
+      throw error;
     }
-
-    return this.prisma.purchaseRequest.create({
-      data: {
-        prNumber,
-        title: createPurchaseRequestDto.title,
-        description: createPurchaseRequestDto.description,
-        requiredDate: new Date(createPurchaseRequestDto.requiredDate),
-        companyId: user.companyId,
-        branchId: createPurchaseRequestDto.branchId,
-        createdById: user.id,
-        prTemplateId: createPurchaseRequestDto.prTemplateId,
-        justification: createPurchaseRequestDto.justification,
-        totalAmount,
-        status: PRStatus.DRAFT,
-        items: {
-          create: createPurchaseRequestDto.items.map((item) => ({
-            itemId: item.itemId,
-            requestedQty: new Decimal(item.requestedQty),
-            estimatedPrice: new Decimal(item.estimatedPrice || 0),
-            totalAmount: new Decimal(item.requestedQty).mul(item.estimatedPrice || 0),
-            requiredDate: new Date(item.requiredDate),
-            remarks: item.remarks,
-          })),
-        },
-      },
-      include: {
-        company: true,
-        branch: true,
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        prTemplate: true,
-        items: {
-          include: {
-            item: true,
-          },
-        },
-      },
-    });
   }
 
   async findAll(user: AuthenticatedUser, branchId?: string) {
@@ -138,6 +178,34 @@ export class PurchaseRequestService {
       },
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  async getTemplates(user: AuthenticatedUser) {
+    // Get purchase request templates for the user's company
+    return this.prisma.pRTemplate.findMany({
+      where: {
+        companyId: user.companyId,
+        isActive: true,
+      },
+      include: {
+        items: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                description: true,
+                mainUnit: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: 'asc',
       },
     });
   }
