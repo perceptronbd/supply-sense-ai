@@ -224,8 +224,8 @@ export class MaterialRequisitionController {
     description: 'Cannot approve non-submitted material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async approve(@Param('id') id: string) {
-    return await this.materialRequisitionService.approve(id);
+  async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.approve(id, user.id);
   }
 
   @Post(':id/complete')
@@ -301,8 +301,8 @@ export class MaterialRequisitionController {
   })
   @ApiResponse({ status: 400, description: 'Cannot create MR from non-approved RF' })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async createFromRF(@Param('rfId') rfId: string) {
-    return await this.materialRequisitionService.createFromRequestForm(rfId);
+  async createFromRF(@Param('rfId') rfId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.createFromRF(rfId, user.id);
   }
 
   @Get('branch/:branchId')
@@ -321,6 +321,6 @@ export class MaterialRequisitionController {
     description: 'Branch material requisitions retrieved successfully',
   })
   async findByBranch(@Param('branchId') branchId: string) {
-    return await this.materialRequisitionService.findByBranch(branchId);
+    return await this.materialRequisitionService.findAll(branchId);
   }
 }
