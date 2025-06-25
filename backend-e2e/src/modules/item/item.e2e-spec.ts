@@ -899,7 +899,7 @@ describe('Item API (E2E)', () => {
             await axios.delete(`${API_BASE_URL}/api/items/${conversionItemId}/hard`, {
               headers: TestHelpers.getAuthHeaders(systemAdminToken),
             });
-          } catch (error) {
+          } catch (_error) {
             // Ignore cleanup errors
           }
         }
@@ -1041,7 +1041,7 @@ describe('Item API (E2E)', () => {
             await axios.delete(`${API_BASE_URL}/api/items/${itemId}/hard`, {
               headers: TestHelpers.getAuthHeaders(systemAdminToken),
             });
-          } catch (error) {
+          } catch (_error) {
             // Ignore cleanup errors
           }
         }
@@ -1135,7 +1135,7 @@ describe('Item API (E2E)', () => {
             await axios.delete(`${API_BASE_URL}/api/items/${itemId}/hard`, {
               headers: TestHelpers.getAuthHeaders(systemAdminToken),
             });
-          } catch (error) {
+          } catch (_error) {
             // Ignore cleanup errors
           }
         }
