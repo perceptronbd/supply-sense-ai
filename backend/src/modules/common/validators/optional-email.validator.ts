@@ -1,29 +1,26 @@
 import {
+  ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
   registerDecorator,
 } from 'class-validator';
+import { isEmail } from 'class-validator';
 
 @ValidatorConstraint({ async: false })
 export class IsOptionalEmailConstraint implements ValidatorConstraintInterface {
-  validate(email: any) {
-    console.log('🔥 CUSTOM EMAIL VALIDATOR CALLED:', email, typeof email);
+  validate(value: string, _args: ValidationArguments) {
+    console.log('🔥 CUSTOM EMAIL VALIDATOR CALLED:', value, typeof value);
 
-    // Allow null, undefined, or empty string
-    if (email === null || email === undefined || email === '') {
+    if (!value) {
       console.log('✅ Email validation: allowing null/undefined/empty');
       return true;
     }
 
-    // If email is provided, validate format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValid = typeof email === 'string' && emailRegex.test(email);
-    console.log('🧪 Email validation result:', isValid, 'for email:', email);
-    return isValid;
+    return isEmail(value);
   }
 
-  defaultMessage() {
+  defaultMessage(_args: ValidationArguments) {
     return 'email must be a valid email address';
   }
 }

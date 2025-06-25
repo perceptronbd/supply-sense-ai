@@ -78,8 +78,8 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findAll(@Query('branchId') branchId?: string) {
-    return await this.goodsReceiptService.findAll(branchId);
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query('branchId') branchId?: string) {
+    return await this.goodsReceiptService.findAll(user, branchId);
   }
 
   @Get(':id')
@@ -100,8 +100,8 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findOne(@Param('id') id: string) {
-    return await this.goodsReceiptService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -123,8 +123,12 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async update(@Param('id') id: string, @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto) {
-    return await this.goodsReceiptService.update(id, updateGoodsReceiptDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.goodsReceiptService.update(id, updateGoodsReceiptDto, user);
   }
 
   @Delete(':id')
@@ -145,8 +149,8 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async remove(@Param('id') id: string) {
-    return await this.goodsReceiptService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.remove(id, user);
   }
 
   @Post(':id/post')
@@ -168,8 +172,8 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async post(@Param('id') id: string) {
-    return await this.goodsReceiptService.post(id);
+  async post(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.post(id, user);
   }
 
   @Post(':id/cancel')
@@ -191,8 +195,8 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async cancel(@Param('id') id: string) {
-    return await this.goodsReceiptService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.cancel(id, user);
   }
 
   @Post('from-po/:poId')

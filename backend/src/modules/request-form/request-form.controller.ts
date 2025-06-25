@@ -104,10 +104,11 @@ export class RequestFormController {
     ],
   })
   async findAll(
+    @CurrentUser() user: AuthenticatedUser,
     @Query('fromBranchId') fromBranchId?: string,
     @Query('toBranchId') toBranchId?: string
   ) {
-    return await this.requestFormService.findAll(fromBranchId, toBranchId);
+    return await this.requestFormService.findAll(user, fromBranchId, toBranchId);
   }
 
   @Get(':id')
@@ -140,8 +141,8 @@ export class RequestFormController {
     },
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.requestFormService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.requestFormService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -168,8 +169,12 @@ export class RequestFormController {
     description: 'Cannot update non-draft request form',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async update(@Param('id') id: string, @Body() updateRequestFormDto: UpdateRequestFormDto) {
-    return await this.requestFormService.update(id, updateRequestFormDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateRequestFormDto: UpdateRequestFormDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.requestFormService.update(id, updateRequestFormDto, user);
   }
 
   @Delete(':id')
@@ -192,8 +197,8 @@ export class RequestFormController {
     description: 'Cannot delete non-draft request form',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async remove(@Param('id') id: string) {
-    return await this.requestFormService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.requestFormService.remove(id, user);
   }
 
   @Post(':id/submit')
@@ -221,8 +226,8 @@ export class RequestFormController {
     description: 'Can only submit DRAFT request forms',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async submit(@Param('id') id: string) {
-    return await this.requestFormService.submit(id);
+  async submit(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.requestFormService.submit(id, user);
   }
 
   @Post(':id/approve')
@@ -251,7 +256,7 @@ export class RequestFormController {
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
   async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.requestFormService.approve(id, user.id);
+    return await this.requestFormService.approve(id, user.id, user);
   }
 
   @Post(':id/reject')
@@ -280,7 +285,7 @@ export class RequestFormController {
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
   async reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.requestFormService.reject(id, user.id);
+    return await this.requestFormService.reject(id, user.id, user);
   }
 
   @Post(':id/ready-for-mr')
@@ -308,8 +313,8 @@ export class RequestFormController {
     description: 'Can only mark APPROVED request forms as ready for MR',
   })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async markReadyForMR(@Param('id') id: string) {
-    return await this.requestFormService.markReadyForMR(id);
+  async markReadyForMR(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.requestFormService.markReadyForMR(id, user);
   }
 
   @Post('from-template/:templateId')

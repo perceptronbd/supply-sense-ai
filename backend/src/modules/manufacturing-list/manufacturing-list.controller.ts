@@ -105,8 +105,12 @@ export class ManufacturingListController {
       },
     ],
   })
-  async findAll(@Query('branchId') branchId?: string, @Query('status') status?: MLStatus) {
-    return await this.manufacturingListService.findAll(branchId, status);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('branchId') branchId?: string,
+    @Query('status') status?: MLStatus
+  ) {
+    return await this.manufacturingListService.findAll(user, branchId, status);
   }
 
   @Get(':id')
@@ -146,8 +150,8 @@ export class ManufacturingListController {
     },
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.manufacturingListService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -176,9 +180,10 @@ export class ManufacturingListController {
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateManufacturingListDto: UpdateManufacturingListDto
+    @Body() updateManufacturingListDto: UpdateManufacturingListDto,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.manufacturingListService.update(id, updateManufacturingListDto);
+    return await this.manufacturingListService.update(id, updateManufacturingListDto, user);
   }
 
   @Delete(':id')
@@ -202,8 +207,8 @@ export class ManufacturingListController {
     description: 'Cannot delete non-draft manufacturing list',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async remove(@Param('id') id: string) {
-    return await this.manufacturingListService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.remove(id, user);
   }
 
   // Workflow endpoints
@@ -232,8 +237,8 @@ export class ManufacturingListController {
     description: 'Can only start DRAFT manufacturing lists',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async startProduction(@Param('id') id: string) {
-    return await this.manufacturingListService.startProduction(id);
+  async startProduction(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.startProduction(id, user);
   }
 
   @Post(':id/complete')
@@ -261,8 +266,8 @@ export class ManufacturingListController {
     description: 'Can only complete IN_PROGRESS manufacturing lists',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async completeProduction(@Param('id') id: string) {
-    return await this.manufacturingListService.completeProduction(id);
+  async completeProduction(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.completeProduction(id, user);
   }
 
   @Post(':id/cancel')
@@ -286,8 +291,8 @@ export class ManufacturingListController {
     },
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async cancel(@Param('id') id: string) {
-    return await this.manufacturingListService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.cancel(id, user);
   }
 
   @Get('production-summary/:branchId')
@@ -352,7 +357,7 @@ export class ManufacturingListController {
     status: 200,
     description: 'Branch manufacturing lists retrieved successfully',
   })
-  async findByBranch(@Param('branchId') branchId: string) {
-    return await this.manufacturingListService.findAll(branchId);
+  async findByBranch(@Param('branchId') branchId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.findAll(user, branchId);
   }
 }

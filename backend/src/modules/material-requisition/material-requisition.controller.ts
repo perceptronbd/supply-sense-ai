@@ -106,8 +106,12 @@ export class MaterialRequisitionController {
       },
     ],
   })
-  async findAll(@Query('branchId') branchId?: string, @Query('type') type?: MRType) {
-    return await this.materialRequisitionService.findAll(branchId, type);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('branchId') branchId?: string,
+    @Query('type') type?: MRType
+  ) {
+    return await this.materialRequisitionService.findAll(user, branchId, type);
   }
 
   @Get(':id')
@@ -141,8 +145,8 @@ export class MaterialRequisitionController {
     },
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.materialRequisitionService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -171,9 +175,10 @@ export class MaterialRequisitionController {
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateMaterialRequisitionDto: UpdateMaterialRequisitionDto
+    @Body() updateMaterialRequisitionDto: UpdateMaterialRequisitionDto,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.materialRequisitionService.update(id, updateMaterialRequisitionDto);
+    return await this.materialRequisitionService.update(id, updateMaterialRequisitionDto, user);
   }
 
   @Delete(':id')
@@ -197,8 +202,8 @@ export class MaterialRequisitionController {
     description: 'Cannot delete non-draft material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async remove(@Param('id') id: string) {
-    return await this.materialRequisitionService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.remove(id, user);
   }
 
   // Workflow endpoints
@@ -225,7 +230,7 @@ export class MaterialRequisitionController {
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
   async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.materialRequisitionService.approve(id, user.id);
+    return await this.materialRequisitionService.approve(id, user.id, user);
   }
 
   @Post(':id/complete')
@@ -250,8 +255,8 @@ export class MaterialRequisitionController {
     description: 'Cannot complete non-approved material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async complete(@Param('id') id: string) {
-    return await this.materialRequisitionService.complete(id);
+  async complete(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.complete(id, user);
   }
 
   @Post(':id/cancel')
@@ -272,8 +277,8 @@ export class MaterialRequisitionController {
     example: { id: '550e8400-e29b-41d4-a716-446655440000', status: 'CANCELLED' },
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async cancel(@Param('id') id: string) {
-    return await this.materialRequisitionService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.cancel(id, user);
   }
 
   @Post('from-rf/:rfId')
@@ -320,7 +325,7 @@ export class MaterialRequisitionController {
     status: 200,
     description: 'Branch material requisitions retrieved successfully',
   })
-  async findByBranch(@Param('branchId') branchId: string) {
-    return await this.materialRequisitionService.findAll(branchId);
+  async findByBranch(@Param('branchId') branchId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.findAll(user, branchId);
   }
 }

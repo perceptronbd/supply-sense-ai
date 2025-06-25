@@ -1,6 +1,7 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
 
@@ -89,10 +90,37 @@ export class RequestFormService {
     });
   }
 
-  async findAll(fromBranchId?: string, toBranchId?: string) {
-    const where: { fromBranchId?: string; toBranchId?: string } = {};
-    if (fromBranchId) where.fromBranchId = fromBranchId;
-    if (toBranchId) where.toBranchId = toBranchId;
+  async findAll(user: AuthenticatedUser, fromBranchId?: string, toBranchId?: string) {
+    // Build where clause with company isolation
+    const where: {
+      companyId: string;
+      fromBranchId?: string | { in: string[] };
+      toBranchId?: string | { in: string[] };
+    } = {
+      companyId: user.companyId, // Add company isolation
+    };
+
+    if (fromBranchId) {
+      // Validate user has access to the branch
+      if (!user.branchIds.includes(fromBranchId)) {
+        throw new ForbiddenException('You do not have access to this branch');
+      }
+      where.fromBranchId = fromBranchId;
+    } else {
+      // Limit to branches user has access to
+      where.fromBranchId = { in: user.branchIds };
+    }
+
+    if (toBranchId) {
+      // Validate user has access to the branch
+      if (!user.branchIds.includes(toBranchId)) {
+        throw new ForbiddenException('You do not have access to this branch');
+      }
+      where.toBranchId = toBranchId;
+    } else {
+      // Limit to branches user has access to
+      where.toBranchId = { in: user.branchIds };
+    }
 
     return this.prisma.requestForm.findMany({
       where,
@@ -127,9 +155,13 @@ export class RequestFormService {
     });
   }
 
-  async findOne(id: string) {
-    const requestForm = await this.prisma.requestForm.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const requestForm = await this.prisma.requestForm.findFirst({
+      where: {
+        id,
+        companyId: user.companyId, // Add company isolation
+        OR: [{ fromBranchId: { in: user.branchIds } }, { toBranchId: { in: user.branchIds } }],
+      },
       include: {
         items: {
           include: {
@@ -166,8 +198,8 @@ export class RequestFormService {
     return requestForm;
   }
 
-  async update(id: string, updateRequestFormDto: UpdateRequestFormDto) {
-    const existingRF = await this.findOne(id);
+  async update(id: string, updateRequestFormDto: UpdateRequestFormDto, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingRF.status !== RFStatus.DRAFT) {
@@ -218,8 +250,8 @@ export class RequestFormService {
     });
   }
 
-  async remove(id: string) {
-    const existingRF = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     // Only allow deletion if status is DRAFT
     if (existingRF.status !== RFStatus.DRAFT) {
@@ -231,8 +263,8 @@ export class RequestFormService {
     });
   }
 
-  async submit(id: string) {
-    const existingRF = await this.findOne(id);
+  async submit(id: string, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     if (existingRF.status !== RFStatus.DRAFT) {
       throw new Error('Can only submit Request Forms in DRAFT status');
@@ -265,8 +297,8 @@ export class RequestFormService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, _userId: string) {
-    const existingRF = await this.findOne(id);
+  async approve(id: string, _userId: string, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
       throw new Error('Can only approve Request Forms in SUBMITTED status');
@@ -300,8 +332,8 @@ export class RequestFormService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async reject(id: string, _userId: string) {
-    const existingRF = await this.findOne(id);
+  async reject(id: string, _userId: string, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     if (existingRF.status !== RFStatus.SUBMITTED) {
       throw new Error('Can only reject Request Forms in SUBMITTED status');
@@ -333,8 +365,8 @@ export class RequestFormService {
     });
   }
 
-  async markReadyForMR(id: string) {
-    const existingRF = await this.findOne(id);
+  async markReadyForMR(id: string, user: AuthenticatedUser) {
+    const existingRF = await this.findOne(id, user);
 
     if (existingRF.status !== RFStatus.APPROVED) {
       throw new Error('Can only mark APPROVED Request Forms as ready for MR');

@@ -123,8 +123,8 @@ export class BranchController {
       },
     },
   })
-  async findAll(@Query() query: QueryBranchDto) {
-    return this.branchService.findAll(query);
+  async findAll(@Query() query: QueryBranchDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.branchService.findAll(query, user.companyId);
   }
 
   @Get('my-branch')
@@ -168,8 +168,8 @@ export class BranchController {
     status: 404,
     description: 'Branch not found',
   })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.branchService.findOne(id);
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.branchService.findOne(id, user.companyId);
   }
 
   @Put(':id')
@@ -197,8 +197,12 @@ export class BranchController {
     status: 409,
     description: 'Conflict - branch code already exists',
   })
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateBranchDto: UpdateBranchDto) {
-    return this.branchService.update(id, updateBranchDto);
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBranchDto: UpdateBranchDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.branchService.update(id, updateBranchDto, user.companyId);
   }
 
   @Delete(':id')
@@ -221,8 +225,8 @@ export class BranchController {
     status: 404,
     description: 'Branch not found',
   })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.branchService.remove(id);
+  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.branchService.remove(id, user.companyId);
   }
 
   @Delete(':id/hard')
@@ -245,7 +249,7 @@ export class BranchController {
     status: 404,
     description: 'Branch not found',
   })
-  async hardDelete(@Param('id', ParseUUIDPipe) id: string) {
-    return this.branchService.hardDelete(id);
+  async hardDelete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.branchService.hardDelete(id, user.companyId);
   }
 }

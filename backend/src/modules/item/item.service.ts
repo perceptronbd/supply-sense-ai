@@ -137,7 +137,24 @@ export class ItemService {
     const item = await this.findOne(itemId, companyId);
     const converter = this.createUnitConverter(item);
 
-    const conversions: any = {
+    const conversions: {
+      rates: {
+        buyingToMain: number | null;
+        transferToMain: number | null;
+        usingToMain: number | null;
+      };
+      units: {
+        main: string;
+        buying: string | null;
+        transfer: string | null;
+        using: string | null;
+      };
+      conversions?: {
+        buyingToMain?: number;
+        transferToMain?: number;
+        usingToMain?: number;
+      };
+    } = {
       rates: {
         buyingToMain: item.buyingToMainRate,
         transferToMain: item.transferToMainRate,
