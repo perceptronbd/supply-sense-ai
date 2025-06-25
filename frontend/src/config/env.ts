@@ -6,9 +6,9 @@
 export const config = {
   /**
    * Backend API base URL
-   * Defaults to http://localhost:3000 if not set in environment
+   * Defaults to http://localhost:3004 if not set in environment
    */
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3004',
 
   /**
    * Get the full API URL with a path
