@@ -1,12 +1,14 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   useCancelPurchaseOrderMutation,
   useClosePurchaseOrderMutation,
   useConfirmPurchaseOrderMutation,
+  useDeletePurchaseOrderMutation,
   useGetPurchaseOrderQuery,
   useSendToSupplierMutation,
 } from '@/store/api/purchaseOrderApi';
@@ -24,7 +26,7 @@ import {
   TableRow,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { use, useState } from 'react';
 
 interface PurchaseOrderDetailPageProps {
   params: Promise<{
@@ -41,6 +43,14 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
   const [confirmPurchaseOrder] = useConfirmPurchaseOrderMutation();
   const [cancelPurchaseOrder] = useCancelPurchaseOrderMutation();
   const [closePurchaseOrder] = useClosePurchaseOrderMutation();
+  const [deletePurchaseOrder] = useDeletePurchaseOrderMutation();
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -59,8 +69,16 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
     }
   };
 
-  const handleWorkflowAction = async (action: 'send' | 'confirm' | 'cancel' | 'close') => {
+  const handleWorkflowAction = async (
+    action: 'send' | 'confirm' | 'cancel' | 'close' | 'delete'
+  ) => {
     try {
+      // Show confirmation modal for delete action
+      if (action === 'delete') {
+        setDeleteModal({ isOpen: true });
+        return; // Don't continue with deletion here
+      }
+
       switch (action) {
         case 'send':
           await sendToSupplier(id).unwrap();
@@ -78,6 +96,16 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
       // The query will automatically refetch due to cache invalidation
     } catch (error) {
       console.error(`Failed to ${action} purchase order:`, error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deletePurchaseOrder(id).unwrap();
+      // Navigate back to list after successful delete
+      router.push('/purchase-orders');
+    } catch (error) {
+      console.error('Failed to delete purchase order:', error);
     }
   };
 
@@ -140,6 +168,13 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
                   </Button>
                   <Button color="warning" onPress={() => handleWorkflowAction('send')}>
                     Send to Supplier
+                  </Button>
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    onPress={() => handleWorkflowAction('delete')}
+                  >
+                    Delete
                   </Button>
                 </>
               )}
@@ -412,6 +447,16 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Purchase Order"
+        message="Are you sure you want to delete this purchase order?"
+        itemName={`PO #${purchaseOrder?.poNumber || ''}`}
+      />
     </AuthGuard>
   );
 }

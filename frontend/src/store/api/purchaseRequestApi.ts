@@ -148,7 +148,10 @@ export const purchaseRequestApi = createApi({
         body: data,
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, { id }) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     deletePurchaseRequest: builder.mutation<void, string>({
@@ -156,7 +159,7 @@ export const purchaseRequestApi = createApi({
         url: `/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [TAG_TYPES.PURCHASE_REQUEST],
+      invalidatesTags: [TAG_TYPES.PURCHASE_REQUEST, TAG_TYPES.PURCHASE_ORDER],
     }),
     submitPurchaseRequest: builder.mutation<PurchaseRequest, string>({
       query: (id) => ({
@@ -164,7 +167,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
     approvePurchaseRequest: builder.mutation<PurchaseRequest, string>({
       query: (id) => ({
@@ -172,7 +178,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     rejectPurchaseRequest: builder.mutation<PurchaseRequest, string>({
@@ -181,7 +190,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     getPurchaseRequestTemplates: builder.query<PurchaseRequestTemplate[], { branchId?: string }>({

@@ -8,14 +8,17 @@ import {
   EyeIcon,
   SendIcon,
   ShoppingCartIcon,
+  TrashIcon,
   XMarkIcon,
 } from '@/components/icons';
 import CreatePOFromPRModal from '@/components/purchase-request/CreatePOFromPRModal';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   type PurchaseRequest,
   useApprovePurchaseRequestMutation,
+  useDeletePurchaseRequestMutation,
   useGetPurchaseRequestsQuery,
   useRejectPurchaseRequestMutation,
   useSubmitPurchaseRequestMutation,
@@ -63,6 +66,17 @@ export default function PurchaseRequestsPage() {
     purchaseRequestNumber: '',
   });
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    requestId: string;
+    requestNumber: string;
+  }>({
+    isOpen: false,
+    requestId: '',
+    requestNumber: '',
+  });
+
   // Ensure component is mounted before rendering
   useEffect(() => {
     setIsMounted(true);
@@ -78,6 +92,7 @@ export default function PurchaseRequestsPage() {
   const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
   const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
   const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+  const [deletePurchaseRequest] = useDeletePurchaseRequestMutation();
 
   // Pagination calculations
   const totalPages = Math.ceil(purchaseRequests.length / itemsPerPage);
@@ -152,6 +167,9 @@ export default function PurchaseRequestsPage() {
         </DropdownItem>,
         <DropdownItem key="submit" color="warning" startContent={<SendIcon />}>
           Submit for Approval
+        </DropdownItem>,
+        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+          Delete Request
         </DropdownItem>
       );
     }
@@ -179,10 +197,21 @@ export default function PurchaseRequestsPage() {
   };
 
   const handleWorkflowAction = async (
-    action: 'submit' | 'approve' | 'reject',
+    action: 'submit' | 'approve' | 'reject' | 'delete',
     requestId: string
   ) => {
     try {
+      // Show confirmation modal for delete action
+      if (action === 'delete') {
+        const request = purchaseRequests.find((pr) => pr.id === requestId);
+        setDeleteModal({
+          isOpen: true,
+          requestId,
+          requestNumber: request?.prNumber || 'Unknown',
+        });
+        return; // Don't continue with deletion here
+      }
+
       switch (action) {
         case 'submit':
           await submitPurchaseRequest(requestId).unwrap();
@@ -218,6 +247,27 @@ export default function PurchaseRequestsPage() {
       addToast({
         title: 'Error',
         description: `Failed to ${action} purchase request. Please try again.`,
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deletePurchaseRequest(deleteModal.requestId).unwrap();
+      addToast({
+        title: 'Success',
+        description: 'Purchase request deleted successfully',
+        color: 'success',
+        variant: 'flat',
+      });
+      refetch();
+    } catch (error: unknown) {
+      console.error('Failed to delete purchase request:', error);
+      addToast({
+        title: 'Error',
+        description: 'Failed to delete purchase request. Please try again.',
         color: 'danger',
         variant: 'flat',
       });
@@ -379,10 +429,11 @@ export default function PurchaseRequestsPage() {
                                   } else if (
                                     action === 'submit' ||
                                     action === 'approve' ||
-                                    action === 'reject'
+                                    action === 'reject' ||
+                                    action === 'delete'
                                   ) {
                                     handleWorkflowAction(
-                                      action as 'submit' | 'approve' | 'reject',
+                                      action as 'submit' | 'approve' | 'reject' | 'delete',
                                       request.id
                                     );
                                   }
@@ -445,6 +496,16 @@ export default function PurchaseRequestsPage() {
           </section>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Purchase Request"
+        message="Are you sure you want to delete this purchase request?"
+        itemName={`PR #${deleteModal.requestNumber}`}
+      />
 
       {/* Create PO from PR Modal */}
       {createPOModal.isOpen && (

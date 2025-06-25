@@ -9,8 +9,10 @@ import {
   EyeIcon,
   ReceiptIcon,
   SendIcon,
+  TrashIcon,
   XMarkIcon,
 } from '@/components/icons';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import { useCreateGoodsReceiptFromPOMutation } from '@/store/api/goodsReceiptApi';
@@ -19,6 +21,7 @@ import {
   useCancelPurchaseOrderMutation,
   useClosePurchaseOrderMutation,
   useConfirmPurchaseOrderMutation,
+  useDeletePurchaseOrderMutation,
   useGetPurchaseOrdersQuery,
   useSendToSupplierMutation,
 } from '@/store/api/purchaseOrderApi';
@@ -54,6 +57,17 @@ export default function PurchaseOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    orderNumber: string;
+  }>({
+    isOpen: false,
+    orderId: '',
+    orderNumber: '',
+  });
+
   // Ensure component is mounted before rendering
   useEffect(() => {
     setIsMounted(true);
@@ -70,6 +84,7 @@ export default function PurchaseOrdersPage() {
   const [confirmPurchaseOrder] = useConfirmPurchaseOrderMutation();
   const [cancelPurchaseOrder] = useCancelPurchaseOrderMutation();
   const [closePurchaseOrder] = useClosePurchaseOrderMutation();
+  const [deletePurchaseOrder] = useDeletePurchaseOrderMutation();
   const [createGoodsReceiptFromPO] = useCreateGoodsReceiptFromPOMutation();
 
   // Pagination calculations
@@ -139,6 +154,9 @@ export default function PurchaseOrdersPage() {
         </DropdownItem>,
         <DropdownItem key="send" color="warning" startContent={<SendIcon />}>
           Send to Supplier
+        </DropdownItem>,
+        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+          Delete Order
         </DropdownItem>
       );
     }
@@ -169,10 +187,21 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleWorkflowAction = async (
-    action: 'send' | 'confirm' | 'cancel' | 'close' | 'createGR',
+    action: 'send' | 'confirm' | 'cancel' | 'close' | 'createGR' | 'delete',
     orderId: string
   ) => {
     try {
+      // Show confirmation modal for delete action
+      if (action === 'delete') {
+        const order = purchaseOrders.find((po) => po.id === orderId);
+        setDeleteModal({
+          isOpen: true,
+          orderId,
+          orderNumber: order?.poNumber || 'Unknown',
+        });
+        return; // Don't continue with deletion here
+      }
+
       switch (action) {
         case 'send':
           await sendToSupplier(orderId).unwrap();
@@ -224,11 +253,32 @@ export default function PurchaseOrdersPage() {
         }
       }
       refetch();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Failed to ${action} purchase order:`, error);
       addToast({
         title: 'Error',
         description: `Failed to ${action} purchase order. Please try again.`,
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deletePurchaseOrder(deleteModal.orderId).unwrap();
+      addToast({
+        title: 'Success',
+        description: 'Purchase order deleted successfully',
+        color: 'success',
+        variant: 'flat',
+      });
+      refetch();
+    } catch (error: unknown) {
+      console.error('Failed to delete purchase order:', error);
+      addToast({
+        title: 'Error',
+        description: 'Failed to delete purchase order. Please try again.',
         color: 'danger',
         variant: 'flat',
       });
@@ -406,7 +456,8 @@ export default function PurchaseOrdersPage() {
                                     action === 'confirm' ||
                                     action === 'cancel' ||
                                     action === 'close' ||
-                                    action === 'createGR'
+                                    action === 'createGR' ||
+                                    action === 'delete'
                                   ) {
                                     handleWorkflowAction(
                                       action as
@@ -414,7 +465,8 @@ export default function PurchaseOrdersPage() {
                                         | 'confirm'
                                         | 'cancel'
                                         | 'close'
-                                        | 'createGR',
+                                        | 'createGR'
+                                        | 'delete',
                                       order.id
                                     );
                                   }
@@ -477,6 +529,16 @@ export default function PurchaseOrdersPage() {
           </section>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Purchase Order"
+        message="Are you sure you want to delete this purchase order?"
+        itemName={`PO #${deleteModal.orderNumber}`}
+      />
     </AuthGuard>
   );
 }

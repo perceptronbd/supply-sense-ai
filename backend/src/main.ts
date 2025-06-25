@@ -100,7 +100,7 @@ async function bootstrap() {
   const cleanedDocument = cleanCircularReferences(document);
   SwaggerModule.setup('api/docs', app, cleanedDocument, {
     customSiteTitle: 'SupplySense API Documentation',
-    customfavIcon: '/favicon.ico',
+    customfavIcon: '/logo.svg',
     customCss: '.swagger-ui .topbar { display: none }',
     swaggerOptions: {
       persistAuthorization: true,

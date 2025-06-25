@@ -17,6 +17,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>SupplySense AI - Supply Chain Management</title>
+        <meta
+          name="description"
+          content="AI-powered supply chain management system for modern businesses"
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        {/* Favicon - prioritize SVG logo with cache busting */}
+        <link rel="icon" href="/logo.svg?v=2" type="image/svg+xml" />
+        <link rel="icon" href="/logo.svg?v=2" type="image/svg+xml" sizes="any" />
+        <link rel="shortcut icon" href="/logo.svg?v=2" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/logo.svg?v=2" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0A2538" />
+      </head>
       <body suppressHydrationWarning={true} className="min-h-screen">
         <Provider store={store}>
           <PersistGate
