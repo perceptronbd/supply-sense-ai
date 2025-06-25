@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Inject, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -7,7 +7,7 @@ import { AppService } from './app.service';
 @ApiTags('app')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(@Inject(AppService) private readonly appService: AppService) {}
 
   @Get()
   @ApiOperation({

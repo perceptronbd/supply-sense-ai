@@ -254,7 +254,7 @@ export class TestHelpers {
    */
   static async loginAsBranchManager(): Promise<AuthTokens> {
     const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
-      email: 'manager.a@supplychain.com',
+      email: 'manager.a@company4788.com',
       password: 'manager123',
     });
 
@@ -269,7 +269,7 @@ export class TestHelpers {
    */
   static async loginAsSystemAdmin(): Promise<AuthTokens> {
     const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
-      email: 'admin@supplychain.com',
+      email: 'admin@company4788.com',
       password: 'admin123',
     });
 
@@ -284,7 +284,7 @@ export class TestHelpers {
    */
   static async loginAsProcurementSpecialist(): Promise<AuthTokens> {
     const response = await axios.post(`${TestHelpers.API_BASE_URL}/api/auth/login`, {
-      email: 'specialist.a@supplychain.com',
+      email: 'procurement@company4788.com',
       password: 'specialist123',
     });
 
@@ -474,6 +474,16 @@ export class TestHelpers {
       return cachedUUIDs;
     }
 
+    // First create a company (required for multi-tenant structure)
+    const company = await prisma.company.create({
+      data: {
+        name: 'Test Company',
+        contactEmail: 'info@testcompany.com',
+        businessAddress: '123 Test Company Ave',
+        contactPhone: '555-123-4567',
+      },
+    });
+
     const item = await prisma.item.create({
       data: {
         name: 'Test Item',
@@ -483,6 +493,9 @@ export class TestHelpers {
         buyingUnit: 'kg',
         transferUnit: 'kg',
         usingUnit: 'kg',
+        company: {
+          connect: { id: company.id },
+        },
       },
     });
 
@@ -494,6 +507,9 @@ export class TestHelpers {
         email: 'supplier@test.com',
         phone: '123-456-7890',
         address: '123 Supplier St',
+        company: {
+          connect: { id: company.id },
+        },
       },
     });
 
@@ -504,8 +520,57 @@ export class TestHelpers {
         address: '123 Test St, Test City',
         phone: '123-456-7890',
         email: 'branch@test.com',
+        company: {
+          connect: { id: company.id },
+        },
       },
     });
+
+    // Get or create default roles for the company
+    const managerRole =
+      (await prisma.role.findFirst({
+        where: {
+          name: 'BRANCH_MANAGER',
+          companyId: company.id,
+        },
+      })) ||
+      (await prisma.role.create({
+        data: {
+          name: 'BRANCH_MANAGER',
+          description: 'Branch Manager Role',
+          company: { connect: { id: company.id } },
+        },
+      }));
+
+    const specialistRole =
+      (await prisma.role.findFirst({
+        where: {
+          name: 'PROCUREMENT_SPECIALIST',
+          companyId: company.id,
+        },
+      })) ||
+      (await prisma.role.create({
+        data: {
+          name: 'PROCUREMENT_SPECIALIST',
+          description: 'Procurement Specialist Role',
+          company: { connect: { id: company.id } },
+        },
+      }));
+
+    const clerkRole =
+      (await prisma.role.findFirst({
+        where: {
+          name: 'INVENTORY_CLERK',
+          companyId: company.id,
+        },
+      })) ||
+      (await prisma.role.create({
+        data: {
+          name: 'INVENTORY_CLERK',
+          description: 'Inventory Clerk Role',
+          company: { connect: { id: company.id } },
+        },
+      }));
 
     const userManager = await prisma.user.create({
       data: {
@@ -514,8 +579,21 @@ export class TestHelpers {
         password: 'securePassword',
         firstName: 'Test',
         lastName: 'Manager',
-        role: 'BRANCH_MANAGER',
-        branchId: branch.id,
+        company: { connect: { id: company.id } },
+        userRoles: {
+          create: [
+            {
+              role: { connect: { id: managerRole.id } },
+            },
+          ],
+        },
+        userBranches: {
+          create: [
+            {
+              branch: { connect: { id: branch.id } },
+            },
+          ],
+        },
       },
     });
 
@@ -526,8 +604,21 @@ export class TestHelpers {
         password: 'securePassword',
         firstName: 'Test',
         lastName: 'Specialist',
-        role: 'PROCUREMENT_SPECIALIST',
-        branchId: branch.id,
+        company: { connect: { id: company.id } },
+        userRoles: {
+          create: [
+            {
+              role: { connect: { id: specialistRole.id } },
+            },
+          ],
+        },
+        userBranches: {
+          create: [
+            {
+              branch: { connect: { id: branch.id } },
+            },
+          ],
+        },
       },
     });
 
@@ -538,8 +629,21 @@ export class TestHelpers {
         password: 'securePassword',
         firstName: 'Test',
         lastName: 'Clerk',
-        role: 'INVENTORY_CLERK',
-        branchId: branch.id,
+        company: { connect: { id: company.id } },
+        userRoles: {
+          create: [
+            {
+              role: { connect: { id: clerkRole.id } },
+            },
+          ],
+        },
+        userBranches: {
+          create: [
+            {
+              branch: { connect: { id: branch.id } },
+            },
+          ],
+        },
       },
     });
 

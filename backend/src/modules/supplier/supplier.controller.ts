@@ -62,7 +62,7 @@ type SupplierWithRelations = Prisma.SupplierGetPayload<{
 
 type PaginatedSuppliersResponse = {
   data: Supplier[];
-  meta?: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
@@ -158,9 +158,10 @@ export class SupplierController {
     type: ApiErrorResponseDto,
   })
   async findAll(
-    @Query() query: QuerySupplierDto
-  ): Promise<PaginatedSuppliersResponse | Supplier[]> {
-    return this.supplierService.findAll(query);
+    @Query() query: QuerySupplierDto,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<PaginatedSuppliersResponse> {
+    return this.supplierService.findAll(user.companyId, query);
   }
 
   @Get(':id')
@@ -190,8 +191,11 @@ export class SupplierController {
     description: 'Supplier not found',
     type: ApiErrorResponseDto,
   })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<SupplierWithRelations> {
-    return this.supplierService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<SupplierWithRelations> {
+    return this.supplierService.findOne(id, user.companyId);
   }
 
   @Put(':id')
@@ -223,9 +227,10 @@ export class SupplierController {
   })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateSupplierDto: UpdateSupplierDto
+    @Body() updateSupplierDto: UpdateSupplierDto,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<Supplier> {
-    return this.supplierService.update(id, updateSupplierDto);
+    return this.supplierService.update(id, updateSupplierDto, user.companyId);
   }
 
   @Delete(':id')
@@ -256,8 +261,11 @@ export class SupplierController {
     description: 'Cannot delete supplier - it has active records',
     type: ApiErrorResponseDto,
   })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<Supplier> {
-    return this.supplierService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<Supplier> {
+    return this.supplierService.remove(id, user.companyId);
   }
 
   @Delete(':id/hard')
@@ -287,7 +295,10 @@ export class SupplierController {
     description: 'Cannot delete supplier - it has references in the system',
     type: ApiErrorResponseDto,
   })
-  async hardDelete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.supplierService.hardDelete(id);
+  async hardDelete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<void> {
+    await this.supplierService.hardDelete(id, user.companyId);
   }
 }

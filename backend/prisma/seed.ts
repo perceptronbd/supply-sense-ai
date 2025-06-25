@@ -233,6 +233,7 @@ async function createDefaultRoles(companyId: string, permissions: any[]) {
     (p.module === "PURCHASE_REQUESTS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
     (p.module === "REQUEST_FORMS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
     (p.module === "INVENTORY_MANAGEMENT" && ["VIEW", "EDIT"].includes(p.action)) ||
+    (p.module === "SUPPLIER_MANAGEMENT" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
     (p.module === "REPORTS" && p.action === "VIEW") ||
     (p.module === "USER_MANAGEMENT" && p.action === "VIEW")
   );

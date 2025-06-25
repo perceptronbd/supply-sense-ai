@@ -1,11 +1,11 @@
-import { PrismaService } from '@app/prisma.service';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, Supplier } from '@prisma/client';
-import { CreateSupplierDto } from './dto/create-supplier.dto';
-import { QuerySupplierDto } from './dto/query-supplier.dto';
-import { UpdateSupplierDto } from './dto/update-supplier.dto';
-import { SupplierService } from './supplier.service';
+import { PrismaService } from '../../../../backend/src/app/prisma.service';
+import { CreateSupplierDto } from '../../../../backend/src/modules/supplier/dto/create-supplier.dto';
+import { QuerySupplierDto } from '../../../../backend/src/modules/supplier/dto/query-supplier.dto';
+import { UpdateSupplierDto } from '../../../../backend/src/modules/supplier/dto/update-supplier.dto';
+import { SupplierService } from '../../../../backend/src/modules/supplier/supplier.service';
 
 // Mock PrismaService
 const mockPrismaService = {
@@ -27,6 +27,7 @@ const mockPrismaService = {
 
 describe('SupplierService', () => {
   let service: SupplierService;
+  let prismaService: typeof mockPrismaService;
 
   const mockSupplier: Supplier = {
     id: 'supplier-1',
@@ -38,6 +39,7 @@ describe('SupplierService', () => {
     address: '123 Test Street',
     averageLeadTime: 7,
     isActive: true,
+    companyId: 'company-1',
     createdAt: new Date('2025-01-01T00:00:00.000Z'),
     updatedAt: new Date('2025-01-01T00:00:00.000Z'),
   };
@@ -99,19 +101,21 @@ describe('SupplierService', () => {
     }).compile();
 
     service = module.get<SupplierService>(SupplierService);
+    prismaService = module.get(PrismaService);
 
     // Reset all mocks
     jest.clearAllMocks();
   });
+
   describe('findAll', () => {
     it('should return all active suppliers without pagination', async () => {
       const mockSuppliers: Supplier[] = [mockSupplier];
-      mockPrismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
+      prismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
 
-      const result = await service.findAll();
+      const result = await service.findAll('company-1');
 
-      expect(mockPrismaService.supplier.findMany).toHaveBeenCalledWith({
-        where: { isActive: true },
+      expect(prismaService.supplier.findMany).toHaveBeenCalledWith({
+        where: { isActive: true, companyId: 'company-1' },
         orderBy: { name: 'asc' },
       });
       expect(result).toEqual({
@@ -128,14 +132,15 @@ describe('SupplierService', () => {
         limit: 10,
       };
 
-      mockPrismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
-      mockPrismaService.supplier.count.mockResolvedValue(1);
+      prismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
+      prismaService.supplier.count.mockResolvedValue(1);
 
-      const result = await service.findAll(query);
+      const result = await service.findAll('company-1', query);
 
-      expect(mockPrismaService.supplier.findMany).toHaveBeenCalledWith({
+      expect(prismaService.supplier.findMany).toHaveBeenCalledWith({
         where: {
           isActive: true,
+          companyId: 'company-1',
           OR: [
             { name: { contains: 'Test', mode: 'insensitive' } },
             { code: { contains: 'Test', mode: 'insensitive' } },
@@ -146,9 +151,10 @@ describe('SupplierService', () => {
         take: 10,
         orderBy: { name: 'asc' },
       });
-      expect(mockPrismaService.supplier.count).toHaveBeenCalledWith({
+      expect(prismaService.supplier.count).toHaveBeenCalledWith({
         where: {
           isActive: true,
+          companyId: 'company-1',
           OR: [
             { name: { contains: 'Test', mode: 'insensitive' } },
             { code: { contains: 'Test', mode: 'insensitive' } },
@@ -162,9 +168,7 @@ describe('SupplierService', () => {
           page: 1,
           limit: 10,
           total: 1,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false,
+          pages: 1,
         },
       });
     });
@@ -172,12 +176,12 @@ describe('SupplierService', () => {
     it('should include inactive suppliers when requested', async () => {
       const query: QuerySupplierDto = { includeInactive: true };
       const mockSuppliers: Supplier[] = [mockSupplier];
-      mockPrismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
+      prismaService.supplier.findMany.mockResolvedValue(mockSuppliers);
 
-      await service.findAll(query);
+      await service.findAll('company-1', query);
 
-      expect(mockPrismaService.supplier.findMany).toHaveBeenCalledWith({
-        where: {},
+      expect(prismaService.supplier.findMany).toHaveBeenCalledWith({
+        where: { companyId: 'company-1' },
         orderBy: { name: 'asc' },
       });
     });
@@ -185,7 +189,7 @@ describe('SupplierService', () => {
     it('should throw error when page is provided without limit', async () => {
       const query: QuerySupplierDto = { page: 1 };
 
-      await expect(service.findAll(query)).rejects.toThrow(
+      await expect(service.findAll('company-1', query)).rejects.toThrow(
         new BadRequestException('Limit must be provided when page is specified')
       );
     });
@@ -193,7 +197,7 @@ describe('SupplierService', () => {
     it('should throw error for invalid page number', async () => {
       const query: QuerySupplierDto = { page: 0, limit: 10 };
 
-      await expect(service.findAll(query)).rejects.toThrow(
+      await expect(service.findAll('company-1', query)).rejects.toThrow(
         new BadRequestException('Page must be greater than 0')
       );
     });
@@ -201,24 +205,31 @@ describe('SupplierService', () => {
     it('should throw error for invalid limit', async () => {
       const query: QuerySupplierDto = { page: 1, limit: 0 };
 
-      await expect(service.findAll(query)).rejects.toThrow(
-        new BadRequestException('Limit must be between 1 and 100')
+      await expect(service.findAll('company-1', query)).rejects.toThrow(
+        new BadRequestException('Limit must be greater than 0')
       );
     });
   });
 
   describe('findOne', () => {
     it('should return supplier with relations', async () => {
-      mockPrismaService.supplier.findUnique.mockResolvedValue(mockSupplierWithRelations);
+      prismaService.supplier.findUnique.mockResolvedValue(mockSupplierWithRelations);
 
-      const result = await service.findOne('supplier-1');
+      const result = await service.findOne('supplier-1', 'company-1');
 
-      expect(mockPrismaService.supplier.findUnique).toHaveBeenCalledWith({
-        where: { id: 'supplier-1' },
+      expect(prismaService.supplier.findUnique).toHaveBeenCalledWith({
+        where: { id: 'supplier-1', companyId: 'company-1' },
         include: {
           items: {
+            where: { isActive: true },
             include: {
-              item: true,
+              item: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                },
+              },
             },
           },
           purchaseOrders: {
@@ -229,9 +240,7 @@ describe('SupplierService', () => {
               orderDate: true,
               totalAmount: true,
             },
-            orderBy: {
-              orderDate: 'desc',
-            },
+            orderBy: { orderDate: 'desc' },
             take: 5,
           },
         },
@@ -240,74 +249,71 @@ describe('SupplierService', () => {
     });
 
     it('should throw NotFoundException when supplier not found', async () => {
-      mockPrismaService.supplier.findUnique.mockResolvedValue(null);
+      prismaService.supplier.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent')).rejects.toThrow(
-        new NotFoundException('Supplier with id non-existent not found')
+      await expect(service.findOne('non-existent', 'company-1')).rejects.toThrow(
+        new NotFoundException('Supplier not found')
       );
     });
   });
+
   describe('create', () => {
-    it('should create new supplier successfully', async () => {
+    it('should create supplier successfully', async () => {
       const createDto: CreateSupplierDto = {
         name: 'New Supplier',
         code: 'SUP002',
-        contactPerson: 'Jane Smith',
+        contactPerson: 'Jane Doe',
         email: 'jane@newsupplier.com',
         phone: '+1-555-5678',
         address: '456 New Street',
-        averageLeadTime: 5,
+        averageLeadTime: 10,
         isActive: true,
       };
 
       const expectedSupplier: Supplier = {
-        id: 'supplier-2',
+        id: 'new-supplier-id',
         name: createDto.name,
         code: createDto.code,
-        contactPerson: createDto.contactPerson || null,
-        email: createDto.email || null,
-        phone: createDto.phone || null,
-        address: createDto.address || null,
-        averageLeadTime: createDto.averageLeadTime || null,
-        isActive: createDto.isActive ?? true,
+        contactPerson: createDto.contactPerson,
+        email: createDto.email,
+        phone: createDto.phone,
+        address: createDto.address,
+        averageLeadTime: createDto.averageLeadTime,
+        isActive: createDto.isActive,
+        companyId: 'company-1',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      (mockPrismaService.supplier.create as jest.Mock).mockResolvedValue(expectedSupplier);
+      prismaService.supplier.create.mockResolvedValue(expectedSupplier);
 
-      const result = await service.create(createDto);
+      const result = await service.create(createDto, 'company-1');
 
-      expect(mockPrismaService.supplier.create).toHaveBeenCalledWith({
+      expect(prismaService.supplier.create).toHaveBeenCalledWith({
         data: {
-          name: createDto.name,
-          code: createDto.code,
-          contactPerson: createDto.contactPerson,
-          email: createDto.email,
-          phone: createDto.phone,
-          address: createDto.address,
-          averageLeadTime: createDto.averageLeadTime,
-          isActive: createDto.isActive,
+          ...createDto,
+          companyId: 'company-1',
         },
       });
       expect(result).toEqual(expectedSupplier);
     });
 
-    it('should throw ConflictException for duplicate code', async () => {
+    it('should handle Prisma unique constraint error', async () => {
       const createDto: CreateSupplierDto = {
         name: 'Duplicate Supplier',
-        code: 'SUP001', // Already exists
+        code: 'SUP001', // Duplicate code
       };
 
       const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
         code: 'P2002',
-        clientVersion: '5.0.0',
+        clientVersion: '4.0.0',
+        meta: { target: ['code'] },
       });
 
       prismaService.supplier.create.mockRejectedValue(prismaError);
 
-      await expect(service.create(createDto)).rejects.toThrow(
-        new ConflictException('A supplier with this code already exists')
+      await expect(service.create(createDto, 'company-1')).rejects.toThrow(
+        new ConflictException('Supplier with this code already exists')
       );
     });
   });
@@ -315,63 +321,61 @@ describe('SupplierService', () => {
   describe('update', () => {
     it('should update supplier successfully', async () => {
       const updateDto: UpdateSupplierDto = {
-        name: 'Updated Supplier Name',
-        contactPerson: 'Updated Contact',
+        name: 'Updated Supplier',
+        contactPerson: 'Updated John Test',
+        averageLeadTime: 10,
       };
 
       const updatedSupplier: Supplier = {
         ...mockSupplier,
-        name: updateDto.name || mockSupplier.name,
-        contactPerson: updateDto.contactPerson || mockSupplier.contactPerson,
+        ...updateDto,
         updatedAt: new Date(),
       };
 
       prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
       prismaService.supplier.update.mockResolvedValue(updatedSupplier);
 
-      const result = await service.update('supplier-1', updateDto);
+      const result = await service.update('supplier-1', updateDto, 'company-1');
 
       expect(prismaService.supplier.findUnique).toHaveBeenCalledWith({
-        where: { id: 'supplier-1' },
+        where: { id: 'supplier-1', companyId: 'company-1' },
       });
       expect(prismaService.supplier.update).toHaveBeenCalledWith({
         where: { id: 'supplier-1' },
-        data: {
-          name: updateDto.name,
-          contactPerson: updateDto.contactPerson,
-        },
+        data: updateDto,
       });
       expect(result).toEqual(updatedSupplier);
     });
 
-    it('should throw NotFoundException when supplier not found', async () => {
+    it('should throw NotFoundException when supplier not found for update', async () => {
+      const updateDto: UpdateSupplierDto = { name: 'Updated Name' };
+
       prismaService.supplier.findUnique.mockResolvedValue(null);
 
-      await expect(service.update('non-existent', {})).rejects.toThrow(
-        new NotFoundException('Supplier with ID non-existent not found')
+      await expect(service.update('non-existent', updateDto, 'company-1')).rejects.toThrow(
+        new NotFoundException('Supplier not found')
       );
     });
 
-    it('should throw ConflictException for duplicate code on update', async () => {
-      const updateDto: UpdateSupplierDto = { code: 'EXISTING_CODE' };
-
-      prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
-
+    it('should handle Prisma unique constraint error on update', async () => {
+      const updateDto: UpdateSupplierDto = { code: 'EXISTING-CODE' };
       const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
         code: 'P2002',
-        clientVersion: '5.0.0',
+        clientVersion: '4.0.0',
+        meta: { target: ['code'] },
       });
 
+      prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
       prismaService.supplier.update.mockRejectedValue(prismaError);
 
-      await expect(service.update('supplier-1', updateDto)).rejects.toThrow(
-        new ConflictException('A supplier with this code already exists')
+      await expect(service.update('supplier-1', updateDto, 'company-1')).rejects.toThrow(
+        new ConflictException('Supplier with this code already exists')
       );
     });
   });
 
-  describe('remove', () => {
-    it('should soft delete supplier when no active references', async () => {
+  describe('remove (soft delete)', () => {
+    it('should soft delete supplier when no active references exist', async () => {
       const softDeletedSupplier: Supplier = {
         ...mockSupplier,
         isActive: false,
@@ -383,16 +387,19 @@ describe('SupplierService', () => {
       prismaService.purchaseOrder.count.mockResolvedValue(0);
       prismaService.supplier.update.mockResolvedValue(softDeletedSupplier);
 
-      const result = await service.remove('supplier-1');
+      const result = await service.remove('supplier-1', 'company-1');
 
       expect(prismaService.supplier.findUnique).toHaveBeenCalledWith({
-        where: { id: 'supplier-1' },
+        where: { id: 'supplier-1', companyId: 'company-1' },
       });
       expect(prismaService.itemSupplier.count).toHaveBeenCalledWith({
-        where: { supplierId: 'supplier-1' },
+        where: { supplierId: 'supplier-1', isActive: true },
       });
       expect(prismaService.purchaseOrder.count).toHaveBeenCalledWith({
-        where: { supplierId: 'supplier-1' },
+        where: {
+          supplierId: 'supplier-1',
+          status: { in: ['DRAFT', 'SENT_TO_SUPPLIER', 'CONFIRMED'] },
+        },
       });
       expect(prismaService.supplier.update).toHaveBeenCalledWith({
         where: { id: 'supplier-1' },
@@ -401,55 +408,72 @@ describe('SupplierService', () => {
       expect(result).toEqual(softDeletedSupplier);
     });
 
-    it('should throw NotFoundException when supplier not found', async () => {
+    it('should throw NotFoundException when supplier not found for soft delete', async () => {
       prismaService.supplier.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('non-existent')).rejects.toThrow(
-        new NotFoundException('Supplier with ID non-existent not found')
+      await expect(service.remove('non-existent', 'company-1')).rejects.toThrow(
+        new NotFoundException('Supplier not found')
       );
     });
 
-    it('should throw BadRequestException when supplier has active references', async () => {
+    it('should throw BadRequestException when supplier has active item references', async () => {
       prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
       prismaService.itemSupplier.count.mockResolvedValue(1); // Has active references
 
-      await expect(service.remove('supplier-1')).rejects.toThrow(
-        new BadRequestException('Cannot delete supplier as it has active records')
+      await expect(service.remove('supplier-1', 'company-1')).rejects.toThrow(
+        new BadRequestException('Cannot delete supplier with active item references')
+      );
+    });
+
+    it('should throw BadRequestException when supplier has active purchase order references', async () => {
+      prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
+      prismaService.itemSupplier.count.mockResolvedValue(0);
+      prismaService.purchaseOrder.count.mockResolvedValue(1); // Has active purchase orders
+
+      await expect(service.remove('supplier-1', 'company-1')).rejects.toThrow(
+        new BadRequestException('Cannot delete supplier with active purchase order references')
       );
     });
   });
 
   describe('hardDelete', () => {
-    it('should permanently delete supplier when no references exist', async () => {
+    it('should hard delete supplier when no references exist', async () => {
       prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
       prismaService.itemSupplier.count.mockResolvedValue(0);
       prismaService.purchaseOrder.count.mockResolvedValue(0);
       prismaService.supplier.delete.mockResolvedValue(mockSupplier);
 
-      await service.hardDelete('supplier-1');
+      await service.hardDelete('supplier-1', 'company-1');
 
+      expect(prismaService.supplier.findUnique).toHaveBeenCalledWith({
+        where: { id: 'supplier-1', companyId: 'company-1' },
+      });
+      expect(prismaService.itemSupplier.count).toHaveBeenCalledWith({
+        where: { supplierId: 'supplier-1' },
+      });
+      expect(prismaService.purchaseOrder.count).toHaveBeenCalledWith({
+        where: { supplierId: 'supplier-1' },
+      });
       expect(prismaService.supplier.delete).toHaveBeenCalledWith({
         where: { id: 'supplier-1' },
       });
     });
 
-    it('should throw NotFoundException when supplier not found', async () => {
+    it('should throw NotFoundException when supplier not found for hard delete', async () => {
       prismaService.supplier.findUnique.mockResolvedValue(null);
 
-      await expect(service.hardDelete('non-existent')).rejects.toThrow(
-        new NotFoundException('Supplier with ID non-existent not found')
+      await expect(service.hardDelete('non-existent', 'company-1')).rejects.toThrow(
+        new NotFoundException('Supplier not found')
       );
     });
 
-    it('should throw BadRequestException when supplier has references', async () => {
+    it('should throw BadRequestException when supplier has existing references', async () => {
       prismaService.supplier.findUnique.mockResolvedValue(mockSupplier);
-      prismaService.itemSupplier.count.mockResolvedValue(0);
-      prismaService.purchaseOrder.count.mockResolvedValue(1); // Has references
+      prismaService.itemSupplier.count.mockResolvedValue(1); // Has references
+      prismaService.purchaseOrder.count.mockResolvedValue(0);
 
-      await expect(service.hardDelete('supplier-1')).rejects.toThrow(
-        new BadRequestException(
-          'Cannot permanently delete supplier as it has references in the system'
-        )
+      await expect(service.hardDelete('supplier-1', 'company-1')).rejects.toThrow(
+        new BadRequestException('Cannot delete supplier with existing references')
       );
     });
   });
