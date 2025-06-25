@@ -45,9 +45,133 @@ type TransformedItem = Omit<
     | undefined;
 };
 
+export interface UnitConversion {
+  fromMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using') => number;
+  toMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using') => number;
+}
+
 @Injectable()
 export class ItemService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  /**
+   * Unit Conversion Utilities (FR-2, FR-3)
+   * Provides real-time conversion between different units and main unit
+   */
+
+  /**
+   * Create unit conversion helper for an item
+   */
+  createUnitConverter(item: TransformedItem): UnitConversion {
+    return {
+      fromMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using'): number => {
+        const rate = this.getConversionRate(item, unitType);
+        return quantity / rate;
+      },
+      toMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using'): number => {
+        const rate = this.getConversionRate(item, unitType);
+        return quantity * rate;
+      },
+    };
+  }
+
+  /**
+   * Get conversion rate for specific unit type
+   */
+  private getConversionRate(
+    item: TransformedItem,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): number {
+    switch (unitType) {
+      case 'buying':
+        return item.buyingToMainRate || 1;
+      case 'transfer':
+        return item.transferToMainRate || 1;
+      case 'using':
+        return item.usingToMainRate || 1;
+      default:
+        throw new BadRequestException(`Invalid unit type: ${unitType}`);
+    }
+  }
+
+  /**
+   * Convert quantity from one unit to main unit
+   */
+  async convertToMainUnit(
+    itemId: string,
+    companyId: string,
+    quantity: number,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): Promise<number> {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+    return converter.toMainUnit(quantity, unitType);
+  }
+
+  /**
+   * Convert quantity from main unit to specified unit
+   */
+  async convertFromMainUnit(
+    itemId: string,
+    companyId: string,
+    quantity: number,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): Promise<number> {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+    return converter.fromMainUnit(quantity, unitType);
+  }
+
+  /**
+   * Get item with unit conversion information
+   */
+  async getItemWithConversions(
+    itemId: string,
+    companyId: string,
+    quantities?: {
+      buying?: number;
+      transfer?: number;
+      using?: number;
+    }
+  ) {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+
+    const conversions: any = {
+      rates: {
+        buyingToMain: item.buyingToMainRate,
+        transferToMain: item.transferToMainRate,
+        usingToMain: item.usingToMainRate,
+      },
+      units: {
+        main: item.mainUnit,
+        buying: item.buyingUnit,
+        transfer: item.transferUnit,
+        using: item.usingUnit,
+      },
+    };
+
+    // Add quantity conversions if provided
+    if (quantities) {
+      conversions.conversions = {
+        ...(quantities.buying && {
+          buyingToMain: converter.toMainUnit(quantities.buying, 'buying'),
+        }),
+        ...(quantities.transfer && {
+          transferToMain: converter.toMainUnit(quantities.transfer, 'transfer'),
+        }),
+        ...(quantities.using && {
+          usingToMain: converter.toMainUnit(quantities.using, 'using'),
+        }),
+      };
+    }
+
+    return {
+      item,
+      conversions,
+    };
+  }
+
   /**
    * Transform items with proper Decimal to number conversion
    */
@@ -102,6 +226,9 @@ export class ItemService {
   private buildQueryOptions(query: QueryItemDto) {
     const { search, branchId, includeInactive = false, includeStock = false } = query;
 
+    // Stock-level filters are handled in post-processing
+    // const { belowSafetyStock, belowReorderLevel, outOfStock, lowStock } = query;
+
     const where: Prisma.ItemWhereInput = {};
     if (!includeInactive) {
       where.isActive = true;
@@ -127,9 +254,49 @@ export class ItemService {
           lastCost: true,
         },
       };
+
+      // Note: Stock-level filters (belowSafetyStock, belowReorderLevel, etc.)
+      // are applied in post-processing due to Prisma limitations with cross-model comparisons
     }
 
     return { where, include };
+  }
+
+  /**
+   * Filter items based on stock levels (post-processing for AI monitoring - FR-9)
+   */
+  private filterByStockLevels(items: TransformedItem[], query: QueryItemDto): TransformedItem[] {
+    const { belowSafetyStock, belowReorderLevel, outOfStock, lowStock } = query;
+
+    if (!belowSafetyStock && !belowReorderLevel && !outOfStock && !lowStock) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      if (!item.stock) return false;
+
+      const { quantity, availableQty } = item.stock;
+      const safetyStock = item.safetyStockLevel || 0;
+      const reorderLevel = item.reorderLevel || 0;
+
+      if (outOfStock) {
+        return quantity <= 0 || availableQty <= 0;
+      }
+
+      if (belowSafetyStock) {
+        return quantity < safetyStock;
+      }
+
+      if (belowReorderLevel) {
+        return quantity < reorderLevel;
+      }
+
+      if (lowStock && safetyStock > 0) {
+        return quantity < safetyStock * 0.2; // Below 20% of safety stock
+      }
+
+      return false;
+    });
   }
 
   /**
@@ -162,7 +329,7 @@ export class ItemService {
       const limitNum = Number(limit);
       const skip = (pageNum - 1) * limitNum;
 
-      const [items, total] = await Promise.all([
+      let [items, total] = await Promise.all([
         this.prisma.item.findMany({
           where,
           include,
@@ -173,7 +340,20 @@ export class ItemService {
         this.prisma.item.count({ where }),
       ]);
 
-      const transformedItems = this.transformItems(items, includeStock);
+      let transformedItems = this.transformItems(items, includeStock);
+
+      // Apply stock-level filters if needed
+      if (includeStock && query.branchId) {
+        transformedItems = this.filterByStockLevels(transformedItems, query);
+        // Recalculate total for filtered results
+        if (transformedItems.length !== items.length) {
+          // For filtered results, we need to get the actual count
+          const allItems = await this.prisma.item.findMany({ where, include });
+          const allTransformed = this.transformItems(allItems, includeStock);
+          const filteredAll = this.filterByStockLevels(allTransformed, query);
+          total = filteredAll.length;
+        }
+      }
 
       return {
         data: transformedItems,
@@ -182,7 +362,9 @@ export class ItemService {
         total,
         pages: Math.ceil(total / limitNum),
       };
-    } // Handle non-paginated queries (with optional limit)
+    }
+
+    // Handle non-paginated queries (with optional limit)
     const queryOptions: {
       where: Prisma.ItemWhereInput;
       include: Prisma.ItemInclude;
@@ -200,8 +382,12 @@ export class ItemService {
     }
 
     const items = await this.prisma.item.findMany(queryOptions);
+    let transformedItems = this.transformItems(items, includeStock);
 
-    const transformedItems = this.transformItems(items, includeStock);
+    // Apply stock-level filters if needed
+    if (includeStock && query.branchId) {
+      transformedItems = this.filterByStockLevels(transformedItems, query);
+    }
 
     return transformedItems;
   }

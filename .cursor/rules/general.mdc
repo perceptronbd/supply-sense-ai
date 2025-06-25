@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# General Development Guidelines
+
+## Code Quality and Best Practices
+
+- Follow conventional commit message format for clear commit history
+- Maintain code readability and follow single responsibility principle
+- Use proper error handling and validation patterns
+- Write clear, descriptive commit messages
+- Document complex logic with inline comments
+- Keep README files and documentation up to date
+- Use meaningful variable and function names that self-document
+- **ALWAYS check package.json scripts before running TypeScript-related commands**
+- **Use defined scripts for type checking, building, and linting**
+- **Prefer project-specific TypeScript configurations over global commands**
+
+
+## File Editing Guidelines
+
+- When using `insert_edit_into_file`, avoid repeating existing code
+- Use line comments with `...existing code...` to represent unchanged regions
+- When using `replace_string_in_file`, include 3-5 lines of context before and after
+- Always check current file contents before making edits
+- Ensure edits result in valid, idiomatic code
+
+## Code Organization
+
+- Group related functionality into logical modules
+- Extract reusable utilities into separate files
+- Follow consistent naming conventions across the codebase
+- Maintain clear separation between business logic and UI components
+
+## Script and Command Execution
+
+- **ALWAYS check package.json scripts before running commands**
+- **Use the defined scripts with `pnpm run <script-name>` rather than direct tool commands**
+- Run `pnpm run` to see all available scripts in the current package
+
+
+## Documentation
+
+- Write clear, descriptive commit messages
+- Document complex logic with inline comments
+- Keep README files and documentation up to date
+
+- Use meaningful variable and function names that self-document

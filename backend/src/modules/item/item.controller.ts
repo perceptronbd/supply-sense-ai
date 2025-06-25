@@ -212,6 +212,119 @@ export class ItemController {
     return this.itemService.searchItems(searchTerm, user.companyId, branchId, numericLimit);
   }
 
+  @Get('monitoring/alerts')
+  @Roles(
+    UserRole.SYSTEM_ADMIN,
+    UserRole.BRANCH_MANAGER,
+    UserRole.PROCUREMENT_SPECIALIST,
+    UserRole.INVENTORY_CLERK
+  )
+  @ApiOperation({
+    summary: 'Get items requiring attention for AI monitoring',
+    description:
+      'Returns items below safety stock, reorder level, or out of stock for AI alerts (FR-9)',
+  })
+  @ApiQuery({
+    name: 'branchId',
+    required: true,
+    description: 'Branch ID to check stock levels',
+    example: 'uuid',
+  })
+  @ApiQuery({
+    name: 'alertType',
+    required: false,
+    description: 'Type of alert to filter by',
+    enum: ['outOfStock', 'belowSafetyStock', 'belowReorderLevel', 'lowStock'],
+    example: 'belowSafetyStock',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Items requiring attention retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/ItemEntity' },
+        },
+        summary: {
+          type: 'object',
+          properties: {
+            outOfStock: { type: 'number', example: 5 },
+            belowSafetyStock: { type: 'number', example: 12 },
+            belowReorderLevel: { type: 'number', example: 8 },
+            lowStock: { type: 'number', example: 3 },
+            total: { type: 'number', example: 28 },
+          },
+        },
+      },
+    },
+  })
+  async getMonitoringAlerts(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('branchId', ParseUUIDPipe) branchId: string,
+    @Query('alertType') alertType?:
+      | 'outOfStock'
+      | 'belowSafetyStock'
+      | 'belowReorderLevel'
+      | 'lowStock'
+  ) {
+    const alertResults = {
+      outOfStock: await this.itemService.findAll(
+        { branchId, includeStock: true, outOfStock: true },
+        user.companyId
+      ),
+      belowSafetyStock: await this.itemService.findAll(
+        { branchId, includeStock: true, belowSafetyStock: true },
+        user.companyId
+      ),
+      belowReorderLevel: await this.itemService.findAll(
+        { branchId, includeStock: true, belowReorderLevel: true },
+        user.companyId
+      ),
+      lowStock: await this.itemService.findAll(
+        { branchId, includeStock: true, lowStock: true },
+        user.companyId
+      ),
+    };
+
+    // Extract data arrays (handle both paginated and non-paginated responses)
+    const alerts = {
+      outOfStock: Array.isArray(alertResults.outOfStock)
+        ? alertResults.outOfStock
+        : alertResults.outOfStock.data,
+      belowSafetyStock: Array.isArray(alertResults.belowSafetyStock)
+        ? alertResults.belowSafetyStock
+        : alertResults.belowSafetyStock.data,
+      belowReorderLevel: Array.isArray(alertResults.belowReorderLevel)
+        ? alertResults.belowReorderLevel
+        : alertResults.belowReorderLevel.data,
+      lowStock: Array.isArray(alertResults.lowStock)
+        ? alertResults.lowStock
+        : alertResults.lowStock.data,
+    };
+
+    const data = alertType
+      ? alerts[alertType]
+      : [
+          ...alerts.outOfStock,
+          ...alerts.belowSafetyStock,
+          ...alerts.belowReorderLevel,
+          ...alerts.lowStock,
+        ].filter((item, index, self) => index === self.findIndex((i) => i.id === item.id)); // Remove duplicates
+
+    return {
+      data,
+      summary: {
+        outOfStock: alerts.outOfStock.length,
+        belowSafetyStock: alerts.belowSafetyStock.length,
+        belowReorderLevel: alerts.belowReorderLevel.length,
+        lowStock: alerts.lowStock.length,
+        total: data.length,
+      },
+    };
+  }
+
   @Get('by-branch/:branchId')
   @Roles(
     UserRole.SYSTEM_ADMIN,
@@ -300,15 +413,111 @@ export class ItemController {
     return this.itemService.findOne(id, user.companyId, branchId, includeStock);
   }
 
-  @Put(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @Get(':id/conversions')
+  @Roles(
+    UserRole.SYSTEM_ADMIN,
+    UserRole.BRANCH_MANAGER,
+    UserRole.PROCUREMENT_SPECIALIST,
+    UserRole.INVENTORY_CLERK,
+    UserRole.PRODUCTION_PLANNER
+  )
   @ApiOperation({
-    summary: 'Update an existing item',
-    description: 'Updates an existing item with the provided data',
+    summary: 'Get item unit conversion information',
+    description: 'Returns unit conversion rates and calculations for an item (FR-2, FR-3)',
   })
   @ApiParam({
     name: 'id',
-    description: 'Item UUID',
+    description: 'Item ID',
+    example: 'uuid',
+  })
+  @ApiQuery({
+    name: 'buyingQty',
+    required: false,
+    description: 'Quantity in buying unit to convert',
+    example: 2,
+  })
+  @ApiQuery({
+    name: 'transferQty',
+    required: false,
+    description: 'Quantity in transfer unit to convert',
+    example: 500,
+  })
+  @ApiQuery({
+    name: 'usingQty',
+    required: false,
+    description: 'Quantity in using unit to convert',
+    example: 1000,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Unit conversion information retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        item: { $ref: '#/components/schemas/ItemEntity' },
+        conversions: {
+          type: 'object',
+          properties: {
+            rates: {
+              type: 'object',
+              properties: {
+                buyingToMain: { type: 'number', example: 1000 },
+                transferToMain: { type: 'number', example: 1 },
+                usingToMain: { type: 'number', example: 1 },
+              },
+            },
+            units: {
+              type: 'object',
+              properties: {
+                main: { type: 'string', example: 'kg' },
+                buying: { type: 'string', example: 'ton' },
+                transfer: { type: 'string', example: 'kg' },
+                using: { type: 'string', example: 'kg' },
+              },
+            },
+            conversions: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                buyingToMain: { type: 'number', example: 2000 },
+                transferToMain: { type: 'number', example: 500 },
+                usingToMain: { type: 'number', example: 1000 },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async getItemConversions(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('buyingQty') buyingQty?: string,
+    @Query('transferQty') transferQty?: string,
+    @Query('usingQty') usingQty?: string
+  ) {
+    const quantities = {
+      ...(buyingQty && { buying: Number(buyingQty) }),
+      ...(transferQty && { transfer: Number(transferQty) }),
+      ...(usingQty && { using: Number(usingQty) }),
+    };
+
+    return this.itemService.getItemWithConversions(
+      id,
+      user.companyId,
+      Object.keys(quantities).length > 0 ? quantities : undefined
+    );
+  }
+
+  @Put(':id')
+  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @ApiOperation({
+    summary: 'Update an item',
+    description: 'Updates an existing item with new information and unit conversion rates',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Item ID',
     example: 'uuid',
   })
   @ApiBody({ type: UpdateItemDto })
