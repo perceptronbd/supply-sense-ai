@@ -1,5 +1,8 @@
 ﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
+import { CHAT_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -111,7 +114,8 @@ export class ChatController {
   }
 
   @Post('sessions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new chat session' })
   @ApiResponse({ status: 201, description: 'Session created successfully', type: ChatSessionDto })
@@ -125,8 +129,10 @@ export class ChatController {
       createSessionDto.description
     );
   }
+
   @Get('sessions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user chat sessions' })
   @ApiResponse({
@@ -143,7 +149,8 @@ export class ChatController {
   }
 
   @Get('sessions/:sessionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific chat session' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully', type: ChatSessionDto })
@@ -152,7 +159,8 @@ export class ChatController {
   }
 
   @Delete('sessions/:sessionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a chat session' })
   @ApiResponse({ status: 200, description: 'Session deleted successfully' })
@@ -164,7 +172,8 @@ export class ChatController {
   }
 
   @Get('sessions/:sessionId/messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get messages from a chat session' })
   @ApiResponse({ status: 200, description: 'Messages retrieved successfully' })
@@ -176,8 +185,10 @@ export class ChatController {
   ) {
     return this.chatService.getSessionMessages(sessionId, limit, offset);
   }
+
   @Post('query')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })
   @ApiResponse({ status: 200, description: 'AI response generated successfully' })
@@ -200,7 +211,8 @@ export class ChatController {
   }
 
   @Post('messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message in a chat session' })
   @ApiResponse({ status: 200, description: 'Message sent successfully' })
@@ -221,6 +233,7 @@ export class ChatController {
   }
 
   @Post('mcp/test')
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiOperation({ summary: 'Test MCP integration without authentication' })
   @ApiResponse({ status: 200, description: 'MCP test completed' })
   async testMcp(@Body() testDto: { query: string }) {
@@ -228,6 +241,7 @@ export class ChatController {
   }
 
   @Post('mcp/test-workflow')
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiOperation({ summary: 'Test MCP workflow integration without authentication' })
   @ApiResponse({ status: 200, description: 'MCP workflow test completed' })
   async testMcpWorkflow(@Body() testDto: { workflowInput: Record<string, unknown> }) {

@@ -2,9 +2,10 @@
   type AuthenticatedUser,
   CurrentUser,
 } from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
+import { ITEM_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -37,13 +38,13 @@ import { ItemService } from './item.service';
 
 @ApiTags('items')
 @Controller('items')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class ItemController {
   constructor(@Inject(ItemService) private readonly itemService: ItemService) {}
 
   @Post()
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(ITEM_PERMISSIONS.CREATE)
   @ApiOperation({
     summary: 'Create a new item',
     description: 'Creates a new item in the system with unit management and conversion rates',
@@ -67,13 +68,7 @@ export class ItemController {
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get all items with optional pagination, search, and stock information',
     description:
@@ -145,13 +140,7 @@ export class ItemController {
   }
 
   @Get('search')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Search items for dropdowns and selection',
     description: 'Simplified search endpoint optimized for item selection in forms',
@@ -207,54 +196,56 @@ export class ItemController {
     @Query('branchId') branchId?: string,
     @Query('limit') limit?: string | number
   ) {
-    // Convert limit to number if it's a string
-    const numericLimit = limit ? Number(limit) : undefined;
-    return this.itemService.searchItems(searchTerm, user.companyId, branchId, numericLimit);
+    const itemLimit = typeof limit === 'string' ? Number.parseInt(limit, 10) : limit || 20;
+    return this.itemService.searchItems(searchTerm, user.companyId, branchId, itemLimit);
   }
 
-  @Get('monitoring/alerts')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
+  @Get('alerts/:branchId')
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
-    summary: 'Get items requiring attention for AI monitoring',
-    description:
-      'Returns items below safety stock, reorder level, or out of stock for AI alerts (FR-9)',
+    summary: 'Get stock monitoring alerts for a branch',
+    description: 'Returns items that need attention based on stock levels and reorder points',
   })
-  @ApiQuery({
+  @ApiParam({
     name: 'branchId',
-    required: true,
-    description: 'Branch ID to check stock levels',
+    description: 'Branch UUID',
     example: 'uuid',
   })
   @ApiQuery({
     name: 'alertType',
     required: false,
-    description: 'Type of alert to filter by',
+    description: 'Filter by specific alert type',
     enum: ['outOfStock', 'belowSafetyStock', 'belowReorderLevel', 'lowStock'],
-    example: 'belowSafetyStock',
   })
   @ApiResponse({
     status: 200,
-    description: 'Items requiring attention retrieved successfully',
+    description: 'Stock alerts retrieved successfully',
     schema: {
       type: 'object',
       properties: {
-        data: {
+        alerts: {
           type: 'array',
-          items: { $ref: '#/components/schemas/ItemEntity' },
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'uuid' },
+              name: { type: 'string', example: 'Steel Rod 10mm' },
+              sku: { type: 'string', example: 'STEEL-ROD-10MM' },
+              currentStock: { type: 'number', example: 5.5 },
+              safetyStock: { type: 'number', example: 10 },
+              reorderLevel: { type: 'number', example: 20 },
+              alertType: { type: 'string', example: 'belowSafetyStock' },
+              severity: { type: 'string', example: 'medium' },
+            },
+          },
         },
         summary: {
           type: 'object',
           properties: {
-            outOfStock: { type: 'number', example: 5 },
-            belowSafetyStock: { type: 'number', example: 12 },
-            belowReorderLevel: { type: 'number', example: 8 },
-            lowStock: { type: 'number', example: 3 },
-            total: { type: 'number', example: 28 },
+            total: { type: 'number', example: 15 },
+            outOfStock: { type: 'number', example: 3 },
+            belowSafetyStock: { type: 'number', example: 7 },
+            belowReorderLevel: { type: 'number', example: 5 },
           },
         },
       },
@@ -262,7 +253,7 @@ export class ItemController {
   })
   async getMonitoringAlerts(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('branchId', ParseUUIDPipe) branchId: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
     @Query('alertType') alertType?:
       | 'outOfStock'
       | 'belowSafetyStock'
@@ -288,7 +279,6 @@ export class ItemController {
       ),
     };
 
-    // Extract data arrays (handle both paginated and non-paginated responses)
     const alerts = {
       outOfStock: Array.isArray(alertResults.outOfStock)
         ? alertResults.outOfStock
@@ -311,7 +301,7 @@ export class ItemController {
           ...alerts.belowSafetyStock,
           ...alerts.belowReorderLevel,
           ...alerts.lowStock,
-        ].filter((item, index, self) => index === self.findIndex((i) => i.id === item.id)); // Remove duplicates
+        ].filter((item, index, self) => index === self.findIndex((i) => i.id === item.id));
 
     return {
       data,
@@ -326,16 +316,10 @@ export class ItemController {
   }
 
   @Get('by-branch/:branchId')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get items for a specific branch with stock information',
-    description: 'Returns items with stock information for the specified branch',
+    description: 'Returns all items with stock information for the specified branch',
   })
   @ApiParam({
     name: 'branchId',
@@ -344,7 +328,7 @@ export class ItemController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Branch items retrieved successfully',
+    description: 'Items with stock information retrieved successfully',
     schema: {
       type: 'object',
       properties: {
@@ -355,6 +339,14 @@ export class ItemController {
         pagination: {
           type: 'object',
           nullable: true,
+          properties: {
+            page: { type: 'number', example: 1 },
+            limit: { type: 'number', example: 10 },
+            total: { type: 'number', example: 250 },
+            totalPages: { type: 'number', example: 25 },
+            hasNext: { type: 'boolean', example: true },
+            hasPrev: { type: 'boolean', example: false },
+          },
         },
       },
     },
@@ -364,19 +356,14 @@ export class ItemController {
     @Query() query: Omit<QueryItemDto, 'branchId'>,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.itemService.findByBranch(branchId, query, user.companyId);
+    return this.itemService.findAll({ ...query, branchId, includeStock: true }, user.companyId);
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get a specific item by ID with optional stock information',
+    description: 'Returns detailed item information with optional stock data for a specific branch',
   })
   @ApiParam({
     name: 'id',
@@ -394,6 +381,7 @@ export class ItemController {
     required: false,
     description: 'Include stock information',
     example: true,
+    type: 'boolean',
   })
   @ApiResponse({
     status: 200,
@@ -414,74 +402,64 @@ export class ItemController {
   }
 
   @Get(':id/conversions')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(ITEM_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get item unit conversion information',
-    description: 'Returns unit conversion rates and calculations for an item (FR-2, FR-3)',
+    description: 'Calculate conversions between different units for the item',
   })
   @ApiParam({
     name: 'id',
-    description: 'Item ID',
+    description: 'Item UUID',
     example: 'uuid',
   })
   @ApiQuery({
     name: 'buyingQty',
     required: false,
     description: 'Quantity in buying unit to convert',
-    example: 2,
+    example: '1',
   })
   @ApiQuery({
     name: 'transferQty',
     required: false,
     description: 'Quantity in transfer unit to convert',
-    example: 500,
+    example: '100',
   })
   @ApiQuery({
     name: 'usingQty',
     required: false,
     description: 'Quantity in using unit to convert',
-    example: 1000,
+    example: '50',
   })
   @ApiResponse({
     status: 200,
-    description: 'Unit conversion information retrieved successfully',
+    description: 'Unit conversions calculated successfully',
     schema: {
       type: 'object',
       properties: {
-        item: { $ref: '#/components/schemas/ItemEntity' },
+        item: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'uuid' },
+            name: { type: 'string', example: 'Steel Rod 10mm' },
+            sku: { type: 'string', example: 'STEEL-ROD-10MM' },
+            mainUnit: { type: 'string', example: 'kg' },
+            buyingUnit: { type: 'string', example: 'ton' },
+            transferUnit: { type: 'string', example: 'kg' },
+            usingUnit: { type: 'string', example: 'kg' },
+          },
+        },
         conversions: {
           type: 'object',
           properties: {
-            rates: {
+            buyingToMain: { type: 'number', example: 1000 },
+            transferToMain: { type: 'number', example: 1 },
+            usingToMain: { type: 'number', example: 1 },
+            inputConversions: {
               type: 'object',
               properties: {
-                buyingToMain: { type: 'number', example: 1000 },
-                transferToMain: { type: 'number', example: 1 },
-                usingToMain: { type: 'number', example: 1 },
-              },
-            },
-            units: {
-              type: 'object',
-              properties: {
-                main: { type: 'string', example: 'kg' },
-                buying: { type: 'string', example: 'ton' },
-                transfer: { type: 'string', example: 'kg' },
-                using: { type: 'string', example: 'kg' },
-              },
-            },
-            conversions: {
-              type: 'object',
-              nullable: true,
-              properties: {
-                buyingToMain: { type: 'number', example: 2000 },
-                transferToMain: { type: 'number', example: 500 },
-                usingToMain: { type: 'number', example: 1000 },
+                fromBuying: { type: 'number', example: 1000 },
+                fromTransfer: { type: 'number', example: 100 },
+                fromUsing: { type: 'number', example: 50 },
               },
             },
           },
@@ -497,9 +475,9 @@ export class ItemController {
     @Query('usingQty') usingQty?: string
   ) {
     const quantities = {
-      ...(buyingQty && { buying: Number(buyingQty) }),
-      ...(transferQty && { transfer: Number(transferQty) }),
-      ...(usingQty && { using: Number(usingQty) }),
+      ...(buyingQty && { buying: Number.parseFloat(buyingQty) }),
+      ...(transferQty && { transfer: Number.parseFloat(transferQty) }),
+      ...(usingQty && { using: Number.parseFloat(usingQty) }),
     };
 
     return this.itemService.getItemWithConversions(
@@ -510,14 +488,14 @@ export class ItemController {
   }
 
   @Put(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(ITEM_PERMISSIONS.UPDATE)
   @ApiOperation({
     summary: 'Update an item',
-    description: 'Updates an existing item with new information and unit conversion rates',
+    description: 'Updates an existing item with the provided data',
   })
   @ApiParam({
     name: 'id',
-    description: 'Item ID',
+    description: 'Item UUID',
     example: 'uuid',
   })
   @ApiBody({ type: UpdateItemDto })
@@ -543,12 +521,11 @@ export class ItemController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN)
+  @RequirePermissions(ITEM_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Soft delete an item',
-    description:
-      'Deactivates an item (sets isActive to false). Only system admins can delete items.',
+    description: 'Marks an item as inactive (soft delete)',
   })
   @ApiParam({
     name: 'id',
@@ -564,21 +541,16 @@ export class ItemController {
     status: 404,
     description: 'Item not found',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete item - it is being used in active records',
-  })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.itemService.remove(id, user.companyId);
   }
 
   @Delete(':id/hard')
-  @Roles(UserRole.SYSTEM_ADMIN)
+  @RequirePermissions(ITEM_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Permanently delete an item',
-    description:
-      'Permanently deletes an item from the system. Only possible if no references exist.',
+    description: 'Permanently removes an item from the system (hard delete)',
   })
   @ApiParam({
     name: 'id',
@@ -593,11 +565,7 @@ export class ItemController {
     status: 404,
     description: 'Item not found',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete item - it has references in the system',
-  })
   async hardDelete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
-    await this.itemService.hardDelete(id, user.companyId);
+    return this.itemService.hardDelete(id, user.companyId);
   }
 }

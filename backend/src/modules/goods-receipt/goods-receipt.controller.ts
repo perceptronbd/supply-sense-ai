@@ -1,11 +1,4 @@
 ﻿import {
-  type AuthenticatedUser,
-  CurrentUser,
-} from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import {
   Body,
   Controller,
   Delete,
@@ -28,13 +21,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { GOODS_RECEIPT_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 import { GoodsReceiptService } from './goods-receipt.service';
 
 @ApiTags('goods-receipt')
 @Controller('goods-receipt')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class GoodsReceiptController {
   constructor(
@@ -42,7 +40,7 @@ export class GoodsReceiptController {
   ) {}
 
   @Post()
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create a new goods receipt' })
   @ApiBody({ type: CreateGoodsReceiptDto })
   @ApiResponse({
@@ -63,12 +61,7 @@ export class GoodsReceiptController {
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PROCUREMENT_SPECIALIST
-  )
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all goods receipts' })
   @ApiQuery({
     name: 'branchId',
@@ -90,12 +83,7 @@ export class GoodsReceiptController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PROCUREMENT_SPECIALIST
-  )
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a goods receipt by ID' })
   @ApiParam({
     name: 'id',
@@ -117,7 +105,7 @@ export class GoodsReceiptController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -140,7 +128,7 @@ export class GoodsReceiptController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.DELETE)
   @ApiOperation({ summary: 'Delete a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -163,7 +151,7 @@ export class GoodsReceiptController {
 
   @Post(':id/post')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Post a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -186,7 +174,7 @@ export class GoodsReceiptController {
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Cancel a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -208,7 +196,7 @@ export class GoodsReceiptController {
   }
 
   @Post('from-po/:poId')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create goods receipt from purchase order' })
   @ApiParam({
     name: 'poId',
@@ -230,7 +218,7 @@ export class GoodsReceiptController {
   }
 
   @Post('from-mr/:mrId')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create goods receipt from material requisition' })
   @ApiParam({
     name: 'mrId',

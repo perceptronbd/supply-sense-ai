@@ -25,9 +25,10 @@ import {
 import { Supplier } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '../auth/decorators/roles.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { SUPPLIER_PERMISSIONS } from '../auth/types/permissions.types';
 import { ApiErrorResponseDto, ApiResponseDto, PaginatedResponseDto } from '../common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { QuerySupplierDto } from './dto/query-supplier.dto';
@@ -72,13 +73,13 @@ type PaginatedSuppliersResponse = {
 
 @ApiTags('suppliers')
 @Controller('suppliers')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class SupplierController {
   constructor(@Inject(SupplierService) private readonly supplierService: SupplierService) {}
 
   @Post()
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(SUPPLIER_PERMISSIONS.CREATE)
   @ApiOperation({
     summary: 'Create a new supplier',
     description: 'Creates a new supplier in the system',
@@ -107,12 +108,7 @@ export class SupplierController {
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
+  @RequirePermissions(SUPPLIER_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get all suppliers with optional pagination and search',
     description:
@@ -165,12 +161,7 @@ export class SupplierController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
+  @RequirePermissions(SUPPLIER_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get a supplier by ID',
     description:
@@ -199,7 +190,7 @@ export class SupplierController {
   }
 
   @Put(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(SUPPLIER_PERMISSIONS.UPDATE)
   @ApiOperation({
     summary: 'Update an existing supplier',
     description: 'Updates an existing supplier with the provided data',
@@ -234,12 +225,11 @@ export class SupplierController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN)
-  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(SUPPLIER_PERMISSIONS.DELETE)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Soft delete a supplier',
-    description:
-      'Deactivates a supplier (sets isActive to false). Only system admins can delete suppliers.',
+    description: 'Marks a supplier as inactive (soft delete)',
   })
   @ApiParam({
     name: 'id',
@@ -247,18 +237,12 @@ export class SupplierController {
     example: 'uuid',
   })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Supplier deleted successfully',
-    type: ApiResponseDto<Supplier>,
   })
   @ApiResponse({
     status: 404,
     description: 'Supplier not found',
-    type: ApiErrorResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete supplier - it has active records',
     type: ApiErrorResponseDto,
   })
   async remove(
@@ -269,12 +253,11 @@ export class SupplierController {
   }
 
   @Delete(':id/hard')
-  @Roles(UserRole.SYSTEM_ADMIN)
+  @RequirePermissions(SUPPLIER_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Permanently delete a supplier',
-    description:
-      'Permanently deletes a supplier from the system. Only possible if no references exist.',
+    description: 'Permanently removes a supplier from the system (hard delete)',
   })
   @ApiParam({
     name: 'id',
@@ -290,15 +273,10 @@ export class SupplierController {
     description: 'Supplier not found',
     type: ApiErrorResponseDto,
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete supplier - it has references in the system',
-    type: ApiErrorResponseDto,
-  })
   async hardDelete(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser
   ): Promise<void> {
-    await this.supplierService.hardDelete(id, user.companyId);
+    return this.supplierService.hardDelete(id, user.companyId);
   }
 }

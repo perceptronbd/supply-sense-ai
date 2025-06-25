@@ -1,5 +1,8 @@
 ﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
+import { AI_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -31,7 +34,7 @@ import { WorkflowAutomationService } from './services/workflow-automation.servic
 
 @ApiTags('ai')
 @Controller('ai')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class AiController {
   constructor(
@@ -46,6 +49,7 @@ export class AiController {
 
   // Demand Forecasting Endpoints
   @Get('demand-forecast')
+  @RequirePermissions(AI_PERMISSIONS.DEMAND_FORECASTING)
   @ApiOperation({ summary: 'Generate demand forecast for items' })
   @ApiResponse({
     status: 200,
@@ -60,6 +64,7 @@ export class AiController {
   }
 
   @Get('auto-purchase-requests/:branchId')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({
     summary: 'Generate automatic purchase request recommendations',
   })
@@ -83,6 +88,7 @@ export class AiController {
 
   // Purchase Optimization Endpoints
   @Post('recommend-supplier')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({ summary: 'Get supplier recommendations for items' })
   @ApiResponse({
     status: 200,
@@ -93,6 +99,7 @@ export class AiController {
   }
 
   @Post('optimize-quantities')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({ summary: 'Optimize order quantities for PO items' })
   @ApiResponse({
     status: 200,
@@ -104,6 +111,7 @@ export class AiController {
 
   // Quality Analysis Endpoints
   @Get('quality-analysis')
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
   @ApiOperation({ summary: 'Analyze supplier quality performance' })
   @ApiResponse({
     status: 200,
@@ -114,6 +122,7 @@ export class AiController {
   }
 
   @Get('anomaly-detection/:grId')
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
   @ApiOperation({ summary: 'Detect anomalies in goods receipt' })
   @ApiResponse({
     status: 200,
@@ -124,6 +133,7 @@ export class AiController {
   }
 
   @Get('quality-report')
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
   @ApiOperation({ summary: 'Generate comprehensive quality report' })
   @ApiResponse({
     status: 200,
@@ -141,6 +151,7 @@ export class AiController {
 
   // Stock Prediction Endpoints
   @Get('stock-prediction/:branchId')
+  @RequirePermissions(AI_PERMISSIONS.DEMAND_FORECASTING)
   @ApiOperation({ summary: 'Predict stock levels for branch' })
   @ApiResponse({
     status: 200,
@@ -155,6 +166,7 @@ export class AiController {
   }
 
   @Get('reorder-recommendations/:branchId')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({ summary: 'Generate reorder recommendations for branch' })
   @ApiResponse({
     status: 200,
@@ -165,6 +177,7 @@ export class AiController {
   }
 
   @Get('stock-report/:branchId')
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
   @ApiOperation({ summary: 'Generate comprehensive stock management report' })
   @ApiResponse({
     status: 200,
@@ -176,6 +189,7 @@ export class AiController {
 
   // Workflow Automation Endpoints
   @Post('evaluate-pr-approval/:prId')
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
   @ApiOperation({ summary: 'Evaluate PR for auto-approval' })
   @ApiResponse({
     status: 200,
@@ -186,6 +200,7 @@ export class AiController {
   }
 
   @Get('optimize-workflow/:workflowType')
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
   @ApiOperation({ summary: 'Analyze and optimize workflow' })
   @ApiResponse({
     status: 200,
@@ -196,6 +211,7 @@ export class AiController {
   }
 
   @Post('smart-routing')
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
   @ApiOperation({ summary: 'Intelligently route document for approval' })
   @ApiResponse({
     status: 200,
@@ -213,6 +229,7 @@ export class AiController {
   // ============================================================================
 
   @Post('suggestions')
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
   @ApiOperation({ summary: 'Create a new AI suggestion' })
   @ApiResponse({
     status: 201,
@@ -223,7 +240,8 @@ export class AiController {
   }
 
   @Get('suggestions')
-  @ApiOperation({ summary: 'Get all AI suggestions with optional filters' })
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
+  @ApiOperation({ summary: 'Get all AI suggestions with filters' })
   @ApiResponse({
     status: 200,
     description: 'AI suggestions retrieved successfully',
@@ -233,16 +251,18 @@ export class AiController {
   }
 
   @Get('suggestions/stats')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({ summary: 'Get AI suggestions statistics' })
   @ApiResponse({
     status: 200,
-    description: 'AI suggestions statistics retrieved successfully',
+    description: 'Suggestions statistics retrieved successfully',
   })
   async getSuggestionsStats(@Query('userId') userId?: string) {
     return this.aiSuggestionsService.getSuggestionsStats(userId);
   }
 
   @Get('suggestions/:id')
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
   @ApiOperation({ summary: 'Get AI suggestion by ID' })
   @ApiResponse({
     status: 200,
@@ -253,7 +273,8 @@ export class AiController {
   }
 
   @Put('suggestions/:id')
-  @ApiOperation({ summary: 'Update AI suggestion status and action' })
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
+  @ApiOperation({ summary: 'Update AI suggestion' })
   @ApiResponse({
     status: 200,
     description: 'AI suggestion updated successfully',
@@ -263,6 +284,7 @@ export class AiController {
   }
 
   @Delete('suggestions/:id')
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
   @ApiOperation({ summary: 'Delete AI suggestion' })
   @ApiResponse({
     status: 200,
@@ -273,10 +295,11 @@ export class AiController {
   }
 
   @Post('suggestions/:id/accept')
-  @ApiOperation({ summary: 'Accept and implement AI suggestion' })
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
+  @ApiOperation({ summary: 'Accept an AI suggestion' })
   @ApiResponse({
     status: 200,
-    description: 'AI suggestion accepted and implemented successfully',
+    description: 'AI suggestion accepted successfully',
   })
   async acceptSuggestion(
     @Param('id') id: string,
@@ -287,7 +310,8 @@ export class AiController {
   }
 
   @Post('suggestions/:id/reject')
-  @ApiOperation({ summary: 'Reject AI suggestion' })
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
+  @ApiOperation({ summary: 'Reject an AI suggestion' })
   @ApiResponse({
     status: 200,
     description: 'AI suggestion rejected successfully',
@@ -297,9 +321,10 @@ export class AiController {
   }
 
   @Post('suggestions/generate')
-  @ApiOperation({ summary: 'Generate new AI suggestions for a branch' })
+  @RequirePermissions(AI_PERMISSIONS.MANAGE_SUGGESTIONS)
+  @ApiOperation({ summary: 'Generate new AI suggestions for analysis' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'AI suggestions generated successfully',
   })
   async generateSuggestions(
@@ -311,7 +336,8 @@ export class AiController {
 
   // AI Insights Dashboard
   @Get('dashboard/:branchId')
-  @ApiOperation({ summary: 'Get AI insights dashboard for branch' })
+  @RequirePermissions(AI_PERMISSIONS.ANALYTICS)
+  @ApiOperation({ summary: 'Get AI-powered dashboard data for a branch' })
   @ApiResponse({
     status: 200,
     description: 'AI dashboard data retrieved successfully',
@@ -361,10 +387,11 @@ export class AiController {
 
   // AI Health Check
   @Get('health')
-  @ApiOperation({ summary: 'Check AI services health' })
+  @RequirePermissions(AI_PERMISSIONS.ACCESS_SUGGESTIONS)
+  @ApiOperation({ summary: 'Check AI services health status' })
   @ApiResponse({
     status: 200,
-    description: 'AI services health check completed',
+    description: 'AI health status retrieved successfully',
   })
   async getAIHealth() {
     return {

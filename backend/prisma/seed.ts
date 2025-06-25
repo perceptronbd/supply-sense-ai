@@ -67,76 +67,86 @@ async function createDefaultPermissions() {
   const permissionData = [
     // Purchase Requests
     { module: "PURCHASE_REQUESTS", action: "CREATE", description: "Create purchase requests" },
-    { module: "PURCHASE_REQUESTS", action: "VIEW", description: "View purchase requests" },
-    { module: "PURCHASE_REQUESTS", action: "EDIT", description: "Edit purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "READ", description: "View purchase requests" },
+    { module: "PURCHASE_REQUESTS", action: "UPDATE", description: "Edit purchase requests" },
     { module: "PURCHASE_REQUESTS", action: "DELETE", description: "Delete purchase requests" },
     { module: "PURCHASE_REQUESTS", action: "APPROVE", description: "Approve purchase requests" },
     { module: "PURCHASE_REQUESTS", action: "SUBMIT", description: "Submit purchase requests" },
 
     // Purchase Orders
     { module: "PURCHASE_ORDERS", action: "CREATE", description: "Create purchase orders" },
-    { module: "PURCHASE_ORDERS", action: "VIEW", description: "View purchase orders" },
-    { module: "PURCHASE_ORDERS", action: "EDIT", description: "Edit purchase orders" },
+    { module: "PURCHASE_ORDERS", action: "READ", description: "View purchase orders" },
+    { module: "PURCHASE_ORDERS", action: "UPDATE", description: "Edit purchase orders" },
     { module: "PURCHASE_ORDERS", action: "DELETE", description: "Delete purchase orders" },
 
-    // Inventory Management
-    { module: "INVENTORY_MANAGEMENT", action: "VIEW", description: "View inventory" },
-    { module: "INVENTORY_MANAGEMENT", action: "EDIT", description: "Edit inventory" },
+    // Items
+    { module: "ITEMS", action: "CREATE", description: "Create items" },
+    { module: "ITEMS", action: "READ", description: "View items" },
+    { module: "ITEMS", action: "UPDATE", description: "Edit items" },
+    { module: "ITEMS", action: "DELETE", description: "Delete items" },
 
     // Request Forms
     { module: "REQUEST_FORMS", action: "CREATE", description: "Create request forms" },
-    { module: "REQUEST_FORMS", action: "VIEW", description: "View request forms" },
-    { module: "REQUEST_FORMS", action: "EDIT", description: "Edit request forms" },
+    { module: "REQUEST_FORMS", action: "READ", description: "View request forms" },
+    { module: "REQUEST_FORMS", action: "UPDATE", description: "Edit request forms" },
     { module: "REQUEST_FORMS", action: "APPROVE", description: "Approve request forms" },
 
     // Material Requisitions
     { module: "MATERIAL_REQUISITIONS", action: "CREATE", description: "Create material requisitions" },
-    { module: "MATERIAL_REQUISITIONS", action: "VIEW", description: "View material requisitions" },
-    { module: "MATERIAL_REQUISITIONS", action: "EDIT", description: "Edit material requisitions" },
+    { module: "MATERIAL_REQUISITIONS", action: "READ", description: "View material requisitions" },
+    { module: "MATERIAL_REQUISITIONS", action: "UPDATE", description: "Edit material requisitions" },
     { module: "MATERIAL_REQUISITIONS", action: "APPROVE", description: "Approve material requisitions" },
 
     // Goods Receipts
     { module: "GOODS_RECEIPTS", action: "CREATE", description: "Create goods receipts" },
-    { module: "GOODS_RECEIPTS", action: "VIEW", description: "View goods receipts" },
-    { module: "GOODS_RECEIPTS", action: "EDIT", description: "Edit goods receipts" },
+    { module: "GOODS_RECEIPTS", action: "READ", description: "View goods receipts" },
+    { module: "GOODS_RECEIPTS", action: "UPDATE", description: "Edit goods receipts" },
+    { module: "GOODS_RECEIPTS", action: "DELETE", description: "Delete goods receipts" },
 
     // Formulas
     { module: "FORMULAS", action: "CREATE", description: "Create formulas" },
-    { module: "FORMULAS", action: "VIEW", description: "View formulas" },
-    { module: "FORMULAS", action: "EDIT", description: "Edit formulas" },
+    { module: "FORMULAS", action: "READ", description: "View formulas" },
+    { module: "FORMULAS", action: "UPDATE", description: "Edit formulas" },
     { module: "FORMULAS", action: "DELETE", description: "Delete formulas" },
 
     // Manufacturing Lists
     { module: "MANUFACTURING_LISTS", action: "CREATE", description: "Create manufacturing lists" },
-    { module: "MANUFACTURING_LISTS", action: "VIEW", description: "View manufacturing lists" },
-    { module: "MANUFACTURING_LISTS", action: "EDIT", description: "Edit manufacturing lists" },
+    { module: "MANUFACTURING_LISTS", action: "READ", description: "View manufacturing lists" },
+    { module: "MANUFACTURING_LISTS", action: "UPDATE", description: "Edit manufacturing lists" },
 
-    // User Management
-    { module: "USER_MANAGEMENT", action: "CREATE", description: "Create users" },
-    { module: "USER_MANAGEMENT", action: "VIEW", description: "View users" },
-    { module: "USER_MANAGEMENT", action: "EDIT", description: "Edit users" },
-    { module: "USER_MANAGEMENT", action: "DELETE", description: "Delete users" },
+    // Users
+    { module: "USERS", action: "CREATE", description: "Create users" },
+    { module: "USERS", action: "READ", description: "View users" },
+    { module: "USERS", action: "UPDATE", description: "Edit users" },
+    { module: "USERS", action: "DELETE", description: "Delete users" },
 
-    // Branch Management
-    { module: "BRANCH_MANAGEMENT", action: "CREATE", description: "Create branches" },
-    { module: "BRANCH_MANAGEMENT", action: "VIEW", description: "View branches" },
-    { module: "BRANCH_MANAGEMENT", action: "EDIT", description: "Edit branches" },
+    // Companies
+    { module: "COMPANIES", action: "CREATE", description: "Create companies" },
+    { module: "COMPANIES", action: "READ", description: "View companies" },
+    { module: "COMPANIES", action: "UPDATE", description: "Edit companies" },
+    { module: "COMPANIES", action: "DELETE", description: "Delete companies" },
 
-    // Supplier Management
-    { module: "SUPPLIER_MANAGEMENT", action: "CREATE", description: "Create suppliers" },
-    { module: "SUPPLIER_MANAGEMENT", action: "VIEW", description: "View suppliers" },
-    { module: "SUPPLIER_MANAGEMENT", action: "EDIT", description: "Edit suppliers" },
+    // Branches
+    { module: "BRANCHES", action: "CREATE", description: "Create branches" },
+    { module: "BRANCHES", action: "READ", description: "View branches" },
+    { module: "BRANCHES", action: "UPDATE", description: "Edit branches" },
+    { module: "BRANCHES", action: "DELETE", description: "Delete branches" },
 
-    // Reports
-    { module: "REPORTS", action: "VIEW", description: "View reports" },
-    { module: "REPORTS", action: "EXPORT", description: "Export reports" },
+    // Suppliers
+    { module: "SUPPLIERS", action: "CREATE", description: "Create suppliers" },
+    { module: "SUPPLIERS", action: "READ", description: "View suppliers" },
+    { module: "SUPPLIERS", action: "UPDATE", description: "Edit suppliers" },
+    { module: "SUPPLIERS", action: "DELETE", description: "Delete suppliers" },
 
-    // System Settings
-    { module: "SYSTEM_SETTINGS", action: "VIEW", description: "View system settings" },
-    { module: "SYSTEM_SETTINGS", action: "EDIT", description: "Edit system settings" },
+    // AI
+    { module: "AI", action: "ACCESS_SUGGESTIONS", description: "Access AI suggestions" },
+    { module: "AI", action: "DEMAND_FORECASTING", description: "Use AI demand forecasting" },
+    { module: "AI", action: "ANALYTICS", description: "View AI analytics" },
 
-    // AI Suggestions
-    { module: "AI_SUGGESTIONS", action: "VIEW", description: "View AI suggestions" },
+    // Chat
+    { module: "CHAT", action: "SEND_MESSAGE", description: "Send messages" },
+    { module: "CHAT", action: "READ_MESSAGES", description: "Read messages" },
+    { module: "CHAT", action: "MANAGE_CONVERSATIONS", description: "Manage conversations" },
   ];
 
   const permissions = [];
@@ -244,12 +254,12 @@ async function createDefaultRoles(companyId: string, permissions: any[]) {
 
   // Assign specific permissions to Branch Manager
   const branchManagerPermissions = permissions.filter((p: any) => 
-    (p.module === "PURCHASE_REQUESTS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
-    (p.module === "REQUEST_FORMS" && ["CREATE", "VIEW", "EDIT", "APPROVE"].includes(p.action)) ||
-    (p.module === "INVENTORY_MANAGEMENT" && ["VIEW", "EDIT"].includes(p.action)) ||
-    (p.module === "SUPPLIER_MANAGEMENT" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
-    (p.module === "REPORTS" && p.action === "VIEW") ||
-    (p.module === "USER_MANAGEMENT" && p.action === "VIEW")
+    (p.module === "PURCHASE_REQUESTS" && ["CREATE", "READ", "UPDATE", "APPROVE"].includes(p.action)) ||
+    (p.module === "REQUEST_FORMS" && ["CREATE", "READ", "UPDATE", "APPROVE"].includes(p.action)) ||
+    (p.module === "ITEMS" && ["READ", "UPDATE"].includes(p.action)) ||
+    (p.module === "SUPPLIERS" && ["CREATE", "READ", "UPDATE"].includes(p.action)) ||
+    (p.module === "BRANCHES" && ["READ"].includes(p.action)) ||
+    (p.module === "USERS" && p.action === "READ")
   );
 
   for (const permission of branchManagerPermissions) {
@@ -280,9 +290,9 @@ async function createDefaultRoles(companyId: string, permissions: any[]) {
   });
 
   const inventoryClerkPermissions = permissions.filter((p: any) => 
-    (p.module === "INVENTORY_MANAGEMENT" && ["VIEW", "EDIT"].includes(p.action)) ||
-    (p.module === "GOODS_RECEIPTS" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
-    (p.module === "MATERIAL_REQUISITIONS" && ["CREATE", "VIEW", "EDIT"].includes(p.action))
+    (p.module === "ITEMS" && ["READ", "UPDATE"].includes(p.action)) ||
+    (p.module === "GOODS_RECEIPTS" && ["CREATE", "READ", "UPDATE"].includes(p.action)) ||
+    (p.module === "MATERIAL_REQUISITIONS" && ["CREATE", "READ", "UPDATE"].includes(p.action))
   );
 
   for (const permission of inventoryClerkPermissions) {
@@ -313,9 +323,9 @@ async function createDefaultRoles(companyId: string, permissions: any[]) {
   });
 
   const procurementPermissions = permissions.filter((p: any) => 
-    (p.module === "PURCHASE_ORDERS" && ["CREATE", "VIEW", "EDIT"].includes(p.action)) ||
-    (p.module === "PURCHASE_REQUESTS" && ["VIEW"].includes(p.action)) ||
-    (p.module === "SUPPLIER_MANAGEMENT" && ["CREATE", "VIEW", "EDIT"].includes(p.action))
+    (p.module === "PURCHASE_ORDERS" && ["CREATE", "READ", "UPDATE"].includes(p.action)) ||
+    (p.module === "PURCHASE_REQUESTS" && ["READ"].includes(p.action)) ||
+    (p.module === "SUPPLIERS" && ["CREATE", "READ", "UPDATE"].includes(p.action))
   );
 
   for (const permission of procurementPermissions) {

@@ -2,9 +2,10 @@
   type AuthenticatedUser,
   CurrentUser,
 } from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
+import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
+import { BRANCH_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -37,16 +38,16 @@ import { BranchEntity } from './entities/branch.entity';
 
 @ApiTags('branches')
 @Controller('branches')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class BranchController {
   constructor(@Inject(BranchService) private readonly branchService: BranchService) {}
 
   @Post()
-  @Roles(UserRole.SYSTEM_ADMIN)
+  @RequirePermissions(BRANCH_PERMISSIONS.CREATE)
   @ApiOperation({
     summary: 'Create a new branch',
-    description: 'Creates a new branch in the system. Only system admins can create branches.',
+    description: 'Creates a new branch in the system',
   })
   @ApiBody({ type: CreateBranchDto })
   @ApiResponse({
@@ -67,13 +68,7 @@ export class BranchController {
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(BRANCH_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get all branches with optional pagination and search',
     description:
@@ -133,13 +128,7 @@ export class BranchController {
   }
 
   @Get('my-branch')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(BRANCH_PERMISSIONS.READ)
   @ApiOperation({
     summary: "Get current user's branch",
     description: 'Returns the branch associated with the current user',
@@ -163,13 +152,7 @@ export class BranchController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PRODUCTION_PLANNER
-  )
+  @RequirePermissions(BRANCH_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a specific branch by ID' })
   @ApiParam({
     name: 'id',
@@ -190,7 +173,7 @@ export class BranchController {
   }
 
   @Put(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(BRANCH_PERMISSIONS.UPDATE)
   @ApiOperation({
     summary: 'Update an existing branch',
     description: 'Updates an existing branch with the provided data',
@@ -219,12 +202,11 @@ export class BranchController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN)
-  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(BRANCH_PERMISSIONS.DELETE)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Soft delete a branch',
-    description:
-      'Deactivates a branch (sets isActive to false). Only system admins can delete branches.',
+    description: 'Marks a branch as inactive (soft delete)',
   })
   @ApiParam({
     name: 'id',
@@ -232,29 +214,23 @@ export class BranchController {
     example: 'uuid',
   })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Branch deleted successfully',
-    type: BranchEntity,
   })
   @ApiResponse({
     status: 404,
     description: 'Branch not found',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete branch - it has active users or records',
   })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.branchService.remove(id);
   }
 
   @Delete(':id/hard')
-  @Roles(UserRole.SYSTEM_ADMIN)
+  @RequirePermissions(BRANCH_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Permanently delete a branch',
-    description:
-      'Permanently deletes a branch from the system. Only possible if no references exist.',
+    description: 'Permanently removes a branch from the system (hard delete)',
   })
   @ApiParam({
     name: 'id',
@@ -269,11 +245,7 @@ export class BranchController {
     status: 404,
     description: 'Branch not found',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot delete branch - it has references in the system',
-  })
   async hardDelete(@Param('id', ParseUUIDPipe) id: string) {
-    await this.branchService.hardDelete(id);
+    return this.branchService.hardDelete(id);
   }
 }

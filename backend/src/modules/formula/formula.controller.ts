@@ -23,19 +23,23 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { FORMULA_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
 import { FormulaService } from './formula.service';
 
 @ApiTags('formula')
 @Controller('formula')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class FormulaController {
   constructor(@Inject(FormulaService) private readonly formulaService: FormulaService) {}
 
   @Post()
+  @RequirePermissions(FORMULA_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new formula' })
   @ApiBody({ type: CreateFormulaDto })
@@ -49,6 +53,7 @@ export class FormulaController {
   }
 
   @Get()
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all formulas' })
   @ApiQuery({
     name: 'isActive',
@@ -66,6 +71,7 @@ export class FormulaController {
   }
 
   @Get('code/:code')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a formula by code' })
   @ApiParam({
     name: 'code',
@@ -82,6 +88,7 @@ export class FormulaController {
   }
 
   @Get(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a formula by ID' })
   @ApiParam({
     name: 'id',
@@ -98,6 +105,7 @@ export class FormulaController {
   }
 
   @Get(':id/material-requirements')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Calculate material requirements for a formula' })
   @ApiParam({
     name: 'id',
@@ -128,6 +136,7 @@ export class FormulaController {
   }
 
   @Patch(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a formula' })
   @ApiParam({
     name: 'id',
@@ -149,6 +158,7 @@ export class FormulaController {
   }
 
   @Patch(':id/toggle-active')
+  @RequirePermissions(FORMULA_PERMISSIONS.UPDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Toggle formula active status' })
   @ApiParam({
@@ -166,6 +176,7 @@ export class FormulaController {
   }
 
   @Post(':id/clone')
+  @RequirePermissions(FORMULA_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Clone a formula with a new version' })
   @ApiParam({
@@ -200,6 +211,7 @@ export class FormulaController {
   }
 
   @Delete(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a formula' })
   @ApiParam({
@@ -211,7 +223,7 @@ export class FormulaController {
     status: 204,
     description: 'Formula deleted successfully',
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 404, description: 'Formula not found' })
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return await this.formulaService.remove(id, user.companyId);
   }

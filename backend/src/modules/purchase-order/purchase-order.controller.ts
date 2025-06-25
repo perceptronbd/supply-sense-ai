@@ -22,11 +22,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { Roles, UserRole } from '../auth/decorators/roles.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { PURCHASE_ORDER_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
@@ -34,14 +32,13 @@ import { PurchaseOrderService } from './purchase-order.service';
 
 @ApiTags('purchase-order')
 @Controller('purchase-order')
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class PurchaseOrderController {
   constructor(
     @Inject(PurchaseOrderService) private readonly purchaseOrderService: PurchaseOrderService
   ) {}
   @Post()
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create a new purchase order' })
   @ApiBody({ type: CreatePurchaseOrderDto })
@@ -61,12 +58,6 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.create(createPurchaseOrderDto, user);
   }
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all purchase orders' })
   @ApiQuery({
@@ -83,12 +74,6 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.findAll(user, branchId);
   }
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a purchase order by ID' })
   @ApiParam({
@@ -105,7 +90,6 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.findOne(id, user);
   }
   @Patch(':id')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a purchase order' })
   @ApiParam({
@@ -131,7 +115,6 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.update(id, updatePurchaseOrderDto, user);
   }
   @Delete(':id')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.DELETE)
   @ApiOperation({ summary: 'Delete a purchase order' })
   @ApiParam({
@@ -153,7 +136,6 @@ export class PurchaseOrderController {
   }
   @Post(':id/send-to-supplier')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
   @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Send purchase order to supplier' })
   @ApiParam({
@@ -175,7 +157,7 @@ export class PurchaseOrderController {
   }
   @Post(':id/confirm')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Confirm a purchase order' })
   @ApiParam({
     name: 'id',
@@ -196,7 +178,7 @@ export class PurchaseOrderController {
   }
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Cancel a purchase order' })
   @ApiParam({
     name: 'id',
@@ -217,7 +199,7 @@ export class PurchaseOrderController {
   }
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Close a purchase order' })
   @ApiParam({
     name: 'id',
@@ -237,7 +219,7 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.close(id, user);
   }
   @Post('create-from-pr/:prId')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_ORDER_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create purchase order from purchase request' })
   @ApiParam({
     name: 'prId',
@@ -273,49 +255,4 @@ export class PurchaseOrderController {
   ) {
     return this.purchaseOrderService.createFromPR(prId, supplierId, user);
   }
-
-  // TODO: NEW ENDPOINT - Create PO from multiple PRs
-  // TODO: @Post('create-from-multiple-prs')
-  // TODO: @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
-  // TODO: @ApiOperation({ summary: 'Create purchase order from multiple purchase requests' })
-  // TODO: @ApiBody({ type: CreatePOFromMultiplePRsDto })
-  // TODO: async createFromMultiplePRs(
-  // TODO:   @Body() dto: CreatePOFromMultiplePRsDto,
-  // TODO:   @CurrentUser() user: AuthenticatedUser
-  // TODO: ) {
-  // TODO:   return this.purchaseOrderService.createFromMultiplePRs(dto.prIds, dto.supplierId, user.id);
-  // TODO: }
-
-  // TODO: NEW ENDPOINT - Create PO with selective items from PR
-  // TODO: @Post('create-from-pr/:prId/selective')
-  // TODO: @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
-  // TODO: @ApiOperation({ summary: 'Create purchase order from selected items in purchase request' })
-  // TODO: @ApiBody({
-  // TODO:   schema: {
-  // TODO:     type: 'object',
-  // TODO:     properties: {
-  // TODO:       supplierId: { type: 'string' },
-  // TODO:       selectedItems: {
-  // TODO:         type: 'array',
-  // TODO:         items: {
-  // TODO:           type: 'object',
-  // TODO:           properties: {
-  // TODO:             prItemId: { type: 'string' },
-  // TODO:             orderedQty: { type: 'number' },
-  // TODO:             unitPrice: { type: 'number' }
-  // TODO:           }
-  // TODO:         }
-  // TODO:       }
-  // TODO:     }
-  // TODO:   }
-  // TODO: })
-  // TODO: async createFromPRWithSelection(
-  // TODO:   @Param('prId') prId: string,
-  // TODO:   @Body() body: { supplierId: string, selectedItems: SelectiveItemDto[] },
-  // TODO:   @CurrentUser() user: AuthenticatedUser
-  // TODO: ) {
-  // TODO:   return this.purchaseOrderService.createFromPRWithSelection(
-  // TODO:     prId, body.supplierId, user.id, body.selectedItems
-  // TODO:   );
-  // TODO: }
 }
