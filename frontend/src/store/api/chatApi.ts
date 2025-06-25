@@ -1,6 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
 // Chat interfaces
@@ -54,7 +55,7 @@ export interface ChatQueryResponse {
 export const chatApi = createApi({
   reducerPath: 'chatApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/chat',
+    baseUrl: config.getApiUrl('/api/chat'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;

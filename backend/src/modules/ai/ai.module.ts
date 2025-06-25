@@ -1,4 +1,5 @@
 ﻿import { PrismaService } from '@app/prisma.service';
+import { AuthModule } from '@modules/auth/auth.module';
 import { PurchaseRequestModule } from '@modules/purchase-request/purchase-request.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -12,7 +13,7 @@ import { StockPredictionService } from './services/stock-prediction.service';
 import { WorkflowAutomationService } from './services/workflow-automation.service';
 
 @Module({
-  imports: [ConfigModule, PurchaseRequestModule],
+  imports: [ConfigModule, AuthModule, PurchaseRequestModule],
   controllers: [AiController],
   providers: [
     GeminiService,

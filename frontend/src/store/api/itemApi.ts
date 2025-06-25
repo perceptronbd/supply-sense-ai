@@ -6,6 +6,7 @@ import {
 } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
 // API Response Types
@@ -94,7 +95,7 @@ export interface ItemsResponse {
 export const itemApi = createApi({
   reducerPath: 'itemApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/items',
+    baseUrl: config.getApiUrl('/api/items'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;

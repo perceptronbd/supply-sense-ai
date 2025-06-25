@@ -6,6 +6,7 @@ import {
 } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
 // API Response Types
@@ -60,7 +61,7 @@ export interface UpdateBranchRequest {
 export const branchApi = createApi({
   reducerPath: 'branchApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/branches',
+    baseUrl: config.getApiUrl('/api/branches'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;

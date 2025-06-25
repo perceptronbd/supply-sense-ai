@@ -11,9 +11,14 @@ import { GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for frontend
+  // Enable CORS for frontend - read from environment variables
+  const frontendUrls = process.env.FRONTEND_URLS?.split(',') || [
+    'http://localhost:3001',
+    'http://localhost:3003',
+  ];
+
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://127.0.0.1:3001'],
+    origin: frontendUrls,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -104,7 +109,22 @@ async function bootstrap() {
   });
   */
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3004;
+  Logger.log(`⚙️  Environment: ${process.env.NODE_ENV || 'development'}`);
+  Logger.log(
+    `🔗 Frontend CORS URLs: ${process.env.FRONTEND_URLS || 'http://localhost:3001,http://localhost:3003'}`
+  );
+  Logger.log(
+    `🗃️  Database: ${process.env.DATABASE_URL ? 'Connected via env var' : 'Using default (ensure DATABASE_URL is set)'}`
+  );
+  Logger.log(
+    `🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Configured' : 'Using default (change in production)'}`
+  );
+  Logger.log(`🤖 AI Model: ${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`);
+  Logger.log(
+    `🔑 Gemini API: ${process.env.GEMINI_API_KEY ? 'Configured' : 'NOT SET - AI features may not work'}`
+  );
+  console.log('');
   await app.listen(port);
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
   // Logger.log(`📚 API Documentation is available at: http://localhost:${port}/api/docs`);

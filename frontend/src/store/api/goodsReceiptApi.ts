@@ -1,6 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { config } from '../../config/env';
 import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
 
 export interface GRItem {
@@ -86,7 +87,7 @@ export interface UpdateGoodsReceiptDto {
 export const goodsReceiptApi = createApi({
   reducerPath: 'goodsReceiptApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/goods-receipt',
+    baseUrl: config.getApiUrl('/api/goods-receipt'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;
