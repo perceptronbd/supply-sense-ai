@@ -13,7 +13,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -25,11 +25,11 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        {/* Favicon - prioritize SVG logo with cache busting */}
-        <link rel="icon" href="/logo.svg?v=2" type="image/svg+xml" />
+        {/* Favicon - use SupplySense ICO file */}
+        <link rel="icon" href="/supply-sense.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/supply-sense.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/supply-sense.ico" />
         <link rel="icon" href="/logo.svg?v=2" type="image/svg+xml" sizes="any" />
-        <link rel="shortcut icon" href="/logo.svg?v=2" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/logo.svg?v=2" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0A2538" />
       </head>
