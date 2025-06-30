@@ -41,8 +41,8 @@ export const useRoutes = () => {
     router.push(ROUTE_PATHS.LOGIN);
   }, [router]);
 
-  const navigateToDashboard = useCallback(() => {
-    router.push(ROUTE_PATHS.DASHBOARD);
+  const navigateToChat = useCallback(() => {
+    router.push(ROUTE_PATHS.CHAT);
   }, [router]);
 
   const navigateToHome = useCallback(() => {
@@ -79,7 +79,7 @@ export const useRoutes = () => {
     // Navigation helpers
     navigateTo,
     navigateToLogin,
-    navigateToDashboard,
+    navigateToChat,
     navigateToHome,
 
     // Route utilities

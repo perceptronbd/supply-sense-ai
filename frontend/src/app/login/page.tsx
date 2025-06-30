@@ -209,7 +209,7 @@ export default function LoginPage() {
       });
 
       dispatch(setCredentials(result));
-      router.push(ROUTE_PATHS.DASHBOARD);
+      router.push(ROUTE_PATHS.CHAT);
     } catch (err: unknown) {
       console.error('Login failed:', err);
       console.error('Error details:', JSON.stringify(err, null, 2));
@@ -251,7 +251,7 @@ export default function LoginPage() {
             Welcome Back
           </Text>
           <Text variant="bodyBase" color="muted" as="p">
-            Sign in to continue to your supply chain dashboard
+            Sign in to continue to SupplySense AI
           </Text>
         </header>
 

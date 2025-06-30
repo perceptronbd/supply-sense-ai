@@ -15,7 +15,6 @@ import {
   ChatIcon,
   ClipboardIcon,
   CloseIcon,
-  DashboardIcon,
   DocumentIcon,
   InboxIcon,
   MoonIcon,
@@ -44,11 +43,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     dispatch(toggleTheme());
   };
   const navigation = [
-    {
-      name: 'Dashboard',
-      href: ROUTE_PATHS.DASHBOARD,
-      icon: <DashboardIcon className="w-5 h-5" />,
-    },
     {
       name: 'AI Chat',
       href: ROUTE_PATHS.CHAT,

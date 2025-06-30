@@ -29,8 +29,8 @@ export const useNavigation = () => {
 
     // Auto mode: smart detection based on route patterns
     if (matchMode === 'auto') {
-      // Dashboard gets exact match to avoid conflicts with other routes
-      if (href === ROUTE_PATHS.DASHBOARD || href === ROUTE_PATHS.ROOT) {
+      // Root gets exact match to avoid conflicts with other routes
+      if (href === ROUTE_PATHS.ROOT) {
         return pathname === href;
       }
 
@@ -94,10 +94,6 @@ export interface NavigationItem {
  * Default navigation configuration
  */
 export const defaultNavigation: NavigationItem[] = [
-  {
-    name: 'Dashboard',
-    href: ROUTE_PATHS.DASHBOARD,
-  },
   {
     name: 'AI Chat',
     href: ROUTE_PATHS.CHAT,

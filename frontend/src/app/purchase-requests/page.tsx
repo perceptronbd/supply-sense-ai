@@ -112,7 +112,7 @@ export default function PurchaseRequestsPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge">Loading...</Text>
             </div>
@@ -278,7 +278,7 @@ export default function PurchaseRequestsPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
@@ -292,7 +292,7 @@ export default function PurchaseRequestsPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase requests
@@ -307,13 +307,13 @@ export default function PurchaseRequestsPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           <header className="flex justify-between items-center mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Requests
               </Text>
-              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
+              <Text variant="bodyBase" className="mt-2 text-default-500" as="p">
                 Manage and track all purchase requests
               </Text>
             </div>
@@ -324,7 +324,7 @@ export default function PurchaseRequestsPage() {
 
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
+              <CardHeader className="flex flex-col gap-4 pb-3">
                 <div className="flex justify-between items-center w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Purchase Requests
@@ -453,7 +453,7 @@ export default function PurchaseRequestsPage() {
                 {totalPages > 1 && (
                   <div className="flex justify-between items-center mt-6">
                     {/* Left side: Dropdown and text */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex gap-4 items-center">
                       <Select
                         size="sm"
                         placeholder="Items per page"

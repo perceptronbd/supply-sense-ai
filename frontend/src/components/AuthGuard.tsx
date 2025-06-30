@@ -26,7 +26,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
     if (requireAuth && !isAuthenticated && !token) {
       router.push('/login');
     } else if (!requireAuth && isAuthenticated && token) {
-      router.push('/dashboard');
+      router.push('/chat');
     }
   }, [isAuthenticated, token, router, requireAuth, isMounted]);
 
@@ -50,7 +50,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   }
 
   if (!requireAuth && isAuthenticated && token) {
-    return null; // redirect to dashboard
+    return null; // redirect to chat
   }
 
   return <>{children}</>;

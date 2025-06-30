@@ -5,7 +5,7 @@ export { SearchIcon } from './SearchIcon';
 export { AiIcon } from './AiIcon';
 export { ArrowLeftIcon } from './ArrowLeftIcon';
 export { PlusIcon } from './PlusIcon';
-export { DashboardIcon } from './DashboardIcon';
+
 export { DocumentIcon } from './DocumentIcon';
 export { ClipboardIcon } from './ClipboardIcon';
 export { InboxIcon } from './InboxIcon';

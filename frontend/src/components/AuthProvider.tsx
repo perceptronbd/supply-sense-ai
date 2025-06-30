@@ -14,7 +14,7 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
   const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
-  const { isCurrentRouteProtected, isCurrentRouteAuth, navigateToLogin, navigateToDashboard } =
+  const { isCurrentRouteProtected, isCurrentRouteAuth, navigateToLogin, navigateToChat } =
     useRoutes();
   const [isMounted, setIsMounted] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -39,7 +39,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     if (isCurrentRouteAuth && isAuthenticated && token) {
       // Authenticated user trying to access login page
       setIsNavigating(true);
-      navigateToDashboard();
+      navigateToChat();
       return;
     }
 
@@ -51,7 +51,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     isCurrentRouteProtected,
     isCurrentRouteAuth,
     navigateToLogin,
-    navigateToDashboard,
+    navigateToChat,
     isMounted,
   ]);
   // Show loading state during initial mount to prevent hydration mismatches

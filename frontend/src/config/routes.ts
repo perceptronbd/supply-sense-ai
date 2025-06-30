@@ -12,7 +12,6 @@ export const ROUTE_PATHS = {
   LOGIN: '/login',
 
   // Protected routes (require authentication)
-  DASHBOARD: '/dashboard',
   CHAT: '/chat',
   PURCHASE_REQUESTS: '/purchase-requests',
   PURCHASE_ORDERS: '/purchase-orders',
@@ -28,7 +27,6 @@ export const ROUTE_PATHS = {
 // Create union types from the route paths
 export type RoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
 export type ProtectedRoutePath =
-  | (typeof ROUTE_PATHS)['DASHBOARD']
   | (typeof ROUTE_PATHS)['CHAT']
   | (typeof ROUTE_PATHS)['PURCHASE_REQUESTS']
   | (typeof ROUTE_PATHS)['PURCHASE_ORDERS']
@@ -68,13 +66,7 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     title: 'Login - SupplySense',
     description: 'Sign in to your SupplySense account',
   },
-  DASHBOARD: {
-    path: ROUTE_PATHS.DASHBOARD,
-    requiresAuth: true,
-    redirectIfAuthenticated: false,
-    title: 'Dashboard - SupplySense',
-    description: 'Overview of your supply chain operations',
-  },
+
   CHAT: {
     path: ROUTE_PATHS.CHAT,
     requiresAuth: true,
