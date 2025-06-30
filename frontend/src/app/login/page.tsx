@@ -72,99 +72,113 @@ export default function LoginPage() {
   };
 
   const getDetailedErrorMessage = (error: unknown): string => {
-    // Handle RTK Query errors with backend ApiErrorResponseDto structure
-    if (error && typeof error === 'object' && 'data' in error) {
-      const rtkError = error as {
-        status: number;
-        data: {
-          success: false;
-          statusCode: number;
-          message: string;
-          error?: string;
-          details?: Record<string, unknown> | string[];
-          metadata: {
-            timestamp: string;
-            path: string;
-            correlationId: string;
-          };
-        };
-      };
+    const rtkErrorMessage = handleRtkQueryError(error);
+    if (rtkErrorMessage) return rtkErrorMessage;
 
-      if (rtkError.data?.message) {
-        const backendMessage = rtkError.data.message;
-        const statusCode = rtkError.data.statusCode || rtkError.status;
+    const networkErrorMessage = handleNetworkError(error);
+    if (networkErrorMessage) return networkErrorMessage;
 
-        // Provide user-friendly messages based on status codes
-        switch (statusCode) {
-          case 401:
-            // Check if it's a specific auth error or generic 401
-            if (
-              backendMessage.toLowerCase().includes('invalid') ||
-              backendMessage.toLowerCase().includes('wrong') ||
-              backendMessage.toLowerCase().includes('incorrect')
-            ) {
-              return 'Invalid email or password. Please check your credentials and try again.';
-            }
-            return 'Authentication failed. Please check your credentials and try again.';
-
-          case 403:
-            if (
-              backendMessage.toLowerCase().includes('disabled') ||
-              backendMessage.toLowerCase().includes('inactive')
-            ) {
-              return 'Your account has been disabled. Please contact support.';
-            }
-            return 'Access denied. Please contact support if you believe this is an error.';
-
-          case 404:
-            return 'Login service not found. Please try again later.';
-
-          case 429:
-            return 'Too many login attempts. Please wait a few minutes before trying again.';
-
-          case 500:
-            return 'Server error. Please try again later.';
-
-          case 503:
-            return 'Service temporarily unavailable. Please try again later.';
-
-          default:
-            // Use the backend message for other cases, but make it user-friendly
-            if (
-              backendMessage.toLowerCase().includes('company') &&
-              backendMessage.toLowerCase().includes('inactive')
-            ) {
-              return 'Your company account is inactive. Please contact support.';
-            }
-            if (backendMessage.toLowerCase().includes('validation')) {
-              return 'Please check your email and password format.';
-            }
-            // Return the backend message as-is if it's already user-friendly
-            return backendMessage;
-        }
-      }
-    }
-
-    // Handle network errors
-    if (error && typeof error === 'object') {
-      if ('status' in error) {
-        const statusError = error as { status: number | string };
-        if (statusError.status === 'FETCH_ERROR' || statusError.status === 'PARSING_ERROR') {
-          return 'Unable to connect to the server. Please check your internet connection.';
-        }
-      }
-
-      if ('code' in error) {
-        const networkError = error as { code: string };
-        if (networkError.code === 'NETWORK_ERROR' || networkError.code === 'ERR_NETWORK') {
-          return 'Unable to connect to the server. Please check your internet connection.';
-        }
-      }
-    }
-
-    // Fallback to the utility function or default message
     const toastError = getToastErrorMessage(error);
     return toastError.description || 'An unexpected error occurred. Please try again.';
+  };
+
+  const handleRtkQueryError = (error: unknown): string | null => {
+    if (!error || typeof error !== 'object' || !('data' in error)) {
+      return null;
+    }
+
+    const rtkError = error as {
+      status: number;
+      data: {
+        success: false;
+        statusCode: number;
+        message: string;
+        error?: string;
+        details?: Record<string, unknown> | string[];
+        metadata: {
+          timestamp: string;
+          path: string;
+          correlationId: string;
+        };
+      };
+    };
+
+    if (!rtkError.data?.message) return null;
+
+    const backendMessage = rtkError.data.message;
+    const statusCode = rtkError.data.statusCode || rtkError.status;
+
+    return getStatusCodeMessage(statusCode, backendMessage);
+  };
+
+  const getStatusCodeMessage = (statusCode: number, backendMessage: string): string => {
+    switch (statusCode) {
+      case 401:
+        return handleAuthError(backendMessage);
+      case 403:
+        return handleForbiddenError(backendMessage);
+      case 404:
+        return 'Login service not found. Please try again later.';
+      case 429:
+        return 'Too many login attempts. Please wait a few minutes before trying again.';
+      case 500:
+        return 'Server error. Please try again later.';
+      case 503:
+        return 'Service temporarily unavailable. Please try again later.';
+      default:
+        return handleDefaultError(backendMessage);
+    }
+  };
+
+  const handleAuthError = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    if (
+      lowerMessage.includes('invalid') ||
+      lowerMessage.includes('wrong') ||
+      lowerMessage.includes('incorrect')
+    ) {
+      return 'Invalid email or password. Please check your credentials and try again.';
+    }
+    return 'Authentication failed. Please check your credentials and try again.';
+  };
+
+  const handleForbiddenError = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('disabled') || lowerMessage.includes('inactive')) {
+      return 'Your account has been disabled. Please contact support.';
+    }
+    return 'Access denied. Please contact support if you believe this is an error.';
+  };
+
+  const handleDefaultError = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('company') && lowerMessage.includes('inactive')) {
+      return 'Your company account is inactive. Please contact support.';
+    }
+    if (lowerMessage.includes('validation')) {
+      return 'Please check your email and password format.';
+    }
+    return message;
+  };
+
+  const handleNetworkError = (error: unknown): string | null => {
+    if (!error || typeof error !== 'object') return null;
+
+    if ('status' in error) {
+      const statusError = error as { status: number | string };
+      if (statusError.status === 'FETCH_ERROR' || statusError.status === 'PARSING_ERROR') {
+        return 'Unable to connect to the server. Please check your internet connection.';
+      }
+    }
+
+    if ('code' in error) {
+      const networkError = error as { code: string };
+      if (networkError.code === 'NETWORK_ERROR' || networkError.code === 'ERR_NETWORK') {
+        return 'Unable to connect to the server. Please check your internet connection.';
+      }
+    }
+
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -88,10 +88,10 @@ export class GoodsReceiptService {
     // Build where clause with company isolation
     const where: {
       companyId: string;
-      branchId: string | { in: string[] };
+      branchId?: string | { in: string[] };
     } = {
       companyId: user.companyId, // Add company isolation
-    } as any;
+    };
 
     // Add branch filtering if specified and validate user access
     if (branchId) {

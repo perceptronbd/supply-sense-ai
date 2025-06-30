@@ -322,7 +322,22 @@ export class ItemService {
   async findAll(query: QueryItemDto, companyId: string) {
     const { page, limit, includeStock = false } = query;
 
-    // Only validate pagination constraints if page is provided
+    this.validatePaginationParams(page, limit);
+
+    const { where, include } = this.buildQueryOptions(query);
+    where.companyId = companyId;
+
+    if (page && limit) {
+      return this.findAllPaginated(query, where, include, page, limit, includeStock);
+    }
+
+    return this.findAllUnpaginated(query, where, include, limit, includeStock);
+  }
+
+  /**
+   * Validate pagination parameters
+   */
+  private validatePaginationParams(page?: number, limit?: number): void {
     if (page && !limit) {
       throw new BadRequestException('Limit must be provided when page is specified');
     }
@@ -334,54 +349,64 @@ export class ItemService {
     if (limit && (limit < 1 || limit > 100)) {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
+  }
 
-    const { where, include } = this.buildQueryOptions(query);
+  /**
+   * Handle paginated queries
+   */
+  private async findAllPaginated(
+    query: QueryItemDto,
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    page: number,
+    limit: number,
+    includeStock: boolean
+  ) {
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    // Add company isolation
-    where.companyId = companyId;
+    let [items, total] = await Promise.all([
+      this.prisma.item.findMany({
+        where,
+        include,
+        skip,
+        take: limitNum,
+        orderBy: [{ name: 'asc' }, { sku: 'asc' }],
+      }),
+      this.prisma.item.count({ where }),
+    ]);
 
-    // Handle paginated queries (both page and limit provided)
-    if (page && limit) {
-      const pageNum = Number(page);
-      const limitNum = Number(limit);
-      const skip = (pageNum - 1) * limitNum;
+    let transformedItems = this.transformItems(items, includeStock);
 
-      let [items, total] = await Promise.all([
-        this.prisma.item.findMany({
-          where,
-          include,
-          skip,
-          take: limitNum,
-          orderBy: [{ name: 'asc' }, { sku: 'asc' }],
-        }),
-        this.prisma.item.count({ where }),
-      ]);
+    if (includeStock && query.branchId) {
+      const originalLength = transformedItems.length;
+      transformedItems = this.filterByStockLevels(transformedItems, query);
 
-      let transformedItems = this.transformItems(items, includeStock);
-
-      // Apply stock-level filters if needed
-      if (includeStock && query.branchId) {
-        transformedItems = this.filterByStockLevels(transformedItems, query);
-        // Recalculate total for filtered results
-        if (transformedItems.length !== items.length) {
-          // For filtered results, we need to get the actual count
-          const allItems = await this.prisma.item.findMany({ where, include });
-          const allTransformed = this.transformItems(allItems, includeStock);
-          const filteredAll = this.filterByStockLevels(allTransformed, query);
-          total = filteredAll.length;
-        }
+      if (transformedItems.length !== originalLength) {
+        total = await this.getFilteredTotal(where, include, query, includeStock);
       }
-
-      return {
-        data: transformedItems,
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      };
     }
 
-    // Handle non-paginated queries (with optional limit)
+    return {
+      data: transformedItems,
+      page: pageNum,
+      limit: limitNum,
+      total,
+      pages: Math.ceil(total / limitNum),
+    };
+  }
+
+  /**
+   * Handle non-paginated queries
+   */
+  private async findAllUnpaginated(
+    query: QueryItemDto,
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    limit?: number,
+    includeStock = false
+  ) {
     const queryOptions: {
       where: Prisma.ItemWhereInput;
       include: Prisma.ItemInclude;
@@ -393,7 +418,6 @@ export class ItemService {
       orderBy: [{ name: 'asc' }, { sku: 'asc' }],
     };
 
-    // Add limit if provided (for performance in non-paginated queries)
     if (limit) {
       queryOptions.take = Number(limit);
     }
@@ -401,12 +425,26 @@ export class ItemService {
     const items = await this.prisma.item.findMany(queryOptions);
     let transformedItems = this.transformItems(items, includeStock);
 
-    // Apply stock-level filters if needed
     if (includeStock && query.branchId) {
       transformedItems = this.filterByStockLevels(transformedItems, query);
     }
 
     return transformedItems;
+  }
+
+  /**
+   * Get filtered total count for paginated results
+   */
+  private async getFilteredTotal(
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    query: QueryItemDto,
+    includeStock: boolean
+  ): Promise<number> {
+    const allItems = await this.prisma.item.findMany({ where, include });
+    const allTransformed = this.transformItems(allItems, includeStock);
+    const filteredAll = this.filterByStockLevels(allTransformed, query);
+    return filteredAll.length;
   }
 
   /**

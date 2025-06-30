@@ -353,7 +353,8 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      this.logger.log(`🤖 Processing general query with AI agent: "${query}"`);
+      // this.logger.log(`🤖 Processing general query with AI agent: "${query}"`);
+      this.logger.log('🤖 Processing general query with AI agent');
 
       // Build the full prompt with context
       let fullPrompt = query;
@@ -373,7 +374,7 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         },
       ]);
 
-      this.logger.log('✅ General agent query processed successfully');
+      this.logger.log('✅ General agent query processed successfully', response.text);
       return {
         success: true,
         response: response.text,

@@ -20,8 +20,21 @@ export class SupplierService {
    */
   async findAll(companyId: string, query: QuerySupplierDto = {}) {
     const { search, includeInactive = false } = query;
+    const { page, limit } = this.validateAndParseParams(query);
 
-    // Ensure page and limit are properly converted to numbers
+    const where = this.buildWhereClause(companyId, search, includeInactive);
+
+    if (page && limit) {
+      return this.findAllPaginated(where, page, limit);
+    }
+
+    return this.findAllUnpaginated(where);
+  }
+
+  /**
+   * Validate and parse pagination parameters
+   */
+  private validateAndParseParams(query: QuerySupplierDto) {
     let page = query.page;
     let limit = query.limit;
 
@@ -33,7 +46,6 @@ export class SupplierService {
       limit = Number.parseInt(limit, 10);
     }
 
-    // Validate page and limit individually first
     if (page !== undefined && page < 1) {
       throw new BadRequestException('Page must be greater than 0');
     }
@@ -42,7 +54,6 @@ export class SupplierService {
       throw new BadRequestException('Limit must be greater than 0');
     }
 
-    // Then validate if both are provided when one is specified
     if (page && !limit) {
       throw new BadRequestException('Limit must be provided when page is specified');
     }
@@ -55,77 +66,69 @@ export class SupplierService {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
 
-    // Build where clause with company isolation
+    return { page, limit };
+  }
+
+  /**
+   * Build where clause for supplier queries
+   */
+  private buildWhereClause(
+    companyId: string,
+    search?: string,
+    includeInactive = false
+  ): Prisma.SupplierWhereInput {
     const where: Prisma.SupplierWhereInput = {
-      companyId, // Add company isolation
+      companyId,
     };
 
-    // Filter by active status unless includeInactive is true
     if (!includeInactive) {
       where.isActive = true;
     }
 
-    // Add search filter
     if (search) {
       where.OR = [
-        {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          code: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          contactPerson: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
+        { name: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+        { contactPerson: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    // If pagination is requested
-    if (page && limit) {
-      const skip = (page - 1) * limit;
+    return where;
+  }
 
-      const [suppliers, total] = await Promise.all([
-        this.prisma.supplier.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: {
-            name: 'asc',
-          },
-        }),
-        this.prisma.supplier.count({ where }),
-      ]);
+  /**
+   * Handle paginated supplier queries
+   */
+  private async findAllPaginated(where: Prisma.SupplierWhereInput, page: number, limit: number) {
+    const skip = (page - 1) * limit;
 
-      const totalPages = Math.ceil(total / limit);
+    const [suppliers, total] = await Promise.all([
+      this.prisma.supplier.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
 
-      // Return suppliers with pagination metadata - the ResponseInterceptor will format it properly
-      return {
-        data: suppliers,
-        page,
-        limit,
-        total,
-        pages: totalPages,
-      };
-    }
+    return {
+      data: suppliers,
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    };
+  }
 
-    // No pagination - return all suppliers
-    const suppliers = await this.prisma.supplier.findMany({
+  /**
+   * Handle non-paginated supplier queries
+   */
+  private async findAllUnpaginated(where: Prisma.SupplierWhereInput) {
+    return this.prisma.supplier.findMany({
       where,
-      orderBy: {
-        name: 'asc',
-      },
+      orderBy: { name: 'asc' },
     });
-
-    return suppliers;
   }
 
   /**

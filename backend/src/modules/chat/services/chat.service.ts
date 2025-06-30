@@ -59,17 +59,19 @@ export class ChatService {
 
       this.logger.log(`Analysis: database=${requiresDatabase}, mcp=${requiresMcp}`);
 
+      this.logger.log('********Handling as database query********');
+      return await this.handleDatabaseQuery(message, context, sessionId, userId);
       // Priority: MCP > Database > General
-      if (requiresMcp) {
-        this.logger.log('Handling as MCP-powered supply chain query');
-        return await this.handleMcpQuery(message, context, sessionId, userId);
-      }
-      if (requiresDatabase) {
-        this.logger.log('Handling as database query');
-        return await this.handleDatabaseQuery(message, context, sessionId, userId);
-      }
-      this.logger.log('Handling as general query');
-      return await this.handleGeneralQuery(message, context, sessionId, userId);
+      // if (requiresMcp) {
+      //   this.logger.log('<<<<<<<<<<Handling as MCP-powered supply chain query>>>>>>>>>>');
+      //   return await this.handleMcpQuery(message, context, sessionId, userId);
+      // }
+      // if (requiresDatabase) {
+      //   this.logger.log('********Handling as database query********');
+      //   return await this.handleDatabaseQuery(message, context, sessionId, userId);
+      // }
+      // this.logger.log('==========Handling as general query==========');
+      // return await this.handleGeneralQuery(message, context, sessionId, userId);
     } catch (error) {
       this.logger.error('Failed to process user message:', error);
       this.logger.error('Error stack:', error.stack);

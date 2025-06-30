@@ -45,14 +45,14 @@ export class DynamicSQLService {
       const schemaForAI = this.databaseSchemaService.formatSchemaForAI(userContext.userRole);
 
       // Log the initial request
-      console.log('\n🔍 ===== AI SQL GENERATION STARTED =====');
-      console.log('📝 User Question:', question);
-      console.log('👤 User Context:', JSON.stringify(userContext, null, 2));
-      console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters'); // Step 2: Generate SQL using AI with comprehensive schema context
+      // console.log('\n🔍 ===== AI SQL GENERATION STARTED =====');
+      // console.log('📝 User Question:', question);
+      // console.log('👤 User Context:', JSON.stringify(userContext, null, 2));
+      // console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters'); // Step 2: Generate SQL using AI with comprehensive schema context
       const sqlResult = await this.generateSecureSQL(question, schemaForAI, userContext); // Check if AI could not generate SQL
       if (sqlResult.sql === null) {
-        console.log('\n⚠️ ===== AI CANNOT GENERATE SQL FOR THIS QUERY =====');
-        console.log('💭 Returning AI explanation to user:', sqlResult.explanation);
+        // console.log('\n⚠️ ===== AI CANNOT GENERATE SQL FOR THIS QUERY =====');
+        // console.log('💭 Returning AI explanation to user:', sqlResult.explanation);
 
         return {
           result: [],
@@ -60,11 +60,11 @@ export class DynamicSQLService {
           sql: undefined,
         };
       } // Enhanced logging for generated SQL
-      console.log('\n🎯 ===== AI GENERATED SQL RESULT =====');
-      console.log('📊 Generated SQL Query:');
-      console.log(sqlResult.sql);
-      console.log('\n🔧 SQL Parameters:', sqlResult.values);
-      console.log('💬 AI Explanation:', sqlResult.explanation);
+      // console.log('\n🎯 ===== AI GENERATED SQL RESULT =====');
+      // console.log('📊 Generated SQL Query:');
+      // console.log(sqlResult.sql);
+      // console.log('\n🔧 SQL Parameters:', sqlResult.values);
+      // console.log('💬 AI Explanation:', sqlResult.explanation);
 
       this.logger.log('🔧 Generated SQL Query from AI:');
       this.logger.log(sqlResult.sql);
@@ -77,41 +77,41 @@ export class DynamicSQLService {
 
       const validationResult = this.validateSQL(sqlResult.sql);
       if (!validationResult.isValid) {
-        console.log('\n❌ ===== SQL VALIDATION FAILED =====');
-        console.log('🚫 Validation Errors:', validationResult.errors);
+        // console.log('\n❌ ===== SQL VALIDATION FAILED =====');
+        // console.log('🚫 Validation Errors:', validationResult.errors);
         throw new Error(`Invalid SQL query: ${validationResult.errors.join(', ')}`);
       }
 
-      console.log('\n✅ SQL Validation: PASSED');
+      // console.log('\n✅ SQL Validation: PASSED');
 
       // Step 4: Execute the query
       const startTime = Date.now();
       const rows = await this.executeSQL(sqlResult.sql, sqlResult.values);
-      const executionTime = Date.now() - startTime;
+      const _executionTime = Date.now() - startTime;
 
       // Log execution results
-      console.log('\n📊 ===== SQL EXECUTION RESULTS =====');
-      console.log('⏱️ Execution Time:', executionTime, 'ms');
-      console.log('📈 Row Count:', rows.length);
-      console.log('🔍 Sample Data (first 2 rows):');
-      console.log(JSON.stringify(rows.slice(0, 2), null, 2));
+      // console.log('\n📊 ===== SQL EXECUTION RESULTS =====');
+      // console.log('⏱️ Execution Time:', executionTime, 'ms');
+      // console.log('📈 Row Count:', rows.length);
+      // console.log('🔍 Sample Data (first 2 rows):');
+      // console.log(JSON.stringify(rows.slice(0, 2), null, 2));
 
       // Step 5: Generate human-readable response
       const explanation = await this.generateExplanation(question, rows, sqlResult.explanation);
 
-      console.log('\n💬 ===== FINAL AI EXPLANATION =====');
-      console.log(explanation);
-      console.log('\n🏁 ===== AI SQL GENERATION COMPLETED =====\n');
+      // console.log('\n💬 ===== FINAL AI EXPLANATION =====');
+      // console.log(explanation);
+      // console.log('\n🏁 ===== AI SQL GENERATION COMPLETED =====\n');
       return {
         result: rows,
         explanation,
         sql: sqlResult.sql, // We know this is not null here due to the type check above
       };
     } catch (error) {
-      console.log('\n💥 ===== DYNAMIC SQL SERVICE ERROR =====');
-      console.log('🚫 Error Type:', error.constructor.name);
-      console.log('🚫 Error Message:', error.message);
-      console.log('🚫 Error Stack:', error.stack);
+      // console.log('\n💥 ===== DYNAMIC SQL SERVICE ERROR =====');
+      // console.log('🚫 Error Type:', error.constructor.name);
+      // console.log('🚫 Error Message:', error.message);
+      // console.log('🚫 Error Stack:', error.stack);
       this.logger.error('Failed to process natural language query:', error);
 
       throw new Error(`Failed to process query: ${error.message}`);
@@ -253,16 +253,16 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
 
     try {
       // Log the AI prompt being sent
-      console.log('\n🤖 ===== AI PROMPT BEING SENT =====');
-      console.log('📝 Prompt Length:', prompt.length, 'characters');
-      console.log('🎯 Key sections:');
-      console.log('  - Question:', question);
-      console.log('  - User Role:', userContext.userRole);
-      console.log('  - Branch ID:', userContext.branchId || 'N/A');
-      console.log('\n📋 Full AI Prompt:');
-      console.log('='.repeat(80));
-      console.log(prompt);
-      console.log('='.repeat(80));
+      // console.log('\n🤖 ===== AI PROMPT BEING SENT =====');
+      // console.log('📝 Prompt Length:', prompt.length, 'characters');
+      // console.log('🎯 Key sections:');
+      // console.log('  - Question:', question);
+      // console.log('  - User Role:', userContext.userRole);
+      // console.log('  - Branch ID:', userContext.branchId || 'N/A');
+      // console.log('\n📋 Full AI Prompt:');
+      // console.log('='.repeat(80));
+      // console.log(prompt);
+      // console.log('='.repeat(80));
       const response = await this.mcpClientService.queryGeneralAgent(prompt);
 
       if (!response.success) {
@@ -271,33 +271,33 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
 
       const aiResponseText = response.response || '';
 
-      console.log('\n🔄 ===== RAW AI RESPONSE =====');
-      console.log('📤 Raw Response Length:', aiResponseText.length, 'characters');
-      console.log('📤 Raw AI Response:');
-      console.log(aiResponseText);
+      // console.log('\n🔄 ===== RAW AI RESPONSE =====');
+      // console.log('📤 Raw Response Length:', aiResponseText.length, 'characters');
+      // console.log('📤 Raw AI Response:');
+      // console.log(aiResponseText);
 
       // Parse the JSON response with improved error handling
       const cleanResponse = aiResponseText.replace(/```json|```/g, '').trim();
 
-      console.log('\n🧹 ===== CLEANED AI RESPONSE =====');
-      console.log('🔧 Cleaned Response:');
-      console.log(cleanResponse);
+      // console.log('\n🧹 ===== CLEANED AI RESPONSE =====');
+      // console.log('🔧 Cleaned Response:');
+      // console.log(cleanResponse);
 
       // Parse the JSON response with improved error handling
       const parsed = await this.parseAIResponse(cleanResponse);
 
-      console.log('\n✅ ===== PARSED AI RESPONSE =====');
-      console.log('📊 Parsed SQL:', parsed.sql);
-      console.log('🔧 Parsed Values:', parsed.values);
-      console.log('💬 Parsed Explanation:', parsed.explanation); // Validate the response structure
+      // console.log('\n✅ ===== PARSED AI RESPONSE =====');
+      // console.log('📊 Parsed SQL:', parsed.sql);
+      // console.log('🔧 Parsed Values:', parsed.values);
+      // console.log('💬 Parsed Explanation:', parsed.explanation); // Validate the response structure
       if (!Array.isArray(parsed.values) || !parsed.explanation) {
-        console.log('\n❌ ===== AI RESPONSE VALIDATION FAILED =====');
-        console.log('🚫 Missing required fields in AI response');
+        // console.log('\n❌ ===== AI RESPONSE VALIDATION FAILED =====');
+        // console.log('🚫 Missing required fields in AI response');
         throw new Error('Invalid response format from AI');
       } // Handle cases where AI cannot generate SQL (sql: null)
       if (parsed.sql === null) {
-        console.log('\n⚠️ ===== AI CANNOT GENERATE SQL =====');
-        console.log('💭 AI Explanation:', parsed.explanation);
+        // console.log('\n⚠️ ===== AI CANNOT GENERATE SQL =====');
+        // console.log('💭 AI Explanation:', parsed.explanation);
 
         // Return a valid SQLQueryResult with null SQL
         return {
@@ -309,12 +309,12 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
 
       // Validate SQL is a non-empty string when provided
       if (typeof parsed.sql !== 'string' || parsed.sql.trim() === '') {
-        console.log('\n❌ ===== INVALID SQL FORMAT =====');
-        console.log('🚫 SQL must be a non-empty string');
+        // console.log('\n❌ ===== INVALID SQL FORMAT =====');
+        // console.log('🚫 SQL must be a non-empty string');
         throw new Error('Invalid SQL format from AI');
       }
 
-      console.log('\n✅ AI Response Validation: PASSED');
+      // console.log('\n✅ AI Response Validation: PASSED');
 
       return {
         sql: parsed.sql,
@@ -322,8 +322,8 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
         explanation: parsed.explanation,
       };
     } catch (error) {
-      console.log('\n❌ ===== AI SQL GENERATION ERROR =====');
-      console.log('🚫 Error Details:', error);
+      // console.log('\n❌ ===== AI SQL GENERATION ERROR =====');
+      // console.log('🚫 Error Details:', error);
       this.logger.error('Failed to generate SQL with AI:', error);
       throw new Error('Failed to generate SQL query');
     }
@@ -333,8 +333,8 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
    * Validate SQL query for security
    */
   private validateSQL(sql: string): { isValid: boolean; errors: string[] } {
-    console.log('\n🔍 ===== SQL VALIDATION STARTED =====');
-    console.log('📝 SQL to validate:', sql);
+    // console.log('\n🔍 ===== SQL VALIDATION STARTED =====');
+    // console.log('📝 SQL to validate:', sql);
 
     const errors: string[] = [];
     const lowerSQL = sql.toLowerCase().trim();
@@ -367,7 +367,7 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
     for (const keyword of dangerousKeywords) {
       const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
       if (regex.test(lowerSQL)) {
-        console.log(`🚫 Found dangerous keyword: ${keyword}`);
+        // console.log(`🚫 Found dangerous keyword: ${keyword}`);
         errors.push(`Dangerous keyword detected: ${keyword}`);
       }
     }
@@ -376,7 +376,7 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
     const commentPatterns = ['--', '/*', '*/'];
     for (const pattern of commentPatterns) {
       if (lowerSQL.includes(pattern)) {
-        console.log(`🚫 Found dangerous comment pattern: ${pattern}`);
+        // console.log(`🚫 Found dangerous comment pattern: ${pattern}`);
         errors.push(`Dangerous comment pattern detected: ${pattern}`);
       }
     }
@@ -391,14 +391,14 @@ Make sure the SQL includes JOINs for readable names and is valid PostgreSQL synt
 
     for (const pattern of injectionPatterns) {
       if (pattern.test(sql)) {
-        console.log(`🚫 Found SQL injection pattern: ${pattern}`);
+        // console.log(`🚫 Found SQL injection pattern: ${pattern}`);
         errors.push('Potential SQL injection pattern detected');
       }
     }
 
-    console.log('🔍 Validation result:', errors.length === 0 ? 'PASSED' : 'FAILED');
+    // console.log('🔍 Validation result:', errors.length === 0 ? 'PASSED' : 'FAILED');
     if (errors.length > 0) {
-      console.log('🚫 Validation errors:', errors);
+      // console.log('🚫 Validation errors:', errors);
     }
 
     return {
@@ -526,10 +526,10 @@ REMEMBER: Users should never see database IDs in your response - only human-read
   private async parseAIResponse(cleanResponse: string): Promise<ParsedAIResponse> {
     try {
       return JSON.parse(cleanResponse) as ParsedAIResponse;
-    } catch (jsonError) {
-      console.log('\n❌ ===== JSON PARSING FAILED =====');
-      console.log('🚫 JSON Parse Error:', (jsonError as Error).message);
-      console.log('🔍 Attempting to extract and fix valid JSON...');
+    } catch (_jsonError) {
+      // console.log('\n❌ ===== JSON PARSING FAILED =====');
+      // console.log('🚫 JSON Parse Error:', (jsonError as Error).message);
+      // console.log('🔍 Attempting to extract and fix valid JSON...');
 
       return this.extractJsonFromResponse(cleanResponse);
     }
@@ -542,22 +542,22 @@ REMEMBER: Users should never see database IDs in your response - only human-read
     // Try to extract JSON from response that might contain extra text
     const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.log('🚫 No valid JSON structure found in response');
+      // console.log('🚫 No valid JSON structure found in response');
       throw new Error(
         `AI response does not contain valid JSON. Response: ${cleanResponse.substring(0, 200)}...`
       );
     }
 
-    console.log('🔍 Found potential JSON block, attempting to fix and parse...');
+    // console.log('🔍 Found potential JSON block, attempting to fix and parse...');
     const extractedJson = jsonMatch[0];
 
     try {
       // First attempt: Parse as-is
       const parsed = JSON.parse(extractedJson) as ParsedAIResponse;
-      console.log('✅ Successfully parsed extracted JSON as-is');
+      // console.log('✅ Successfully parsed extracted JSON as-is');
       return parsed;
     } catch (_extractError) {
-      console.log('🔧 JSON extraction failed, attempting to fix SQL field issues...');
+      // console.log('🔧 JSON extraction failed, attempting to fix SQL field issues...');
       return this.fixAndParseJson(extractedJson, cleanResponse);
     }
   }
@@ -596,14 +596,14 @@ REMEMBER: Users should never see database IDs in your response - only human-read
         }
       );
 
-      console.log('🔧 Fixed JSON structure:');
-      console.log(fixedJson);
+      // console.log('🔧 Fixed JSON structure:');
+      // console.log(fixedJson);
 
       const parsed = JSON.parse(fixedJson) as ParsedAIResponse;
-      console.log('✅ Successfully parsed fixed JSON');
+      // console.log('✅ Successfully parsed fixed JSON');
       return parsed;
-    } catch (fixError) {
-      console.log('🚫 Failed to fix and parse JSON:', (fixError as Error).message);
+    } catch (_fixError) {
+      // console.log('🚫 Failed to fix and parse JSON:', (fixError as Error).message);
       return this.manuallyExtractFields(cleanResponse);
     }
   }
@@ -612,7 +612,7 @@ REMEMBER: Users should never see database IDs in your response - only human-read
    * Manual field extraction as final fallback
    */
   private manuallyExtractFields(cleanResponse: string): ParsedAIResponse {
-    console.log('🔧 Attempting manual field extraction...');
+    // console.log('🔧 Attempting manual field extraction...');
     try {
       const sqlMatch =
         cleanResponse.match(/"sql":\s*"([^"]*(?:\\.[^"]*)*)"/) ||
@@ -639,13 +639,13 @@ REMEMBER: Users should never see database IDs in your response - only human-read
           values = [];
         }
 
-        console.log('✅ Manual extraction successful');
+        // console.log('✅ Manual extraction successful');
         return { sql, values, explanation };
       }
 
       throw new Error('Could not extract required fields from AI response');
-    } catch (manualError) {
-      console.log('🚫 Manual extraction failed:', (manualError as Error).message);
+    } catch (_manualError) {
+      // console.log('🚫 Manual extraction failed:', (manualError as Error).message);
       throw new Error(
         `AI returned invalid JSON format that could not be fixed. Response: ${cleanResponse.substring(0, 300)}...`
       );
