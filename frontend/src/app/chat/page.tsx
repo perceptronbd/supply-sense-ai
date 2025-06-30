@@ -31,7 +31,7 @@ export default function ChatPage() {
   }, [activeSessionId, createSession]);
 
   return (
-    <main className="w-full h-screen bg-background">
+    <main className="w-full h-[calc(100vh-40px)] bg-background">
       <div className="flex overflow-hidden relative h-full bg-background text-foreground">
         <LoadingOverlay
           isVisible={isCreatingSession}

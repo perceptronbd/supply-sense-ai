@@ -6,7 +6,7 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { logout } from '@/store/slices/authSlice';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
-import { Badge, Button } from '@heroui/react';
+import { Button, Chip } from '@heroui/react';
 import {
   Building2,
   ClipboardList,
@@ -80,27 +80,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       {/* Mobile backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-overlay/50 z-40 lg:hidden"
+        <input
+          type="button"
+          className="fixed inset-0 z-40 bg-overlay/50 lg:hidden"
           onClick={onClose}
           onKeyDown={(e) => e.key === 'Escape' && onClose()}
-          role="button"
           tabIndex={0}
         />
       )}
       {/* Sidebar */}
       <aside
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-content1 rounded-xl m-3 shadow-large transform transition-transform duration-300 ease-in-out border border-divider
+        fixed inset-y-0 left-0 z-50 w-64 rounded-xl mr-2  transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-0
       `}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <header className="flex items-center justify-between h-16 px-6 border-b border-divider rounded-t-xl">
+          <header className="flex justify-between items-center px-6 h-16 rounded-t-xl border-b border-divider">
             <BrandLogo showText={true} />
-            <div className="flex items-center gap-2">
+            <div className="flex gap-2 items-center">
               {/* Theme toggle icon button */}
               <Button
                 isIconOnly
@@ -115,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="lg:hidden p-1 rounded-medium hover:bg-content2 transition-colors text-foreground"
+                className="p-1 transition-colors lg:hidden rounded-medium hover:bg-content2 text-foreground"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -136,7 +136,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       w-full flex items-center px-3 py-2 text-left text-small font-medium rounded-medium transition-colors duration-200
                       ${
                         isActive(item.href)
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary/20 text-primary-primary border-primary border'
                           : 'text-foreground hover:bg-content2 hover:text-foreground'
                       }
                     `}
@@ -149,7 +149,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </ul>
           </nav>
           {/* User info and logout */}
-          <footer className="border-t border-divider p-4 rounded-b-xl">
+          <footer className="p-4 rounded-b-xl border-t border-divider">
             <div className="mb-4 space-y-2">
               <Text variant="bodySmall" weight="medium" color="default" className="truncate" as="p">
                 {user?.firstName} {user?.lastName}
@@ -157,9 +157,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <Text variant="bodyXSmall" color="muted" className="truncate" as="p">
                 {user?.email}
               </Text>
-              <Badge color="secondary" variant="flat" size="sm">
-                {user?.role?.replace(/_/g, ' ')}
-              </Badge>
+              <Chip color="secondary" variant="flat" size="sm">
+                {user?.roles && user.roles.length > 0
+                  ? user.roles.join(', ').replace(/_/g, ' ')
+                  : 'No role assigned'}
+              </Chip>
             </div>
 
             {/* Logout button */}

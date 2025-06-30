@@ -32,25 +32,25 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex p-4 h-screen bg-content2 text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+      <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
         {/* Top bar for mobile */}
-        <header className="lg:hidden bg-content1 shadow-small border-b border-divider px-4 py-3 flex items-center justify-between">
+        <header className="flex justify-between items-center px-4 py-3 border-b lg:hidden bg-content1 shadow-small border-divider">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-medium text-default-500 hover:text-foreground hover:bg-content2 transition-colors"
+            className="p-2 transition-colors rounded-medium text-default-500 hover:text-foreground hover:bg-content2"
           >
             <MenuIcon className="w-6 h-6" />
           </button>
           <Text variant="titleMedium" weight="semiBold" color="default" as="h1">
             SupplySense
           </Text>
-        </header>{' '}
+        </header>
         {/* Main content */}
-        <main className="flex-1 overflow-auto bg-background">{children}</main>
+        <main className="overflow-auto flex-1 bg-background">{children}</main>
       </div>
     </div>
   );

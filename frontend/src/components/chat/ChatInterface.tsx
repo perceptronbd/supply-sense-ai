@@ -92,7 +92,7 @@ export function ChatInterface({ sessionId, className }: ChatInterfaceProps) {
   if (messagesError) {
     return (
       <section
-        className={`flex items-center justify-center h-full bg-background ${className}`}
+        className={`flex justify-center items-center h-full bg-background ${className}`}
         aria-label="Chat error"
       >
         <div className="text-center">

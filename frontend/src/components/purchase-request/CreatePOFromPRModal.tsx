@@ -45,7 +45,7 @@ export default function CreatePOFromPRModal({
 
   // Check if user has required role
   const hasRequiredRole =
-    user?.role === 'BRANCH_MANAGER' || user?.role === 'PROCUREMENT_SPECIALIST';
+    user?.roles?.includes('BRANCH_MANAGER') || user?.roles?.includes('PROCUREMENT_SPECIALIST');
 
   // Check if there are any active suppliers with proper type checking
   const hasActiveSuppliers = Array.isArray(suppliers)
@@ -164,7 +164,7 @@ export default function CreatePOFromPRModal({
                 </Text>
                 <Text variant="bodyXSmall" className="text-danger-600 mt-1" as="p">
                   You need to be a Branch Manager or Procurement Specialist to create purchase
-                  orders. Your current role: {user?.role || 'Unknown'}
+                  orders. Your current roles: {user?.roles?.join(', ') || 'Unknown'}
                 </Text>
               </section>
             )}
