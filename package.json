@@ -138,6 +138,7 @@
     "framer-motion": "^12.16.0",
     "html-react-parser": "^5.2.5",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.525.0",
     "next": "~15.2.4",
     "next-themes": "^0.4.6",
     "openai": "^5.6.0",

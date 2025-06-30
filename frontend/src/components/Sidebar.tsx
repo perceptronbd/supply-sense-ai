@@ -7,19 +7,19 @@ import { logout } from '@/store/slices/authSlice';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
 import { Badge, Button } from '@heroui/react';
+import {
+  Building2,
+  ClipboardList,
+  FileText,
+  Inbox,
+  MessageCircle,
+  Moon,
+  Package,
+  Sun,
+  X,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  BoxIcon,
-  BuildingIcon,
-  ChatIcon,
-  ClipboardIcon,
-  CloseIcon,
-  DocumentIcon,
-  InboxIcon,
-  MoonIcon,
-  SunIcon,
-} from './icons';
 import { Text } from './ui/Text';
 
 interface SidebarProps {
@@ -42,36 +42,37 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
   };
+
   const navigation = [
     {
       name: 'AI Chat',
       href: ROUTE_PATHS.CHAT,
-      icon: <ChatIcon className="w-5 h-5" />,
+      icon: <MessageCircle className="w-5 h-5" />,
     },
     {
       name: 'Items',
       href: ROUTE_PATHS.ITEMS,
-      icon: <BoxIcon className="w-5 h-5" />,
+      icon: <Package className="w-5 h-5" />,
     },
     {
       name: 'Branches',
       href: ROUTE_PATHS.BRANCHES,
-      icon: <BuildingIcon className="w-5 h-5" />,
+      icon: <Building2 className="w-5 h-5" />,
     },
     {
       name: 'Purchase Requests',
       href: ROUTE_PATHS.PURCHASE_REQUESTS,
-      icon: <DocumentIcon className="w-5 h-5" />,
+      icon: <FileText className="w-5 h-5" />,
     },
     {
       name: 'Purchase Orders',
       href: ROUTE_PATHS.PURCHASE_ORDERS,
-      icon: <ClipboardIcon className="w-5 h-5" />,
+      icon: <ClipboardList className="w-5 h-5" />,
     },
     {
       name: 'Goods Receipts',
       href: ROUTE_PATHS.GOODS_RECEIPTS,
-      icon: <InboxIcon className="w-5 h-5" />,
+      icon: <Inbox className="w-5 h-5" />,
     },
   ];
 
@@ -109,18 +110,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onPress={handleThemeToggle}
                 aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {theme === 'dark' ? (
-                  <SunIcon className="w-4 h-4" />
-                ) : (
-                  <MoonIcon className="w-4 h-4" />
-                )}
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </Button>
               <button
                 type="button"
                 onClick={onClose}
                 className="lg:hidden p-1 rounded-medium hover:bg-content2 transition-colors text-foreground"
               >
-                <CloseIcon className="w-6 h-6" />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </header>
