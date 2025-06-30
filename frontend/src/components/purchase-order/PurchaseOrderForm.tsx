@@ -231,7 +231,7 @@ export function PurchaseOrderForm({
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.paymentTerms}
                 errors={errors.paymentTerms}
-                defaultValue={formData.paymentTerms}
+                defaultValue={formData.paymentTerms ?? undefined}
                 placeholder="e.g., Net 30 days"
                 onValueChange={handleFieldChange}
               />
@@ -243,7 +243,7 @@ export function PurchaseOrderForm({
                 wasSubmitted={wasSubmitted}
                 fieldSchema={purchaseOrderSchema.shape.deliveryTerms}
                 errors={errors.deliveryTerms}
-                defaultValue={formData.deliveryTerms}
+                defaultValue={formData.deliveryTerms ?? undefined}
                 placeholder="e.g., FOB Origin"
                 onValueChange={handleFieldChange}
               />
@@ -255,7 +255,7 @@ export function PurchaseOrderForm({
                   wasSubmitted={wasSubmitted}
                   fieldSchema={purchaseOrderSchema.shape.notes}
                   errors={errors.notes}
-                  defaultValue={formData.notes}
+                  defaultValue={formData.notes ?? undefined}
                   rows={3}
                   placeholder="Any additional notes or special requirements"
                   onValueChange={handleFieldChange}

@@ -1,6 +1,7 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
