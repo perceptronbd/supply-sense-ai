@@ -74,6 +74,46 @@ interface PermissionGuardProps {
   readonly disabledClassName?: string;
 }
 
+/**
+ * Helper function to clone child elements with disabled props
+ * Extracted to reduce cognitive complexity
+ */
+function cloneChildWithDisabledProps(child: ReactNode): ReactNode {
+  if (!React.isValidElement(child)) {
+    return child;
+  }
+
+  // Try to inject disabled props for common interactive elements
+  const childProps: Record<string, unknown> = {
+    disabled: true,
+    'aria-disabled': true,
+    tabIndex: -1,
+  };
+
+  // For HeroUI components, use isDisabled prop
+  if ('isDisabled' in (child.props as object)) {
+    childProps.isDisabled = true;
+  }
+
+  // For form elements and buttons
+  if (
+    child.type === 'button' ||
+    child.type === 'input' ||
+    child.type === 'textarea' ||
+    child.type === 'select' ||
+    child.type === 'form'
+  ) {
+    childProps.disabled = true;
+  }
+
+  try {
+    return React.cloneElement(child, childProps);
+  } catch {
+    // If cloning fails, return original child
+    return child;
+  }
+}
+
 export function PermissionGuard({
   children,
   permission,
@@ -146,40 +186,7 @@ export function PermissionGuard({
         tabIndex={-1} // Remove from tab order
       >
         {/* Clone children and inject disabled props if possible */}
-        {React.Children.map(children, (child) => {
-          if (React.isValidElement(child)) {
-            // Try to inject disabled props for common interactive elements
-            const childProps: Record<string, unknown> = {
-              disabled: true,
-              'aria-disabled': true,
-              tabIndex: -1,
-            };
-
-            // For HeroUI components, use isDisabled prop
-            if ('isDisabled' in (child.props as object)) {
-              childProps.isDisabled = true;
-            }
-
-            // For form elements and buttons
-            if (
-              child.type === 'button' ||
-              child.type === 'input' ||
-              child.type === 'textarea' ||
-              child.type === 'select' ||
-              child.type === 'form'
-            ) {
-              childProps.disabled = true;
-            }
-
-            try {
-              return React.cloneElement(child, childProps);
-            } catch {
-              // If cloning fails, return original child
-              return child;
-            }
-          }
-          return child;
-        })}
+        {React.Children.map(children, cloneChildWithDisabledProps)}
       </div>
     );
   }

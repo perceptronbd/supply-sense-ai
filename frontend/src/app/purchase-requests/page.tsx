@@ -157,6 +157,73 @@ export default function PurchaseRequestsPage() {
     });
   };
 
+  // Helper functions to reduce complexity
+  const getDraftStatusItems = () => {
+    const items = [];
+
+    if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.UPDATE)) {
+      items.push(
+        <DropdownItem key="edit" startContent={<EditIcon />}>
+          Edit Request
+        </DropdownItem>
+      );
+    }
+
+    if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.SUBMIT)) {
+      items.push(
+        <DropdownItem key="submit" color="warning" startContent={<SendIcon />}>
+          Submit for Approval
+        </DropdownItem>
+      );
+    }
+
+    if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.DELETE)) {
+      items.push(
+        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+          Delete Request
+        </DropdownItem>
+      );
+    }
+
+    return items;
+  };
+
+  const getSubmittedStatusItems = () => {
+    const items = [];
+
+    if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.APPROVE)) {
+      items.push(
+        <DropdownItem key="approve" color="success" startContent={<CheckIcon />}>
+          Approve Request
+        </DropdownItem>
+      );
+    }
+
+    if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.REJECT)) {
+      items.push(
+        <DropdownItem key="reject" color="danger" startContent={<XMarkIcon />}>
+          Reject Request
+        </DropdownItem>
+      );
+    }
+
+    return items;
+  };
+
+  const getApprovedStatusItems = () => {
+    const items = [];
+
+    if (hasPermission(PURCHASE_ORDER_PERMISSIONS.CREATE)) {
+      items.push(
+        <DropdownItem key="createPO" color="primary" startContent={<ShoppingCartIcon />}>
+          Create Purchase Order
+        </DropdownItem>
+      );
+    }
+
+    return items;
+  };
+
   const getDropdownItems = (request: PurchaseRequest) => {
     const items = [
       <DropdownItem key="view" startContent={<EyeIcon />}>
@@ -164,64 +231,16 @@ export default function PurchaseRequestsPage() {
       </DropdownItem>,
     ];
 
-    if (request.status === 'DRAFT') {
-      // Edit action - requires UPDATE permission
-      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.UPDATE)) {
-        items.push(
-          <DropdownItem key="edit" startContent={<EditIcon />}>
-            Edit Request
-          </DropdownItem>
-        );
-      }
-
-      // Submit action - requires SUBMIT permission
-      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.SUBMIT)) {
-        items.push(
-          <DropdownItem key="submit" color="warning" startContent={<SendIcon />}>
-            Submit for Approval
-          </DropdownItem>
-        );
-      }
-
-      // Delete action - requires DELETE permission
-      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.DELETE)) {
-        items.push(
-          <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
-            Delete Request
-          </DropdownItem>
-        );
-      }
-    }
-
-    if (request.status === 'SUBMITTED') {
-      // Approve action - requires APPROVE permission
-      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.APPROVE)) {
-        items.push(
-          <DropdownItem key="approve" color="success" startContent={<CheckIcon />}>
-            Approve Request
-          </DropdownItem>
-        );
-      }
-
-      // Reject action - requires REJECT permission
-      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.REJECT)) {
-        items.push(
-          <DropdownItem key="reject" color="danger" startContent={<XMarkIcon />}>
-            Reject Request
-          </DropdownItem>
-        );
-      }
-    }
-
-    if (request.status === 'APPROVED') {
-      // Create PO action - requires CREATE permission for purchase orders
-      if (hasPermission(PURCHASE_ORDER_PERMISSIONS.CREATE)) {
-        items.push(
-          <DropdownItem key="createPO" color="primary" startContent={<ShoppingCartIcon />}>
-            Create Purchase Order
-          </DropdownItem>
-        );
-      }
+    switch (request.status) {
+      case 'DRAFT':
+        items.push(...getDraftStatusItems());
+        break;
+      case 'SUBMITTED':
+        items.push(...getSubmittedStatusItems());
+        break;
+      case 'APPROVED':
+        items.push(...getApprovedStatusItems());
+        break;
     }
 
     return items;
