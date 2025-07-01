@@ -2,7 +2,7 @@ import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { config } from '../../config/env';
-import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
+import { TAG_TYPES } from './tagTypes';
 
 interface LoginRequest {
   email: string;
@@ -66,7 +66,7 @@ export const authApi = createApi({
       return headers;
     },
   }),
-  tagTypes: TAG_TYPE_GROUPS.AUTH_MODULE,
+  tagTypes: [TAG_TYPES.AUTH, TAG_TYPES.USER_PROFILE],
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({

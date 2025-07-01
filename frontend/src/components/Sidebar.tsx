@@ -15,10 +15,12 @@ import {
   ITEM_PERMISSIONS,
   PURCHASE_ORDER_PERMISSIONS,
   PURCHASE_REQUEST_PERMISSIONS,
+  SUPPLIER_PERMISSIONS,
 } from '@supplysense/types';
 import {
   Building2,
   ClipboardList,
+  Container,
   FileText,
   Inbox,
   MessageCircle,
@@ -61,6 +63,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: <MessageCircle className="w-5 h-5" />,
       permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
+
+    {
+      name: 'Branches',
+      href: ROUTE_PATHS.BRANCHES,
+      icon: <Building2 className="w-5 h-5" />,
+      permission: BRANCH_PERMISSIONS.READ,
+    },
     {
       name: 'Items',
       href: ROUTE_PATHS.ITEMS,
@@ -68,10 +77,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       permission: ITEM_PERMISSIONS.READ,
     },
     {
-      name: 'Branches',
-      href: ROUTE_PATHS.BRANCHES,
-      icon: <Building2 className="w-5 h-5" />,
-      permission: BRANCH_PERMISSIONS.READ,
+      name: 'Suppliers',
+      href: ROUTE_PATHS.SUPPLIERS,
+      icon: <Container className="w-5 h-5" />,
+      permission: SUPPLIER_PERMISSIONS.READ,
     },
     {
       name: 'Purchase Requests',
@@ -118,9 +127,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <header className="flex justify-between items-center px-6 h-16 rounded-t-xl border-b border-divider">
+          <header className="flex items-center justify-between h-16 px-6 border-b rounded-t-xl border-divider">
             <BrandLogo showText={true} />
-            <div className="flex gap-2 items-center">
+            <div className="flex items-center gap-2">
               {/* Theme toggle icon button */}
               <Button
                 isIconOnly
@@ -169,7 +178,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </ul>
           </nav>
           {/* User info and logout */}
-          <footer className="p-4 rounded-b-xl border-t border-divider">
+          <footer className="p-4 border-t rounded-b-xl border-divider">
             <div className="mb-4 space-y-2">
               <Text variant="bodySmall" weight="medium" color="default" className="truncate" as="p">
                 {user?.firstName} {user?.lastName}

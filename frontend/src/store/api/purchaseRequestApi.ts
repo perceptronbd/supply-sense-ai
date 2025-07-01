@@ -2,7 +2,7 @@ import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { config } from '../../config/env';
-import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
+import { TAG_TYPES } from './tagTypes';
 
 // API Response Types
 export interface PurchaseRequestItem {
@@ -111,7 +111,13 @@ export const purchaseRequestApi = createApi({
       }
     },
   }),
-  tagTypes: TAG_TYPE_GROUPS.PURCHASE_REQUEST_MODULE,
+  tagTypes: [
+    TAG_TYPES.PURCHASE_REQUEST,
+    TAG_TYPES.PURCHASE_REQUEST_TEMPLATE,
+    TAG_TYPES.PURCHASE_ORDER,
+    TAG_TYPES.BRANCH,
+    TAG_TYPES.ITEM,
+  ],
   endpoints: (builder) => ({
     // Purchase Request endpoints
     createPurchaseRequest: builder.mutation<PurchaseRequest, CreatePurchaseRequestRequest>({

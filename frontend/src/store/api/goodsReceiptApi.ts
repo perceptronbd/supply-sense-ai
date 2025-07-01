@@ -2,7 +2,7 @@ import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { config } from '../../config/env';
-import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
+import { TAG_TYPES } from './tagTypes';
 
 export interface GRItem {
   id: string;
@@ -96,7 +96,13 @@ export const goodsReceiptApi = createApi({
       }
     },
   }),
-  tagTypes: TAG_TYPE_GROUPS.GOODS_RECEIPT_MODULE,
+  tagTypes: [
+    TAG_TYPES.GOODS_RECEIPT,
+    TAG_TYPES.PURCHASE_ORDER,
+    TAG_TYPES.ITEM,
+    TAG_TYPES.STOCK,
+    TAG_TYPES.BRANCH,
+  ],
   endpoints: (builder) => ({
     getGoodsReceipts: builder.query<GoodsReceipt[], { branchId?: string }>({
       query: (params) => ({

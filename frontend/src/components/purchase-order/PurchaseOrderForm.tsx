@@ -15,6 +15,7 @@ import { type PurchaseOrder } from '@/store/api/purchaseOrderApi';
 import { useGetSuppliersQuery } from '@/store/api/supplierApi';
 import type { RootState } from '@/store/store';
 import { Button, Card, CardBody, CardHeader, addToast } from '@heroui/react';
+import { PURCHASE_ORDER_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -36,6 +37,11 @@ export function PurchaseOrderForm({
 }: PurchaseOrderFormProps) {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  // Check supplier permissions using the correct format from shared library
+  const hasSupplierReadPermission =
+    user?.permissions?.some((permission) => permission === PURCHASE_ORDER_PERMISSIONS.CREATE) ||
+    false;
 
   // Helper function to normalize initial data
   const normalizeInitialData = (data?: Partial<PurchaseOrderFormData>) => {
@@ -84,7 +90,13 @@ export function PurchaseOrderForm({
 
   // API queries
   const { data: branches = [] } = useGetAllBranchesQuery(undefined);
-  const { data: suppliers = [], error: suppliersError } = useGetSuppliersQuery();
+  const { data: suppliersResponse, error: suppliersError } = useGetSuppliersQuery(
+    {},
+    { skip: !hasSupplierReadPermission }
+  );
+
+  // Extract suppliers from response
+  const suppliers = suppliersResponse?.data || [];
 
   // Handle suppliers API errors with toast
   useEffect(() => {
@@ -151,13 +163,13 @@ export function PurchaseOrderForm({
   }));
 
   return (
-    <section className="max-w-6xl mx-auto p-6 space-y-6">
-      <header className="flex justify-between items-center">
+    <section className="max-w-6xl p-6 mx-auto space-y-6">
+      <header className="flex items-center justify-between">
         <div>
           <Text variant="headerSmall" weight="bold" as="h1">
             {mode === 'create' ? 'Create Purchase Order' : 'Edit Purchase Order'}
           </Text>
-          <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
+          <Text variant="bodyBase" className="mt-2 text-default-500" as="p">
             {mode === 'create'
               ? 'Create a new purchase order for your branch'
               : 'Update the purchase order details'}
@@ -172,7 +184,7 @@ export function PurchaseOrderForm({
             <h3 className="text-xl font-semibold">Basic Information</h3>
           </CardHeader>
           <CardBody className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <ValidatedInput
                   name="title"
@@ -188,18 +200,26 @@ export function PurchaseOrderForm({
                   onValueChange={handleFieldChange}
                 />
               </div>
-              <ValidatedSelect
-                name="supplierId"
-                label="Supplier"
-                isRequired
-                variant="bordered"
-                wasSubmitted={wasSubmitted}
-                fieldSchema={purchaseOrderSchema.shape.supplierId}
-                errors={errors.supplierId}
-                options={supplierOptions}
-                defaultSelectedKeys={formData.supplierId ? [formData.supplierId] : []}
-                onValueChange={handleFieldChange}
-              />
+              <div className="space-y-2">
+                <ValidatedSelect
+                  name="supplierId"
+                  label="Supplier"
+                  isRequired
+                  variant="bordered"
+                  wasSubmitted={wasSubmitted}
+                  fieldSchema={purchaseOrderSchema.shape.supplierId}
+                  errors={errors.supplierId}
+                  options={supplierOptions}
+                  defaultSelectedKeys={formData.supplierId ? [formData.supplierId] : []}
+                  onValueChange={handleFieldChange}
+                  isDisabled={!hasSupplierReadPermission}
+                />
+                {!hasSupplierReadPermission && (
+                  <Text variant="bodySmall" className="text-danger">
+                    You don't have permission to view suppliers. Please contact your administrator.
+                  </Text>
+                )}
+              </div>
               <ValidatedSelect
                 name="branchId"
                 label="Branch"
