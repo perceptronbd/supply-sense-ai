@@ -19,7 +19,8 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@supplysense/types": ["../libs/shared/src/index.ts"]
     },
     "plugins": [
       {

@@ -3,10 +3,19 @@
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import { useNavigation } from '@/hooks/useNavigation';
+import { usePermissions } from '@/hooks/usePermissions';
 import { logout } from '@/store/slices/authSlice';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
 import { Button, Chip } from '@heroui/react';
+import {
+  BRANCH_PERMISSIONS,
+  CHAT_PERMISSIONS,
+  GOODS_RECEIPT_PERMISSIONS,
+  ITEM_PERMISSIONS,
+  PURCHASE_ORDER_PERMISSIONS,
+  PURCHASE_REQUEST_PERMISSIONS,
+} from '@supplysense/types';
 import {
   Building2,
   ClipboardList,
@@ -30,6 +39,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
   const { isActive } = useNavigation();
+  const { hasPermission } = usePermissions();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { theme } = useSelector((state: RootState) => state.theme);
@@ -43,38 +53,48 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     dispatch(toggleTheme());
   };
 
+  // Navigation items with permission checks
   const navigation = [
     {
       name: 'AI Chat',
       href: ROUTE_PATHS.CHAT,
       icon: <MessageCircle className="w-5 h-5" />,
+      permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
     {
       name: 'Items',
       href: ROUTE_PATHS.ITEMS,
       icon: <Package className="w-5 h-5" />,
+      permission: ITEM_PERMISSIONS.READ,
     },
     {
       name: 'Branches',
       href: ROUTE_PATHS.BRANCHES,
       icon: <Building2 className="w-5 h-5" />,
+      permission: BRANCH_PERMISSIONS.READ,
     },
     {
       name: 'Purchase Requests',
       href: ROUTE_PATHS.PURCHASE_REQUESTS,
       icon: <FileText className="w-5 h-5" />,
+      permission: PURCHASE_REQUEST_PERMISSIONS.READ,
     },
     {
       name: 'Purchase Orders',
       href: ROUTE_PATHS.PURCHASE_ORDERS,
       icon: <ClipboardList className="w-5 h-5" />,
+      permission: PURCHASE_ORDER_PERMISSIONS.READ,
     },
     {
       name: 'Goods Receipts',
       href: ROUTE_PATHS.GOODS_RECEIPTS,
       icon: <Inbox className="w-5 h-5" />,
+      permission: GOODS_RECEIPT_PERMISSIONS.READ,
     },
   ];
+
+  // Filter navigation items based on user permissions
+  const visibleNavigation = navigation.filter((item) => hasPermission(item.permission));
 
   return (
     <>
@@ -124,7 +144,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             <ul className="space-y-2">
-              {navigation.map((item) => (
+              {visibleNavigation.map((item) => (
                 <li key={item.name}>
                   <button
                     type="button"
@@ -158,9 +178,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {user?.email}
               </Text>
               <Chip color="secondary" variant="flat" size="sm">
-                {user?.roles && user.roles.length > 0
-                  ? user.roles.join(', ').replace(/_/g, ' ')
-                  : 'No role assigned'}
+                {user?.permissions && user.permissions.length > 0
+                  ? `${user.permissions.length} permission${user.permissions.length > 1 ? 's' : ''}`
+                  : 'No permissions'}
               </Chip>
             </div>
 

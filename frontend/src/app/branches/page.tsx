@@ -24,8 +24,10 @@ import AuthGuard from '@/components/AuthGuard';
 import { ActionsDropdown } from '@/components/branches';
 import { SearchIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import type { Branch } from '@/store/api/branchApi';
+import { BRANCH_PERMISSIONS } from '@supplysense/types';
 
 import { AddressCell, ContactCell, ManagerCell, NameCell } from './components/BranchCells';
 import { DeleteModal } from './components/DeleteModal';
@@ -96,7 +98,7 @@ export default function BranchesPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
@@ -111,7 +113,7 @@ export default function BranchesPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header */}
           <header className="flex justify-between items-center mb-6">
             <div>
@@ -122,30 +124,32 @@ export default function BranchesPage() {
                 Manage company branches and locations
               </Text>
             </div>
-            <Button
-              color="primary"
-              onPress={actions.handleCreateBranch}
-              startContent={
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              }
-            >
-              Add Branch
-            </Button>
+            <PermissionGuard permission={BRANCH_PERMISSIONS.CREATE}>
+              <Button
+                color="primary"
+                onPress={actions.handleCreateBranch}
+                startContent={
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                }
+              >
+                Add Branch
+              </Button>
+            </PermissionGuard>
           </header>
 
           {/* Main Content */}
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
+              <CardHeader className="flex flex-col gap-4 pb-3">
                 <div className="flex justify-between items-center w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Branches
@@ -164,7 +168,7 @@ export default function BranchesPage() {
                   </div>
                 </div>
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-start w-full">
+                <div className="flex flex-col gap-4 justify-start w-full sm:flex-row">
                   <Input
                     placeholder="Search branches by name or code..."
                     value={state.searchTerm}
@@ -173,7 +177,7 @@ export default function BranchesPage() {
                     className="w-full sm:w-96"
                     variant="bordered"
                   />
-                  <div className="flex items-center gap-4">
+                  <div className="flex gap-4 items-center">
                     <Checkbox
                       isSelected={state.includeInactive}
                       onValueChange={state.handleIncludeInactiveChange}
@@ -231,8 +235,8 @@ export default function BranchesPage() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-divider">
-                        <div className="flex items-center gap-4">
+                      <div className="flex justify-between items-center pt-4 mt-6 border-t border-divider">
+                        <div className="flex gap-4 items-center">
                           <Select
                             size="sm"
                             placeholder="Items per page"
@@ -275,7 +279,7 @@ export default function BranchesPage() {
 
                 {/* Empty State */}
                 {!state.isLoading && !state.error && state.branches.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <Text variant="bodyLarge" className="text-default-400">
                       No branches found
                     </Text>

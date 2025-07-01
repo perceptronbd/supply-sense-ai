@@ -1,6 +1,8 @@
 import { BanIcon, DotsVerticalIcon, EditIcon, EyeIcon, TrashIcon } from '@/components/icons';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import type { Branch } from '@/store/api/branchApi';
 import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
+import { BRANCH_PERMISSIONS } from '@supplysense/types';
 
 interface ActionsDropdownProps {
   branch: Branch;
@@ -25,31 +27,40 @@ export function ActionsDropdown({ branch, onViewDetails, onEdit, onDelete }: Act
         >
           View Details
         </DropdownItem>
-        <DropdownItem
-          key="edit"
-          startContent={<EditIcon className="w-4 h-4" />}
-          onPress={() => onEdit(branch)}
-        >
-          Edit
-        </DropdownItem>
-        <DropdownItem
-          key="deactivate"
-          className="text-warning"
-          color="warning"
-          startContent={<BanIcon className="w-4 h-4" />}
-          onPress={() => onDelete(branch, 'soft')}
-        >
-          {branch.isActive ? 'Deactivate' : 'Activate'}
-        </DropdownItem>
-        <DropdownItem
-          key="delete"
-          className="text-danger"
-          color="danger"
-          startContent={<TrashIcon className="w-4 h-4" />}
-          onPress={() => onDelete(branch, 'hard')}
-        >
-          Delete Permanently
-        </DropdownItem>
+
+        <PermissionGuard permission={BRANCH_PERMISSIONS.UPDATE}>
+          <DropdownItem
+            key="edit"
+            startContent={<EditIcon className="w-4 h-4" />}
+            onPress={() => onEdit(branch)}
+          >
+            Edit
+          </DropdownItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission={BRANCH_PERMISSIONS.UPDATE}>
+          <DropdownItem
+            key="deactivate"
+            className="text-warning"
+            color="warning"
+            startContent={<BanIcon className="w-4 h-4" />}
+            onPress={() => onDelete(branch, 'soft')}
+          >
+            {branch.isActive ? 'Deactivate' : 'Activate'}
+          </DropdownItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission={BRANCH_PERMISSIONS.DELETE}>
+          <DropdownItem
+            key="delete"
+            className="text-danger"
+            color="danger"
+            startContent={<TrashIcon className="w-4 h-4" />}
+            onPress={() => onDelete(branch, 'hard')}
+          >
+            Delete Permanently
+          </DropdownItem>
+        </PermissionGuard>
       </DropdownMenu>
     </Dropdown>
   );

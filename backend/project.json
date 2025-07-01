@@ -4,6 +4,7 @@
   "sourceRoot": "backend/src",
   "projectType": "application",
   "tags": [],
+  "implicitDependencies": ["types"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",

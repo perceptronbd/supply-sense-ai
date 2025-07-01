@@ -2,8 +2,10 @@
 
 import AuthGuard from '@/components/AuthGuard';
 import { ItemForm } from '@/components/items/ItemForm';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { type Item, useGetItemQuery } from '@/store/api/itemApi';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 
@@ -65,7 +67,22 @@ export default function EditItemPage({ params }: EditItemPageProps) {
 
   return (
     <AuthGuard requireAuth={true}>
-      <ItemForm mode="edit" item={item} onSuccess={handleSuccess} />
+      <PermissionGuard
+        permission={ITEM_PERMISSIONS.UPDATE}
+        fallback={
+          <main className="p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-center items-center h-64">
+                <Text variant="bodyLarge" className="text-danger" as="p">
+                  You don't have permission to edit items
+                </Text>
+              </div>
+            </div>
+          </main>
+        }
+      >
+        <ItemForm mode="edit" item={item} onSuccess={handleSuccess} />
+      </PermissionGuard>
     </AuthGuard>
   );
 }

@@ -4,6 +4,7 @@ import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
 import { ActionsDropdown, DeleteItemDialog, StatusChip, StockDisplay } from '@/components/items';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { type Item, useGetItemsQuery } from '@/store/api/itemApi';
 import {
@@ -24,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -219,24 +221,26 @@ export default function ItemsPage() {
                 Manage your inventory items and view stock levels
               </Text>
             </div>
-            <Button
-              color="primary"
-              onPress={handleCreateItem}
-              startContent={
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              }
-            >
-              Add Item
-            </Button>
+            <PermissionGuard permission={ITEM_PERMISSIONS.CREATE}>
+              <Button
+                color="primary"
+                onPress={handleCreateItem}
+                startContent={
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                }
+              >
+                Add Item
+              </Button>
+            </PermissionGuard>
           </header>
 
           {/* Items Table and Filters */}

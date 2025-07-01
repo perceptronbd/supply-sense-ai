@@ -4,6 +4,7 @@
   "sourceRoot": "frontend",
   "projectType": "application",
   "tags": [],
+  "implicitDependencies": ["types"],
   "// targets": "to see all targets run: nx show project frontend --web",
   "targets": {
     "lint": {

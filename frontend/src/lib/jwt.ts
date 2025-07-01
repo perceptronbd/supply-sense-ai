@@ -76,6 +76,7 @@ export function getUserFromToken(token: string): {
   firstName: string;
   lastName: string;
   roles: string[];
+  permissions: string[];
   branchId: string;
   isActive: boolean;
 } | null {
@@ -88,6 +89,7 @@ export function getUserFromToken(token: string): {
     firstName: payload.firstName,
     lastName: payload.lastName,
     roles: payload.roles,
+    permissions: payload.permissions || [],
     branchId: payload.branchIds?.[0] || '', // Use first branch ID as primary branch
     isActive: true, // Assume active if token is valid
   };

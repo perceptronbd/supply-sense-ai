@@ -14,7 +14,9 @@ import {
 import CreatePOFromPRModal from '@/components/purchase-request/CreatePOFromPRModal';
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   type PurchaseRequest,
   useApprovePurchaseRequestMutation,
@@ -44,12 +46,14 @@ import {
   TableRow,
   addToast,
 } from '@heroui/react';
+import { PURCHASE_ORDER_PERMISSIONS, PURCHASE_REQUEST_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function PurchaseRequestsPage() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const { hasPermission } = usePermissions();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,36 +165,63 @@ export default function PurchaseRequestsPage() {
     ];
 
     if (request.status === 'DRAFT') {
-      items.push(
-        <DropdownItem key="edit" startContent={<EditIcon />}>
-          Edit Request
-        </DropdownItem>,
-        <DropdownItem key="submit" color="warning" startContent={<SendIcon />}>
-          Submit for Approval
-        </DropdownItem>,
-        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
-          Delete Request
-        </DropdownItem>
-      );
+      // Edit action - requires UPDATE permission
+      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.UPDATE)) {
+        items.push(
+          <DropdownItem key="edit" startContent={<EditIcon />}>
+            Edit Request
+          </DropdownItem>
+        );
+      }
+
+      // Submit action - requires SUBMIT permission
+      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.SUBMIT)) {
+        items.push(
+          <DropdownItem key="submit" color="warning" startContent={<SendIcon />}>
+            Submit for Approval
+          </DropdownItem>
+        );
+      }
+
+      // Delete action - requires DELETE permission
+      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.DELETE)) {
+        items.push(
+          <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+            Delete Request
+          </DropdownItem>
+        );
+      }
     }
 
     if (request.status === 'SUBMITTED') {
-      items.push(
-        <DropdownItem key="approve" color="success" startContent={<CheckIcon />}>
-          Approve Request
-        </DropdownItem>,
-        <DropdownItem key="reject" color="danger" startContent={<XMarkIcon />}>
-          Reject Request
-        </DropdownItem>
-      );
+      // Approve action - requires APPROVE permission
+      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.APPROVE)) {
+        items.push(
+          <DropdownItem key="approve" color="success" startContent={<CheckIcon />}>
+            Approve Request
+          </DropdownItem>
+        );
+      }
+
+      // Reject action - requires REJECT permission
+      if (hasPermission(PURCHASE_REQUEST_PERMISSIONS.REJECT)) {
+        items.push(
+          <DropdownItem key="reject" color="danger" startContent={<XMarkIcon />}>
+            Reject Request
+          </DropdownItem>
+        );
+      }
     }
 
     if (request.status === 'APPROVED') {
-      items.push(
-        <DropdownItem key="createPO" color="primary" startContent={<ShoppingCartIcon />}>
-          Create Purchase Order
-        </DropdownItem>
-      );
+      // Create PO action - requires CREATE permission for purchase orders
+      if (hasPermission(PURCHASE_ORDER_PERMISSIONS.CREATE)) {
+        items.push(
+          <DropdownItem key="createPO" color="primary" startContent={<ShoppingCartIcon />}>
+            Create Purchase Order
+          </DropdownItem>
+        );
+      }
     }
 
     return items;
@@ -317,9 +348,11 @@ export default function PurchaseRequestsPage() {
                 Manage and track all purchase requests
               </Text>
             </div>
-            <Button color="primary" onPress={handleCreateRequest}>
-              Create New Request
-            </Button>
+            <PermissionGuard permission={PURCHASE_REQUEST_PERMISSIONS.CREATE}>
+              <Button color="primary" onPress={handleCreateRequest}>
+                Create New Request
+              </Button>
+            </PermissionGuard>
           </header>
 
           <section>

@@ -11,7 +11,9 @@ import {
   XMarkIcon,
 } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   type GoodsReceipt,
   useCancelGoodsReceiptMutation,
@@ -40,12 +42,14 @@ import {
   TableRow,
   addToast,
 } from '@heroui/react';
+import { GOODS_RECEIPT_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function GoodsReceiptsPage() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const { hasPermission } = usePermissions();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,20 +128,41 @@ export default function GoodsReceiptsPage() {
     ];
 
     if (receipt.status === 'DRAFT') {
-      items.push(
-        <DropdownItem key="edit" startContent={<EditIcon />}>
-          Edit Receipt
-        </DropdownItem>,
-        <DropdownItem key="post" color="success" startContent={<PostIcon />}>
-          Post Receipt
-        </DropdownItem>,
-        <DropdownItem key="cancel" color="warning" startContent={<XMarkIcon />}>
-          Cancel Receipt
-        </DropdownItem>,
-        <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
-          Delete Receipt
-        </DropdownItem>
-      );
+      // Edit action - requires UPDATE permission
+      if (hasPermission(GOODS_RECEIPT_PERMISSIONS.UPDATE)) {
+        items.push(
+          <DropdownItem key="edit" startContent={<EditIcon />}>
+            Edit Receipt
+          </DropdownItem>
+        );
+      }
+
+      // Post action - requires APPROVE permission (posting is like approving)
+      if (hasPermission(GOODS_RECEIPT_PERMISSIONS.APPROVE)) {
+        items.push(
+          <DropdownItem key="post" color="success" startContent={<PostIcon />}>
+            Post Receipt
+          </DropdownItem>
+        );
+      }
+
+      // Cancel action - requires REJECT permission (canceling is like rejecting)
+      if (hasPermission(GOODS_RECEIPT_PERMISSIONS.REJECT)) {
+        items.push(
+          <DropdownItem key="cancel" color="warning" startContent={<XMarkIcon />}>
+            Cancel Receipt
+          </DropdownItem>
+        );
+      }
+
+      // Delete action - requires DELETE permission
+      if (hasPermission(GOODS_RECEIPT_PERMISSIONS.DELETE)) {
+        items.push(
+          <DropdownItem key="delete" color="danger" startContent={<TrashIcon />}>
+            Delete Receipt
+          </DropdownItem>
+        );
+      }
     }
 
     return items;
@@ -243,9 +268,11 @@ export default function GoodsReceiptsPage() {
                 Track and manage all incoming goods receipts
               </Text>
             </div>
-            <Button color="primary" onPress={handleCreateReceipt} startContent={<ReceiptIcon />}>
-              Record New Receipt
-            </Button>
+            <PermissionGuard permission={GOODS_RECEIPT_PERMISSIONS.CREATE}>
+              <Button color="primary" onPress={handleCreateReceipt} startContent={<ReceiptIcon />}>
+                Record New Receipt
+              </Button>
+            </PermissionGuard>
           </header>
 
           <section>

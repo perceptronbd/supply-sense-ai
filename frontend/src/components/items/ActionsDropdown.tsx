@@ -1,6 +1,8 @@
 import { BanIcon, DotsVerticalIcon, EditIcon, EyeIcon, TrashIcon } from '@/components/icons';
+import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import type { Item } from '@/store/api/itemApi';
 import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
 
 interface ActionsDropdownProps {
   item: Item;
@@ -25,31 +27,40 @@ export function ActionsDropdown({ item, onViewDetails, onEdit, onDelete }: Actio
         >
           View Details
         </DropdownItem>
-        <DropdownItem
-          key="edit"
-          startContent={<EditIcon className="w-4 h-4" />}
-          onPress={() => onEdit(item)}
-        >
-          Edit
-        </DropdownItem>
-        <DropdownItem
-          key="deactivate"
-          className="text-warning"
-          color="warning"
-          startContent={<BanIcon className="w-4 h-4" />}
-          onPress={() => onDelete(item, 'soft')}
-        >
-          {item.isActive ? 'Deactivate' : 'Activate'}
-        </DropdownItem>
-        <DropdownItem
-          key="delete"
-          className="text-danger"
-          color="danger"
-          startContent={<TrashIcon className="w-4 h-4" />}
-          onPress={() => onDelete(item, 'hard')}
-        >
-          Delete Permanently
-        </DropdownItem>
+
+        <PermissionGuard permission={ITEM_PERMISSIONS.UPDATE}>
+          <DropdownItem
+            key="edit"
+            startContent={<EditIcon className="w-4 h-4" />}
+            onPress={() => onEdit(item)}
+          >
+            Edit
+          </DropdownItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission={ITEM_PERMISSIONS.UPDATE}>
+          <DropdownItem
+            key="deactivate"
+            className="text-warning"
+            color="warning"
+            startContent={<BanIcon className="w-4 h-4" />}
+            onPress={() => onDelete(item, 'soft')}
+          >
+            {item.isActive ? 'Deactivate' : 'Activate'}
+          </DropdownItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission={ITEM_PERMISSIONS.DELETE}>
+          <DropdownItem
+            key="delete"
+            className="text-danger"
+            color="danger"
+            startContent={<TrashIcon className="w-4 h-4" />}
+            onPress={() => onDelete(item, 'hard')}
+          >
+            Delete Permanently
+          </DropdownItem>
+        </PermissionGuard>
       </DropdownMenu>
     </Dropdown>
   );
