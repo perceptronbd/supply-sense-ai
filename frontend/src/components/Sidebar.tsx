@@ -15,7 +15,9 @@ import {
   ITEM_PERMISSIONS,
   PURCHASE_ORDER_PERMISSIONS,
   PURCHASE_REQUEST_PERMISSIONS,
+  ROLE_PERMISSIONS,
   SUPPLIER_PERMISSIONS,
+  USER_PERMISSIONS,
 } from '@supplysense/types';
 import {
   Building2,
@@ -26,7 +28,9 @@ import {
   MessageCircle,
   Moon,
   Package,
+  Shield,
   Sun,
+  Users,
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -64,6 +68,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
 
+    {
+      name: 'Users',
+      href: ROUTE_PATHS.USERS,
+      icon: <Users className="w-5 h-5" />,
+      permission: USER_PERMISSIONS.READ,
+    },
+    {
+      name: 'Roles',
+      href: ROUTE_PATHS.ROLES,
+      icon: <Shield className="w-5 h-5" />,
+      permission: ROLE_PERMISSIONS.READ,
+    },
     {
       name: 'Branches',
       href: ROUTE_PATHS.BRANCHES,

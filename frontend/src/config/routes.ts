@@ -26,6 +26,8 @@ export const ROUTE_PATHS = {
   MATERIAL_REQUISITION: '/material-requisition',
   BRANCHES: '/branches',
   REQUEST_FORMS: '/request-forms',
+  USERS: '/users',
+  ROLES: '/roles',
 } as const;
 
 // Create union types from the route paths
@@ -41,7 +43,9 @@ export type ProtectedRoutePath =
   | (typeof ROUTE_PATHS)['MANUFACTURING_LIST']
   | (typeof ROUTE_PATHS)['MATERIAL_REQUISITION']
   | (typeof ROUTE_PATHS)['BRANCHES']
-  | (typeof ROUTE_PATHS)['REQUEST_FORMS'];
+  | (typeof ROUTE_PATHS)['REQUEST_FORMS']
+  | (typeof ROUTE_PATHS)['USERS']
+  | (typeof ROUTE_PATHS)['ROLES'];
 
 export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'] | (typeof ROUTE_PATHS)['REGISTER'];
 export type PublicRoutePath = (typeof ROUTE_PATHS)['ROOT'];
@@ -155,6 +159,20 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     redirectIfAuthenticated: false,
     title: 'Request Forms - SupplySense',
     description: 'Custom request forms and workflows',
+  },
+  USERS: {
+    path: ROUTE_PATHS.USERS,
+    requiresAuth: true,
+    redirectIfAuthenticated: false,
+    title: 'Users - SupplySense',
+    description: 'Manage user accounts and permissions',
+  },
+  ROLES: {
+    path: ROUTE_PATHS.ROLES,
+    requiresAuth: true,
+    redirectIfAuthenticated: false,
+    title: 'Roles - SupplySense',
+    description: 'Manage roles and permissions',
   },
 } as const;
 

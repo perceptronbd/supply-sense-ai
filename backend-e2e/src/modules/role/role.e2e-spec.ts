@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { type AxiosErrorResponse, TestHelpers, TestUser } from '../../support/test-helpers';
+import { type AxiosErrorResponse, TestHelpers, TestUser } from '../support/test-helpers';
 
 describe('Role Management (E2E)', () => {
   const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
@@ -10,57 +10,32 @@ describe('Role Management (E2E)', () => {
   const createdRoles: string[] = [];
 
   beforeAll(async () => {
-    console.log('🚀 Starting Role Management E2E Tests...');
+    // Login as super admin for role management tests
+    const superAdminAuth = await TestHelpers.loginAsSuperAdmin();
+    superAdminToken = superAdminAuth.accessToken;
 
-    try {
-      // Login as super admin for role management tests
-      console.log('🔑 Logging in as super admin...');
-      const superAdminAuth = await TestHelpers.loginAsSuperAdmin();
-      superAdminToken = superAdminAuth.accessToken;
-      console.log('✅ Super admin login successful');
+    // Login as branch manager for permission tests
+    const branchManagerAuth = await TestHelpers.loginAsBranchManager();
+    authToken = branchManagerAuth.accessToken;
+    testUser = branchManagerAuth.user;
 
-      // Login as branch manager for permission tests
-      console.log('🔑 Logging in as branch manager...');
-      const branchManagerAuth = await TestHelpers.loginAsBranchManager();
-      authToken = branchManagerAuth.accessToken;
-      testUser = branchManagerAuth.user;
-      console.log('✅ Branch manager login successful');
-
-      // Get available permissions for role creation
-      console.log('📋 Fetching available permissions...');
-      availablePermissions = await TestHelpers.getTestPermissions(superAdminToken);
-      console.log(`✅ Found ${availablePermissions.length} available permissions`);
-
-      if (availablePermissions.length === 0) {
-        throw new Error('No permissions available for testing');
-      }
-    } catch (error) {
-      console.error('❌ Setup failed:', error);
-      throw error;
-    }
-  }, 30000); // 30 second timeout for setup
+    // Get available permissions for role creation
+    availablePermissions = await TestHelpers.getTestPermissions(superAdminToken);
+  });
 
   afterAll(async () => {
-    console.log('🧹 Cleaning up created roles...');
     // Cleanup created roles
     for (const roleId of createdRoles) {
-      try {
-        await TestHelpers.cleanupRole(superAdminToken, roleId);
-        console.log(`✅ Cleaned up role: ${roleId}`);
-      } catch (error) {
-        console.warn(`⚠️  Failed to cleanup role ${roleId}:`, error);
-      }
+      await TestHelpers.cleanupRole(superAdminToken, roleId);
     }
-    console.log('✅ Role cleanup completed');
   });
 
   const getAuthHeaders = (token: string) => TestHelpers.getAuthHeaders(token);
 
   describe('Role CRUD Operations', () => {
     it('should create role with Discord-style permission assignment', async () => {
-      const timestamp = Date.now();
       const roleData = {
-        name: `E2E Test Manager Role ${timestamp}`,
+        name: 'E2E Test Manager Role',
         description: 'Discord-style role created for E2E testing',
         permissionIds: availablePermissions.slice(0, 8).map((p: any) => p.id),
       };
@@ -83,11 +58,10 @@ describe('Role Management (E2E)', () => {
     });
 
     it('should require at least one permission when creating role', async () => {
-      const timestamp = Date.now();
       const roleData = {
-        name: `Empty Role ${timestamp}`,
+        name: 'Empty Role',
         description: 'Role with no permissions',
-        permissionIds: [] as string[],
+        permissionIds: [],
       };
 
       try {
@@ -554,7 +528,7 @@ describe('Role Management (E2E)', () => {
       const invalidRoleData = {
         // Missing required fields
         name: '',
-        permissionIds: [] as string[],
+        permissionIds: [],
       };
 
       try {

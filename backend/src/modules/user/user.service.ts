@@ -233,30 +233,34 @@ export class UserService {
 
     // If pagination is requested
     if (page && limit) {
-      const skip = (page - 1) * limit;
+      // Ensure page and limit are numbers (fallback if DTO transformation fails)
+      const pageNum = typeof page === 'string' ? Number.parseInt(page, 10) : page;
+      const limitNum = typeof limit === 'string' ? Number.parseInt(limit, 10) : limit;
+
+      const skip = (pageNum - 1) * limitNum;
 
       const [users, total] = await Promise.all([
         this.prisma.user.findMany({
           where,
           include,
           skip,
-          take: limit,
+          take: limitNum,
           orderBy: { [sortBy]: sortOrder },
         }),
         this.prisma.user.count({ where }),
       ]);
 
-      const totalPages = Math.ceil(total / limit);
+      const totalPages = Math.ceil(total / limitNum);
 
       return {
         data: users.map((user) => this.transformUserEntity(user)),
         pagination: {
-          page,
-          limit,
+          page: pageNum,
+          limit: limitNum,
           total,
           totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1,
         },
       };
     }
@@ -347,9 +351,17 @@ export class UserService {
       }
     }
 
+    // Prepare update data
+    const updateData: Partial<UpdateUserDto & { password: string }> = { ...updateUserDto };
+
+    // Hash password if provided
+    if (updateUserDto.password) {
+      updateData.password = await argon2.hash(updateUserDto.password);
+    }
+
     const user = await this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: updateData,
       include: {
         userRoles: {
           include: {

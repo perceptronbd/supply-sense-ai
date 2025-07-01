@@ -8,7 +8,9 @@ import { goodsReceiptApi } from './api/goodsReceiptApi';
 import { itemApi } from './api/itemApi';
 import { purchaseOrderApi } from './api/purchaseOrderApi';
 import { purchaseRequestApi } from './api/purchaseRequestApi';
+import { roleApi } from './api/roleApi';
 import { supplierApi } from './api/supplierApi';
+import { userApi } from './api/userApi';
 import authSlice from './slices/authSlice';
 import themeSlice from './slices/themeSlice';
 
@@ -23,7 +25,9 @@ export const store = configureStore({
     [itemApi.reducerPath]: itemApi.reducer,
     [purchaseRequestApi.reducerPath]: purchaseRequestApi.reducer,
     [purchaseOrderApi.reducerPath]: purchaseOrderApi.reducer,
+    [roleApi.reducerPath]: roleApi.reducer,
     [supplierApi.reducerPath]: supplierApi.reducer,
+    [userApi.reducerPath]: userApi.reducer,
     [aiApi.reducerPath]: aiApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -39,7 +43,9 @@ export const store = configureStore({
       itemApi.middleware,
       purchaseRequestApi.middleware,
       purchaseOrderApi.middleware,
+      roleApi.middleware,
       supplierApi.middleware,
+      userApi.middleware,
       aiApi.middleware
     ),
 });

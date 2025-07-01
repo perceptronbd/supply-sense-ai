@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 
 export class QueryUserDto {
   @ApiPropertyOptional({
@@ -46,7 +46,9 @@ export class QueryUserDto {
     minimum: 1,
   })
   @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
+  @Type(() => Number)
+  @IsInt({ message: 'Page must be an integer' })
+  @Min(1, { message: 'Page must be at least 1' })
   page?: number;
 
   @ApiPropertyOptional({
@@ -56,7 +58,10 @@ export class QueryUserDto {
     maximum: 100,
   })
   @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
+  @Type(() => Number)
+  @IsInt({ message: 'Limit must be an integer' })
+  @Min(1, { message: 'Limit must be at least 1' })
+  @Max(100, { message: 'Limit cannot exceed 100' })
   limit?: number;
 
   @ApiPropertyOptional({
