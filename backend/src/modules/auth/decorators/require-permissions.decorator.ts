@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { Permission } from '../types/permissions.types';
+import type { Permission } from '@supplysense/types';
 
 export const PERMISSIONS_KEY = 'permissions';
 

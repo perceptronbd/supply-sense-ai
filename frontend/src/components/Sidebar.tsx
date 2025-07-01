@@ -178,9 +178,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {user?.email}
               </Text>
               <Chip color="secondary" variant="flat" size="sm">
-                {user?.permissions && user.permissions.length > 0
-                  ? `${user.permissions.length} permission${user.permissions.length > 1 ? 's' : ''}`
-                  : 'No permissions'}
+                {user?.roles && user.roles.length > 0
+                  ? user.roles.join(', ').replace(/_/g, ' ')
+                  : 'No role assigned'}
               </Chip>
             </div>
 
