@@ -26,6 +26,10 @@ export const RESOURCES = {
   // Advanced features
   AI: 'AI',
   CHAT: 'CHAT',
+
+  // Roles and Permissions
+  ROLES: 'ROLES',
+  PERMISSIONS: 'PERMISSIONS',
 } as const;
 
 // Define Actions - Ordered by common operations first, then specialized actions
@@ -41,10 +45,6 @@ export const ACTIONS = {
   SUBMIT: 'SUBMIT',
   APPROVE: 'APPROVE',
   REJECT: 'REJECT',
-
-  // User management actions
-  MANAGE_ROLES: 'MANAGE_ROLES',
-  MANAGE_PERMISSIONS: 'MANAGE_PERMISSIONS',
 
   // Authentication actions
   LOGIN: 'LOGIN',
@@ -75,8 +75,6 @@ export const USER_PERMISSIONS = {
   READ: createPermission(RESOURCES.USERS, ACTIONS.READ),
   UPDATE: createPermission(RESOURCES.USERS, ACTIONS.UPDATE),
   DELETE: createPermission(RESOURCES.USERS, ACTIONS.DELETE),
-  MANAGE_ROLES: createPermission(RESOURCES.USERS, ACTIONS.MANAGE_ROLES),
-  MANAGE_PERMISSIONS: createPermission(RESOURCES.USERS, ACTIONS.MANAGE_PERMISSIONS),
 } as const;
 
 // Company Permissions
