@@ -9,6 +9,18 @@ interface LoginRequest {
   password: string;
 }
 
+interface RegisterRequest {
+  companyName: string;
+  companyEmail: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  taxId?: string;
+  businessAddress?: string;
+  contactPhone?: string;
+}
+
 interface LoginResponse {
   user: {
     id: string;
@@ -19,6 +31,24 @@ interface LoginResponse {
     permissions: string[];
     branchId: string;
     isActive: boolean;
+  };
+  access_token: string;
+}
+
+interface RegistrationResponse {
+  success: boolean;
+  message: string;
+  company: {
+    id: string;
+    name: string;
+    contactEmail: string;
+  };
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    isSuperAdmin: boolean;
   };
   access_token: string;
 }
@@ -67,13 +97,14 @@ export const authApi = createApi({
         return response;
       },
     }),
-    register: builder.mutation<LoginResponse, LoginRequest & { name: string }>({
-      query: (userData) => ({
+    register: builder.mutation<RegistrationResponse, RegisterRequest>({
+      query: (registerData) => ({
         url: '/register',
         method: 'POST',
-        body: userData,
+        body: registerData,
       }),
-      transformResponse: (response: ApiResponse<LoginResponse>) => transformApiResponse(response),
+      transformResponse: (response: ApiResponse<RegistrationResponse>) =>
+        transformApiResponse(response),
       transformErrorResponse: (response: { status: number; data: unknown }) => {
         // The backend global error handler sends errors in ApiErrorResponseDto format
         if (response.data && typeof response.data === 'object') {

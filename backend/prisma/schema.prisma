@@ -229,7 +229,7 @@ model UserBranch {
 model Branch {
   id       String  @id @default(uuid())
   name     String
-  code     String  @unique
+  code     String
   address  String?
   phone    String?
   email    String?

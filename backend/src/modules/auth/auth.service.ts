@@ -1,9 +1,17 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../app/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
 import { UserResponseDto } from './dto/auth-response.dto';
+import { RegisterDto } from './dto/register.dto';
+import { RegistrationResponseDto } from './dto/registration-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 // Type definitions for complex Prisma queries
@@ -89,6 +97,138 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       user,
+    };
+  }
+
+  /**
+   * Register a new company and create the first super admin user
+   */
+  async register(registerDto: RegisterDto): Promise<RegistrationResponseDto> {
+    // Check if company email already exists
+    const existingCompany = await this.prisma.company.findUnique({
+      where: { contactEmail: registerDto.companyEmail },
+    });
+
+    if (existingCompany) {
+      throw new ConflictException('A company with this email is already registered');
+    }
+
+    // Check if user email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: registerDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('A user with this email already exists');
+    }
+
+    // Hash the password
+    const hashedPassword = await argon2.hash(registerDto.password);
+
+    // Create company and user in a transaction
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Create the company
+      const company = await tx.company.create({
+        data: {
+          name: registerDto.companyName,
+          contactEmail: registerDto.companyEmail,
+          taxId: registerDto.taxId,
+          businessAddress: registerDto.businessAddress,
+          contactPhone: registerDto.contactPhone,
+        },
+      });
+
+      // Create default "Super Admin" role for the company
+      const superAdminRole = await tx.role.create({
+        data: {
+          name: 'Super Admin',
+          description: 'Full access to all company resources and settings',
+          companyId: company.id,
+        },
+      });
+
+      // Get all available permissions
+      const allPermissions = await tx.permission.findMany();
+
+      // Assign all permissions to Super Admin role
+      const rolePermissions = allPermissions.map((permission) => ({
+        roleId: superAdminRole.id,
+        permissionId: permission.id,
+      }));
+
+      await tx.rolePermission.createMany({
+        data: rolePermissions,
+      });
+
+      // Create default headquarters branch
+      const hqBranch = await tx.branch.create({
+        data: {
+          name: 'Headquarters',
+          code: 'HQ',
+          address: registerDto.businessAddress || '',
+          isHQ: true,
+          companyId: company.id,
+        },
+      });
+
+      // Create the super admin user
+      const user = await tx.user.create({
+        data: {
+          email: registerDto.email,
+          username: registerDto.email, // Use email as default username
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+          password: hashedPassword,
+          isSuperAdmin: true,
+          companyId: company.id,
+        },
+      });
+
+      // Assign Super Admin role to user
+      await tx.userRole.create({
+        data: {
+          userId: user.id,
+          roleId: superAdminRole.id,
+        },
+      });
+
+      // Assign user to headquarters branch
+      await tx.userBranch.create({
+        data: {
+          userId: user.id,
+          branchId: hqBranch.id,
+          isActive: true,
+        },
+      });
+
+      return { company, user };
+    });
+
+    // Get the user with full relations for token generation
+    const userWithRelations = await this.getUserById(result.user.id);
+    if (!userWithRelations) {
+      throw new BadRequestException('Failed to retrieve user data after registration');
+    }
+
+    // Generate JWT token
+    const access_token = await this.generateToken(userWithRelations);
+
+    return {
+      success: true,
+      message: 'Company and user registered successfully',
+      company: {
+        id: result.company.id,
+        name: result.company.name,
+        contactEmail: result.company.contactEmail,
+      },
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        firstName: result.user.firstName || '',
+        lastName: result.user.lastName || '',
+        isSuperAdmin: result.user.isSuperAdmin,
+      },
+      access_token,
     };
   }
 

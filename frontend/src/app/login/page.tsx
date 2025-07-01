@@ -10,6 +10,7 @@ import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useLoginMutation } from '@/store/api/authApi';
 import { setCredentials } from '@/store/slices/authSlice';
 import { Card, CardBody, addToast } from '@heroui/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -239,150 +240,199 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo Section */}
-        <header className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <LogoIcon size={40} className="text-primary" aria-hidden="true" />
-            <SupplySenseTextIcon size={160} className="text-foreground" aria-hidden="true" />
-          </div>
-          <Text variant="headerMedium" as="h1" className="mb-2">
-            Welcome Back
-          </Text>
-          <Text variant="bodyBase" color="muted" as="p">
-            Sign in to continue to SupplySense AI
-          </Text>
-        </header>
-
-        {/* Login Form */}
-        <section aria-labelledby="login-form-title">
-          <Card className="bg-content1 shadow-medium">
-            <CardBody className="p-6">
-              <Text id="login-form-title" variant="titleSmall" className="sr-only">
-                Login Form
-              </Text>
-
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                <ValidatedInput
-                  name="email"
-                  type="email"
-                  label="Email Address"
-                  placeholder="Enter your email address"
-                  isRequired
-                  variant="bordered"
-                  labelPlacement="inside"
-                  fieldSchema={loginSchema.shape.email}
-                  wasSubmitted={wasSubmitted}
-                  errors={fieldErrors.email}
-                  defaultValue={formData.email}
-                  onValueChange={handleFieldChange}
-                  autoComplete="email"
-                  autoFocus
-                />
-
-                <ValidatedInput
-                  name="password"
-                  type="password"
-                  label="Password"
-                  placeholder="Enter your password"
-                  isRequired
-                  variant="bordered"
-                  labelPlacement="inside"
-                  fieldSchema={loginSchema.shape.password}
-                  wasSubmitted={wasSubmitted}
-                  errors={fieldErrors.password}
-                  defaultValue={formData.password}
-                  onValueChange={handleFieldChange}
-                  autoComplete="current-password"
-                />
-
-                <Button
-                  type="submit"
-                  color="primary"
-                  className="w-full"
-                  isLoading={isLoading}
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-
-              {/* Demo credentials */}
-              <aside className="mt-6 p-4 bg-default-50 rounded-medium">
-                <Text variant="bodySmall" className="font-medium mb-3">
-                  Demo Accounts:
-                </Text>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
-                        Branch Manager:
-                      </Text>
-                      <Text variant="bodyXSmall" color="muted" as="p">
-                        manager.a@company001.com / manager123
-                      </Text>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      color="primary"
-                      className="text-xs px-2 py-1 h-auto min-h-0"
-                      onPress={() => handleDemoLogin('manager.a@company001.com', 'manager123')}
-                    >
-                      Use
-                    </Button>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
-                        Inventory Clerk:
-                      </Text>
-                      <Text variant="bodyXSmall" color="muted" as="p">
-                        clerk.a@company001.com / clerk123
-                      </Text>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      color="primary"
-                      className="text-xs px-2 py-1 h-auto min-h-0"
-                      onPress={() => handleDemoLogin('clerk.a@company001.com', 'clerk123')}
-                    >
-                      Use
-                    </Button>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
-                        Admin:
-                      </Text>
-                      <Text variant="bodyXSmall" color="muted" as="p">
-                        admin@company001.com / admin123
-                      </Text>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      color="primary"
-                      className="text-xs px-2 py-1 h-auto min-h-0"
-                      onPress={() => handleDemoLogin('admin@company001.com', 'admin123')}
-                    >
-                      Use
-                    </Button>
-                  </div>
+    <main className="min-h-screen bg-content2 flex items-center justify-center p-4">
+      <div className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Welcome Section - Left Side */}
+          <section className="w-full flex items-center justify-center">
+            <div className="text-center ml-6 lg:text-left space-y-6 max-w-3xl">
+              <header>
+                <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+                  <LogoIcon className="w-12 h-12" />
+                  <SupplySenseTextIcon className="h-10" />
                 </div>
-              </aside>
-            </CardBody>
-          </Card>
-        </section>
+                <Text variant="display" as="h1" weight="bold" className="text-foreground mb-4">
+                  Welcome Back
+                </Text>
+                <Text variant="headerSmall" as="h2" className="text-primary-700 mb-6">
+                  Sign in to your SupplySense account
+                </Text>
+              </header>
 
-        <footer className="text-center mt-6">
-          <Text variant="bodySmall" color="muted" as="p">
-            © 2025 SupplySense. All rights reserved.
-          </Text>
-        </footer>
+              <div className="space-y-4">
+                <Text variant="bodyLarge" as="p" className="text-foreground-700">
+                  Continue managing your supply chain operations with ease.
+                </Text>
+
+                <ul className="space-y-3 text-left">
+                  <li className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <Text variant="bodyMedium" as="span" className="text-foreground-600">
+                      Real-time inventory tracking and monitoring
+                    </Text>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <Text variant="bodyMedium" as="span" className="text-foreground-600">
+                      Streamlined purchase and manufacturing workflows
+                    </Text>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <Text variant="bodyMedium" as="span" className="text-foreground-600">
+                      AI-powered insights and recommendations
+                    </Text>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <Text variant="bodyMedium" as="span" className="text-foreground-600">
+                      Secure multi-tenant data isolation
+                    </Text>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          {/* Login Form - Right Side */}
+          <section className="max-w-xl">
+            <Card className="shadow-2xl border-0">
+              <CardBody className="p-8">
+                <header className="text-center mb-6">
+                  <Text variant="headerMedium" as="h3" className="text-foreground mb-2">
+                    Sign In
+                  </Text>
+                  <Text variant="bodyBase" as="p" className="text-foreground-600">
+                    Access your SupplySense dashboard
+                  </Text>
+                </header>
+
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+                  <ValidatedInput
+                    name="email"
+                    type="email"
+                    label="Email Address"
+                    placeholder="Enter your email address"
+                    isRequired
+                    variant="bordered"
+                    fieldSchema={loginSchema.shape.email}
+                    wasSubmitted={wasSubmitted}
+                    errors={fieldErrors.email}
+                    defaultValue={formData.email}
+                    onValueChange={handleFieldChange}
+                    autoComplete="email"
+                    autoFocus
+                  />
+
+                  <ValidatedInput
+                    name="password"
+                    type="password"
+                    label="Password"
+                    placeholder="Enter your password"
+                    isRequired
+                    variant="bordered"
+                    fieldSchema={loginSchema.shape.password}
+                    wasSubmitted={wasSubmitted}
+                    errors={fieldErrors.password}
+                    defaultValue={formData.password}
+                    onValueChange={handleFieldChange}
+                    autoComplete="current-password"
+                  />
+
+                  <Button
+                    type="submit"
+                    color="primary"
+                    className="w-full"
+                    isLoading={isLoading}
+                    size="lg"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                </form>
+
+                {/* Registration Link */}
+                <div className="text-center mt-6">
+                  <Text variant="bodySmall" as="p" className="text-foreground-600">
+                    Don't have an account?{' '}
+                    <Link
+                      href={ROUTE_PATHS.REGISTER}
+                      className="text-secondary-500 hover:text-primary-700 font-medium"
+                    >
+                      Register your company
+                    </Link>
+                  </Text>
+                </div>
+
+                {/* Demo credentials */}
+                <aside className="mt-6 p-4 bg-default-50 rounded-medium">
+                  <Text variant="bodySmall" className="font-medium mb-3">
+                    Demo Accounts:
+                  </Text>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
+                          Branch Manager:
+                        </Text>
+                        <Text variant="bodyXSmall" color="muted" as="p">
+                          manager.a@company001.com / manager123
+                        </Text>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="light"
+                        color="primary"
+                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        onPress={() => handleDemoLogin('manager.a@company001.com', 'manager123')}
+                      >
+                        Use
+                      </Button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
+                          Inventory Clerk:
+                        </Text>
+                        <Text variant="bodyXSmall" color="muted" as="p">
+                          clerk.a@company001.com / clerk123
+                        </Text>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="light"
+                        color="primary"
+                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        onPress={() => handleDemoLogin('clerk.a@company001.com', 'clerk123')}
+                      >
+                        Use
+                      </Button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
+                          Admin:
+                        </Text>
+                        <Text variant="bodyXSmall" color="muted" as="p">
+                          admin@company001.com / admin123
+                        </Text>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="light"
+                        color="primary"
+                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        onPress={() => handleDemoLogin('admin@company001.com', 'admin123')}
+                      >
+                        Use
+                      </Button>
+                    </div>
+                  </div>
+                </aside>
+              </CardBody>
+            </Card>
+          </section>
+        </div>
       </div>
     </main>
   );

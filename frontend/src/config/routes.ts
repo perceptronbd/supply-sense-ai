@@ -10,6 +10,10 @@ export const ROUTE_PATHS = {
 
   // Auth routes (redirect authenticated users)
   LOGIN: '/login',
+  REGISTER: '/register',
+
+  // Dashboard
+  DASHBOARD: '/dashboard',
 
   // Protected routes (require authentication)
   CHAT: '/chat',
@@ -27,6 +31,7 @@ export const ROUTE_PATHS = {
 // Create union types from the route paths
 export type RoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
 export type ProtectedRoutePath =
+  | (typeof ROUTE_PATHS)['DASHBOARD']
   | (typeof ROUTE_PATHS)['CHAT']
   | (typeof ROUTE_PATHS)['PURCHASE_REQUESTS']
   | (typeof ROUTE_PATHS)['PURCHASE_ORDERS']
@@ -38,7 +43,7 @@ export type ProtectedRoutePath =
   | (typeof ROUTE_PATHS)['BRANCHES']
   | (typeof ROUTE_PATHS)['REQUEST_FORMS'];
 
-export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'];
+export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'] | (typeof ROUTE_PATHS)['REGISTER'];
 export type PublicRoutePath = (typeof ROUTE_PATHS)['ROOT'];
 
 // Route configuration with access levels
@@ -65,6 +70,20 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     redirectIfAuthenticated: true,
     title: 'Login - SupplySense',
     description: 'Sign in to your SupplySense account',
+  },
+  REGISTER: {
+    path: ROUTE_PATHS.REGISTER,
+    requiresAuth: false,
+    redirectIfAuthenticated: true,
+    title: 'Register - SupplySense',
+    description: 'Register your company with SupplySense',
+  },
+  DASHBOARD: {
+    path: ROUTE_PATHS.DASHBOARD,
+    requiresAuth: true,
+    redirectIfAuthenticated: false,
+    title: 'Dashboard - SupplySense',
+    description: 'SupplySense dashboard and overview',
   },
 
   CHAT: {

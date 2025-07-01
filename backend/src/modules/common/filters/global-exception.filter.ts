@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { ApiErrorResponseDto } from '../dto/api-response.dto';
 
@@ -40,6 +41,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = exceptionResponse as string;
       }
+    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      const prismaError = this.handlePrismaError(exception);
+      status = prismaError.status;
+      message = prismaError.message;
+      error = prismaError.error;
+
+      // Log Prisma errors for debugging
+      this.logger.error(
+        `Prisma error ${exception.code}: ${exception.message}`,
+        exception.stack,
+        'GlobalExceptionFilter'
+      );
     } else if (exception instanceof Error) {
       message = exception.message;
       error = 'INTERNAL_ERROR';
@@ -80,5 +93,99 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     });
 
     response.status(status).json(errorResponse);
+  }
+
+  /**
+   * Get user-friendly error message for unique constraint violations
+   */
+  private getUniqueConstraintErrorMessage(target: unknown): string {
+    if (!Array.isArray(target)) {
+      return 'A record with this data already exists';
+    }
+
+    // Company-specific unique constraints
+    if (target.includes('taxId')) {
+      return 'A company with this tax ID already exists';
+    }
+    if (target.includes('contactEmail')) {
+      return 'A company with this email is already registered';
+    }
+
+    // User-specific unique constraints
+    if (target.includes('email')) {
+      return 'A user with this email already exists';
+    }
+    if (target.includes('username')) {
+      return 'This username is already taken';
+    }
+
+    // Branch-specific unique constraints
+    if (target.includes('companyId') && target.includes('code')) {
+      return 'A branch with this code already exists in your company';
+    }
+    if (target.includes('code')) {
+      return 'This code is already in use';
+    }
+
+    // Item-specific unique constraints
+    if (target.includes('companyId') && target.includes('sku')) {
+      return 'An item with this SKU already exists in your company';
+    }
+    if (target.includes('sku')) {
+      return 'This SKU is already in use';
+    }
+
+    // Supplier-specific unique constraints
+    if (target.includes('companyId') && target.includes('name')) {
+      return 'A supplier with this name already exists in your company';
+    }
+    if (target.includes('name')) {
+      return 'A record with this name already exists';
+    }
+
+    return 'A record with this data already exists';
+  }
+
+  /**
+   * Handle Prisma errors and return appropriate HTTP status and message
+   */
+  private handlePrismaError(exception: Prisma.PrismaClientKnownRequestError): {
+    status: number;
+    message: string;
+    error: string;
+  } {
+    if (exception.code === 'P2002') {
+      // Unique constraint violation
+      return {
+        status: HttpStatus.CONFLICT,
+        message: this.getUniqueConstraintErrorMessage(exception.meta?.target),
+        error: 'CONFLICT',
+      };
+    }
+
+    if (exception.code === 'P2025') {
+      // Record not found
+      return {
+        status: HttpStatus.NOT_FOUND,
+        message: 'Record not found',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    if (exception.code === 'P2003') {
+      // Foreign key constraint failed
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Invalid reference to related record',
+        error: 'BAD_REQUEST',
+      };
+    }
+
+    // Other Prisma errors
+    return {
+      status: HttpStatus.BAD_REQUEST,
+      message: 'Database operation failed',
+      error: 'DATABASE_ERROR',
+    };
   }
 }
