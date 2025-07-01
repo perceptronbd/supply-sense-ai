@@ -21,11 +21,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { PURCHASE_ORDER_PERMISSIONS } from '@supplysense/types';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { PURCHASE_ORDER_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 import { PurchaseOrderService } from './purchase-order.service';

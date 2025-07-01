@@ -24,11 +24,11 @@ import {
 } from '@nestjs/swagger';
 import { Supplier } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { SUPPLIER_PERMISSIONS } from '@supplysense/types';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { SUPPLIER_PERMISSIONS } from '../auth/types/permissions.types';
 import { ApiErrorResponseDto, ApiResponseDto, PaginatedResponseDto } from '../common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { QuerySupplierDto } from './dto/query-supplier.dto';

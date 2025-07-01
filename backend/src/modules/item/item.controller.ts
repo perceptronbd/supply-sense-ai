@@ -5,7 +5,6 @@
 import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
-import { ITEM_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -30,6 +29,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
 import { CreateItemDto } from './dto/create-item.dto';
 import { QueryItemDto } from './dto/query-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';

@@ -2,7 +2,6 @@
 import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
-import { CHAT_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -18,6 +17,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';

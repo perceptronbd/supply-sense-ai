@@ -21,11 +21,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { REQUEST_FORM_PERMISSIONS } from '@supplysense/types';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { REQUEST_FORM_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreateRequestFormDto } from './dto/create-request-form.dto';
 import { UpdateRequestFormDto } from './dto/update-request-form.dto';
 import { RequestFormService } from './request-form.service';

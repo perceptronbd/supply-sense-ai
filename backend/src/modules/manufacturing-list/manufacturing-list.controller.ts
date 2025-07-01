@@ -21,11 +21,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { MANUFACTURING_LIST_PERMISSIONS } from '@supplysense/types';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { MANUFACTURING_LIST_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 import { ManufacturingListService } from './manufacturing-list.service';

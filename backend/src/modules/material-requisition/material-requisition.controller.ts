@@ -21,11 +21,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { MATERIAL_REQUISITION_PERMISSIONS } from '@supplysense/types';
 import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { MATERIAL_REQUISITION_PERMISSIONS } from '../auth/types/permissions.types';
 import { CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 import { MaterialRequisitionService } from './material-requisition.service';

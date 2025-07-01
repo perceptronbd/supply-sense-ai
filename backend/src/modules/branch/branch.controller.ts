@@ -5,7 +5,6 @@
 import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
-import { BRANCH_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -30,6 +29,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { BRANCH_PERMISSIONS } from '@supplysense/types';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { QueryBranchDto } from './dto/query-branch.dto';

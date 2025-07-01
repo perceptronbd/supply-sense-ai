@@ -2,7 +2,6 @@
 import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
-import { AI_PERMISSIONS } from '@modules/auth/types/permissions.types';
 import {
   Body,
   Controller,
@@ -16,6 +15,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AI_PERMISSIONS } from '@supplysense/types';
 import {
   AISuggestionFiltersDto,
   AcceptSuggestionDto,
