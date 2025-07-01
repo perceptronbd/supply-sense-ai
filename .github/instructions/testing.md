@@ -1,4 +1,9 @@
 ---
+description: 
+globs: 
+alwaysApply: false
+---
+---
 applyTo: "backend/**/*.test.ts,backend/**/*.spec.ts,**/e2e/**,**/tests/**"
 ---
 
@@ -765,3 +770,4 @@ export async function cleanupTestApp(app: any, prisma: PrismaService) {
   }
 }
 ```
+
