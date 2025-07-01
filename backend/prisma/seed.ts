@@ -147,6 +147,17 @@ async function createDefaultPermissions() {
     { module: "CHAT", action: "SEND_MESSAGE", description: "Send messages" },
     { module: "CHAT", action: "READ_MESSAGES", description: "Read messages" },
     { module: "CHAT", action: "MANAGE_CONVERSATIONS", description: "Manage conversations" },
+
+    // Roles
+    { module: "ROLES", action: "CREATE", description: "Create roles" },
+    { module: "ROLES", action: "READ", description: "View roles" },
+    { module: "ROLES", action: "UPDATE", description: "Edit roles" },
+    { module: "ROLES", action: "DELETE", description: "Delete roles" },
+    { module: "ROLES", action: "MANAGE", description: "Manage role permissions" },
+
+    // Permissions
+    { module: "PERMISSIONS", action: "READ", description: "View permissions" },
+    { module: "PERMISSIONS", action: "MANAGE", description: "Manage permissions" },
   ];
 
   const permissions = [];
@@ -348,7 +359,12 @@ async function createBranches(companyId: string) {
 
   // HQ Branch
   const hqBranch = await (prisma as any).branch.upsert({
-    where: { code: `HQ${companyPrefix}` },
+    where: { 
+      companyId_code: {
+        companyId,
+        code: `HQ${companyPrefix}`
+      }
+    },
     update: {
       name: "Headquarters",
       address: "123 Main Street, Business District",
@@ -373,7 +389,12 @@ async function createBranches(companyId: string) {
 
   // Manufacturing Branch A
   const branchA = await (prisma as any).branch.upsert({
-    where: { code: `BR1${companyPrefix}` },
+    where: { 
+      companyId_code: {
+        companyId,
+        code: `BR1${companyPrefix}`
+      }
+    },
     update: {
       name: "Manufacturing Branch A",
       address: "456 Industrial Ave, Manufacturing Zone",
@@ -398,7 +419,12 @@ async function createBranches(companyId: string) {
 
   // Manufacturing Branch B
   const branchB = await (prisma as any).branch.upsert({
-    where: { code: `BR2${companyPrefix}` },
+    where: { 
+      companyId_code: {
+        companyId,
+        code: `BR2${companyPrefix}`
+      }
+    },
     update: {
       name: "Manufacturing Branch B",
       address: "789 Factory Road, Production Area",

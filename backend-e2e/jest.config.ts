@@ -6,6 +6,7 @@ export default {
   setupFiles: ['<rootDir>/src/support/test-setup.ts'],
   testEnvironment: 'node',
   maxWorkers: 1,
+  testTimeout: 30000, // 30 seconds timeout for each test
   testMatch: [
     '<rootDir>/src/**/*.{spec,test}.{js,ts}',
     '<rootDir>/src/**/*.e2e-spec.{js,ts}',

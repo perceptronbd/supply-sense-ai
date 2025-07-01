@@ -75,6 +75,7 @@ export const USER_PERMISSIONS = {
   READ: createPermission(RESOURCES.USERS, ACTIONS.READ),
   UPDATE: createPermission(RESOURCES.USERS, ACTIONS.UPDATE),
   DELETE: createPermission(RESOURCES.USERS, ACTIONS.DELETE),
+  MANAGE: createPermission(RESOURCES.USERS, ACTIONS.MANAGE),
 } as const;
 
 // Company Permissions
@@ -187,6 +188,23 @@ export const GOODS_RECEIPT_PERMISSIONS = {
   REJECT: createPermission(RESOURCES.GOODS_RECEIPTS, ACTIONS.REJECT),
 } as const;
 
+// === ROLES AND PERMISSIONS ===
+
+// Role Permissions
+export const ROLE_PERMISSIONS = {
+  CREATE: createPermission(RESOURCES.ROLES, ACTIONS.CREATE),
+  READ: createPermission(RESOURCES.ROLES, ACTIONS.READ),
+  UPDATE: createPermission(RESOURCES.ROLES, ACTIONS.UPDATE),
+  DELETE: createPermission(RESOURCES.ROLES, ACTIONS.DELETE),
+  MANAGE: createPermission(RESOURCES.ROLES, ACTIONS.MANAGE),
+} as const;
+
+// Permission Management Permissions
+export const PERMISSION_PERMISSIONS = {
+  READ: createPermission(RESOURCES.PERMISSIONS, ACTIONS.READ),
+  MANAGE: createPermission(RESOURCES.PERMISSIONS, ACTIONS.MANAGE),
+} as const;
+
 // === ADVANCED FEATURE PERMISSIONS ===
 
 // AI & Analytics Permissions
@@ -223,6 +241,10 @@ export const ALL_PERMISSIONS = {
   REQUEST_FORMS: REQUEST_FORM_PERMISSIONS,
   MANUFACTURING_LISTS: MANUFACTURING_LIST_PERMISSIONS,
   GOODS_RECEIPTS: GOODS_RECEIPT_PERMISSIONS,
+
+  // Roles and Permissions
+  ROLES: ROLE_PERMISSIONS,
+  PERMISSIONS: PERMISSION_PERMISSIONS,
 
   // Advanced features
   AI: AI_PERMISSIONS,
