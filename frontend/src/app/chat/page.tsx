@@ -3,7 +3,9 @@
 import { ChatInterface } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
+import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useCreateSessionMutation } from '@/store/api/chatApi';
+import { addToast } from '@heroui/react';
 import { useEffect, useState } from 'react';
 
 export default function ChatPage() {
@@ -22,6 +24,17 @@ export default function ChatPage() {
         console.log('Chat session initialized:', newSession.id);
       } catch (error) {
         console.error('Failed to initialize chat session:', error);
+
+        // Get enhanced error information for toast
+        const toastError = getToastErrorMessage(error);
+
+        // Show error toast
+        addToast({
+          title: toastError.title,
+          description: toastError.description,
+          color: 'danger',
+          variant: 'flat',
+        });
       }
     };
 

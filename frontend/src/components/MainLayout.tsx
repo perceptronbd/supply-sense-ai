@@ -32,7 +32,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex p-4 h-screen bg-content2 text-foreground">
+    <div className="flex p-2 h-screen bg-content2 text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
