@@ -1,8 +1,4 @@
----
-description:
-globs:
-alwaysApply: false
----
+
 # PRD Requirements Tracking
 
 ## Document Reference

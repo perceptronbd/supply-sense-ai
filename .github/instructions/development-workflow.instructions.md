@@ -1,8 +1,3 @@
----
-description: 
-globs: 
-alwaysApply: true
----
 # Development Workflow Guidelines
 
 ## Project Architecture
