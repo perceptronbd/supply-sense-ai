@@ -335,7 +335,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                     fieldSchema={fieldSchemas.firstName}
                     isRequired
                     variant="bordered"
-                    key={`firstName-${formData.firstName}`} // Force re-render when formData changes
                   />
                 </div>
 
@@ -350,7 +349,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                     fieldSchema={fieldSchemas.lastName}
                     isRequired
                     variant="bordered"
-                    key={`lastName-${formData.lastName}`}
                   />
                 </div>
 
@@ -366,7 +364,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                     fieldSchema={fieldSchemas.email}
                     isRequired
                     variant="bordered"
-                    key={`email-${formData.email}`}
                   />
                 </div>
 
@@ -381,7 +378,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                     fieldSchema={fieldSchemas.username}
                     isRequired
                     variant="bordered"
-                    key={`username-${formData.username}`}
                   />
                 </div>
               </div>
@@ -414,7 +410,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                     }
                     isRequired={mode === 'create'}
                     variant="bordered"
-                    key={`password-${formData.password}`}
                   />
                 </div>
 
@@ -439,7 +434,6 @@ export function UserForm({ user, mode, onSuccess }: UserFormProps) {
                       mode === 'create' || (mode === 'edit' && formData.password.length > 0)
                     }
                     variant="bordered"
-                    key={`confirmPassword-${formData.confirmPassword}-${formData.password}`}
                   />
                 </div>
               </div>

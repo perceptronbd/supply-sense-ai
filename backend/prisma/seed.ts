@@ -119,6 +119,7 @@ async function createDefaultPermissions() {
     { module: "USERS", action: "READ", description: "View users" },
     { module: "USERS", action: "UPDATE", description: "Edit users" },
     { module: "USERS", action: "DELETE", description: "Delete users" },
+    { module: "USERS", action: "MANAGE", description: "Manage user roles and branches" },
 
     // Companies
     { module: "COMPANIES", action: "CREATE", description: "Create companies" },
