@@ -198,8 +198,8 @@ export default function ItemsPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -210,9 +210,9 @@ export default function ItemsPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <header className="flex justify-between items-center mb-6">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" color="default" as="h1">
                 Items
@@ -246,13 +246,13 @@ export default function ItemsPage() {
           {/* Items Table and Filters */}
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
-                <div className="flex justify-between items-center w-full">
+              <CardHeader className="flex flex-col gap-4 pb-3">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Items
                   </Text>
                   {/* Status Summary Chips */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip
                       color="primary"
                       variant="flat"
@@ -282,7 +282,7 @@ export default function ItemsPage() {
                   </div>{' '}
                 </div>
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-start w-full">
+                <div className="flex flex-col justify-start w-full gap-4 sm:flex-row">
                   <Input
                     placeholder="Search items by name, SKU, or description..."
                     value={searchTerm}
@@ -306,13 +306,13 @@ export default function ItemsPage() {
               <CardBody>
                 {/* Loading State */}
                 {isLoading && (
-                  <div className="flex justify-center items-center py-12">
+                  <div className="flex items-center justify-center py-12">
                     <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                   </div>
                 )}
                 {/* Error State */}
                 {error && (
-                  <div className="text-center py-12">
+                  <div className="py-12 text-center">
                     <Text variant="bodyLarge" color="danger" className="mb-4">
                       Failed to load items
                     </Text>
@@ -323,10 +323,11 @@ export default function ItemsPage() {
                 )}
                 {/* Empty State */}
                 {!isLoading && !error && (!Array.isArray(items) || items.length === 0) && (
-                  <div className="text-center py-12">
+                  <div className="py-12 text-center border-2 border-dashed rounded-lg border-divider">
                     <Text variant="bodyLarge" color="muted" className="mb-2">
                       {searchTerm ? 'No items found matching your search' : 'No items found'}
                     </Text>
+
                     {searchTerm && (
                       <Text variant="bodyMedium" color="muted">
                         Try adjusting your search criteria
@@ -363,7 +364,7 @@ export default function ItemsPage() {
                     </Table>{' '}
                     {/* Pagination */}
                     {pagination && pagination.pages > 1 && (
-                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-divider">
+                      <div className="flex items-center justify-between pt-4 mt-6 border-t border-divider">
                         <div className="flex items-center gap-4">
                           <Select
                             size="sm"

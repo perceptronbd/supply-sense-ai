@@ -211,80 +211,92 @@ export default function BranchesPage() {
                   </div>
                 )}
 
-                {/* Table */}
-                {!state.isLoading && !state.error && state.branches.length > 0 && (
-                  <>
-                    <Table aria-label="Branches table">
-                      <TableHeader columns={columns}>
-                        {(column) => (
-                          <TableColumn key={column.uid} allowsSorting={column.sortable}>
-                            {column.name}
-                          </TableColumn>
-                        )}
-                      </TableHeader>
-                      <TableBody items={state.branches}>
-                        {(branch) => (
-                          <TableRow key={branch.id}>
-                            {(columnKey) => (
-                              <TableCell>{renderCell(branch, columnKey as string)}</TableCell>
-                            )}
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-between items-center pt-4 mt-6 border-t border-divider">
-                        <div className="flex gap-4 items-center">
-                          <Select
-                            size="sm"
-                            placeholder="Items per page"
-                            defaultSelectedKeys={[state.itemsPerPage.toString()]}
-                            className="w-32"
-                            onChange={(e) =>
-                              state.handleItemsPerPageChange(Number.parseInt(e.target.value))
-                            }
-                          >
-                            <SelectItem key="10">10</SelectItem>
-                            <SelectItem key="25">25</SelectItem>
-                            <SelectItem key="50">50</SelectItem>
-                          </Select>
-                          <Text variant="bodySmall" className="text-default-400">
-                            {state.pagination && (
-                              <>
-                                Showing {(state.currentPage - 1) * state.itemsPerPage + 1} to{' '}
-                                {Math.min(
-                                  state.currentPage * state.itemsPerPage,
-                                  state.pagination.total
-                                )}{' '}
-                                of {state.pagination.total} branches
-                              </>
-                            )}
-                          </Text>
-                        </div>
-                        <Pagination
-                          isCompact
-                          showControls
-                          showShadow
-                          color="primary"
-                          page={state.currentPage}
-                          total={totalPages}
-                          onChange={state.handlePageChange}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-
                 {/* Empty State */}
-                {!state.isLoading && !state.error && state.branches.length === 0 && (
-                  <div className="py-8 text-center">
-                    <Text variant="bodyLarge" className="text-default-400">
-                      No branches found
-                    </Text>
-                  </div>
-                )}
+                {!state.isLoading &&
+                  !state.error &&
+                  (!Array.isArray(state.branches) || state.branches.length === 0) && (
+                    <div className="py-12 text-center border-2 border-dashed rounded-lg border-divider">
+                      <Text variant="bodyLarge" color="muted" className="mb-2">
+                        {state.searchTerm
+                          ? 'No branches found matching your search'
+                          : 'No branches found'}
+                      </Text>
+                      {state.searchTerm && (
+                        <Text variant="bodyMedium" color="muted">
+                          Try adjusting your search criteria
+                        </Text>
+                      )}
+                    </div>
+                  )}
+
+                {/* Table */}
+                {!state.isLoading &&
+                  !state.error &&
+                  Array.isArray(state.branches) &&
+                  state.branches.length > 0 && (
+                    <>
+                      <Table aria-label="Branches table">
+                        <TableHeader columns={columns}>
+                          {(column) => (
+                            <TableColumn key={column.uid} allowsSorting={column.sortable}>
+                              {column.name}
+                            </TableColumn>
+                          )}
+                        </TableHeader>
+                        <TableBody items={state.branches}>
+                          {(branch) => (
+                            <TableRow key={branch.id}>
+                              {(columnKey) => (
+                                <TableCell>{renderCell(branch, columnKey as string)}</TableCell>
+                              )}
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex justify-between items-center pt-4 mt-6 border-t border-divider">
+                          <div className="flex gap-4 items-center">
+                            <Select
+                              size="sm"
+                              placeholder="Items per page"
+                              defaultSelectedKeys={[state.itemsPerPage.toString()]}
+                              className="w-32"
+                              onChange={(e) =>
+                                state.handleItemsPerPageChange(Number.parseInt(e.target.value))
+                              }
+                            >
+                              <SelectItem key="10">10</SelectItem>
+                              <SelectItem key="25">25</SelectItem>
+                              <SelectItem key="50">50</SelectItem>
+                            </Select>
+                            <Text variant="bodySmall" className="text-default-400">
+                              {state.pagination && (
+                                <>
+                                  Showing {(state.currentPage - 1) * state.itemsPerPage + 1} to{' '}
+                                  {Math.min(
+                                    state.currentPage * state.itemsPerPage,
+                                    state.pagination.total
+                                  )}{' '}
+                                  of {state.pagination.total} branches
+                                </>
+                              )}
+                            </Text>
+                          </div>
+                          <Pagination
+                            isCompact
+                            showControls
+                            showShadow
+                            color="primary"
+                            page={state.currentPage}
+                            total={totalPages}
+                            onChange={state.handlePageChange}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
               </CardBody>
             </Card>
           </section>

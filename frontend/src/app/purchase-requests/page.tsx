@@ -117,7 +117,7 @@ export default function PurchaseRequestsPage() {
       <AuthGuard requireAuth={true}>
         <div className="p-6">
           <div className="mx-auto max-w-7xl">
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <Text variant="bodyLarge">Loading...</Text>
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function PurchaseRequestsPage() {
       <AuthGuard requireAuth={true}>
         <div className="p-6">
           <div className="mx-auto max-w-7xl">
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -343,7 +343,7 @@ export default function PurchaseRequestsPage() {
       <AuthGuard requireAuth={true}>
         <div className="p-6">
           <div className="mx-auto max-w-7xl">
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase requests
               </Text>
@@ -358,7 +358,7 @@ export default function PurchaseRequestsPage() {
     <AuthGuard requireAuth={true}>
       <main className="p-6">
         <div className="mx-auto max-w-7xl">
-          <header className="flex justify-between items-center mb-6">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Requests
@@ -377,12 +377,12 @@ export default function PurchaseRequestsPage() {
           <section>
             <Card>
               <CardHeader className="flex flex-col gap-4 pb-3">
-                <div className="flex justify-between items-center w-full">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Purchase Requests
                   </Text>
                   {/* Status Summary Chips moved to the right */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip
                       color="primary"
                       variant="flat"
@@ -428,121 +428,167 @@ export default function PurchaseRequestsPage() {
                 </div>
               </CardHeader>
               <CardBody>
-                <Table
-                  aria-label="Purchase requests table"
-                  classNames={{
-                    th: 'bg-default-200',
-                    tr: 'hover:bg-default-200',
-                  }}
-                >
-                  <TableHeader>
-                    <TableColumn>REQUEST ID</TableColumn>
-                    <TableColumn>TITLE</TableColumn>
-                    <TableColumn>STATUS</TableColumn>
-                    <TableColumn>REQUIRED DATE</TableColumn>
-                    <TableColumn>CREATED</TableColumn>
-                    <TableColumn>ACTIONS</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.prNumber}</TableCell>
-                        <TableCell>{request.title || 'Untitled'}</TableCell>
-                        <TableCell>
-                          <Chip color={getStatusColor(request.status)} variant="flat" size="sm">
-                            {request.status}
-                          </Chip>
-                        </TableCell>
-                        <TableCell>{new Date(request.requiredDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-center">
-                            <Dropdown>
-                              <DropdownTrigger>
-                                <Button
-                                  variant="light"
-                                  size="sm"
-                                  isIconOnly
-                                  className="text-default-600 hover:text-default-600"
-                                >
-                                  <DotsVerticalIcon />
-                                </Button>
-                              </DropdownTrigger>
-                              <DropdownMenu
-                                variant="flat"
-                                onAction={(key) => {
-                                  const action = key as string;
-                                  if (action === 'view') {
-                                    router.push(`/purchase-requests/${request.id}`);
-                                  } else if (action === 'edit') {
-                                    handleEditRequest(request);
-                                  } else if (action === 'createPO') {
-                                    handleCreatePO(request);
-                                  } else if (
-                                    action === 'submit' ||
-                                    action === 'approve' ||
-                                    action === 'reject' ||
-                                    action === 'delete'
-                                  ) {
-                                    handleWorkflowAction(
-                                      action as 'submit' | 'approve' | 'reject' | 'delete',
-                                      request.id
-                                    );
-                                  }
-                                }}
-                              >
-                                {getDropdownItems(request)}
-                              </DropdownMenu>
-                            </Dropdown>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-between items-center mt-6">
-                    {/* Left side: Dropdown and text */}
-                    <div className="flex gap-4 items-center">
-                      <Select
-                        size="sm"
-                        placeholder="Items per page"
-                        defaultSelectedKeys={[itemsPerPage.toString()]}
-                        className="w-32"
-                        classNames={{
-                          popoverContent: 'bg-default-200',
-                          trigger: 'bg-default-200',
-                        }}
-                        onChange={(e) => {
-                          const newItemsPerPage = Number.parseInt(e.target.value);
-                          setItemsPerPage(newItemsPerPage);
-                          setCurrentPage(1); // Reset to first page
-                        }}
-                      >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="25">25</SelectItem>
-                        <SelectItem key="50">50</SelectItem>
-                      </Select>
-                      <Text variant="bodySmall" className="text-default-500" as="p">
-                        Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)} of{' '}
-                        {purchaseRequests.length} requests
-                      </Text>
-                    </div>
-
-                    {/* Right side: Pagination buttons */}
-                    <Pagination
-                      total={totalPages}
-                      page={currentPage}
-                      onChange={setCurrentPage}
-                      showControls
-                      showShadow
-                      color="primary"
-                    />
+                {/* Loading State */}
+                {isLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                   </div>
                 )}
+
+                {/* Error State */}
+                {error && (
+                  <div className="py-12 text-center">
+                    <Text variant="bodyLarge" color="danger" className="mb-4">
+                      Failed to load purchase requests
+                    </Text>
+                    <Button color="primary" variant="flat" onPress={() => window.location.reload()}>
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!isLoading &&
+                  !error &&
+                  (!Array.isArray(purchaseRequests) || purchaseRequests.length === 0) && (
+                    <div className="py-12 text-center border-2 border-dashed rounded-lg border-divider">
+                      <Text variant="bodyLarge" color="muted" className="mb-2">
+                        No purchase requests found
+                      </Text>
+                    </div>
+                  )}
+
+                {/* Purchase Requests Table */}
+                {!isLoading &&
+                  !error &&
+                  Array.isArray(purchaseRequests) &&
+                  purchaseRequests.length > 0 && (
+                    <>
+                      <Table
+                        aria-label="Purchase requests table"
+                        classNames={{
+                          th: 'bg-default-200',
+                          tr: 'hover:bg-default-200',
+                        }}
+                      >
+                        <TableHeader>
+                          <TableColumn>REQUEST ID</TableColumn>
+                          <TableColumn>TITLE</TableColumn>
+                          <TableColumn>STATUS</TableColumn>
+                          <TableColumn>REQUIRED DATE</TableColumn>
+                          <TableColumn>CREATED</TableColumn>
+                          <TableColumn>ACTIONS</TableColumn>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedRequests.map((request) => (
+                            <TableRow key={request.id}>
+                              <TableCell className="font-medium">{request.prNumber}</TableCell>
+                              <TableCell>{request.title || 'Untitled'}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  color={getStatusColor(request.status)}
+                                  variant="flat"
+                                  size="sm"
+                                >
+                                  {request.status}
+                                </Chip>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(request.requiredDate).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(request.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center">
+                                  <Dropdown>
+                                    <DropdownTrigger>
+                                      <Button
+                                        variant="light"
+                                        size="sm"
+                                        isIconOnly
+                                        className="text-default-600 hover:text-default-600"
+                                      >
+                                        <DotsVerticalIcon />
+                                      </Button>
+                                    </DropdownTrigger>
+                                    <DropdownMenu
+                                      variant="flat"
+                                      onAction={(key) => {
+                                        const action = key as string;
+                                        if (action === 'view') {
+                                          router.push(`/purchase-requests/${request.id}`);
+                                        } else if (action === 'edit') {
+                                          handleEditRequest(request);
+                                        } else if (action === 'createPO') {
+                                          handleCreatePO(request);
+                                        } else if (
+                                          action === 'submit' ||
+                                          action === 'approve' ||
+                                          action === 'reject' ||
+                                          action === 'delete'
+                                        ) {
+                                          handleWorkflowAction(
+                                            action as 'submit' | 'approve' | 'reject' | 'delete',
+                                            request.id
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {getDropdownItems(request)}
+                                    </DropdownMenu>
+                                  </Dropdown>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-6">
+                          {/* Left side: Dropdown and text */}
+                          <div className="flex items-center gap-4">
+                            <Select
+                              size="sm"
+                              placeholder="Items per page"
+                              defaultSelectedKeys={[itemsPerPage.toString()]}
+                              className="w-32"
+                              classNames={{
+                                popoverContent: 'bg-default-200',
+                                trigger: 'bg-default-200',
+                              }}
+                              onChange={(e) => {
+                                const newItemsPerPage = Number.parseInt(e.target.value);
+                                setItemsPerPage(newItemsPerPage);
+                                setCurrentPage(1); // Reset to first page
+                              }}
+                            >
+                              <SelectItem key="5">5</SelectItem>
+                              <SelectItem key="10">10</SelectItem>
+                              <SelectItem key="25">25</SelectItem>
+                              <SelectItem key="50">50</SelectItem>
+                            </Select>
+                            <Text variant="bodySmall" className="text-default-500" as="p">
+                              Showing {startIndex + 1}-{Math.min(endIndex, purchaseRequests.length)}{' '}
+                              of {purchaseRequests.length} requests
+                            </Text>
+                          </div>
+
+                          {/* Right side: Pagination buttons */}
+                          <Pagination
+                            total={totalPages}
+                            page={currentPage}
+                            onChange={setCurrentPage}
+                            showControls
+                            showShadow
+                            color="primary"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
               </CardBody>
             </Card>
           </section>

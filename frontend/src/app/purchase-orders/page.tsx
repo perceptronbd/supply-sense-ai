@@ -105,8 +105,8 @@ export default function PurchaseOrdersPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -289,8 +289,8 @@ export default function PurchaseOrdersPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -303,8 +303,8 @@ export default function PurchaseOrdersPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase orders
               </Text>
@@ -318,13 +318,13 @@ export default function PurchaseOrdersPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <header className="flex justify-between items-center mb-6">
+        <div className="mx-auto max-w-7xl">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Orders
               </Text>
-              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
+              <Text variant="bodyBase" className="mt-2 text-default-500" as="p">
                 Track and manage all purchase orders
               </Text>
             </div>
@@ -335,13 +335,13 @@ export default function PurchaseOrdersPage() {
 
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
-                <div className="flex justify-between items-center w-full">
+              <CardHeader className="flex flex-col gap-4 pb-3">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold">
                     All Purchase Orders
                   </Text>
                   {/* Status Summary Chips moved to the right */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip
                       color="primary"
                       variant="flat"
@@ -397,133 +397,173 @@ export default function PurchaseOrdersPage() {
                 </div>
               </CardHeader>
               <CardBody>
-                <Table
-                  classNames={{
-                    th: 'bg-default-200',
-                    tr: 'hover:bg-default-200',
-                  }}
-                  aria-label="Purchase orders table"
-                >
-                  <TableHeader>
-                    <TableColumn>ORDER ID</TableColumn>
-                    <TableColumn>SUPPLIER</TableColumn>
-                    <TableColumn>ORDER DATE</TableColumn>
-                    <TableColumn>EXPECTED DELIVERY</TableColumn>
-                    <TableColumn>STATUS</TableColumn>
-                    <TableColumn>TOTAL AMOUNT</TableColumn>
-                    <TableColumn>ACTIONS</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.poNumber}</TableCell>
-                        <TableCell>{order.supplier.name}</TableCell>
-                        <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          {new Date(order.expectedDeliveryDate).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Chip color={getStatusColor(order.status)} variant="flat" size="sm">
-                            {order.status.replace('_', ' ')}
-                          </Chip>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          ${Number(order.totalAmount).toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-center">
-                            <Dropdown>
-                              <DropdownTrigger>
-                                <Button
-                                  variant="light"
-                                  size="sm"
-                                  isIconOnly
-                                  className="text-default-600 hover:text-default-600"
-                                >
-                                  <DotsVerticalIcon />
-                                </Button>
-                              </DropdownTrigger>
-                              <DropdownMenu
-                                variant="flat"
-                                onAction={(key) => {
-                                  const action = key as string;
-                                  if (action === 'view') {
-                                    router.push(`/purchase-orders/${order.id}`);
-                                  } else if (action === 'edit') {
-                                    handleEditOrder(order);
-                                  } else if (
-                                    action === 'send' ||
-                                    action === 'confirm' ||
-                                    action === 'cancel' ||
-                                    action === 'close' ||
-                                    action === 'createGR' ||
-                                    action === 'delete'
-                                  ) {
-                                    handleWorkflowAction(
-                                      action as
-                                        | 'send'
-                                        | 'confirm'
-                                        | 'cancel'
-                                        | 'close'
-                                        | 'createGR'
-                                        | 'delete',
-                                      order.id
-                                    );
-                                  }
-                                }}
-                              >
-                                {getDropdownItems(order)}
-                              </DropdownMenu>
-                            </Dropdown>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-between items-center mt-6">
-                    {/* Left side: Dropdown and text */}
-                    <div className="flex items-center gap-4">
-                      <Select
-                        size="sm"
-                        placeholder="Items per page"
-                        defaultSelectedKeys={[itemsPerPage.toString()]}
-                        className="w-32"
-                        classNames={{
-                          popoverContent: 'bg-default-200',
-                          trigger: 'bg-default-200',
-                        }}
-                        onChange={(e) => {
-                          const newItemsPerPage = Number.parseInt(e.target.value);
-                          setItemsPerPage(newItemsPerPage);
-                          setCurrentPage(1); // Reset to first page
-                        }}
-                      >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="25">25</SelectItem>
-                        <SelectItem key="50">50</SelectItem>
-                      </Select>
-                      <Text variant="bodySmall" className="text-default-500">
-                        Showing {startIndex + 1}-{Math.min(endIndex, purchaseOrders.length)} of{' '}
-                        {purchaseOrders.length} orders
-                      </Text>
-                    </div>
-
-                    {/* Right side: Pagination buttons */}
-                    <Pagination
-                      total={totalPages}
-                      page={currentPage}
-                      onChange={setCurrentPage}
-                      showControls
-                      showShadow
-                      color="primary"
-                    />
+                {/* Loading State */}
+                {isLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                   </div>
                 )}
+
+                {/* Error State */}
+                {error && (
+                  <div className="py-12 text-center">
+                    <Text variant="bodyLarge" color="danger" className="mb-4">
+                      Failed to load purchase orders
+                    </Text>
+                    <Button color="primary" variant="flat" onPress={() => window.location.reload()}>
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!isLoading &&
+                  !error &&
+                  (!Array.isArray(purchaseOrders) || purchaseOrders.length === 0) && (
+                    <div className="py-12 text-center border-2 border-dashed rounded-lg border-divider">
+                      <Text variant="bodyLarge" color="muted" className="mb-2">
+                        No purchase orders found
+                      </Text>
+                    </div>
+                  )}
+
+                {/* Purchase Orders Table */}
+                {!isLoading &&
+                  !error &&
+                  Array.isArray(purchaseOrders) &&
+                  purchaseOrders.length > 0 && (
+                    <>
+                      <Table
+                        classNames={{
+                          th: 'bg-default-200',
+                          tr: 'hover:bg-default-200',
+                        }}
+                        aria-label="Purchase orders table"
+                      >
+                        <TableHeader>
+                          <TableColumn>ORDER ID</TableColumn>
+                          <TableColumn>SUPPLIER</TableColumn>
+                          <TableColumn>ORDER DATE</TableColumn>
+                          <TableColumn>EXPECTED DELIVERY</TableColumn>
+                          <TableColumn>STATUS</TableColumn>
+                          <TableColumn>TOTAL AMOUNT</TableColumn>
+                          <TableColumn>ACTIONS</TableColumn>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedOrders.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="font-medium">{order.poNumber}</TableCell>
+                              <TableCell>{order.supplier.name}</TableCell>
+                              <TableCell>
+                                {new Date(order.orderDate).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(order.expectedDeliveryDate).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Chip color={getStatusColor(order.status)} variant="flat" size="sm">
+                                  {order.status.replace('_', ' ')}
+                                </Chip>
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                ${Number(order.totalAmount).toFixed(2)}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center">
+                                  <Dropdown>
+                                    <DropdownTrigger>
+                                      <Button
+                                        variant="light"
+                                        size="sm"
+                                        isIconOnly
+                                        className="text-default-600 hover:text-default-600"
+                                      >
+                                        <DotsVerticalIcon />
+                                      </Button>
+                                    </DropdownTrigger>
+                                    <DropdownMenu
+                                      variant="flat"
+                                      onAction={(key) => {
+                                        const action = key as string;
+                                        if (action === 'view') {
+                                          router.push(`/purchase-orders/${order.id}`);
+                                        } else if (action === 'edit') {
+                                          handleEditOrder(order);
+                                        } else if (
+                                          action === 'send' ||
+                                          action === 'confirm' ||
+                                          action === 'cancel' ||
+                                          action === 'close' ||
+                                          action === 'createGR' ||
+                                          action === 'delete'
+                                        ) {
+                                          handleWorkflowAction(
+                                            action as
+                                              | 'send'
+                                              | 'confirm'
+                                              | 'cancel'
+                                              | 'close'
+                                              | 'createGR'
+                                              | 'delete',
+                                            order.id
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {getDropdownItems(order)}
+                                    </DropdownMenu>
+                                  </Dropdown>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-6">
+                          {/* Left side: Dropdown and text */}
+                          <div className="flex items-center gap-4">
+                            <Select
+                              size="sm"
+                              placeholder="Items per page"
+                              defaultSelectedKeys={[itemsPerPage.toString()]}
+                              className="w-32"
+                              classNames={{
+                                popoverContent: 'bg-default-200',
+                                trigger: 'bg-default-200',
+                              }}
+                              onChange={(e) => {
+                                const newItemsPerPage = Number.parseInt(e.target.value);
+                                setItemsPerPage(newItemsPerPage);
+                                setCurrentPage(1); // Reset to first page
+                              }}
+                            >
+                              <SelectItem key="5">5</SelectItem>
+                              <SelectItem key="10">10</SelectItem>
+                              <SelectItem key="25">25</SelectItem>
+                              <SelectItem key="50">50</SelectItem>
+                            </Select>
+                            <Text variant="bodySmall" className="text-default-500">
+                              Showing {startIndex + 1}-{Math.min(endIndex, purchaseOrders.length)}{' '}
+                              of {purchaseOrders.length} orders
+                            </Text>
+                          </div>
+
+                          {/* Right side: Pagination buttons */}
+                          <Pagination
+                            total={totalPages}
+                            page={currentPage}
+                            onChange={setCurrentPage}
+                            showControls
+                            showShadow
+                            color="primary"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
               </CardBody>
             </Card>
           </section>
