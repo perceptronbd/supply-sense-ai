@@ -3,8 +3,8 @@
 import AuthGuard from '@/components/AuthGuard';
 import { ArrowLeftIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { type Supplier, useGetSupplierQuery } from '@/store/api/supplierApi';
 import { Button } from '@heroui/react';
 import { SUPPLIER_PERMISSIONS } from '@supplysense/types';
@@ -21,6 +21,7 @@ interface EditSupplierPageProps {
 export default function EditSupplierPage({ params }: EditSupplierPageProps) {
   const router = useRouter();
   const { id } = use(params);
+  const { hasPermission } = usePermissions();
 
   // Fetch supplier data
   const { data: supplier, isLoading, error, refetch } = useGetSupplierQuery(id);
@@ -92,9 +93,15 @@ export default function EditSupplierPage({ params }: EditSupplierPageProps) {
 
           {/* Edit Form */}
           <section>
-            <PermissionGuard permission={SUPPLIER_PERMISSIONS.UPDATE}>
+            {hasPermission(SUPPLIER_PERMISSIONS.UPDATE) ? (
               <SupplierForm supplier={supplier} onSuccess={handleSuccess} />
-            </PermissionGuard>
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <Text variant="bodyLarge" className="text-danger" as="p">
+                  You don't have permission to edit suppliers
+                </Text>
+              </div>
+            )}
           </section>
         </div>
       </main>

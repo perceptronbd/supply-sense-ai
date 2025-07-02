@@ -3,8 +3,8 @@
 import AuthGuard from '@/components/AuthGuard';
 import { ArrowLeftIcon, EditIcon, TrashIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   useDeleteSupplierMutation,
   useGetSupplierQuery,
@@ -25,6 +25,7 @@ interface SupplierDetailPageProps {
 export default function SupplierDetailPage({ params }: SupplierDetailPageProps) {
   const router = useRouter();
   const { id } = use(params);
+  const { hasPermission } = usePermissions();
 
   // State for delete dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -155,7 +156,7 @@ export default function SupplierDetailPage({ params }: SupplierDetailPageProps) 
                     {supplier.isActive ? 'Active' : 'Inactive'}
                   </Chip>
 
-                  <PermissionGuard permission={SUPPLIER_PERMISSIONS.UPDATE}>
+                  {hasPermission(SUPPLIER_PERMISSIONS.UPDATE) && (
                     <Button
                       color="primary"
                       variant="flat"
@@ -164,9 +165,9 @@ export default function SupplierDetailPage({ params }: SupplierDetailPageProps) 
                     >
                       Edit
                     </Button>
-                  </PermissionGuard>
+                  )}
 
-                  <PermissionGuard permission={SUPPLIER_PERMISSIONS.DELETE}>
+                  {hasPermission(SUPPLIER_PERMISSIONS.DELETE) && (
                     <Button
                       color="danger"
                       variant="flat"
@@ -175,7 +176,7 @@ export default function SupplierDetailPage({ params }: SupplierDetailPageProps) 
                     >
                       {supplier.isActive ? 'Deactivate' : 'Delete'}
                     </Button>
-                  </PermissionGuard>
+                  )}
                 </div>
               </div>
             </header>

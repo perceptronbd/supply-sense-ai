@@ -1,8 +1,8 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { type Supplier } from '@/store/api/supplierApi';
 import { SUPPLIER_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import { SupplierForm } from '../components/SupplierForm';
 
 export default function CreateSupplierPage() {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
 
   const handleSuccess = (supplier: Supplier) => {
     // Navigate to the newly created supplier's detail page
@@ -19,7 +20,7 @@ export default function CreateSupplierPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="mx-auto max-w-4xl">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <header className="mb-6">
             <Text variant="headerSmall" weight="bold" color="default" as="h1">
@@ -32,9 +33,15 @@ export default function CreateSupplierPage() {
 
           {/* Create Form */}
           <section>
-            <PermissionGuard permission={SUPPLIER_PERMISSIONS.CREATE}>
+            {hasPermission(SUPPLIER_PERMISSIONS.CREATE) ? (
               <SupplierForm onSuccess={handleSuccess} />
-            </PermissionGuard>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <Text variant="bodyLarge" className="text-danger" as="p">
+                  You don't have permission to create suppliers
+                </Text>
+              </div>
+            )}
           </section>
         </div>
       </main>

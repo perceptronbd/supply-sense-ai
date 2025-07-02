@@ -29,14 +29,15 @@ import { useDeleteRoleMutation, useGetRoleQuery } from '@/store/api/roleApi';
 // 4. Internal alias imports - Components
 import AuthGuard from '@/components/AuthGuard';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function RoleDetailPage() {
   const router = useRouter();
   const params = useParams();
   const roleId = params.id as string;
+  const { hasPermission } = usePermissions();
 
   const { data: role, isLoading, error } = useGetRoleQuery(roleId);
   const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
@@ -163,7 +164,7 @@ export default function RoleDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <PermissionGuard permission={ROLE_PERMISSIONS.UPDATE}>
+              {hasPermission(ROLE_PERMISSIONS.UPDATE) && (
                 <Button
                   color="primary"
                   startContent={<Edit className="w-4 h-4" />}
@@ -171,8 +172,8 @@ export default function RoleDetailPage() {
                 >
                   Edit Role
                 </Button>
-              </PermissionGuard>
-              <PermissionGuard permission={ROLE_PERMISSIONS.DELETE}>
+              )}
+              {hasPermission(ROLE_PERMISSIONS.DELETE) && (
                 <Button
                   color="danger"
                   variant="flat"
@@ -182,7 +183,7 @@ export default function RoleDetailPage() {
                 >
                   Delete
                 </Button>
-              </PermissionGuard>
+              )}
             </div>
           </header>
 
@@ -342,7 +343,7 @@ export default function RoleDetailPage() {
                 <Text variant="bodySmall" color="muted" className="mt-1">
                   User management for roles is handled through the Users module
                 </Text>
-                <PermissionGuard permission={ROLE_PERMISSIONS.READ}>
+                {hasPermission(ROLE_PERMISSIONS.READ) && (
                   <Button
                     variant="flat"
                     color="primary"
@@ -351,7 +352,7 @@ export default function RoleDetailPage() {
                   >
                     View Users with this Role
                   </Button>
-                </PermissionGuard>
+                )}
               </div>
             </CardBody>
           </Card>

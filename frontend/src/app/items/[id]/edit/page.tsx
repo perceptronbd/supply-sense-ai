@@ -2,8 +2,8 @@
 
 import AuthGuard from '@/components/AuthGuard';
 import { ItemForm } from '@/components/items/ItemForm';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { type Item, useGetItemQuery } from '@/store/api/itemApi';
 import { ITEM_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ interface EditItemPageProps {
 export default function EditItemPage({ params }: EditItemPageProps) {
   const router = useRouter();
   const { id } = use(params);
+  const { hasPermission } = usePermissions();
 
   const {
     data: item,
@@ -67,22 +68,19 @@ export default function EditItemPage({ params }: EditItemPageProps) {
 
   return (
     <AuthGuard requireAuth={true}>
-      <PermissionGuard
-        permission={ITEM_PERMISSIONS.UPDATE}
-        fallback={
-          <main className="p-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-center items-center h-64">
-                <Text variant="bodyLarge" className="text-danger" as="p">
-                  You don't have permission to edit items
-                </Text>
-              </div>
+      {!hasPermission(ITEM_PERMISSIONS.UPDATE) ? (
+        <main className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <Text variant="bodyLarge" className="text-danger" as="p">
+                You don't have permission to edit items
+              </Text>
             </div>
-          </main>
-        }
-      >
+          </div>
+        </main>
+      ) : (
         <ItemForm mode="edit" item={item} onSuccess={handleSuccess} />
-      </PermissionGuard>
+      )}
     </AuthGuard>
   );
 }

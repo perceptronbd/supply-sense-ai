@@ -2,9 +2,9 @@
 
 import AuthGuard from '@/components/AuthGuard';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useGetUserQuery } from '@/store/api/userApi';
 import { Button, Card, CardBody, CardHeader, Chip } from '@heroui/react';
 import { USER_PERMISSIONS } from '@supplysense/types';
@@ -17,6 +17,8 @@ export default function UserDetailPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
+
+  const { hasPermission } = usePermissions();
 
   const { data: user, isLoading, error } = useGetUserQuery(userId);
 
@@ -76,7 +78,7 @@ export default function UserDetailPage() {
                 {user.firstName} {user.lastName}
               </Text>
             </div>
-            <PermissionGuard permission={USER_PERMISSIONS.UPDATE}>
+            {hasPermission(USER_PERMISSIONS.UPDATE) && (
               <Button
                 color="primary"
                 startContent={<Edit className="w-4 h-4" />}
@@ -84,7 +86,7 @@ export default function UserDetailPage() {
               >
                 Edit User
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* User Information */}
@@ -159,7 +161,7 @@ export default function UserDetailPage() {
                 <Text variant="titleMedium" weight="medium">
                   Roles
                 </Text>
-                <PermissionGuard permission={USER_PERMISSIONS.MANAGE}>
+                {hasPermission(USER_PERMISSIONS.MANAGE) && (
                   <Button
                     size="sm"
                     variant="light"
@@ -168,7 +170,7 @@ export default function UserDetailPage() {
                   >
                     Manage Roles
                   </Button>
-                </PermissionGuard>
+                )}
               </div>
             </CardHeader>
             <CardBody>
@@ -195,7 +197,7 @@ export default function UserDetailPage() {
                 <Text variant="titleMedium" weight="medium">
                   Branches
                 </Text>
-                <PermissionGuard permission={USER_PERMISSIONS.MANAGE}>
+                {hasPermission(USER_PERMISSIONS.MANAGE) && (
                   <Button
                     size="sm"
                     variant="light"
@@ -204,7 +206,7 @@ export default function UserDetailPage() {
                   >
                     Manage Branches
                   </Button>
-                </PermissionGuard>
+                )}
               </div>
             </CardHeader>
             <CardBody>
