@@ -4,8 +4,8 @@ import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
 import { ActionsDropdown, DeleteItemDialog, StatusChip, StockDisplay } from '@/components/items';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { type Item, useGetItemsQuery } from '@/store/api/itemApi';
 import {
   Button,
@@ -31,6 +31,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export default function ItemsPage() {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [isMounted, setIsMounted] = useState(false);
 
   // Filter and pagination state
@@ -221,7 +222,7 @@ export default function ItemsPage() {
                 Manage your inventory items and view stock levels
               </Text>
             </div>
-            <PermissionGuard permission={ITEM_PERMISSIONS.CREATE}>
+            {hasPermission(ITEM_PERMISSIONS.CREATE) && (
               <Button
                 color="primary"
                 onPress={handleCreateItem}
@@ -240,7 +241,7 @@ export default function ItemsPage() {
               >
                 Add Item
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* Items Table and Filters */}

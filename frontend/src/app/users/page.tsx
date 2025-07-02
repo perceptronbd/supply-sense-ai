@@ -25,9 +25,9 @@ import { useEffect, useMemo, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { User } from '@/store/api/userApi';
 
 import { UserTableCell } from './components/UserTableCell';
@@ -35,6 +35,7 @@ import { useUsersPage } from './hooks/useUsersPage';
 
 export default function UsersPage() {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [isMounted, setIsMounted] = useState(false);
 
   const {
@@ -115,7 +116,7 @@ export default function UsersPage() {
                 Manage user accounts and permissions
               </Text>
             </div>
-            <PermissionGuard permission={USER_PERMISSIONS.CREATE}>
+            {hasPermission(USER_PERMISSIONS.CREATE) && (
               <Button
                 color="primary"
                 startContent={<Plus className="w-4 h-4" />}
@@ -123,7 +124,7 @@ export default function UsersPage() {
               >
                 Create User
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* Main Content */}

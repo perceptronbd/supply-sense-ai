@@ -24,8 +24,8 @@ import AuthGuard from '@/components/AuthGuard';
 import { ActionsDropdown } from '@/components/branches';
 import { SearchIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Branch } from '@/store/api/branchApi';
 import { BRANCH_PERMISSIONS } from '@supplysense/types';
 
@@ -37,6 +37,7 @@ import { useBranchesState } from './hooks/useBranchesState';
 
 export default function BranchesPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const { hasPermission } = usePermissions();
 
   // Use extracted hooks for state management
   const state = useBranchesState();
@@ -99,7 +100,7 @@ export default function BranchesPage() {
       <AuthGuard requireAuth={true}>
         <div className="p-6">
           <div className="mx-auto max-w-7xl">
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -115,7 +116,7 @@ export default function BranchesPage() {
       <main className="p-6">
         <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <header className="flex justify-between items-center mb-6">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" color="default" as="h1">
                 Branches
@@ -124,7 +125,7 @@ export default function BranchesPage() {
                 Manage company branches and locations
               </Text>
             </div>
-            <PermissionGuard permission={BRANCH_PERMISSIONS.CREATE}>
+            {hasPermission(BRANCH_PERMISSIONS.CREATE) && (
               <Button
                 color="primary"
                 onPress={actions.handleCreateBranch}
@@ -143,19 +144,19 @@ export default function BranchesPage() {
               >
                 Add Branch
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* Main Content */}
           <section>
             <Card>
               <CardHeader className="flex flex-col gap-4 pb-3">
-                <div className="flex justify-between items-center w-full">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Branches
                   </Text>
                   {/* Status Summary */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip color="primary" variant="flat" size="sm">
                       Total: {state.pagination?.total || state.branches.length}
                     </Chip>
@@ -168,7 +169,7 @@ export default function BranchesPage() {
                   </div>
                 </div>
                 {/* Search and Filters */}
-                <div className="flex flex-col gap-4 justify-start w-full sm:flex-row">
+                <div className="flex flex-col justify-start w-full gap-4 sm:flex-row">
                   <Input
                     placeholder="Search branches by name or code..."
                     value={state.searchTerm}
@@ -177,7 +178,7 @@ export default function BranchesPage() {
                     className="w-full sm:w-96"
                     variant="bordered"
                   />
-                  <div className="flex gap-4 items-center">
+                  <div className="flex items-center gap-4">
                     <Checkbox
                       isSelected={state.includeInactive}
                       onValueChange={state.handleIncludeInactiveChange}
@@ -192,14 +193,14 @@ export default function BranchesPage() {
               <CardBody>
                 {/* Loading State */}
                 {state.isLoading && (
-                  <div className="flex justify-center items-center py-12">
+                  <div className="flex items-center justify-center py-12">
                     <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                   </div>
                 )}
 
                 {/* Error State */}
                 {state.error && (
-                  <div className="flex justify-center items-center py-12">
+                  <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                       <Text variant="bodyBase" color="danger" className="mb-2">
                         Failed to load branches
@@ -256,8 +257,8 @@ export default function BranchesPage() {
 
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <div className="flex justify-between items-center pt-4 mt-6 border-t border-divider">
-                          <div className="flex gap-4 items-center">
+                        <div className="flex items-center justify-between pt-4 mt-6 border-t border-divider">
+                          <div className="flex items-center gap-4">
                             <Select
                               size="sm"
                               placeholder="Items per page"

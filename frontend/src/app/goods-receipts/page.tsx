@@ -11,7 +11,6 @@ import {
   XMarkIcon,
 } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -268,11 +267,11 @@ export default function GoodsReceiptsPage() {
                 Track and manage all incoming goods receipts
               </Text>
             </div>
-            <PermissionGuard permission={GOODS_RECEIPT_PERMISSIONS.CREATE}>
+            {hasPermission(GOODS_RECEIPT_PERMISSIONS.CREATE) && (
               <Button color="primary" onPress={handleCreateReceipt} startContent={<ReceiptIcon />}>
                 Record New Receipt
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           <section>

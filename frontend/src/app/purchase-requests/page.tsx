@@ -14,7 +14,6 @@ import {
 import CreatePOFromPRModal from '@/components/purchase-request/CreatePOFromPRModal';
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -367,11 +366,11 @@ export default function PurchaseRequestsPage() {
                 Manage and track all purchase requests
               </Text>
             </div>
-            <PermissionGuard permission={PURCHASE_REQUEST_PERMISSIONS.CREATE}>
+            {hasPermission(PURCHASE_REQUEST_PERMISSIONS.CREATE) && (
               <Button color="primary" onPress={handleCreateRequest}>
                 Create New Request
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           <section>

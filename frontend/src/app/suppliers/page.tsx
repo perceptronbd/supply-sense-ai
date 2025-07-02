@@ -3,8 +3,8 @@
 import AuthGuard from '@/components/AuthGuard';
 import { PlusIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import { SUPPLIER_PERMISSIONS } from '@supplysense/types';
 import { DeleteConfirmationModal } from './components/DeleteConfirmationModal';
@@ -28,6 +28,7 @@ function LoadingState() {
 }
 
 export default function SuppliersPage() {
+  const { hasPermission } = usePermissions();
   const {
     // State
     isMounted,
@@ -88,11 +89,11 @@ export default function SuppliersPage() {
                 Manage your suppliers and vendor relationships
               </Text>
             </div>
-            <PermissionGuard permission={SUPPLIER_PERMISSIONS.CREATE}>
+            {hasPermission(SUPPLIER_PERMISSIONS.CREATE) && (
               <Button color="primary" onPress={handleCreateSupplier} startContent={<PlusIcon />}>
                 Add Supplier
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* Suppliers Table and Filters */}

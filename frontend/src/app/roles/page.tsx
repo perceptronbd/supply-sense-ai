@@ -26,9 +26,9 @@ import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { PermissionGuard } from '@/components/ui/PermissionGuard';
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Role } from '@/store/api/roleApi';
 import { useGetRolesQuery } from '@/store/api/roleApi';
 
@@ -36,6 +36,7 @@ import { RoleTableCell } from './components/RoleTableCell';
 
 export default function RolesPage() {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [isMounted, setIsMounted] = useState(false);
 
   // Filter and pagination state
@@ -144,7 +145,7 @@ export default function RolesPage() {
                 Manage roles and permissions
               </Text>
             </div>
-            <PermissionGuard permission={ROLE_PERMISSIONS.CREATE}>
+            {hasPermission(ROLE_PERMISSIONS.CREATE) && (
               <Button
                 color="primary"
                 startContent={<Plus className="w-4 h-4" />}
@@ -152,7 +153,7 @@ export default function RolesPage() {
               >
                 Create Role
               </Button>
-            </PermissionGuard>
+            )}
           </header>
 
           {/* Main Content */}
