@@ -39,7 +39,7 @@ export interface UpdateRoleRequest {
 
 export interface AssignPermissionsRequest {
   permissionIds: string[];
-  operation: 'replace' | 'add' | 'remove';
+  action: 'replace' | 'assign' | 'remove';
 }
 
 export interface PermissionsByModule {

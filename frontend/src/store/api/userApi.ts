@@ -224,6 +224,16 @@ export const userApi = createApi({
       invalidatesTags: (_result, _error, id) => [TAG_TYPES.USER, { type: TAG_TYPES.USER, id }],
     }),
 
+    // Hard delete user (permanent removal)
+    // TODO: Implement backend endpoint for hard delete at /${id}/hard-delete
+    hardDeleteUser: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/${id}/hard-delete`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [TAG_TYPES.USER, { type: TAG_TYPES.USER, id }],
+    }),
+
     // Activate user
     activateUser: builder.mutation<User, string>({
       query: (id) => ({
@@ -244,5 +254,6 @@ export const {
   useAssignRolesMutation,
   useAssignBranchesMutation,
   useDeleteUserMutation,
+  useHardDeleteUserMutation,
   useActivateUserMutation,
 } = userApi;

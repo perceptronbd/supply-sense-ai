@@ -13,14 +13,34 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  addToast,
+  useDisclosure,
 } from '@heroui/react';
 import { USER_PERMISSIONS } from '@supplysense/types';
 import { format } from 'date-fns';
-import { Edit, Eye, MoreVertical, Shield, Trash2, UserCheck, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  Edit,
+  Eye,
+  MoreVertical,
+  Shield,
+  Trash2,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 
 // 3. Internal alias imports - Store/API
 import type { User } from '@/store/api/userApi';
-import { useActivateUserMutation, useDeleteUserMutation } from '@/store/api/userApi';
+import {
+  useActivateUserMutation,
+  useDeleteUserMutation,
+  // useHardDeleteUserMutation, // TODO: Use when backend supports hard delete
+} from '@/store/api/userApi';
 
 // 4. Internal alias imports - Components and Config
 import { Text } from '@/components/ui/Text';
@@ -36,7 +56,13 @@ export function UserTableCell({ user, columnKey }: UserTableCellProps) {
   const router = useRouter();
   const { hasPermission } = usePermissions();
   const [activateUser] = useActivateUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  // const [hardDeleteUser] = useHardDeleteUserMutation(); // TODO: Use when backend supports hard delete
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onOpenChange: onDeleteOpenChange,
+  } = useDisclosure();
 
   const canUpdate = hasPermission(USER_PERMISSIONS.UPDATE);
   const canDelete = hasPermission(USER_PERMISSIONS.DELETE);
@@ -61,10 +87,62 @@ export function UserTableCell({ user, columnKey }: UserTableCellProps) {
   const handleDeactivate = useCallback(async () => {
     try {
       await deleteUser(user.id).unwrap();
-    } catch (error) {
-      console.error('Failed to deactivate user:', error);
+      addToast({
+        title: 'Success',
+        description: 'User deactivated successfully',
+        color: 'success',
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error !== null &&
+              'data' in error &&
+              typeof error.data === 'object' &&
+              error.data !== null &&
+              'message' in error.data
+            ? String(error.data.message)
+            : 'Failed to deactivate user';
+
+      addToast({
+        title: 'Error',
+        description: errorMessage,
+        color: 'danger',
+      });
     }
   }, [deleteUser, user.id]);
+
+  const handleDelete = useCallback(async () => {
+    try {
+      // TODO: Replace with hardDeleteUser when backend endpoint is ready
+      await deleteUser(user.id).unwrap();
+      addToast({
+        title: 'Success',
+        description: 'User deleted successfully',
+        color: 'success',
+      });
+      onDeleteOpenChange();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error !== null &&
+              'data' in error &&
+              typeof error.data === 'object' &&
+              error.data !== null &&
+              'message' in error.data
+            ? String(error.data.message)
+            : 'Failed to delete user';
+
+      addToast({
+        title: 'Error',
+        description: errorMessage,
+        color: 'danger',
+      });
+    }
+  }, [deleteUser, user.id, onDeleteOpenChange]);
 
   const renderNameCell = () => (
     <div className="flex items-center gap-3">
@@ -218,7 +296,7 @@ export function UserTableCell({ user, columnKey }: UserTableCellProps) {
         user.isActive ? (
           <DropdownItem
             key="deactivate"
-            color="danger"
+            color="warning"
             startContent={<Trash2 className="w-4 h-4" />}
             onPress={handleDeactivate}
           >
@@ -235,6 +313,18 @@ export function UserTableCell({ user, columnKey }: UserTableCellProps) {
           </DropdownItem>
         )
       );
+
+      // Add permanent delete option
+      items.push(
+        <DropdownItem
+          key="delete"
+          color="danger"
+          startContent={<Trash2 className="w-4 h-4" />}
+          onPress={onDeleteOpen}
+        >
+          Delete Permanently
+        </DropdownItem>
+      );
     }
 
     return items;
@@ -250,6 +340,46 @@ export function UserTableCell({ user, columnKey }: UserTableCellProps) {
         </DropdownTrigger>
         <DropdownMenu aria-label="User actions">{renderActionsDropdownItems()}</DropdownMenu>
       </Dropdown>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} size="md">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-danger" />
+                <Text variant="titleMedium" weight="semiBold">
+                  Delete User
+                </Text>
+              </ModalHeader>
+              <ModalBody>
+                <Text variant="bodyMedium">
+                  Are you sure you want to permanently delete the user "{user.name}"? This action
+                  cannot be undone.
+                </Text>
+                <div className="p-3 border rounded-md bg-danger-50 border-danger-200">
+                  <Text variant="bodySmall" color="danger" weight="medium">
+                    Warning: All user data, permissions, and access will be permanently removed.
+                  </Text>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="flat" onPress={onClose} isDisabled={isDeleting}>
+                  Cancel
+                </Button>
+                <Button
+                  color="danger"
+                  onPress={handleDelete}
+                  isLoading={isDeleting}
+                  startContent={!isDeleting ? <Trash2 className="w-4 h-4" /> : undefined}
+                >
+                  Delete Permanently
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 

@@ -1,5 +1,9 @@
 'use client';
 
+// 1. React and core Next.js imports
+import { useRouter } from 'next/navigation';
+
+// 2. External library imports
 import {
   Button,
   Chip,
@@ -7,16 +11,25 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   Tooltip,
+  addToast,
+  useDisclosure,
 } from '@heroui/react';
 import { ROLE_PERMISSIONS } from '@supplysense/types';
-import { Edit, Eye, MoreVertical, Shield, Trash2, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { AlertTriangle, Edit, Eye, MoreVertical, Shield, Trash2, Users } from 'lucide-react';
 
+// 3. Internal alias imports - Store/API
+import { type Role, useDeleteRoleMutation } from '@/store/api/roleApi';
+
+// 4. Internal alias imports - Components
 import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
 import { usePermissions } from '@/hooks/usePermissions';
-import type { Role } from '@/store/api/roleApi';
 
 interface RoleTableCellProps {
   role: Role;
@@ -85,11 +98,47 @@ const renderPermissions = (role: Role) => {
 export function RoleTableCell({ role, columnKey }: RoleTableCellProps): JSX.Element {
   const router = useRouter();
   const { hasPermission } = usePermissions();
+  const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onOpenChange: onDeleteOpenChange,
+  } = useDisclosure();
 
   // Permissions
   const canView = hasPermission(ROLE_PERMISSIONS.READ);
   const canEdit = hasPermission(ROLE_PERMISSIONS.UPDATE);
   const canDelete = hasPermission(ROLE_PERMISSIONS.DELETE);
+
+  const handleDelete = async () => {
+    try {
+      await deleteRole(role.id).unwrap();
+      addToast({
+        title: 'Success',
+        description: 'Role deleted successfully',
+        color: 'success',
+      });
+      onDeleteOpenChange();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error !== null &&
+              'data' in error &&
+              typeof error.data === 'object' &&
+              error.data !== null &&
+              'message' in error.data
+            ? String(error.data.message)
+            : 'Failed to delete role';
+
+      addToast({
+        title: 'Error',
+        description: errorMessage,
+        color: 'danger',
+      });
+    }
+  };
 
   switch (columnKey) {
     case 'name':
@@ -164,7 +213,7 @@ export function RoleTableCell({ role, columnKey }: RoleTableCellProps): JSX.Elem
             className="text-danger"
             color="danger"
             startContent={<Trash2 className="w-4 h-4" />}
-            onPress={() => console.log('Delete role:', role.id)}
+            onPress={onDeleteOpen}
           >
             Delete Role
           </DropdownItem>
@@ -172,14 +221,56 @@ export function RoleTableCell({ role, columnKey }: RoleTableCellProps): JSX.Elem
       }
 
       return (
-        <Dropdown>
-          <DropdownTrigger>
-            <Button isIconOnly size="sm" variant="light">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu aria-label="Role actions">{items}</DropdownMenu>
-        </Dropdown>
+        <div>
+          <Dropdown>
+            <DropdownTrigger>
+              <Button isIconOnly size="sm" variant="light">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Role actions">{items}</DropdownMenu>
+          </Dropdown>
+
+          {/* Delete Confirmation Modal */}
+          <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} size="md">
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalHeader className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-danger" />
+                    <Text variant="titleMedium" weight="semiBold">
+                      Delete Role
+                    </Text>
+                  </ModalHeader>
+                  <ModalBody>
+                    <Text variant="bodyMedium">
+                      Are you sure you want to delete the role "{role.name}"? This action cannot be
+                      undone.
+                    </Text>
+                    <div className="p-3 border rounded-md bg-danger-50 border-danger-200">
+                      <Text variant="bodySmall" color="danger" weight="medium">
+                        Warning: Users assigned to this role will lose their permissions.
+                      </Text>
+                    </div>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button variant="flat" onPress={onClose} isDisabled={isDeleting}>
+                      Cancel
+                    </Button>
+                    <Button
+                      color="danger"
+                      onPress={handleDelete}
+                      isLoading={isDeleting}
+                      startContent={!isDeleting ? <Trash2 className="w-4 h-4" /> : undefined}
+                    >
+                      Delete Role
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+        </div>
       );
     }
 
