@@ -22,8 +22,7 @@
       "executor": "@nx/next:server",
       "options": {
         "buildTarget": "frontend:build",
-        "dev": true,
-        "port": "process.env.PORT || 3000"
+        "dev": true
       },
       "configurations": {
         "production": {
