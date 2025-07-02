@@ -9,8 +9,8 @@ export default defineConfig({
         default: 'pnpm exec nx run frontend:dev',
       },
       ciWebServerCommand: 'pnpm exec nx run frontend:start',
-      ciBaseUrl: 'http://localhost:3000',
+      ciBaseUrl: process.env.CYPRESS_BASE_URL || 'http://localhost:3000',
     }),
-    baseUrl: 'http://127.0.0.1:3000',
+    baseUrl: process.env.CYPRESS_BASE_URL || 'http://127.0.0.1:3000',
   },
 });

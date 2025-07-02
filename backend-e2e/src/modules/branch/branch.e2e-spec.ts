@@ -10,7 +10,7 @@ interface AxiosErrorResponse {
 }
 
 describe('Branch API (E2E)', () => {
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3004';
   let authToken: string;
   let testUser: TestUser;
   let TEST_BRANCH_ID: string;

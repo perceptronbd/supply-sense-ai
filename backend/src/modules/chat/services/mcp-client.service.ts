@@ -2,6 +2,7 @@ import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
 import { MCPClient } from '@mastra/mcp';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { appConfig } from '../../../config/app.config';
 
 interface AgentResponse {
   success: boolean;
@@ -63,8 +64,8 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       this.mcpClient = new MCPClient({
         servers: {
           supplySense: {
-            url: new URL('http://localhost:3002/mcp'), // MCP server HTTP endpoint
-            timeout: 30000, // 30 second timeout
+            url: new URL(`${appConfig.mcpServerUrl}/mcp`), // MCP server HTTP endpoint
+            timeout: appConfig.mcpServerTimeout, // Configurable timeout
           },
         },
         timeout: 60000, // Global 60 second timeout

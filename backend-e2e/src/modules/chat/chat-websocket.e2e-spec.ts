@@ -3,8 +3,8 @@ import { Socket, io } from 'socket.io-client';
 import { TestHelpers, type TestUser } from '../../support/test-helpers';
 
 describe('Chat WebSocket Gateway (E2E)', () => {
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
-  const WS_URL = process.env.WS_URL || 'http://localhost:3000/chat';
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3004';
+  const WS_URL = process.env.WS_URL || 'http://localhost:3004/chat';
 
   let authToken: string;
   let testUser: TestUser;

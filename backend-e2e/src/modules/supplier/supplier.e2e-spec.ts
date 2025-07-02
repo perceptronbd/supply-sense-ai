@@ -3,7 +3,7 @@ import axios from 'axios';
 import { type AxiosErrorResponse, TestHelpers } from '../../support/test-helpers';
 
 describe('Supplier API (E2E)', () => {
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3004';
   let authToken: string;
   let systemAdminToken: string;
   let createdSupplierId: string;
