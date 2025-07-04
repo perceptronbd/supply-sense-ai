@@ -12,7 +12,7 @@
     "backend:test": "npx nx test backend",
     "frontend:serve": "npx nx dev frontend",
     "frontend:build": "npx nx build frontend && npm run frontend:clean-cache",
-    "frontend:start": "npx nx serve frontend",
+    "frontend:start": "cd dist/frontend && PORT=$PORT NODE_ENV=production pnpm exec next start",
     "frontend:test": "npx nx test frontend",
     "frontend:analyze": "ANALYZE=true npx nx build frontend",
     "frontend:clean": "npx nx reset frontend",
