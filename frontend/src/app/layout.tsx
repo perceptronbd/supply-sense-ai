@@ -4,6 +4,7 @@ import './global.css';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import ClarityProvider from '@/components/analytics/Clarity';
 import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
 import { persistor, store } from '@/store/store';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
@@ -34,6 +35,9 @@ export default function RootLayout({
         <meta name="theme-color" content="#0A2538" />
       </head>
       <body suppressHydrationWarning={true} className="min-h-screen">
+        {/* Microsoft Clarity Analytics */}
+        <ClarityProvider projectId={process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID} />
+
         <Provider store={store}>
           <PersistGate
             loading={
