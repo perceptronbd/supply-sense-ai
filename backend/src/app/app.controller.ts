@@ -1,6 +1,6 @@
-import { Controller, Get, Inject, Req } from '@nestjs/common';
+import { Controller, Get, Inject, Req, Res } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AppService } from './app.service';
 
@@ -21,6 +21,21 @@ export class AppController {
   })
   getData() {
     return this.appService.getData();
+  }
+
+  @Get('status')
+  @ApiOperation({
+    summary: 'Simple status check',
+    description: 'Returns a simple status ok response',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status retrieved successfully',
+    example: { status: 'ok' },
+  })
+  getStatus(@Res() res: Response) {
+    // Bypass the ResponseInterceptor by using @Res() directly
+    return res.status(200).json({ status: 'ok' });
   }
 
   @Get('health')
