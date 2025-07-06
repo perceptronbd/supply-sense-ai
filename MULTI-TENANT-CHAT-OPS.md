@@ -1,8 +1,40 @@
 # Developer Guide: SupplySense Chat-Ops SaaS MVP
 
+> **Note:** This system uses a company-based schema for multi-tenancy. All references to "tenant" or "tenantId" in API, database, and logic should be interpreted as "company" or "companyId". There is no separate tenants schema; all isolation and tracking is company-based.
+
 ## Purpose
 
-This document outlines end-to-end developer instructions for implementing the user onboarding flow, metadata collection, schema generation, and chat-ops integration for the SupplySense MVP. It covers UI prompts, API endpoints, data models, and schema refresh strategies.
+This document outlines end-to-end developer instructions for implementing the user onboarding flow, metadata collection, schema generation, chat-ops integration, and the subscription/payment/rate-limiting system for the SupplySense MVP. It covers UI prompts, API endpoints, data models, and schema refresh strategies.
+
+---
+
+## Subscription Packages & Payment Integration
+
+### Packages
+
+- **Starter (Free Trial)**: No credit card required. Basic features, lowest rate limits and token quota. Intended as a trial before upgrade. All usage limitations apply.
+- **Business**: Paid. Increased rate limits and tokens, more features.
+- **Enterprise**: Paid. Highest limits, premium features, priority support.
+
+Each package defines:
+- Maximum monthly API/chat rate limit (requests/messages).
+- Monthly token quota (for LLM/AI usage).
+- Feature access.
+
+### Payment Integration
+
+- Starter plan does not require payment or credit card.
+- Payment required to activate Business or Enterprise subscription (Stripe or similar).
+- Payment handled during onboarding after account creation, before database connection (except for Starter).
+- Subscription status (active, trial, cancelled, etc.) is stored and checked on each request.
+
+### Rate Limiting & Token Usage
+
+- Each tenant's usage is tracked per connected database.
+- Rate limits and token quotas are enforced per package and per database connection.
+- Exceeding limits disables chat/API access until quota resets or package is upgraded.
+
+---
 
 ## 1. Project Setup & Prerequisites
 
@@ -14,8 +46,8 @@ This document outlines end-to-end developer instructions for implementing the us
 
 ### Databases
 
-- App DB (PostgreSQL) for tenant records, metadata, credentials
-- Customer DBs: tenant-specific Postgres or SQL Server instances
+- App DB (PostgreSQL) for company records, metadata, credentials, subscription, payment, and usage tracking
+- Customer DBs: company-specific Postgres or SQL Server instances
 
 ### Libraries & Tools
 
@@ -27,15 +59,18 @@ This document outlines end-to-end developer instructions for implementing the us
 ## 2. High-Level User Flow
 
 1. Sign-Up / Login
-2. Database Connection (Structured)
-3. Table Discovery & Selection
-4. Metadata Capture
-5. Relationship Confirmation
-6. Business Context Entry
-7. Schema Assembly & Caching
-8. Chat Interface Launch
-9. Message Processing & SQL Execution
-10. Schema Refresh (Post-Onboarding Updates)
+2. **Subscription Selection & Payment**
+3. Database Connection (Structured)
+4. Table Discovery & Selection
+5. Metadata Capture
+6. Relationship Confirmation
+7. Business Context Entry
+8. Schema Assembly & Caching
+9. Chat Interface Launch
+10. Message Processing & SQL Execution (with rate limiting)
+11. Schema Refresh (Post-Onboarding Updates)
+
+> All steps below use "company" and "companyId" as the multi-tenancy key.
 
 ## 3. Detailed Steps
 
@@ -49,19 +84,56 @@ Next.js pages `/auth/signup` & `/auth/login`
 
 NestJS AuthController:
 
-- `POST /auth/register`: validate email/password, hash password, create Tenant
-- `POST /auth/login`: verify hash, issue JWT with tenantId
+- `POST /auth/register`: validate email/password, hash password, create Company
+- `POST /auth/login`: verify hash, issue JWT 
 
-#### App DB Schema
+
+---
+
+### 3.2 Subscription Selection & Payment
+
+#### Frontend
+
+- `/onboarding/subscription`: Choose package (starter, business, enterprise)
+- `/onboarding/payment`: Enter payment details (Stripe, etc.)
+
+#### Backend
+
+- `POST /onboarding/subscribe`: Select package, initiate payment
+- `POST /onboarding/payment`: Process payment, activate subscription
+
+#### App DB Tables
 
 ```sql
-CREATE TABLE tenants (
+CREATE TABLE subscriptions (
   id UUID PRIMARY KEY,
-  email TEXT UNIQUE,
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
+  company_id UUID REFERENCES companies(id),
+  package TEXT NOT NULL, -- 'starter', 'business', 'enterprise'
+  status TEXT NOT NULL, -- 'active', 'trial', 'cancelled'
+  started_at TIMESTAMP DEFAULT now(),
+  expires_at TIMESTAMP,
+  payment_provider TEXT,
+  payment_id TEXT
+);
+
+CREATE TABLE usage_limits (
+  id UUID PRIMARY KEY,
+  company_id UUID REFERENCES companies(id),
+  db_connection_id UUID, -- references db_connections
+  package TEXT NOT NULL,
+  rate_limit INTEGER NOT NULL, -- e.g. max requests per month
+  token_quota INTEGER NOT NULL, -- e.g. max tokens per month
+  used_requests INTEGER DEFAULT 0,
+  used_tokens INTEGER DEFAULT 0,
+  period_start TIMESTAMP DEFAULT now(),
+  period_end TIMESTAMP
 );
 ```
+
+- On payment success, activate subscription and initialize usage_limits for each db connection.
+- On downgrade/upgrade, update limits and quotas accordingly.
+
+---
 
 ### 3.2 Database Connection (Structured)
 
@@ -78,7 +150,7 @@ CREATE TABLE tenants (
 
 **Flow:**
 
-1. Validate JWT → extract tenantId
+1. Validate JWT → extract companyId
 2. Attempt connection via pg or typeorm using structured fields
 3. On success:
    - Encrypt sensitive fields (password) with AES-256-KMS
@@ -90,7 +162,7 @@ CREATE TABLE tenants (
 
 ```sql
 CREATE TABLE db_connections (
-  tenant_id UUID REFERENCES tenants(id),
+  company_id UUID REFERENCES companies(id),
   host TEXT,
   port INTEGER,
   database TEXT,
@@ -100,7 +172,7 @@ CREATE TABLE db_connections (
   connection_hash TEXT UNIQUE,
   created_at TIMESTAMP DEFAULT now(),
   updated_at TIMESTAMP DEFAULT now(),
-  PRIMARY KEY (tenant_id)
+  PRIMARY KEY (company_id)
 );
 ```
 
@@ -108,7 +180,7 @@ CREATE TABLE db_connections (
 
 #### API
 
-`GET /onboarding/:tenantId/tables`
+`GET /onboarding/:companyId/tables`
 
 1. Decrypt credentials, connect to customer DB
 2. Query table names:
@@ -154,13 +226,13 @@ Editable grid for selected tables:
 
 #### API
 
-`POST /onboarding/:tenantId/metadata` upserts rows
+`POST /onboarding/:companyId/metadata` upserts rows
 
 ### 3.5 Relationship Confirmation
 
 #### API
 
-`GET /onboarding/:tenantId/relationships`
+`GET /onboarding/:companyId/relationships`
 
 Query foreign keys:
 
@@ -200,7 +272,7 @@ CREATE TABLE table_relationships (
 
 #### API
 
-`POST /onboarding/:tenantId/relationships` to upsert
+`POST /onboarding/:companyId/relationships` to upsert
 
 ### 3.6 Business Context Entry
 
@@ -219,7 +291,7 @@ CREATE TABLE tenant_context (
 
 #### API
 
-`POST /onboarding/:tenantId/context` stores it
+`POST /onboarding/:companyId/context` stores it
 
 ### 3.7 Schema Assembly & Caching
 
@@ -229,9 +301,9 @@ After metadata & relationships are saved
 
 #### Service
 
-`SchemaBuilderService.buildSchema(tenantId)`
+`SchemaBuilderService.buildSchema(companyId)`
 
-1. Load db_connections, table_metadata, table_relationships, tenant_context
+1. Load db_connections, table_metadata, table_relationships, company_context
 2. Connect to Customer DB
 3. For each table in metadata, query columns:
 
@@ -262,7 +334,7 @@ WHERE table_name=$1;
 
 ```sql
 CREATE TABLE schema_cache (
-  tenant_id UUID PRIMARY KEY,
+  company_id UUID PRIMARY KEY,
   schema JSONB,
   cached_at TIMESTAMP DEFAULT now()
 );
@@ -272,29 +344,42 @@ CREATE TABLE schema_cache (
 
 #### UI
 
-`<ChatWidget tenantId={id} schema={cachedSchema} />` on `/chat`
+`<ChatWidget companyId={id} schema={cachedSchema} />` on `/chat`
 
 #### API
 
 WebSocket or `POST /chat/message`
 
-- Body: `{ tenantId, message }`
-- Auth: JWT validates tenant
+- Body: `{ companyId, message }`
+- Auth: JWT validates company
 
-### 3.9 Message Processing & SQL Execution
+---
 
-#### ChatService.processMessage(tenantId, message)
+### 3.9 Message Processing, Rate Limiting & SQL Execution
+
+#### ChatService.processMessage(companyId, message, dbConnectionId)
 
 1. Retrieve cached schema & context
-2. Build prompt via PromptTemplateService: include system instructions, context, schema, and user message
-3. Pass prompt to MCP to generate SQL
-4. Validate SQL (`/SELECT\s+/i` and append LIMIT 100)
-5. Execute with per-tenant connection pool
-6. Return result rows or human summary
+2. **Check subscription status and usage limits for company and dbConnectionId**
+   - If over rate limit or token quota, reject with error and prompt upgrade.
+   - Otherwise, increment usage counters.
+3. Build prompt via PromptTemplateService: include system instructions, context, schema, and user message
+4. Pass prompt to MCP to generate SQL
+5. Validate SQL (`/SELECT\s+/i` and append LIMIT 100)
+6. Execute with per-company connection pool
+7. Return result rows or human summary
+
+#### Usage Tracking
+
+- Each chat/message increments `used_requests` and adds to `used_tokens` in `usage_limits` for the relevant db connection.
+- Quotas reset monthly or on package change.
+- Admin UI shows usage stats and upgrade prompts.
 
 #### Error Handling
 
-Catch DB or LLM errors, return user-friendly prompts to rephrase
+- If payment fails or subscription expires, disable chat/API access.
+- If rate limit or token quota exceeded, return error and suggest upgrade.
+- Catch DB or LLM errors, return user-friendly prompts to rephrase.
 
 ### 3.10 Schema Refresh (Post-Onboarding Updates)
 
