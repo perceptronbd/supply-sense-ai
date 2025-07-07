@@ -17,7 +17,7 @@ export class BranchService {
   /**
    * Get branches with optional pagination and search
    * If no pagination params provided, returns all branches
-   */ async findAll(query: QueryBranchDto) {
+   */ async findAll(query: QueryBranchDto, companyId: string) {
     const { search, page, limit, includeInactive = false } = query;
 
     // Only validate pagination constraints if page is provided
@@ -33,8 +33,10 @@ export class BranchService {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
 
-    // Build where clause
-    const where: Prisma.BranchWhereInput = {};
+    // Build where clause with company isolation
+    const where: Prisma.BranchWhereInput = {
+      companyId, // Add company isolation
+    };
 
     // Filter by active status unless includeInactive is true
     if (!includeInactive) {
@@ -106,9 +108,12 @@ export class BranchService {
   /**
    * Get a single branch by ID
    */
-  async findOne(id: string) {
-    const branch = await this.prisma.branch.findUnique({
-      where: { id },
+  async findOne(id: string, companyId: string) {
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!branch) {
@@ -124,20 +129,29 @@ export class BranchService {
   async findUserBranches(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { branch: true },
+      include: {
+        userBranches: {
+          include: {
+            branch: true,
+          },
+          where: {
+            isActive: true,
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    return [user.branch];
+    return user.userBranches.map((ub) => ub.branch);
   }
 
   /**
    * Create a new branch
    */
-  async create(createBranchDto: CreateBranchDto) {
+  async create(createBranchDto: CreateBranchDto, companyId: string) {
     try {
       const branch = await this.prisma.branch.create({
         data: {
@@ -147,6 +161,7 @@ export class BranchService {
           phone: createBranchDto.phone,
           email: createBranchDto.email,
           isActive: createBranchDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 
@@ -164,10 +179,13 @@ export class BranchService {
   /**
    * Update an existing branch
    */
-  async update(id: string, updateBranchDto: UpdateBranchDto) {
-    // Check if branch exists
-    const existingBranch = await this.prisma.branch.findUnique({
-      where: { id },
+  async update(id: string, updateBranchDto: UpdateBranchDto, companyId: string) {
+    // Check if branch exists and belongs to company
+    const existingBranch = await this.prisma.branch.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingBranch) {
@@ -199,69 +217,53 @@ export class BranchService {
   }
 
   /**
-   * Soft delete a branch (set isActive to false)
+   * Remove (soft delete) a branch
    */
-  async remove(id: string) {
-    // Check if branch exists
-    const existingBranch = await this.prisma.branch.findUnique({
-      where: { id },
+  async remove(id: string, companyId: string) {
+    // Check if branch exists and belongs to company
+    const existingBranch = await this.prisma.branch.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingBranch) {
       throw new NotFoundException(`Branch with ID ${id} not found`);
     }
 
-    // Check if branch has active users
-    const activeUsersCount = await this.prisma.user.count({
-      where: {
-        branchId: id,
-        isActive: true,
-      },
-    });
-
-    if (activeUsersCount > 0) {
+    // Check if branch has dependent records
+    const hasReferences = await this.checkBranchReferences(id);
+    if (hasReferences) {
       throw new BadRequestException(
-        'Cannot delete branch with active users. Please reassign users first.'
+        'Cannot delete branch. It has associated purchase requests, purchase orders, or other records. Please remove them first or use soft delete.'
       );
     }
 
-    // Check if branch has active references
-    const hasActiveReferences = await this.checkBranchReferences(id);
-
-    if (hasActiveReferences) {
-      throw new BadRequestException('Cannot delete branch as it has active records');
-    }
-
-    const branch = await this.prisma.branch.update({
+    // Soft delete: mark as inactive
+    await this.prisma.branch.update({
       where: { id },
       data: { isActive: false },
     });
 
-    return branch;
+    return { message: 'Branch soft deleted successfully' };
   }
 
   /**
-   * Hard delete a branch (only if no references exist)
+   * Hard delete a branch (permanently remove from database)
+   * WARNING: This action cannot be undone
    */
-  async hardDelete(id: string): Promise<void> {
-    // Check if branch exists
-    const existingBranch = await this.prisma.branch.findUnique({
-      where: { id },
+  async hardDelete(id: string, companyId: string): Promise<void> {
+    // Check if branch exists and belongs to company
+    const existingBranch = await this.prisma.branch.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingBranch) {
       throw new NotFoundException(`Branch with ID ${id} not found`);
-    }
-
-    // Check if branch has any users
-    const usersCount = await this.prisma.user.count({
-      where: { branchId: id },
-    });
-
-    if (usersCount > 0) {
-      throw new BadRequestException(
-        'Cannot permanently delete branch with users. Please reassign users first.'
-      );
     }
 
     // Check if branch has any references
@@ -269,10 +271,11 @@ export class BranchService {
 
     if (hasReferences) {
       throw new BadRequestException(
-        'Cannot permanently delete branch as it has references in the system'
+        'Cannot hard delete branch. It has associated purchase requests, purchase orders, or other records. Please remove them first.'
       );
     }
 
+    // Hard delete the branch
     await this.prisma.branch.delete({
       where: { id },
     });

@@ -1,44 +1,50 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "jsxImportSource": "react",
+    "target": "es2022",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    "emitDeclarationOnly": false,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "jsx": "preserve",
     "incremental": true,
-    "baseUrl": ".",
-    "skipLibCheck": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "plugins": [
       {
         "name": "next"
       }
     ],
-    "types": ["jest", "node", "react", "react-dom"],
-    "declaration": false
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@supplysense/types": ["../libs/shared/src/index.ts"]
+    },
+    "forceConsistentCasingInFileNames": true,
+    "types": ["jest", "node"],
+    "preserveWatchOutput": true,
+    "tsBuildInfoFile": ".next/cache/tsconfig.tsbuildinfo"
   },
   "include": [
-    "**/*.js",
-    "**/*.jsx",
     "**/*.ts",
     "**/*.tsx",
-    "../dist/frontend/.next/types/**/*.ts",
-    "../frontend/.next/types/**/*.ts",
-    "next-env.d.ts",
+    "../../dist/frontend/.next/types/**/*.ts",
     ".next/types/**/*.ts",
-    "types/**/*.d.ts"
+    "next-env.d.ts",
+    "../dist/frontend/.next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "cypress",
+    "cypress.config.ts",
+    "**/*.cy.ts",
+    ".next",
+    "dist"
+  ]
 }

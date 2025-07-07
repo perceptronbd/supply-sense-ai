@@ -1,12 +1,14 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   useCancelPurchaseOrderMutation,
   useClosePurchaseOrderMutation,
   useConfirmPurchaseOrderMutation,
+  useDeletePurchaseOrderMutation,
   useGetPurchaseOrderQuery,
   useSendToSupplierMutation,
 } from '@/store/api/purchaseOrderApi';
@@ -24,12 +26,57 @@ import {
   TableRow,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { use, useState } from 'react';
 
 interface PurchaseOrderDetailPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+interface StatusActionButtonsProps {
+  status: string;
+  orderId: string;
+  onWorkflowAction: (action: 'send' | 'confirm' | 'cancel' | 'close' | 'delete') => void;
+  onEdit: () => void;
+}
+
+function StatusActionButtons({ status, onWorkflowAction, onEdit }: StatusActionButtonsProps) {
+  switch (status) {
+    case 'DRAFT':
+      return (
+        <>
+          <Button color="secondary" variant="flat" onPress={onEdit}>
+            Edit
+          </Button>
+          <Button color="warning" onPress={() => onWorkflowAction('send')}>
+            Send to Supplier
+          </Button>
+          <Button color="danger" variant="flat" onPress={() => onWorkflowAction('delete')}>
+            Delete
+          </Button>
+        </>
+      );
+    case 'SENT_TO_SUPPLIER':
+      return (
+        <>
+          <Button color="success" onPress={() => onWorkflowAction('confirm')}>
+            Confirm
+          </Button>
+          <Button color="danger" variant="flat" onPress={() => onWorkflowAction('cancel')}>
+            Cancel
+          </Button>
+        </>
+      );
+    case 'CONFIRMED':
+      return (
+        <Button color="primary" onPress={() => onWorkflowAction('close')}>
+          Close Order
+        </Button>
+      );
+    default:
+      return null;
+  }
 }
 
 export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailPageProps) {
@@ -41,6 +88,14 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
   const [confirmPurchaseOrder] = useConfirmPurchaseOrderMutation();
   const [cancelPurchaseOrder] = useCancelPurchaseOrderMutation();
   const [closePurchaseOrder] = useClosePurchaseOrderMutation();
+  const [deletePurchaseOrder] = useDeletePurchaseOrderMutation();
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -59,25 +114,44 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
     }
   };
 
-  const handleWorkflowAction = async (action: 'send' | 'confirm' | 'cancel' | 'close') => {
+  const handleWorkflowAction = async (
+    action: 'send' | 'confirm' | 'cancel' | 'close' | 'delete'
+  ) => {
     try {
-      switch (action) {
-        case 'send':
-          await sendToSupplier(id).unwrap();
-          break;
-        case 'confirm':
-          await confirmPurchaseOrder(id).unwrap();
-          break;
-        case 'cancel':
-          await cancelPurchaseOrder(id).unwrap();
-          break;
-        case 'close':
-          await closePurchaseOrder(id).unwrap();
-          break;
+      if (action === 'delete') {
+        setDeleteModal({ isOpen: true });
+        return;
       }
-      // The query will automatically refetch due to cache invalidation
+
+      await executeWorkflowAction(action);
     } catch (error) {
       console.error(`Failed to ${action} purchase order:`, error);
+    }
+  };
+
+  const executeWorkflowAction = async (action: 'send' | 'confirm' | 'cancel' | 'close') => {
+    switch (action) {
+      case 'send':
+        await sendToSupplier(id).unwrap();
+        break;
+      case 'confirm':
+        await confirmPurchaseOrder(id).unwrap();
+        break;
+      case 'cancel':
+        await cancelPurchaseOrder(id).unwrap();
+        break;
+      case 'close':
+        await closePurchaseOrder(id).unwrap();
+        break;
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deletePurchaseOrder(id).unwrap();
+      router.push('/purchase-orders');
+    } catch (error) {
+      console.error('Failed to delete purchase order:', error);
     }
   };
 
@@ -85,7 +159,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
@@ -99,7 +173,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
     return (
       <AuthGuard requireAuth={true}>
         <main className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="flex justify-center items-center h-64">
               <Text variant="bodyLarge" className="text-danger">
                 Error loading purchase order or order not found
@@ -114,7 +188,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header */}
           <header className="flex justify-between items-center mb-6">
             <div>
@@ -124,44 +198,17 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
               <Text variant="headerSmall" weight="bold" className="text-foreground" as="h1">
                 Purchase Order {purchaseOrder.poNumber}
               </Text>
-              <Text variant="bodyBase" className="text-default-500 mt-2" as="p">
+              <Text variant="bodyBase" className="mt-2 text-default-500" as="p">
                 View and manage purchase order details
               </Text>
             </div>
             <div className="flex gap-2">
-              {purchaseOrder.status === 'DRAFT' && (
-                <>
-                  <Button
-                    color="secondary"
-                    variant="flat"
-                    onPress={() => router.push(`/purchase-orders/${id}/edit`)}
-                  >
-                    Edit
-                  </Button>
-                  <Button color="warning" onPress={() => handleWorkflowAction('send')}>
-                    Send to Supplier
-                  </Button>
-                </>
-              )}
-              {purchaseOrder.status === 'SENT_TO_SUPPLIER' && (
-                <>
-                  <Button color="success" onPress={() => handleWorkflowAction('confirm')}>
-                    Confirm
-                  </Button>
-                  <Button
-                    color="danger"
-                    variant="flat"
-                    onPress={() => handleWorkflowAction('cancel')}
-                  >
-                    Cancel
-                  </Button>
-                </>
-              )}
-              {purchaseOrder.status === 'CONFIRMED' && (
-                <Button color="primary" onPress={() => handleWorkflowAction('close')}>
-                  Close Order
-                </Button>
-              )}
+              <StatusActionButtons
+                status={purchaseOrder.status}
+                orderId={id}
+                onWorkflowAction={handleWorkflowAction}
+                onEdit={() => router.push(`/purchase-orders/${id}/edit`)}
+              />
             </div>
           </header>
 
@@ -173,7 +220,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
               </Text>
             </CardHeader>
             <CardBody>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Status
@@ -230,7 +277,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Total Amount
                   </Text>
-                  <Text variant="bodyBase" className="mt-1 text-foreground font-semibold" as="p">
+                  <Text variant="bodyBase" className="mt-1 font-semibold text-foreground" as="p">
                     ${Number(purchaseOrder.totalAmount).toFixed(2)}
                   </Text>
                 </div>
@@ -332,7 +379,7 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
               </Text>
             </CardHeader>
             <CardBody>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <Text variant="bodySmall" weight="medium" className="text-default-500" as="p">
                     Order Date
@@ -412,6 +459,16 @@ export default function PurchaseOrderDetailPage({ params }: PurchaseOrderDetailP
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Purchase Order"
+        message="Are you sure you want to delete this purchase order?"
+        itemName={`PO #${purchaseOrder?.poNumber || ''}`}
+      />
     </AuthGuard>
   );
 }

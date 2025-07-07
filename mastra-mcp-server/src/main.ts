@@ -47,14 +47,15 @@ async function main() {
     // Log available tools
     console.log('🔧 Direct Tools:');
     console.log('   - supplyChainTool: Get supply chain status and metrics'); // Start the MCP server using HTTP transport with SSE
-    const port = process.env.MCP_PORT || 3002;
-    console.log(`🔌 Starting MCP Server with HTTP/SSE transport on port ${port}...`);
+    const port = process.env.PORT || process.env.MCP_PORT || 3002;
+    const host = process.env.MCP_HOST || '0.0.0.0';
+    console.log(`🔌 Starting MCP Server with HTTP/SSE transport on ${host}:${port}...`);
 
     // Create HTTP server
     const httpServer = http.createServer(async (req, res) => {
       try {
         await mcpServer.startSSE({
-          url: new URL(req.url || '', `http://localhost:${port}`),
+          url: new URL(req.url || '', `http://${host}:${port}`),
           ssePath: '/mcp',
           messagePath: '/message',
           req,
@@ -67,12 +68,12 @@ async function main() {
       }
     });
 
-    httpServer.listen(Number(port), () => {
+    httpServer.listen(Number(port), host, () => {
       console.log('✅ SupplySense MCP Server is now running!');
       console.log('🔗 Ready to connect from MCP clients (VS Code, Chat applications, etc.)');
       console.log('📡 Server details:');
       console.log('   - Transport: HTTP (Server-Sent Events)');
-      console.log(`   - URL: http://localhost:${port}/mcp`);
+      console.log(`   - URL: http://${host}:${port}/mcp`);
       console.log('   - Protocol: Model Context Protocol (MCP)');
     });
   } catch (error) {

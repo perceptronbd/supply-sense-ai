@@ -25,7 +25,9 @@ import { ActionsDropdown } from '@/components/branches';
 import { SearchIcon } from '@/components/icons';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Branch } from '@/store/api/branchApi';
+import { BRANCH_PERMISSIONS } from '@supplysense/types';
 
 import { AddressCell, ContactCell, ManagerCell, NameCell } from './components/BranchCells';
 import { DeleteModal } from './components/DeleteModal';
@@ -35,6 +37,7 @@ import { useBranchesState } from './hooks/useBranchesState';
 
 export default function BranchesPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const { hasPermission } = usePermissions();
 
   // Use extracted hooks for state management
   const state = useBranchesState();
@@ -96,8 +99,8 @@ export default function BranchesPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -111,9 +114,9 @@ export default function BranchesPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <header className="flex justify-between items-center mb-6">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" color="default" as="h1">
                 Branches
@@ -122,36 +125,38 @@ export default function BranchesPage() {
                 Manage company branches and locations
               </Text>
             </div>
-            <Button
-              color="primary"
-              onPress={actions.handleCreateBranch}
-              startContent={
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              }
-            >
-              Add Branch
-            </Button>
+            {hasPermission(BRANCH_PERMISSIONS.CREATE) && (
+              <Button
+                color="primary"
+                onPress={actions.handleCreateBranch}
+                startContent={
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                }
+              >
+                Add Branch
+              </Button>
+            )}
           </header>
 
           {/* Main Content */}
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
-                <div className="flex justify-between items-center w-full">
+              <CardHeader className="flex flex-col gap-4 pb-3">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Branches
                   </Text>
                   {/* Status Summary */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip color="primary" variant="flat" size="sm">
                       Total: {state.pagination?.total || state.branches.length}
                     </Chip>
@@ -164,7 +169,7 @@ export default function BranchesPage() {
                   </div>
                 </div>
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-start w-full">
+                <div className="flex flex-col justify-start w-full gap-4 sm:flex-row">
                   <Input
                     placeholder="Search branches by name or code..."
                     value={state.searchTerm}
@@ -188,14 +193,14 @@ export default function BranchesPage() {
               <CardBody>
                 {/* Loading State */}
                 {state.isLoading && (
-                  <div className="flex justify-center items-center py-12">
+                  <div className="flex items-center justify-center py-12">
                     <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                   </div>
                 )}
 
                 {/* Error State */}
                 {state.error && (
-                  <div className="flex justify-center items-center py-12">
+                  <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                       <Text variant="bodyBase" color="danger" className="mb-2">
                         Failed to load branches
@@ -207,80 +212,92 @@ export default function BranchesPage() {
                   </div>
                 )}
 
-                {/* Table */}
-                {!state.isLoading && !state.error && state.branches.length > 0 && (
-                  <>
-                    <Table aria-label="Branches table">
-                      <TableHeader columns={columns}>
-                        {(column) => (
-                          <TableColumn key={column.uid} allowsSorting={column.sortable}>
-                            {column.name}
-                          </TableColumn>
-                        )}
-                      </TableHeader>
-                      <TableBody items={state.branches}>
-                        {(branch) => (
-                          <TableRow key={branch.id}>
-                            {(columnKey) => (
-                              <TableCell>{renderCell(branch, columnKey as string)}</TableCell>
-                            )}
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-divider">
-                        <div className="flex items-center gap-4">
-                          <Select
-                            size="sm"
-                            placeholder="Items per page"
-                            defaultSelectedKeys={[state.itemsPerPage.toString()]}
-                            className="w-32"
-                            onChange={(e) =>
-                              state.handleItemsPerPageChange(Number.parseInt(e.target.value))
-                            }
-                          >
-                            <SelectItem key="10">10</SelectItem>
-                            <SelectItem key="25">25</SelectItem>
-                            <SelectItem key="50">50</SelectItem>
-                          </Select>
-                          <Text variant="bodySmall" className="text-default-400">
-                            {state.pagination && (
-                              <>
-                                Showing {(state.currentPage - 1) * state.itemsPerPage + 1} to{' '}
-                                {Math.min(
-                                  state.currentPage * state.itemsPerPage,
-                                  state.pagination.total
-                                )}{' '}
-                                of {state.pagination.total} branches
-                              </>
-                            )}
-                          </Text>
-                        </div>
-                        <Pagination
-                          isCompact
-                          showControls
-                          showShadow
-                          color="primary"
-                          page={state.currentPage}
-                          total={totalPages}
-                          onChange={state.handlePageChange}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-
                 {/* Empty State */}
-                {!state.isLoading && !state.error && state.branches.length === 0 && (
-                  <div className="text-center py-8">
-                    <Text variant="bodyLarge" className="text-default-400">
-                      No branches found
-                    </Text>
-                  </div>
-                )}
+                {!state.isLoading &&
+                  !state.error &&
+                  (!Array.isArray(state.branches) || state.branches.length === 0) && (
+                    <div className="py-12 text-center border-2 border-dashed rounded-lg border-divider">
+                      <Text variant="bodyLarge" color="muted" className="mb-2">
+                        {state.searchTerm
+                          ? 'No branches found matching your search'
+                          : 'No branches found'}
+                      </Text>
+                      {state.searchTerm && (
+                        <Text variant="bodyMedium" color="muted">
+                          Try adjusting your search criteria
+                        </Text>
+                      )}
+                    </div>
+                  )}
+
+                {/* Table */}
+                {!state.isLoading &&
+                  !state.error &&
+                  Array.isArray(state.branches) &&
+                  state.branches.length > 0 && (
+                    <>
+                      <Table aria-label="Branches table">
+                        <TableHeader columns={columns}>
+                          {(column) => (
+                            <TableColumn key={column.uid} allowsSorting={column.sortable}>
+                              {column.name}
+                            </TableColumn>
+                          )}
+                        </TableHeader>
+                        <TableBody items={state.branches}>
+                          {(branch) => (
+                            <TableRow key={branch.id}>
+                              {(columnKey) => (
+                                <TableCell>{renderCell(branch, columnKey as string)}</TableCell>
+                              )}
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 mt-6 border-t border-divider">
+                          <div className="flex items-center gap-4">
+                            <Select
+                              size="sm"
+                              placeholder="Items per page"
+                              defaultSelectedKeys={[state.itemsPerPage.toString()]}
+                              className="w-32"
+                              onChange={(e) =>
+                                state.handleItemsPerPageChange(Number.parseInt(e.target.value))
+                              }
+                            >
+                              <SelectItem key="10">10</SelectItem>
+                              <SelectItem key="25">25</SelectItem>
+                              <SelectItem key="50">50</SelectItem>
+                            </Select>
+                            <Text variant="bodySmall" className="text-default-400">
+                              {state.pagination && (
+                                <>
+                                  Showing {(state.currentPage - 1) * state.itemsPerPage + 1} to{' '}
+                                  {Math.min(
+                                    state.currentPage * state.itemsPerPage,
+                                    state.pagination.total
+                                  )}{' '}
+                                  of {state.pagination.total} branches
+                                </>
+                              )}
+                            </Text>
+                          </div>
+                          <Pagination
+                            isCompact
+                            showControls
+                            showShadow
+                            color="primary"
+                            page={state.currentPage}
+                            total={totalPages}
+                            onChange={state.handlePageChange}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
               </CardBody>
             </Card>
           </section>

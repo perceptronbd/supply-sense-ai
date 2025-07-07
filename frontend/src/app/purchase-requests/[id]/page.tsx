@@ -1,10 +1,12 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import {
   useApprovePurchaseRequestMutation,
+  useDeletePurchaseRequestMutation,
   useGetPurchaseRequestQuery,
   useRejectPurchaseRequestMutation,
   useSubmitPurchaseRequestMutation,
@@ -23,7 +25,7 @@ import {
   TableRow,
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { use, useState } from 'react';
 
 interface PurchaseRequestDetailPageProps {
   params: Promise<{
@@ -39,6 +41,14 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
   const [submitPurchaseRequest] = useSubmitPurchaseRequestMutation();
   const [approvePurchaseRequest] = useApprovePurchaseRequestMutation();
   const [rejectPurchaseRequest] = useRejectPurchaseRequestMutation();
+  const [deletePurchaseRequest] = useDeletePurchaseRequestMutation();
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -55,8 +65,14 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
     }
   };
 
-  const handleWorkflowAction = async (action: 'submit' | 'approve' | 'reject') => {
+  const handleWorkflowAction = async (action: 'submit' | 'approve' | 'reject' | 'delete') => {
     try {
+      // Show confirmation modal for delete action
+      if (action === 'delete') {
+        setDeleteModal({ isOpen: true });
+        return; // Don't continue with deletion here
+      }
+
       switch (action) {
         case 'submit':
           await submitPurchaseRequest(id).unwrap();
@@ -71,6 +87,16 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
       // The query will automatically refetch due to cache invalidation
     } catch (error) {
       console.error(`Failed to ${action} purchase request:`, error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deletePurchaseRequest(id).unwrap();
+      // Navigate back to list after successful delete
+      router.push('/purchase-requests');
+    } catch (error) {
+      console.error('Failed to delete purchase request:', error);
     }
   };
 
@@ -133,6 +159,13 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
                   </Button>
                   <Button color="warning" onPress={() => handleWorkflowAction('submit')}>
                     Submit for Approval
+                  </Button>
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    onPress={() => handleWorkflowAction('delete')}
+                  >
+                    Delete
                   </Button>
                 </>
               )}
@@ -326,6 +359,16 @@ export default function PurchaseRequestDetailPage({ params }: PurchaseRequestDet
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Purchase Request"
+        message="Are you sure you want to delete this purchase request?"
+        itemName={`PR #${purchaseRequest?.prNumber || ''}`}
+      />
     </AuthGuard>
   );
 }

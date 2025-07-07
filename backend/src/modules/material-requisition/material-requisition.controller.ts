@@ -10,14 +10,30 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { MATERIAL_REQUISITION_PERMISSIONS } from '@supplysense/types';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 import { MaterialRequisitionService } from './material-requisition.service';
 
 @ApiTags('material-requisition')
 @Controller('material-requisition')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class MaterialRequisitionController {
   constructor(
     @Inject(MaterialRequisitionService)
@@ -25,6 +41,7 @@ export class MaterialRequisitionController {
   ) {}
 
   @Post()
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create a new material requisition',
@@ -50,13 +67,15 @@ export class MaterialRequisitionController {
     },
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async create(@Body() createMaterialRequisitionDto: CreateMaterialRequisitionDto) {
-    // TODO: Get actual user ID from authentication
-    const userId = 'user-1'; // Placeholder
-    return await this.materialRequisitionService.create(createMaterialRequisitionDto, userId);
+  async create(
+    @Body() createMaterialRequisitionDto: CreateMaterialRequisitionDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.materialRequisitionService.create(createMaterialRequisitionDto, user.id);
   }
 
   @Get()
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get all material requisitions',
     description: 'Retrieves all material requisitions with optional filtering by branch and type',
@@ -87,11 +106,16 @@ export class MaterialRequisitionController {
       },
     ],
   })
-  async findAll(@Query('branchId') branchId?: string, @Query('type') type?: MRType) {
-    return await this.materialRequisitionService.findAll(branchId, type);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('branchId') branchId?: string,
+    @Query('type') type?: MRType
+  ) {
+    return await this.materialRequisitionService.findAll(user, branchId, type);
   }
 
   @Get(':id')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get material requisition by ID',
     description: 'Retrieves a specific material requisition with all related data',
@@ -121,11 +145,12 @@ export class MaterialRequisitionController {
     },
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.materialRequisitionService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.findOne(id, user);
   }
 
   @Patch(':id')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.UPDATE)
   @ApiOperation({
     summary: 'Update material requisition',
     description: 'Updates a material requisition (only allowed in DRAFT status)',
@@ -150,12 +175,14 @@ export class MaterialRequisitionController {
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateMaterialRequisitionDto: UpdateMaterialRequisitionDto
+    @Body() updateMaterialRequisitionDto: UpdateMaterialRequisitionDto,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.materialRequisitionService.update(id, updateMaterialRequisitionDto);
+    return await this.materialRequisitionService.update(id, updateMaterialRequisitionDto, user);
   }
 
   @Delete(':id')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete material requisition',
@@ -175,12 +202,13 @@ export class MaterialRequisitionController {
     description: 'Cannot delete non-draft material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async remove(@Param('id') id: string) {
-    return await this.materialRequisitionService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.remove(id, user);
   }
 
   // Workflow endpoints
   @Post(':id/approve')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.APPROVE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Approve material requisition',
@@ -198,21 +226,19 @@ export class MaterialRequisitionController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Can only approve DRAFT material requisitions',
+    description: 'Cannot approve non-submitted material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async approve(@Param('id') id: string) {
-    // TODO: Get actual user ID from authentication
-    const userId = 'user-1'; // Placeholder
-    return await this.materialRequisitionService.approve(id, userId);
+  async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.approve(id, user.id, user);
   }
 
   @Post(':id/complete')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.UPDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Complete material requisition',
-    description:
-      'Completes a material requisition. For TRANSFER type, deducts stock from source branch.',
+    description: 'Marks material requisition as completed (for TRANSFER type)',
   })
   @ApiParam({
     name: 'id',
@@ -222,25 +248,23 @@ export class MaterialRequisitionController {
   @ApiResponse({
     status: 200,
     description: 'Material requisition completed successfully',
-    example: {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      status: 'COMPLETED',
-    },
+    example: { id: '550e8400-e29b-41d4-a716-446655440000', status: 'COMPLETED' },
   })
   @ApiResponse({
     status: 400,
-    description: 'Can only complete APPROVED material requisitions',
+    description: 'Cannot complete non-approved material requisition',
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async complete(@Param('id') id: string) {
-    return await this.materialRequisitionService.complete(id);
+  async complete(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.complete(id, user);
   }
 
   @Post(':id/cancel')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.REJECT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Cancel material requisition',
-    description: 'Cancels a material requisition (cannot cancel COMPLETED requisitions)',
+    description: 'Cancels a material requisition',
   })
   @ApiParam({
     name: 'id',
@@ -250,22 +274,15 @@ export class MaterialRequisitionController {
   @ApiResponse({
     status: 200,
     description: 'Material requisition cancelled successfully',
-    example: {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      status: 'CANCELLED',
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot cancel completed material requisitions',
+    example: { id: '550e8400-e29b-41d4-a716-446655440000', status: 'CANCELLED' },
   })
   @ApiResponse({ status: 404, description: 'Material requisition not found' })
-  async cancel(@Param('id') id: string) {
-    return await this.materialRequisitionService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.cancel(id, user);
   }
 
-  // Utility endpoints
   @Post('from-rf/:rfId')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create material requisition from request form',
@@ -274,35 +291,30 @@ export class MaterialRequisitionController {
   @ApiParam({
     name: 'rfId',
     description: 'Request form unique identifier',
-    example: '550e8400-e29b-41d4-a716-446655440001',
+    example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponse({
     status: 201,
     description: 'Material requisition created from request form successfully',
     example: {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      mrNumber: 'MR000001',
-      title: 'MR for RF000001',
-      rfId: '550e8400-e29b-41d4-a716-446655440001',
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      mrNumber: 'MR000002',
+      title: 'Auto-generated from RF000001',
       type: 'TRANSFER',
       status: 'DRAFT',
     },
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Can only create MR from APPROVED or READY_FOR_MR request forms',
-  })
+  @ApiResponse({ status: 400, description: 'Cannot create MR from non-approved RF' })
   @ApiResponse({ status: 404, description: 'Request form not found' })
-  async createFromRF(@Param('rfId') rfId: string) {
-    // TODO: Get actual user ID from authentication
-    const userId = 'user-1'; // Placeholder
-    return await this.materialRequisitionService.createFromRF(rfId, userId);
+  async createFromRF(@Param('rfId') rfId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.createFromRF(rfId, user.id);
   }
 
   @Get('branch/:branchId')
+  @RequirePermissions(MATERIAL_REQUISITION_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get material requisitions by branch',
-    description: 'Retrieves all material requisitions associated with a specific branch',
+    description: 'Retrieves material requisitions for a specific branch',
   })
   @ApiParam({
     name: 'branchId',
@@ -311,17 +323,9 @@ export class MaterialRequisitionController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Material requisitions for branch retrieved successfully',
-    example: [
-      {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        mrNumber: 'MR000001',
-        type: 'TRANSFER',
-        status: 'DRAFT',
-      },
-    ],
+    description: 'Branch material requisitions retrieved successfully',
   })
-  async findByBranch(@Param('branchId') branchId: string) {
-    return await this.materialRequisitionService.findAll(branchId);
+  async findByBranch(@Param('branchId') branchId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.materialRequisitionService.findAll(user, branchId);
   }
 }

@@ -1,7 +1,0 @@
-{
-  "workflowInput": {
-    "itemSku": "ITEM-001",
-    "threshold": 10,
-    "action": "optimize_supply_chain"
-  }
-}

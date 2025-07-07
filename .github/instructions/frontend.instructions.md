@@ -1,3 +1,4 @@
+
 ---
 applyTo: "frontend/**"
 ---
@@ -459,4 +460,5 @@ The project is configured with `@/` alias pointing to `frontend/src/`:
 - **Readability**: Clear project structure understanding
 - **Consistency**: Same import pattern across all files
 - **IDE Support**: Better autocomplete and navigation
+
 - **Avoid Deep Nesting**: No more `../../../` chains

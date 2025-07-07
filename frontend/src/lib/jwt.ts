@@ -5,10 +5,13 @@
 export interface JWTPayload {
   sub: string; // user id
   username: string; // email
-  role: string;
+  roles: string[];
   firstName: string;
   lastName: string;
-  branchId: string;
+  branchIds: string[];
+  companyId: string;
+  permissions: string[];
+  isSuperAdmin: boolean;
   iat: number;
   exp: number;
 }
@@ -72,7 +75,8 @@ export function getUserFromToken(token: string): {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  roles: string[];
+  permissions: string[];
   branchId: string;
   isActive: boolean;
 } | null {
@@ -84,8 +88,9 @@ export function getUserFromToken(token: string): {
     email: payload.username,
     firstName: payload.firstName,
     lastName: payload.lastName,
-    role: payload.role,
-    branchId: payload.branchId,
+    roles: payload.roles,
+    permissions: payload.permissions || [],
+    branchId: payload.branchIds?.[0] || '', // Use first branch ID as primary branch
     isActive: true, // Assume active if token is valid
   };
 }

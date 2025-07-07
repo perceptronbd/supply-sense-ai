@@ -1,11 +1,4 @@
 ﻿import {
-  type AuthenticatedUser,
-  CurrentUser,
-} from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import {
   Body,
   Controller,
   Delete,
@@ -28,13 +21,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { GOODS_RECEIPT_PERMISSIONS } from '@supplysense/types';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 import { GoodsReceiptService } from './goods-receipt.service';
 
 @ApiTags('goods-receipt')
 @Controller('goods-receipt')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class GoodsReceiptController {
   constructor(
@@ -42,7 +40,7 @@ export class GoodsReceiptController {
   ) {}
 
   @Post()
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create a new goods receipt' })
   @ApiBody({ type: CreateGoodsReceiptDto })
   @ApiResponse({
@@ -59,16 +57,11 @@ export class GoodsReceiptController {
     @Body() createGoodsReceiptDto: CreateGoodsReceiptDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.goodsReceiptService.create(createGoodsReceiptDto, user.id);
+    return await this.goodsReceiptService.create(createGoodsReceiptDto, user);
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PROCUREMENT_SPECIALIST
-  )
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all goods receipts' })
   @ApiQuery({
     name: 'branchId',
@@ -85,17 +78,12 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findAll(@Query('branchId') branchId?: string) {
-    return await this.goodsReceiptService.findAll(branchId);
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query('branchId') branchId?: string) {
+    return await this.goodsReceiptService.findAll(user, branchId);
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.INVENTORY_CLERK,
-    UserRole.PROCUREMENT_SPECIALIST
-  )
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a goods receipt by ID' })
   @ApiParam({
     name: 'id',
@@ -112,12 +100,12 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findOne(@Param('id') id: string) {
-    return await this.goodsReceiptService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.findOne(id, user);
   }
 
   @Patch(':id')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -135,12 +123,16 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async update(@Param('id') id: string, @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto) {
-    return await this.goodsReceiptService.update(id, updateGoodsReceiptDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateGoodsReceiptDto: UpdateGoodsReceiptDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.goodsReceiptService.update(id, updateGoodsReceiptDto, user);
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.DELETE)
   @ApiOperation({ summary: 'Delete a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -157,13 +149,13 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async remove(@Param('id') id: string) {
-    return await this.goodsReceiptService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.remove(id, user);
   }
 
   @Post(':id/post')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Post a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -180,13 +172,13 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async post(@Param('id') id: string) {
-    return await this.goodsReceiptService.post(id);
+  async post(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.post(id, user);
   }
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Cancel a goods receipt' })
   @ApiParam({
     name: 'id',
@@ -203,12 +195,12 @@ export class GoodsReceiptController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async cancel(@Param('id') id: string) {
-    return await this.goodsReceiptService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.goodsReceiptService.cancel(id, user);
   }
 
   @Post('from-po/:poId')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create goods receipt from purchase order' })
   @ApiParam({
     name: 'poId',
@@ -226,11 +218,11 @@ export class GoodsReceiptController {
     description: 'Forbidden - insufficient permissions',
   })
   async createFromPO(@Param('poId') poId: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.goodsReceiptService.createFromPO(poId, user.id);
+    return await this.goodsReceiptService.createFromPO(poId, user);
   }
 
   @Post('from-mr/:mrId')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.INVENTORY_CLERK)
+  @RequirePermissions(GOODS_RECEIPT_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create goods receipt from material requisition' })
   @ApiParam({
     name: 'mrId',
@@ -248,6 +240,6 @@ export class GoodsReceiptController {
     description: 'Forbidden - insufficient permissions',
   })
   async createFromMR(@Param('mrId') mrId: string, @CurrentUser() user: AuthenticatedUser) {
-    return await this.goodsReceiptService.createFromMR(mrId, user.id);
+    return await this.goodsReceiptService.createFromMR(mrId, user);
   }
 }

@@ -1,6 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
 // AI API Response Types
@@ -121,7 +122,7 @@ export interface QualityReportParams {
 export const aiApi = createApi({
   reducerPath: 'aiApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/ai',
+    baseUrl: config.getApiUrl('/api/ai'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;

@@ -1,22 +1,12 @@
 ﻿import {
-  type AuthenticatedUser,
-  CurrentUser,
-} from '@modules/auth/decorators/current-user.decorator';
-import { Roles, UserRole } from '@modules/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import {
   Body,
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Inject,
   Param,
   Patch,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -28,68 +18,48 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { PURCHASE_REQUEST_PERMISSIONS } from '@supplysense/types';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { CreatePurchaseRequestDto } from './dto/create-purchase-request.dto';
 import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 import { PurchaseRequestService } from './purchase-request.service';
 
 @ApiTags('purchase-request')
 @Controller('purchase-request')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class PurchaseRequestController {
   constructor(
     @Inject(PurchaseRequestService) private readonly purchaseRequestService: PurchaseRequestService
   ) {}
 
-  @Get('debug-user')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
-  @ApiOperation({ summary: 'Debug user information' })
-  @ApiResponse({
-    status: 200,
-    description: 'User debug information retrieved successfully',
-  })
-  async debugUser(@CurrentUser() user: AuthenticatedUser) {
-    console.log('Debug User Object:', user);
-    return { user };
-  }
-
   @Post()
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.CREATE)
   @ApiOperation({ summary: 'Create a new purchase request' })
   @ApiBody({ type: CreatePurchaseRequestDto })
   @ApiResponse({
     status: 201,
     description: 'Purchase request created successfully',
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: 'Forbidden - insufficient permissions or access denied',
   })
+  @ApiResponse({ status: 404, description: 'Branch or items not found' })
   async create(
     @Body() createPurchaseRequestDto: CreatePurchaseRequestDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    try {
-      return await this.purchaseRequestService.create(createPurchaseRequestDto, user.id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.create(createPurchaseRequestDto, user);
   }
 
   @Get()
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all purchase requests' })
   @ApiQuery({
     name: 'branchId',
@@ -106,17 +76,34 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findAll(@Query('branchId') branchId?: string) {
-    return await this.purchaseRequestService.findAll(branchId);
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.findAll(user);
+  }
+
+  @Get('templates')
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.READ)
+  @ApiOperation({ summary: 'Get purchase request templates' })
+  @ApiQuery({
+    name: 'branchId',
+    required: false,
+    description: 'Filter templates by branch ID',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of purchase request templates retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async getTemplates(@CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.getTemplates(user);
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.SYSTEM_ADMIN,
-    UserRole.BRANCH_MANAGER,
-    UserRole.PROCUREMENT_SPECIALIST,
-    UserRole.INVENTORY_CLERK
-  )
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a purchase request by ID' })
   @ApiParam({
     name: 'id',
@@ -133,16 +120,12 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async findOne(@Param('id') id: string) {
-    try {
-      return await this.purchaseRequestService.findOne(id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-    }
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.findOne(id, user);
   }
 
   @Patch(':id')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a purchase request' })
   @ApiParam({
     name: 'id',
@@ -162,17 +145,14 @@ export class PurchaseRequestController {
   })
   async update(
     @Param('id') id: string,
-    @Body() updatePurchaseRequestDto: UpdatePurchaseRequestDto
+    @Body() updatePurchaseRequestDto: UpdatePurchaseRequestDto,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    try {
-      return await this.purchaseRequestService.update(id, updatePurchaseRequestDto);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.update(id, updatePurchaseRequestDto, user);
   }
 
   @Delete(':id')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.DELETE)
   @ApiOperation({ summary: 'Delete a purchase request' })
   @ApiParam({
     name: 'id',
@@ -189,16 +169,12 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async remove(@Param('id') id: string) {
-    try {
-      return await this.purchaseRequestService.remove(id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.remove(id, user);
   }
 
   @Post(':id/submit')
-  @Roles(UserRole.BRANCH_MANAGER, UserRole.PROCUREMENT_SPECIALIST)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.SUBMIT)
   @ApiOperation({ summary: 'Submit a purchase request for approval' })
   @ApiParam({
     name: 'id',
@@ -215,16 +191,12 @@ export class PurchaseRequestController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async submit(@Param('id') id: string) {
-    try {
-      return await this.purchaseRequestService.submit(id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  async submit(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.purchaseRequestService.submit(id, user);
   }
 
   @Post(':id/approve')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.APPROVE)
   @ApiOperation({ summary: 'Approve a purchase request' })
   @ApiParam({
     name: 'id',
@@ -242,15 +214,11 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.approve(id, user.id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.approve(id, user);
   }
 
   @Post(':id/reject')
-  @Roles(UserRole.SYSTEM_ADMIN, UserRole.BRANCH_MANAGER)
+  @RequirePermissions(PURCHASE_REQUEST_PERMISSIONS.REJECT)
   @ApiOperation({ summary: 'Reject a purchase request' })
   @ApiParam({
     name: 'id',
@@ -268,10 +236,6 @@ export class PurchaseRequestController {
     description: 'Forbidden - insufficient permissions',
   })
   async reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    try {
-      return await this.purchaseRequestService.reject(id, user.id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.purchaseRequestService.reject(id, user);
   }
 }

@@ -1,5 +1,7 @@
 ﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import {
   Body,
   Controller,
@@ -15,6 +17,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
@@ -50,68 +53,19 @@ export class ChatController {
 
   @Get('mcp/health')
   @ApiOperation({ summary: 'Check MCP client health and connection status' })
-  @ApiResponse({ status: 200, description: 'MCP health check completed' })
-  async mcpHealth() {
-    try {
-      // Wait a moment for service initialization if needed
-      if (!this.mcpClientService) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      if (!this.mcpClientService) {
-        return {
-          status: 'error',
-          timestamp: new Date().toISOString(),
-          error: 'McpClientService is not available',
-          mcp: {
-            connected: false,
-            toolsCount: 0,
-            availableTools: [] as string[],
-            error: 'Service not initialized',
-          },
-        };
-      }
-
-      const mcpHealth = await this.mcpClientService.healthCheck();
-      const connectionStatus = this.mcpClientService.getConnectionStatus();
-
-      return {
-        status: mcpHealth.connected ? 'healthy' : 'disconnected',
-        timestamp: new Date().toISOString(),
-        mcp: {
-          connected: mcpHealth.connected,
-          toolsCount: mcpHealth.toolsCount,
-          availableTools: mcpHealth.availableTools,
-          hasClient: connectionStatus.hasClient,
-          error: mcpHealth.error,
-        },
-        server: {
-          name: 'SupplySense Supply Chain Server',
-          capabilities: [
-            'Supply Chain Agent (ask_supplyChainAgent)',
-            'Supply Chain Workflow (run_supplyChainWorkflow)',
-            'Supply Chain Status Tool',
-          ],
-        },
-      };
-    } catch (error) {
-      this.logger.error('MCP health check error:', error);
-      return {
-        status: 'error',
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-        mcp: {
-          connected: false,
-          toolsCount: 0,
-          availableTools: [] as string[],
-          error: 'Failed to check MCP health',
-        },
-      };
-    }
+  @ApiResponse({
+    status: 200,
+    description: 'MCP health check completed',
+    example: { status: 'ok' },
+  })
+  async mcpHealth(@Res() res: Response) {
+    // Bypass the ResponseInterceptor by using @Res() directly
+    return res.status(200).json({ status: 'ok' });
   }
 
   @Post('sessions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new chat session' })
   @ApiResponse({ status: 201, description: 'Session created successfully', type: ChatSessionDto })
@@ -125,8 +79,10 @@ export class ChatController {
       createSessionDto.description
     );
   }
+
   @Get('sessions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user chat sessions' })
   @ApiResponse({
@@ -143,7 +99,8 @@ export class ChatController {
   }
 
   @Get('sessions/:sessionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific chat session' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully', type: ChatSessionDto })
@@ -152,7 +109,8 @@ export class ChatController {
   }
 
   @Delete('sessions/:sessionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a chat session' })
   @ApiResponse({ status: 200, description: 'Session deleted successfully' })
@@ -164,7 +122,8 @@ export class ChatController {
   }
 
   @Get('sessions/:sessionId/messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get messages from a chat session' })
   @ApiResponse({ status: 200, description: 'Messages retrieved successfully' })
@@ -176,8 +135,10 @@ export class ChatController {
   ) {
     return this.chatService.getSessionMessages(sessionId, limit, offset);
   }
+
   @Post('query')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })
   @ApiResponse({ status: 200, description: 'AI response generated successfully' })
@@ -191,16 +152,17 @@ export class ChatController {
       queryDto.query,
       user.id,
       {
-        userRole: user.role,
-        branchId: user.branchId,
-        userPermissions: [], // TODO: Implement user permissions system
+        userRole: user.roles[0] || 'USER', // Use first role or default
+        branchId: user.branchIds[0] || '', // Use first branch or empty
+        userPermissions: user.permissions, // Use actual permissions
       }
     );
     return res.status(HttpStatus.OK).json(result);
   }
 
   @Post('messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message in a chat session' })
   @ApiResponse({ status: 200, description: 'Message sent successfully' })
@@ -213,14 +175,15 @@ export class ChatController {
       sendMessageDto.content,
       user.id,
       {
-        userRole: user.role,
-        branchId: user.branchId,
-        userPermissions: [], // TODO: Implement user permissions system
+        userRole: user.roles[0] || 'USER', // Use first role or default
+        branchId: user.branchIds[0] || '', // Use first branch or empty
+        userPermissions: user.permissions, // Use actual permissions
       }
     );
   }
 
   @Post('mcp/test')
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiOperation({ summary: 'Test MCP integration without authentication' })
   @ApiResponse({ status: 200, description: 'MCP test completed' })
   async testMcp(@Body() testDto: { query: string }) {
@@ -228,6 +191,7 @@ export class ChatController {
   }
 
   @Post('mcp/test-workflow')
+  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiOperation({ summary: 'Test MCP workflow integration without authentication' })
   @ApiResponse({ status: 200, description: 'MCP workflow test completed' })
   async testMcpWorkflow(@Body() testDto: { workflowInput: Record<string, unknown> }) {

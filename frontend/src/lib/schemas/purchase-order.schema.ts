@@ -29,7 +29,7 @@ export const purchaseOrderSchema = z.object({
     .string()
     .min(1, { message: 'Title is required.' })
     .max(100, { message: 'Title cannot exceed 100 characters.' }),
-  prId: z.string().uuid().optional(),
+  prId: z.string().uuid().nullish(),
   supplierId: z.string().uuid({ message: 'Please select a valid supplier.' }),
   expectedDeliveryDate: z.string().refine(
     (date) => {
@@ -43,13 +43,13 @@ export const purchaseOrderSchema = z.object({
   paymentTerms: z
     .string()
     .max(100, { message: 'Payment terms cannot exceed 100 characters.' })
-    .optional(),
+    .nullish(),
   deliveryTerms: z
     .string()
     .max(100, { message: 'Delivery terms cannot exceed 100 characters.' })
-    .optional(),
+    .nullish(),
   branchId: z.string().uuid({ message: 'Please select a valid branch.' }),
-  notes: z.string().max(1000, { message: 'Notes cannot exceed 1000 characters.' }).optional(),
+  notes: z.string().max(1000, { message: 'Notes cannot exceed 1000 characters.' }).nullish(),
   items: z
     .array(purchaseOrderItemSchema)
     .min(1, { message: 'At least one item is required.' })

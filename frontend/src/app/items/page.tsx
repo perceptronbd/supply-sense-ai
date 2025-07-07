@@ -2,33 +2,25 @@
 
 import AuthGuard from '@/components/AuthGuard';
 import { SearchIcon } from '@/components/icons';
-import { ActionsDropdown, DeleteItemDialog, StatusChip, StockDisplay } from '@/components/items';
+import {
+  ActionsDropdown,
+  DeleteItemDialog,
+  ItemsTableContent,
+  StatusChip,
+  StockDisplay,
+} from '@/components/items';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
+import { usePermissions } from '@/hooks/usePermissions';
 import { type Item, useGetItemsQuery } from '@/store/api/itemApi';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Checkbox,
-  Chip,
-  Input,
-  Pagination,
-  Select,
-  SelectItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from '@heroui/react';
+import { Button, Card, CardBody, CardHeader, Checkbox, Chip, Input } from '@heroui/react';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function ItemsPage() {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [isMounted, setIsMounted] = useState(false);
 
   // Filter and pagination state
@@ -150,43 +142,37 @@ export default function ItemsPage() {
   // Table row content
   const renderCell = useCallback(
     (item: Item, columnKey: string) => {
-      switch (columnKey) {
-        case 'sku':
-          return (
-            <Text variant="bodyMedium" weight="medium">
-              {item.sku || '—'}
-            </Text>
-          );
-        case 'name':
-          return (
-            <Text variant="bodyMedium" weight="medium">
-              {item.name || '—'}
-            </Text>
-          );
-        case 'description':
-          return (
-            <Text variant="bodySmall" color="muted" className="max-w-xs truncate">
-              {item.description || '—'}
-            </Text>
-          );
-        case 'mainUnit':
-          return <Text variant="bodyMedium">{item.mainUnit || '—'}</Text>;
-        case 'stock':
-          return <StockDisplay stock={item.stock} />;
-        case 'status':
-          return <StatusChip isActive={item.isActive} />;
-        case 'actions':
-          return (
-            <ActionsDropdown
-              item={item}
-              onViewDetails={handleViewDetails}
-              onEdit={handleEditItem}
-              onDelete={handleDeleteItem}
-            />
-          );
-        default:
-          return null;
-      }
+      const cellRenderers = {
+        sku: () => (
+          <Text variant="bodyMedium" weight="medium">
+            {item.sku || '—'}
+          </Text>
+        ),
+        name: () => (
+          <Text variant="bodyMedium" weight="medium">
+            {item.name || '—'}
+          </Text>
+        ),
+        description: () => (
+          <Text variant="bodySmall" color="muted" className="max-w-xs truncate">
+            {item.description || '—'}
+          </Text>
+        ),
+        mainUnit: () => <Text variant="bodyMedium">{item.mainUnit || '—'}</Text>,
+        stock: () => <StockDisplay stock={item.stock} />,
+        status: () => <StatusChip isActive={item.isActive} />,
+        actions: () => (
+          <ActionsDropdown
+            item={item}
+            onViewDetails={handleViewDetails}
+            onEdit={handleEditItem}
+            onDelete={handleDeleteItem}
+          />
+        ),
+      };
+
+      const renderer = cellRenderers[columnKey as keyof typeof cellRenderers];
+      return renderer ? renderer() : null;
     },
     [handleViewDetails, handleEditItem, handleDeleteItem]
   );
@@ -196,8 +182,8 @@ export default function ItemsPage() {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -208,9 +194,9 @@ export default function ItemsPage() {
   return (
     <AuthGuard requireAuth={true}>
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <header className="flex justify-between items-center mb-6">
+          <header className="flex items-center justify-between mb-6">
             <div>
               <Text variant="headerSmall" weight="bold" color="default" as="h1">
                 Items
@@ -219,36 +205,38 @@ export default function ItemsPage() {
                 Manage your inventory items and view stock levels
               </Text>
             </div>
-            <Button
-              color="primary"
-              onPress={handleCreateItem}
-              startContent={
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              }
-            >
-              Add Item
-            </Button>
+            {hasPermission(ITEM_PERMISSIONS.CREATE) && (
+              <Button
+                color="primary"
+                onPress={handleCreateItem}
+                startContent={
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                }
+              >
+                Add Item
+              </Button>
+            )}
           </header>
 
           {/* Items Table and Filters */}
           <section>
             <Card>
-              <CardHeader className="pb-3 flex flex-col gap-4">
-                <div className="flex justify-between items-center w-full">
+              <CardHeader className="flex flex-col gap-4 pb-3">
+                <div className="flex items-center justify-between w-full">
                   <Text variant="titleSmall" weight="semiBold" as="h2">
                     All Items
                   </Text>
                   {/* Status Summary Chips */}
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Chip
                       color="primary"
                       variant="flat"
@@ -278,7 +266,7 @@ export default function ItemsPage() {
                   </div>{' '}
                 </div>
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-start w-full">
+                <div className="flex flex-col justify-start w-full gap-4 sm:flex-row">
                   <Input
                     placeholder="Search items by name, SKU, or description..."
                     value={searchTerm}
@@ -300,103 +288,20 @@ export default function ItemsPage() {
               </CardHeader>
 
               <CardBody>
-                {/* Loading State */}
-                {isLoading && (
-                  <div className="flex justify-center items-center py-12">
-                    <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
-                  </div>
-                )}
-                {/* Error State */}
-                {error && (
-                  <div className="text-center py-12">
-                    <Text variant="bodyLarge" color="danger" className="mb-4">
-                      Failed to load items
-                    </Text>
-                    <Button color="primary" variant="flat" onPress={() => refetch()}>
-                      Try Again
-                    </Button>
-                  </div>
-                )}
-                {/* Empty State */}
-                {!isLoading && !error && (!Array.isArray(items) || items.length === 0) && (
-                  <div className="text-center py-12">
-                    <Text variant="bodyLarge" color="muted" className="mb-2">
-                      {searchTerm ? 'No items found matching your search' : 'No items found'}
-                    </Text>
-                    {searchTerm && (
-                      <Text variant="bodyMedium" color="muted">
-                        Try adjusting your search criteria
-                      </Text>
-                    )}
-                  </div>
-                )}{' '}
-                {/* Items Table */}
-                {!isLoading && !error && Array.isArray(items) && items.length > 0 && (
-                  <>
-                    <Table
-                      aria-label="Items table"
-                      classNames={{
-                        th: 'bg-default-200',
-                        tr: 'hover:bg-default-200',
-                      }}
-                    >
-                      <TableHeader columns={columns}>
-                        {(column) => (
-                          <TableColumn key={column.uid} allowsSorting={column.sortable}>
-                            {column.name}
-                          </TableColumn>
-                        )}
-                      </TableHeader>
-                      <TableBody items={items}>
-                        {(item) => (
-                          <TableRow key={item.id}>
-                            {(columnKey) => (
-                              <TableCell>{renderCell(item, columnKey as string)}</TableCell>
-                            )}
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>{' '}
-                    {/* Pagination */}
-                    {pagination && pagination.pages > 1 && (
-                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-divider">
-                        <div className="flex items-center gap-4">
-                          <Select
-                            size="sm"
-                            placeholder="Items per page"
-                            defaultSelectedKeys={[itemsPerPage.toString()]}
-                            className="w-32"
-                            classNames={{
-                              popoverContent: 'bg-default-200',
-                              trigger: 'bg-default-200',
-                            }}
-                            onChange={(e) => {
-                              const newItemsPerPage = Number.parseInt(e.target.value);
-                              handleItemsPerPageChange(newItemsPerPage.toString());
-                            }}
-                          >
-                            <SelectItem key="10">10</SelectItem>
-                            <SelectItem key="25">25</SelectItem>
-                            <SelectItem key="50">50</SelectItem>
-                            <SelectItem key="100">100</SelectItem>
-                          </Select>
-                          <Text variant="bodySmall" color="muted">
-                            Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                            {pagination.total} items
-                          </Text>
-                        </div>
-                        <Pagination
-                          page={currentPage}
-                          total={pagination.pages}
-                          onChange={handlePageChange}
-                          showControls
-                          color="primary"
-                        />
-                      </div>
-                    )}{' '}
-                  </>
-                )}
+                <ItemsTableContent
+                  isLoading={isLoading}
+                  error={error}
+                  items={items}
+                  searchTerm={searchTerm}
+                  columns={columns}
+                  renderCell={renderCell}
+                  pagination={pagination}
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  onRefetch={refetch}
+                />
               </CardBody>
             </Card>
           </section>

@@ -45,9 +45,150 @@ type TransformedItem = Omit<
     | undefined;
 };
 
+export interface UnitConversion {
+  fromMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using') => number;
+  toMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using') => number;
+}
+
 @Injectable()
 export class ItemService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  /**
+   * Unit Conversion Utilities (FR-2, FR-3)
+   * Provides real-time conversion between different units and main unit
+   */
+
+  /**
+   * Create unit conversion helper for an item
+   */
+  createUnitConverter(item: TransformedItem): UnitConversion {
+    return {
+      fromMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using'): number => {
+        const rate = this.getConversionRate(item, unitType);
+        return quantity / rate;
+      },
+      toMainUnit: (quantity: number, unitType: 'buying' | 'transfer' | 'using'): number => {
+        const rate = this.getConversionRate(item, unitType);
+        return quantity * rate;
+      },
+    };
+  }
+
+  /**
+   * Get conversion rate for specific unit type
+   */
+  private getConversionRate(
+    item: TransformedItem,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): number {
+    switch (unitType) {
+      case 'buying':
+        return item.buyingToMainRate || 1;
+      case 'transfer':
+        return item.transferToMainRate || 1;
+      case 'using':
+        return item.usingToMainRate || 1;
+      default:
+        throw new BadRequestException(`Invalid unit type: ${unitType}`);
+    }
+  }
+
+  /**
+   * Convert quantity from one unit to main unit
+   */
+  async convertToMainUnit(
+    itemId: string,
+    companyId: string,
+    quantity: number,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): Promise<number> {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+    return converter.toMainUnit(quantity, unitType);
+  }
+
+  /**
+   * Convert quantity from main unit to specified unit
+   */
+  async convertFromMainUnit(
+    itemId: string,
+    companyId: string,
+    quantity: number,
+    unitType: 'buying' | 'transfer' | 'using'
+  ): Promise<number> {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+    return converter.fromMainUnit(quantity, unitType);
+  }
+
+  /**
+   * Get item with unit conversion information
+   */
+  async getItemWithConversions(
+    itemId: string,
+    companyId: string,
+    quantities?: {
+      buying?: number;
+      transfer?: number;
+      using?: number;
+    }
+  ) {
+    const item = await this.findOne(itemId, companyId);
+    const converter = this.createUnitConverter(item);
+
+    const conversions: {
+      rates: {
+        buyingToMain: number | null;
+        transferToMain: number | null;
+        usingToMain: number | null;
+      };
+      units: {
+        main: string;
+        buying: string | null;
+        transfer: string | null;
+        using: string | null;
+      };
+      conversions?: {
+        buyingToMain?: number;
+        transferToMain?: number;
+        usingToMain?: number;
+      };
+    } = {
+      rates: {
+        buyingToMain: item.buyingToMainRate,
+        transferToMain: item.transferToMainRate,
+        usingToMain: item.usingToMainRate,
+      },
+      units: {
+        main: item.mainUnit,
+        buying: item.buyingUnit,
+        transfer: item.transferUnit,
+        using: item.usingUnit,
+      },
+    };
+
+    // Add quantity conversions if provided
+    if (quantities) {
+      conversions.conversions = {
+        ...(quantities.buying && {
+          buyingToMain: converter.toMainUnit(quantities.buying, 'buying'),
+        }),
+        ...(quantities.transfer && {
+          transferToMain: converter.toMainUnit(quantities.transfer, 'transfer'),
+        }),
+        ...(quantities.using && {
+          usingToMain: converter.toMainUnit(quantities.using, 'using'),
+        }),
+      };
+    }
+
+    return {
+      item,
+      conversions,
+    };
+  }
+
   /**
    * Transform items with proper Decimal to number conversion
    */
@@ -64,6 +205,7 @@ export class ItemService {
       name: item.name,
       sku: item.sku,
       description: item.description,
+      companyId: item.companyId, // Add missing companyId
       mainUnit: item.mainUnit,
       buyingUnit: item.buyingUnit,
       transferUnit: item.transferUnit,
@@ -101,6 +243,9 @@ export class ItemService {
   private buildQueryOptions(query: QueryItemDto) {
     const { search, branchId, includeInactive = false, includeStock = false } = query;
 
+    // Stock-level filters are handled in post-processing
+    // const { belowSafetyStock, belowReorderLevel, outOfStock, lowStock } = query;
+
     const where: Prisma.ItemWhereInput = {};
     if (!includeInactive) {
       where.isActive = true;
@@ -126,17 +271,73 @@ export class ItemService {
           lastCost: true,
         },
       };
+
+      // Note: Stock-level filters (belowSafetyStock, belowReorderLevel, etc.)
+      // are applied in post-processing due to Prisma limitations with cross-model comparisons
     }
 
     return { where, include };
   }
 
   /**
+   * Filter items based on stock levels (post-processing for AI monitoring - FR-9)
+   */
+  private filterByStockLevels(items: TransformedItem[], query: QueryItemDto): TransformedItem[] {
+    const { belowSafetyStock, belowReorderLevel, outOfStock, lowStock } = query;
+
+    if (!belowSafetyStock && !belowReorderLevel && !outOfStock && !lowStock) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      if (!item.stock) return false;
+
+      const { quantity, availableQty } = item.stock;
+      const safetyStock = item.safetyStockLevel || 0;
+      const reorderLevel = item.reorderLevel || 0;
+
+      if (outOfStock) {
+        return quantity <= 0 || availableQty <= 0;
+      }
+
+      if (belowSafetyStock) {
+        return quantity < safetyStock;
+      }
+
+      if (belowReorderLevel) {
+        return quantity < reorderLevel;
+      }
+
+      if (lowStock && safetyStock > 0) {
+        return quantity < safetyStock * 0.2; // Below 20% of safety stock
+      }
+
+      return false;
+    });
+  }
+
+  /**
    * Get items with optional pagination, search, and stock information
-   */ async findAll(query: QueryItemDto) {
+   */
+  async findAll(query: QueryItemDto, companyId: string) {
     const { page, limit, includeStock = false } = query;
 
-    // Only validate pagination constraints if page is provided
+    this.validatePaginationParams(page, limit);
+
+    const { where, include } = this.buildQueryOptions(query);
+    where.companyId = companyId;
+
+    if (page && limit) {
+      return this.findAllPaginated(query, where, include, page, limit, includeStock);
+    }
+
+    return this.findAllUnpaginated(query, where, include, limit, includeStock);
+  }
+
+  /**
+   * Validate pagination parameters
+   */
+  private validatePaginationParams(page?: number, limit?: number): void {
     if (page && !limit) {
       throw new BadRequestException('Limit must be provided when page is specified');
     }
@@ -148,35 +349,64 @@ export class ItemService {
     if (limit && (limit < 1 || limit > 100)) {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
-    const { where, include } = this.buildQueryOptions(query);
+  }
 
-    // Handle paginated queries (both page and limit provided)
-    if (page && limit) {
-      const pageNum = Number(page);
-      const limitNum = Number(limit);
-      const skip = (pageNum - 1) * limitNum;
+  /**
+   * Handle paginated queries
+   */
+  private async findAllPaginated(
+    query: QueryItemDto,
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    page: number,
+    limit: number,
+    includeStock: boolean
+  ) {
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-      const [items, total] = await Promise.all([
-        this.prisma.item.findMany({
-          where,
-          include,
-          skip,
-          take: limitNum,
-          orderBy: [{ name: 'asc' }, { sku: 'asc' }],
-        }),
-        this.prisma.item.count({ where }),
-      ]);
+    let [items, total] = await Promise.all([
+      this.prisma.item.findMany({
+        where,
+        include,
+        skip,
+        take: limitNum,
+        orderBy: [{ name: 'asc' }, { sku: 'asc' }],
+      }),
+      this.prisma.item.count({ where }),
+    ]);
 
-      const transformedItems = this.transformItems(items, includeStock);
+    let transformedItems = this.transformItems(items, includeStock);
 
-      return {
-        data: transformedItems,
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      };
-    } // Handle non-paginated queries (with optional limit)
+    if (includeStock && query.branchId) {
+      const originalLength = transformedItems.length;
+      transformedItems = this.filterByStockLevels(transformedItems, query);
+
+      if (transformedItems.length !== originalLength) {
+        total = await this.getFilteredTotal(where, include, query, includeStock);
+      }
+    }
+
+    return {
+      data: transformedItems,
+      page: pageNum,
+      limit: limitNum,
+      total,
+      pages: Math.ceil(total / limitNum),
+    };
+  }
+
+  /**
+   * Handle non-paginated queries
+   */
+  private async findAllUnpaginated(
+    query: QueryItemDto,
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    limit?: number,
+    includeStock = false
+  ) {
     const queryOptions: {
       where: Prisma.ItemWhereInput;
       include: Prisma.ItemInclude;
@@ -188,22 +418,39 @@ export class ItemService {
       orderBy: [{ name: 'asc' }, { sku: 'asc' }],
     };
 
-    // Add limit if provided (for performance in non-paginated queries)
     if (limit) {
       queryOptions.take = Number(limit);
     }
 
     const items = await this.prisma.item.findMany(queryOptions);
+    let transformedItems = this.transformItems(items, includeStock);
 
-    const transformedItems = this.transformItems(items, includeStock);
+    if (includeStock && query.branchId) {
+      transformedItems = this.filterByStockLevels(transformedItems, query);
+    }
 
     return transformedItems;
   }
 
   /**
+   * Get filtered total count for paginated results
+   */
+  private async getFilteredTotal(
+    where: Prisma.ItemWhereInput,
+    include: Prisma.ItemInclude,
+    query: QueryItemDto,
+    includeStock: boolean
+  ): Promise<number> {
+    const allItems = await this.prisma.item.findMany({ where, include });
+    const allTransformed = this.transformItems(allItems, includeStock);
+    const filteredAll = this.filterByStockLevels(allTransformed, query);
+    return filteredAll.length;
+  }
+
+  /**
    * Get a single item by ID with optional stock information
    */
-  async findOne(id: string, branchId?: string, includeStock = false) {
+  async findOne(id: string, companyId: string, branchId?: string, includeStock = false) {
     const include: Prisma.ItemInclude = {};
     if (includeStock && branchId) {
       include.stock = {
@@ -218,8 +465,11 @@ export class ItemService {
       };
     }
 
-    const item = await this.prisma.item.findUnique({
-      where: { id },
+    const item = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
       include,
     });
 
@@ -232,17 +482,20 @@ export class ItemService {
   /**
    * Get items for a specific branch with stock information
    */
-  async findByBranch(branchId: string, query: Omit<QueryItemDto, 'branchId'>) {
-    return this.findAll({
-      ...query,
-      branchId,
-      includeStock: true,
-    });
+  async findByBranch(branchId: string, query: Omit<QueryItemDto, 'branchId'>, companyId: string) {
+    return this.findAll(
+      {
+        ...query,
+        branchId,
+        includeStock: true,
+      },
+      companyId
+    );
   }
   /**
    * Search items by name or SKU (simplified search for dropdowns)
    */
-  async searchItems(searchTerm: string, branchId?: string, limit = 20) {
+  async searchItems(searchTerm: string, companyId: string, branchId?: string, limit = 20) {
     // Validate inputs
     if (!searchTerm) {
       throw new BadRequestException('Search term is required');
@@ -255,6 +508,7 @@ export class ItemService {
     }
 
     const where: Prisma.ItemWhereInput = {
+      companyId, // Add company isolation
       isActive: true,
       OR: [
         { name: { contains: searchTerm, mode: 'insensitive' } },
@@ -323,7 +577,7 @@ export class ItemService {
   /**
    * Create a new item
    */
-  async create(createItemDto: CreateItemDto): Promise<TransformedItem> {
+  async create(createItemDto: CreateItemDto, companyId: string): Promise<TransformedItem> {
     try {
       const item = await this.prisma.item.create({
         data: {
@@ -340,6 +594,7 @@ export class ItemService {
           safetyStockLevel: createItemDto.safetyStockLevel ?? 0,
           reorderLevel: createItemDto.reorderLevel ?? 0,
           isActive: createItemDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 
@@ -357,10 +612,17 @@ export class ItemService {
   /**
    * Update an existing item
    */
-  async update(id: string, updateItemDto: UpdateItemDto): Promise<TransformedItem> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async update(
+    id: string,
+    updateItemDto: UpdateItemDto,
+    companyId: string
+  ): Promise<TransformedItem> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {
@@ -421,10 +683,13 @@ export class ItemService {
   /**
    * Soft delete an item (set isActive to false)
    */
-  async remove(id: string): Promise<TransformedItem> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async remove(id: string, companyId: string): Promise<TransformedItem> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {
@@ -449,10 +714,13 @@ export class ItemService {
   /**
    * Hard delete an item (only if no references exist)
    */
-  async hardDelete(id: string): Promise<void> {
-    // Check if item exists
-    const existingItem = await this.prisma.item.findUnique({
-      where: { id },
+  async hardDelete(id: string, companyId: string): Promise<void> {
+    // Check if item exists and belongs to company
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingItem) {

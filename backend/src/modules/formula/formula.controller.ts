@@ -11,18 +11,35 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FORMULA_PERMISSIONS } from '@supplysense/types';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { CreateFormulaDto } from './dto/create-formula.dto';
 import { UpdateFormulaDto } from './dto/update-formula.dto';
 import { FormulaService } from './formula.service';
 
 @ApiTags('formula')
 @Controller('formula')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class FormulaController {
   constructor(@Inject(FormulaService) private readonly formulaService: FormulaService) {}
 
   @Post()
+  @RequirePermissions(FORMULA_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new formula' })
   @ApiBody({ type: CreateFormulaDto })
@@ -31,13 +48,12 @@ export class FormulaController {
     description: 'Formula created successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(@Body() createFormulaDto: CreateFormulaDto) {
-    // TODO: Replace with actual user ID from JWT token
-    const userId = 'user-123';
-    return await this.formulaService.create(createFormulaDto, userId);
+  async create(@Body() createFormulaDto: CreateFormulaDto, @CurrentUser() user: AuthenticatedUser) {
+    return await this.formulaService.create(createFormulaDto, user.id, user.companyId);
   }
 
   @Get()
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get all formulas' })
   @ApiQuery({
     name: 'isActive',
@@ -49,12 +65,13 @@ export class FormulaController {
     status: 200,
     description: 'List of formulas retrieved successfully',
   })
-  async findAll(@Query('isActive') isActive?: string) {
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query('isActive') isActive?: string) {
     const activeFilter = isActive ? isActive === 'true' : undefined;
-    return await this.formulaService.findAll(activeFilter);
+    return await this.formulaService.findAll(activeFilter, user.companyId);
   }
 
   @Get('code/:code')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a formula by code' })
   @ApiParam({
     name: 'code',
@@ -66,11 +83,12 @@ export class FormulaController {
     description: 'Formula retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'Formula not found' })
-  async findByCode(@Param('code') code: string) {
-    return await this.formulaService.findByCode(code);
+  async findByCode(@Param('code') code: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.formulaService.findByCode(code, user.companyId);
   }
 
   @Get(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Get a formula by ID' })
   @ApiParam({
     name: 'id',
@@ -82,11 +100,12 @@ export class FormulaController {
     description: 'Formula retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'Formula not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.formulaService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.formulaService.findOne(id, user.companyId);
   }
 
   @Get(':id/material-requirements')
+  @RequirePermissions(FORMULA_PERMISSIONS.READ)
   @ApiOperation({ summary: 'Calculate material requirements for a formula' })
   @ApiParam({
     name: 'id',
@@ -106,12 +125,18 @@ export class FormulaController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async calculateMaterialRequirements(
     @Param('id') id: string,
-    @Query('outputQuantity', ParseIntPipe) outputQuantity: number
+    @Query('outputQuantity', ParseIntPipe) outputQuantity: number,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.formulaService.calculateMaterialRequirements(id, outputQuantity);
+    return await this.formulaService.calculateMaterialRequirements(
+      id,
+      outputQuantity,
+      user.companyId
+    );
   }
 
   @Patch(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.UPDATE)
   @ApiOperation({ summary: 'Update a formula' })
   @ApiParam({
     name: 'id',
@@ -124,11 +149,16 @@ export class FormulaController {
     description: 'Formula updated successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async update(@Param('id') id: string, @Body() updateFormulaDto: UpdateFormulaDto) {
-    return await this.formulaService.update(id, updateFormulaDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateFormulaDto: UpdateFormulaDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.formulaService.update(id, updateFormulaDto, user.companyId);
   }
 
   @Patch(':id/toggle-active')
+  @RequirePermissions(FORMULA_PERMISSIONS.UPDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Toggle formula active status' })
   @ApiParam({
@@ -141,11 +171,12 @@ export class FormulaController {
     description: 'Formula active status toggled successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async toggleActive(@Param('id') id: string) {
-    return await this.formulaService.toggleActive(id);
+  async toggleActive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.formulaService.toggleActive(id, user.companyId);
   }
 
   @Post(':id/clone')
+  @RequirePermissions(FORMULA_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Clone a formula with a new version' })
   @ApiParam({
@@ -171,13 +202,16 @@ export class FormulaController {
     description: 'Formula cloned successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async cloneFormula(@Param('id') id: string, @Body('newVersion') newVersion: string) {
-    // TODO: Replace with actual user ID from JWT token
-    const userId = 'user-456';
-    return await this.formulaService.cloneFormula(id, newVersion, userId);
+  async cloneFormula(
+    @Param('id') id: string,
+    @Body('newVersion') newVersion: string,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.formulaService.cloneFormula(id, newVersion, user.id, user.companyId);
   }
 
   @Delete(':id')
+  @RequirePermissions(FORMULA_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a formula' })
   @ApiParam({
@@ -189,8 +223,8 @@ export class FormulaController {
     status: 204,
     description: 'Formula deleted successfully',
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  async remove(@Param('id') id: string) {
-    return await this.formulaService.remove(id);
+  @ApiResponse({ status: 404, description: 'Formula not found' })
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.formulaService.remove(id, user.companyId);
   }
 }

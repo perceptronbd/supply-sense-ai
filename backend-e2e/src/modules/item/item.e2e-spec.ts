@@ -2,7 +2,7 @@ import axios from 'axios';
 import { type AxiosErrorResponse, TestHelpers, type TestUser } from '../../support/test-helpers';
 
 describe('Item API (E2E)', () => {
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3004';
   let authToken: string;
   let testUser: TestUser;
   let TEST_BRANCH_ID: string;
@@ -13,7 +13,7 @@ describe('Item API (E2E)', () => {
     const auth = await TestHelpers.loginAsBranchManager();
     authToken = auth.accessToken;
     testUser = auth.user;
-    TEST_BRANCH_ID = testUser.branchId;
+    TEST_BRANCH_ID = testUser.branchIds[0]; // Use first branch ID
     TEST_ITEM_ID = await TestHelpers.getTestItemId();
   });
 
@@ -401,7 +401,7 @@ describe('Item API (E2E)', () => {
 
   describe('Role-based Access Control', () => {
     it('should allow branch manager access to item endpoints', async () => {
-      expect(testUser.role).toBe('BRANCH_MANAGER');
+      expect(testUser.roles).toContain('BRANCH_MANAGER');
 
       const response = await axios.get(`${API_BASE_URL}/api/items`, {
         headers: getAuthHeaders(),
@@ -861,6 +861,427 @@ describe('Item API (E2E)', () => {
         } catch (error: unknown) {
           const axiosError = error as AxiosErrorResponse;
           expect(axiosError.response.status).toBe(404);
+        }
+      });
+    });
+
+    describe('Unit Conversions (FR-2, FR-3)', () => {
+      let conversionItemId: string;
+
+      beforeAll(async () => {
+        // Create a test item with specific conversion rates
+        const itemData = {
+          name: 'Conversion Test Steel Rod',
+          sku: `CONV-STEEL-${Date.now()}`,
+          description: 'Test item for unit conversion e2e tests',
+          mainUnit: 'kg',
+          buyingUnit: 'ton',
+          transferUnit: 'kg',
+          usingUnit: 'g',
+          buyingToMainRate: 1000, // 1 ton = 1000 kg
+          transferToMainRate: 1, // 1 kg = 1 kg
+          usingToMainRate: 0.001, // 1 g = 0.001 kg
+          safetyStockLevel: 100,
+          reorderLevel: 50,
+        };
+
+        const response = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+          headers: TestHelpers.getAuthHeaders(systemAdminToken),
+        });
+
+        conversionItemId = response.data.data.id;
+      });
+
+      afterAll(async () => {
+        // Clean up test item
+        if (conversionItemId) {
+          try {
+            await axios.delete(`${API_BASE_URL}/api/items/${conversionItemId}/hard`, {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            });
+          } catch (_error) {
+            // Ignore cleanup errors
+          }
+        }
+      });
+
+      it('should get unit conversion information without quantities', async () => {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/items/${conversionItemId}/conversions`,
+          {
+            headers: getAuthHeaders(),
+          }
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toHaveProperty('item');
+        expect(response.data.data).toHaveProperty('conversions');
+
+        const conversions = response.data.data.conversions;
+        expect(conversions.rates).toMatchObject({
+          buyingToMain: 1000,
+          transferToMain: 1,
+          usingToMain: 0.001,
+        });
+        expect(conversions.units).toMatchObject({
+          main: 'kg',
+          buying: 'ton',
+          transfer: 'kg',
+          using: 'g',
+        });
+      });
+
+      it('should calculate unit conversions with provided quantities', async () => {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/items/${conversionItemId}/conversions`,
+          {
+            params: {
+              buyingQty: 2, // 2 tons
+              transferQty: 500, // 500 kg
+              usingQty: 2000, // 2000 g
+            },
+            headers: getAuthHeaders(),
+          }
+        );
+
+        expect(response.status).toBe(200);
+        const conversions = response.data.data.conversions;
+
+        expect(conversions.conversions).toMatchObject({
+          buyingToMain: 2000, // 2 tons = 2000 kg
+          transferToMain: 500, // 500 kg = 500 kg
+          usingToMain: 2, // 2000 g = 2 kg
+        });
+      });
+
+      it('should require authentication for unit conversion endpoint', async () => {
+        try {
+          await axios.get(`${API_BASE_URL}/api/items/${conversionItemId}/conversions`);
+          fail('Should have thrown 401 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(401);
+        }
+      });
+
+      it('should return 404 for non-existent item conversions', async () => {
+        try {
+          await axios.get(
+            `${API_BASE_URL}/api/items/00000000-0000-0000-0000-000000000999/conversions`,
+            {
+              headers: getAuthHeaders(),
+            }
+          );
+          fail('Should have thrown 404 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(404);
+        }
+      });
+    });
+
+    describe('Enhanced Validation', () => {
+      it('should validate SKU format (uppercase alphanumeric with hyphens/underscores)', async () => {
+        const invalidSKUs = [
+          'invalid-sku-lowercase',
+          'INVALID@SKU',
+          'INVALID SKU',
+          'invalid_sku_lowercase',
+        ];
+
+        for (const invalidSKU of invalidSKUs) {
+          const itemData = {
+            name: `Test Item ${Date.now()}`,
+            sku: invalidSKU,
+            mainUnit: 'kg',
+            buyingUnit: 'kg',
+            transferUnit: 'kg',
+            usingUnit: 'kg',
+          };
+
+          try {
+            await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            });
+            fail(`Should have thrown validation error for SKU: ${invalidSKU}`);
+          } catch (error: unknown) {
+            const axiosError = error as AxiosErrorResponse;
+            expect(axiosError.response.status).toBe(400);
+          }
+        }
+      });
+
+      it('should accept valid SKU formats', async () => {
+        const validSKUs = ['VALID-SKU-123', 'VALID_SKU_456', 'VALIDSKU789', 'ITEM-001_V2'];
+
+        const createdItems: string[] = [];
+
+        for (const validSKU of validSKUs) {
+          const itemData = {
+            name: `Test Item ${Date.now()}`,
+            sku: validSKU,
+            mainUnit: 'kg',
+            buyingUnit: 'kg',
+            transferUnit: 'kg',
+            usingUnit: 'kg',
+          };
+
+          const response = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+
+          expect(response.status).toBe(201);
+          expect(response.data.data.sku).toBe(validSKU);
+          createdItems.push(response.data.data.id);
+        }
+
+        // Clean up
+        for (const itemId of createdItems) {
+          try {
+            await axios.delete(`${API_BASE_URL}/api/items/${itemId}/hard`, {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            });
+          } catch (_error) {
+            // Ignore cleanup errors
+          }
+        }
+      });
+
+      it('should validate conversion rates are positive', async () => {
+        const itemData = {
+          name: `Test Item ${Date.now()}`,
+          sku: `TEST-NEGATIVE-${Date.now()}`,
+          mainUnit: 'kg',
+          buyingUnit: 'kg',
+          transferUnit: 'kg',
+          usingUnit: 'kg',
+          buyingToMainRate: -1, // Invalid negative rate
+        };
+
+        try {
+          await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+          fail('Should have thrown validation error for negative conversion rate');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(400);
+        }
+      });
+    });
+
+    describe('Stock Level Filtering (FR-9)', () => {
+      const stockTestItems: string[] = [];
+
+      beforeAll(async () => {
+        // Create test items with different stock scenarios
+        const testItems = [
+          {
+            name: 'Out of Stock Item',
+            sku: `OUT-OF-STOCK-${Date.now()}`,
+            safetyStockLevel: 100,
+            reorderLevel: 50,
+          },
+          {
+            name: 'Below Safety Stock Item',
+            sku: `BELOW-SAFETY-${Date.now()}`,
+            safetyStockLevel: 100,
+            reorderLevel: 50,
+          },
+          {
+            name: 'Below Reorder Level Item',
+            sku: `BELOW-REORDER-${Date.now()}`,
+            safetyStockLevel: 100,
+            reorderLevel: 50,
+          },
+          {
+            name: 'Low Stock Item',
+            sku: `LOW-STOCK-${Date.now()}`,
+            safetyStockLevel: 100,
+            reorderLevel: 50,
+          },
+          {
+            name: 'Normal Stock Item',
+            sku: `NORMAL-STOCK-${Date.now()}`,
+            safetyStockLevel: 100,
+            reorderLevel: 50,
+          },
+        ];
+
+        for (const item of testItems) {
+          const itemData = {
+            ...item,
+            mainUnit: 'kg',
+            buyingUnit: 'kg',
+            transferUnit: 'kg',
+            usingUnit: 'kg',
+          };
+
+          const response = await axios.post(`${API_BASE_URL}/api/items`, itemData, {
+            headers: TestHelpers.getAuthHeaders(systemAdminToken),
+          });
+
+          stockTestItems.push(response.data.data.id);
+        }
+
+        // Note: In a real test, we would need to create stock records for these items
+        // For now, we'll test the filtering logic without actual stock data
+      });
+
+      afterAll(async () => {
+        // Clean up test items
+        for (const itemId of stockTestItems) {
+          try {
+            await axios.delete(`${API_BASE_URL}/api/items/${itemId}/hard`, {
+              headers: TestHelpers.getAuthHeaders(systemAdminToken),
+            });
+          } catch (_error) {
+            // Ignore cleanup errors
+          }
+        }
+      });
+
+      it('should filter items below safety stock level', async () => {
+        const response = await axios.get(`${API_BASE_URL}/api/items`, {
+          params: {
+            branchId: TEST_BRANCH_ID,
+            includeStock: true,
+            belowSafetyStock: true,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toBeInstanceOf(Array);
+        // Note: Without actual stock data, this will return empty array
+        // In a real scenario with stock data, we would verify the filtering logic
+      });
+
+      it('should filter items below reorder level', async () => {
+        const response = await axios.get(`${API_BASE_URL}/api/items`, {
+          params: {
+            branchId: TEST_BRANCH_ID,
+            includeStock: true,
+            belowReorderLevel: true,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toBeInstanceOf(Array);
+      });
+
+      it('should filter out of stock items', async () => {
+        const response = await axios.get(`${API_BASE_URL}/api/items`, {
+          params: {
+            branchId: TEST_BRANCH_ID,
+            includeStock: true,
+            outOfStock: true,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toBeInstanceOf(Array);
+      });
+
+      it('should filter low stock items', async () => {
+        const response = await axios.get(`${API_BASE_URL}/api/items`, {
+          params: {
+            branchId: TEST_BRANCH_ID,
+            includeStock: true,
+            lowStock: true,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toBeInstanceOf(Array);
+      });
+    });
+
+    describe('AI Monitoring Alerts Endpoint (FR-9)', () => {
+      it('should get monitoring alerts for a branch', async () => {
+        const response = await axios.get(`${API_BASE_URL}/api/items/monitoring/alerts`, {
+          params: {
+            branchId: TEST_BRANCH_ID,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data).toHaveProperty('data');
+        expect(response.data.data).toHaveProperty('summary');
+
+        const summary = response.data.data.summary;
+        expect(summary).toMatchObject({
+          outOfStock: expect.any(Number),
+          belowSafetyStock: expect.any(Number),
+          belowReorderLevel: expect.any(Number),
+          lowStock: expect.any(Number),
+          total: expect.any(Number),
+        });
+      });
+
+      it('should filter alerts by type', async () => {
+        const alertTypes = ['outOfStock', 'belowSafetyStock', 'belowReorderLevel', 'lowStock'];
+
+        for (const alertType of alertTypes) {
+          const response = await axios.get(`${API_BASE_URL}/api/items/monitoring/alerts`, {
+            params: {
+              branchId: TEST_BRANCH_ID,
+              alertType,
+            },
+            headers: getAuthHeaders(),
+          });
+
+          expect(response.status).toBe(200);
+          expect(response.data.data).toHaveProperty('data');
+          expect(response.data.data).toHaveProperty('summary');
+        }
+      });
+
+      it('should require branchId parameter', async () => {
+        try {
+          await axios.get(`${API_BASE_URL}/api/items/monitoring/alerts`, {
+            headers: getAuthHeaders(),
+          });
+          fail('Should have thrown validation error for missing branchId');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(400);
+        }
+      });
+
+      it('should require authentication for monitoring alerts', async () => {
+        try {
+          await axios.get(`${API_BASE_URL}/api/items/monitoring/alerts`, {
+            params: {
+              branchId: TEST_BRANCH_ID,
+            },
+          });
+          fail('Should have thrown 401 error');
+        } catch (error: unknown) {
+          const axiosError = error as AxiosErrorResponse;
+          expect(axiosError.response.status).toBe(401);
+        }
+      });
+
+      it('should allow appropriate roles for monitoring alerts', async () => {
+        const allowedRoles = [
+          { name: 'System Admin', token: systemAdminToken },
+          { name: 'Branch Manager', token: authToken },
+        ];
+
+        for (const role of allowedRoles) {
+          const response = await axios.get(`${API_BASE_URL}/api/items/monitoring/alerts`, {
+            params: {
+              branchId: TEST_BRANCH_ID,
+            },
+            headers: TestHelpers.getAuthHeaders(role.token),
+          });
+
+          expect(response.status).toBe(200);
         }
       });
     });

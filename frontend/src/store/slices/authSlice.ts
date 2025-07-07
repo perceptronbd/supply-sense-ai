@@ -8,7 +8,8 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  roles: string[];
+  permissions: string[];
   branchId: string;
   isActive: boolean;
 }

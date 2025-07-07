@@ -1,6 +1,13 @@
 ﻿import { PrismaService } from '@app/prisma.service';
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
@@ -17,7 +24,72 @@ enum POStatus {
 export class PurchaseOrderService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async create(createPurchaseOrderDto: CreatePurchaseOrderDto, userId: string) {
+  async create(createPurchaseOrderDto: CreatePurchaseOrderDto, user: AuthenticatedUser) {
+    // Validate branch access
+    if (!user.branchIds.includes(createPurchaseOrderDto.branchId)) {
+      throw new ForbiddenException('Access denied: You do not have access to this branch');
+    }
+
+    // Validate that the branch belongs to the user's company
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        id: createPurchaseOrderDto.branchId,
+        companyId: user.companyId,
+      },
+    });
+
+    if (!branch) {
+      throw new ForbiddenException(
+        'Access denied: Branch not found or does not belong to your company'
+      );
+    }
+
+    // If PR is specified, validate it belongs to the same company and branch
+    if (createPurchaseOrderDto.prId) {
+      const purchaseRequest = await this.prisma.purchaseRequest.findFirst({
+        where: {
+          id: createPurchaseOrderDto.prId,
+          companyId: user.companyId,
+          branchId: createPurchaseOrderDto.branchId,
+        },
+      });
+
+      if (!purchaseRequest) {
+        throw new ForbiddenException(
+          'Access denied: Purchase request not found or does not belong to your company/branch'
+        );
+      }
+    }
+
+    // Validate supplier belongs to the company
+    const supplier = await this.prisma.supplier.findFirst({
+      where: {
+        id: createPurchaseOrderDto.supplierId,
+        companyId: user.companyId,
+      },
+    });
+
+    if (!supplier) {
+      throw new ForbiddenException(
+        'Access denied: Supplier not found or does not belong to your company'
+      );
+    }
+
+    // Validate all items belong to the company
+    const itemIds = createPurchaseOrderDto.items.map((item) => item.itemId);
+    const items = await this.prisma.item.findMany({
+      where: {
+        id: { in: itemIds },
+        companyId: user.companyId,
+      },
+    });
+
+    if (items.length !== itemIds.length) {
+      throw new ForbiddenException(
+        'Access denied: One or more items do not belong to your company'
+      );
+    }
+
     // Generate unique PO number using timestamp and random number
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
@@ -43,7 +115,8 @@ export class PurchaseOrderService {
         paymentTerms: createPurchaseOrderDto.paymentTerms,
         deliveryTerms: createPurchaseOrderDto.deliveryTerms,
         branchId: createPurchaseOrderDto.branchId,
-        createdById: userId,
+        companyId: user.companyId, // Add company isolation
+        createdById: user.id,
         notes: createPurchaseOrderDto.notes,
         subtotal,
         taxAmount,
@@ -81,9 +154,20 @@ export class PurchaseOrderService {
     });
   }
 
-  async findAll(branchId?: string) {
+  async findAll(user: AuthenticatedUser, branchId?: string) {
+    // Validate branch access if branchId is provided
+    if (branchId && !user.branchIds.includes(branchId)) {
+      throw new ForbiddenException('Access denied: You do not have access to this branch');
+    }
+
+    // Build where clause with company isolation
+    const whereClause = {
+      companyId: user.companyId,
+      ...(branchId ? { branchId } : { branchId: { in: user.branchIds } }),
+    };
+
     return this.prisma.purchaseOrder.findMany({
-      where: branchId ? { branchId } : undefined,
+      where: whereClause,
       include: {
         items: {
           include: {
@@ -108,9 +192,13 @@ export class PurchaseOrderService {
     });
   }
 
-  async findOne(id: string) {
-    const purchaseOrder = await this.prisma.purchaseOrder.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const purchaseOrder = await this.prisma.purchaseOrder.findFirst({
+      where: {
+        id,
+        companyId: user.companyId,
+        branchId: { in: user.branchIds },
+      },
       include: {
         items: {
           include: {
@@ -137,14 +225,18 @@ export class PurchaseOrderService {
     });
 
     if (!purchaseOrder) {
-      throw new NotFoundException(`Purchase Order with ID ${id} not found`);
+      throw new NotFoundException(`Purchase Order with ID ${id} not found or access denied`);
     }
 
     return purchaseOrder;
   }
 
-  async update(id: string, updatePurchaseOrderDto: UpdatePurchaseOrderDto) {
-    const existingPO = await this.findOne(id);
+  async update(
+    id: string,
+    updatePurchaseOrderDto: UpdatePurchaseOrderDto,
+    user: AuthenticatedUser
+  ) {
+    const existingPO = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
@@ -217,8 +309,8 @@ export class PurchaseOrderService {
     });
   }
 
-  async remove(id: string) {
-    const existingPO = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingPO = await this.findOne(id, user);
 
     // Only allow deletion if status is DRAFT
     if (existingPO.status !== POStatus.DRAFT) {
@@ -230,8 +322,8 @@ export class PurchaseOrderService {
     });
   }
 
-  async sendToSupplier(id: string) {
-    const existingPO = await this.findOne(id);
+  async sendToSupplier(id: string, user: AuthenticatedUser) {
+    const existingPO = await this.findOne(id, user);
 
     if (existingPO.status !== POStatus.DRAFT) {
       throw new BadRequestException('Can only send Purchase Orders in DRAFT status');
@@ -264,8 +356,8 @@ export class PurchaseOrderService {
     });
   }
 
-  async confirm(id: string) {
-    const existingPO = await this.findOne(id);
+  async confirm(id: string, user: AuthenticatedUser) {
+    const existingPO = await this.findOne(id, user);
 
     if (existingPO.status !== POStatus.SENT_TO_SUPPLIER) {
       throw new BadRequestException('Can only confirm Purchase Orders in SENT_TO_SUPPLIER status');
@@ -299,8 +391,8 @@ export class PurchaseOrderService {
     });
   }
 
-  async cancel(id: string) {
-    const existingPO = await this.findOne(id);
+  async cancel(id: string, user: AuthenticatedUser) {
+    const existingPO = await this.findOne(id, user);
 
     if (existingPO.status === POStatus.CLOSED || existingPO.status === POStatus.CANCELLED) {
       throw new BadRequestException(
@@ -334,8 +426,8 @@ export class PurchaseOrderService {
     });
   }
 
-  async close(id: string) {
-    const existingPO = await this.findOne(id);
+  async close(id: string, user: AuthenticatedUser) {
+    const existingPO = await this.findOne(id, user);
 
     if (existingPO.status !== POStatus.CONFIRMED) {
       throw new BadRequestException('Can only close Purchase Orders in CONFIRMED status');
@@ -369,15 +461,19 @@ export class PurchaseOrderService {
   }
 
   // Create PO from approved PR
-  async createFromPR(prId: string, supplierId: string, userId: string) {
+  async createFromPR(prId: string, supplierId: string, user: AuthenticatedUser) {
     // TODO: ENHANCEMENT - Add support for selective item conversion
     // TODO: Currently converts ALL items from PR to PO automatically
     // TODO: Future enhancement should allow selecting specific items and adjusting quantities
-    // TODO: API signature could be: createFromPR(prId, supplierId, userId, selectedItems?: SelectedItemDto[])
+    // TODO: API signature could be: createFromPR(prId, supplierId, user, selectedItems?: SelectedItemDto[])
     // TODO: where SelectedItemDto = { prItemId: string, orderedQty: number, unitPrice: number }
 
-    const pr = await this.prisma.purchaseRequest.findUnique({
-      where: { id: prId },
+    const pr = await this.prisma.purchaseRequest.findFirst({
+      where: {
+        id: prId,
+        companyId: user.companyId,
+        branchId: { in: user.branchIds },
+      },
       include: {
         items: {
           include: {
@@ -389,11 +485,25 @@ export class PurchaseOrderService {
     });
 
     if (!pr) {
-      throw new NotFoundException(`Purchase Request with ID ${prId} not found`);
+      throw new NotFoundException(`Purchase Request with ID ${prId} not found or access denied`);
     }
 
     if (pr.status !== 'APPROVED') {
       throw new BadRequestException('Can only create PO from APPROVED Purchase Requests');
+    }
+
+    // Validate supplier belongs to the company
+    const supplier = await this.prisma.supplier.findFirst({
+      where: {
+        id: supplierId,
+        companyId: user.companyId,
+      },
+    });
+
+    if (!supplier) {
+      throw new ForbiddenException(
+        'Access denied: Supplier not found or does not belong to your company'
+      );
     }
 
     // TODO: VALIDATION - Add minimum items validation
@@ -401,7 +511,7 @@ export class PurchaseOrderService {
     // TODO: if (pr.items.length === 0) throw new BadRequestException('Cannot create PO from PR with no items')
 
     // TODO: ENHANCEMENT - Add support for multiple PR to single PO conversion
-    // TODO: Create new method: createFromMultiplePRs(prIds: string[], supplierId: string, userId: string)
+    // TODO: Create new method: createFromMultiplePRs(prIds: string[], supplierId: string, user: AuthenticatedUser)
     // TODO: This would validate all PRs are approved, from same branch, and merge items
 
     // Convert PR items to PO items (convert units from buying to buying - no conversion needed)
@@ -440,7 +550,7 @@ export class PurchaseOrderService {
     };
 
     // Create the PO
-    const po = await this.create(createDto, userId);
+    const po = await this.create(createDto, user);
 
     // Update PR status to CONVERTED_TO_PO
     await this.prisma.purchaseRequest.update({

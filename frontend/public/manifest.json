@@ -1,0 +1,17 @@
+{
+  "name": "SupplySense AI - Supply Chain Management",
+  "short_name": "SupplySense",
+  "description": "AI-powered supply chain management system for modern businesses",
+  "theme_color": "#0A2538",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/logo.svg?v=2",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

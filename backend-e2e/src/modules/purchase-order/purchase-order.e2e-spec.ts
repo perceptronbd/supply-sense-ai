@@ -7,7 +7,7 @@ import {
 } from '../../support/test-helpers';
 
 describe('Purchase Order API (E2E)', () => {
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3004';
   let authToken: string;
   let testUser: TestUser;
   let testPurchaseRequestId: string;

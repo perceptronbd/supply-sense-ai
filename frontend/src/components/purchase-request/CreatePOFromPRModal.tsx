@@ -13,6 +13,7 @@ import {
   ModalHeader,
   addToast,
 } from '@heroui/react';
+import { PURCHASE_ORDER_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -40,17 +41,19 @@ export default function CreatePOFromPRModal({
   // Get current user from auth state
   const { user } = useSelector((state: RootState) => state.auth);
   // API hooks
-  const { data: suppliers, isLoading: suppliersLoading } = useGetSuppliersQuery();
+  const { data: suppliersResponse, isLoading: suppliersLoading } = useGetSuppliersQuery({});
   const [createPOFromPR, { isLoading: isCreating }] = useCreatePurchaseOrderFromPRMutation();
+
+  // Extract suppliers from response
+  const suppliers = suppliersResponse?.data || [];
 
   // Check if user has required role
   const hasRequiredRole =
-    user?.role === 'BRANCH_MANAGER' || user?.role === 'PROCUREMENT_SPECIALIST';
+    user?.permissions?.some((permission) => permission === PURCHASE_ORDER_PERMISSIONS.CREATE) ||
+    false;
 
-  // Check if there are any active suppliers with proper type checking
-  const hasActiveSuppliers = Array.isArray(suppliers)
-    ? suppliers.some((supplier) => supplier.isActive)
-    : false;
+  // Check if there are any active suppliers
+  const hasActiveSuppliers = suppliers.some((supplier) => supplier.isActive);
 
   // Helper function to handle API errors
   const getErrorMessage = (error: unknown): string => {
@@ -90,7 +93,7 @@ export default function CreatePOFromPRModal({
       addToast({
         title: 'Insufficient Permissions',
         description:
-          'You need to be a Branch Manager or Procurement Specialist to create purchase orders.',
+          'You don&#39;t have permission to view suppliers. Please contact your administrator.',
         color: 'danger',
       });
       return;
@@ -151,20 +154,20 @@ export default function CreatePOFromPRModal({
             <WhatHappensNextSection />
 
             <SupplierSelect
-              suppliers={Array.isArray(suppliers) ? suppliers : []}
+              suppliers={suppliers}
               isLoading={suppliersLoading}
               selectedSupplierId={selectedSupplierId}
               onSelectionChange={setSelectedSupplierId}
             />
 
             {!hasRequiredRole && (
-              <section className="bg-danger-50 border border-danger-200 p-4 rounded-lg">
+              <section className="p-4 border rounded-lg bg-danger-50 border-danger-200">
                 <Text variant="bodySmall" className="text-danger-700" weight="medium" as="p">
                   Insufficient Permissions
                 </Text>
-                <Text variant="bodyXSmall" className="text-danger-600 mt-1" as="p">
-                  You need to be a Branch Manager or Procurement Specialist to create purchase
-                  orders. Your current role: {user?.role || 'Unknown'}
+                <Text variant="bodyXSmall" className="mt-1 text-danger-600" as="p">
+                  You don&#39;t have permission to view suppliers. Please contact your
+                  administrator.
                 </Text>
               </section>
             )}

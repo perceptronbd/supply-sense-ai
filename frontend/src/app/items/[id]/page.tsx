@@ -74,7 +74,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
           </Text>
         </CardHeader>
         <CardBody>
-          <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <dl className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <dt>
                 <Text variant="bodySmall" color="muted">
@@ -124,8 +124,8 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
     return (
       <AuthGuard requireAuth={true}>
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-center justify-center h-64">
               <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
             </div>
           </div>
@@ -136,24 +136,22 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
 
   return (
     <AuthGuard requireAuth={true}>
-      <main className="p-6 bg-background min-h-screen">
+      <main className="min-h-screen p-6 bg-background">
         <div className="max-w-4xl mx-auto">
           {/* Back button */}
-          <div className="mb-6">
-            <Button
-              variant="light"
-              onPress={() => router.back()}
-              startContent={<ArrowLeftIcon className="w-4 h-4" />}
-            >
-              Back
-            </Button>
-          </div>
+          <Button
+            variant="light"
+            onPress={() => router.back()}
+            startContent={<ArrowLeftIcon className="w-4 h-4" />}
+          >
+            Back
+          </Button>
 
           {/* Loading State */}
           {isLoading && (
             <Card>
               <CardBody>
-                <div className="flex justify-center items-center py-12">
+                <div className="flex items-center justify-center py-12">
                   <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
                 </div>
               </CardBody>
@@ -164,7 +162,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
           {error && (
             <Card>
               <CardBody>
-                <div className="text-center py-12">
+                <div className="py-12 text-center">
                   <Text variant="bodyLarge" color="danger" className="mb-4">
                     Failed to load item details
                   </Text>
@@ -181,7 +179,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
             <div className="space-y-6">
               {/* Header */}
               <header>
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex items-start justify-between mb-4">
                   <div>
                     <Text variant="headerMedium" weight="bold" color="default" as="h1">
                       {item.name}
@@ -207,7 +205,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                   </Text>
                 </CardHeader>
                 <CardBody>
-                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <dl className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <section>
                       <dt>
                         <Text variant="bodySmall" color="muted">
@@ -278,7 +276,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                   </Text>
                 </CardHeader>
                 <CardBody>
-                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <dl className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <section>
                       <dt>
                         <Text variant="bodySmall" color="muted">
@@ -348,7 +346,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
                   </Text>
                 </CardHeader>
                 <CardBody>
-                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <dl className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <section>
                       <dt>
                         <Text variant="bodySmall" color="muted">
@@ -395,7 +393,7 @@ export default function ItemDetailsPage({ params }: ItemDetailsPageProps) {
           {!isLoading && !error && !item && (
             <Card>
               <CardBody>
-                <div className="text-center py-12">
+                <div className="py-12 text-center">
                   <Text variant="bodyLarge" color="muted" className="mb-2">
                     Item not found
                   </Text>

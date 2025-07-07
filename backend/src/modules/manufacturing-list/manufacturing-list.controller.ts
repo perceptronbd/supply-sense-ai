@@ -10,14 +10,30 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { MANUFACTURING_LIST_PERMISSIONS } from '@supplysense/types';
+import { type AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 import { ManufacturingListService } from './manufacturing-list.service';
 
 @ApiTags('manufacturing-list')
 @Controller('manufacturing-list')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class ManufacturingListController {
   constructor(
     @Inject(ManufacturingListService)
@@ -25,6 +41,7 @@ export class ManufacturingListController {
   ) {}
 
   @Post()
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create a new manufacturing list',
@@ -49,13 +66,15 @@ export class ManufacturingListController {
     },
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async create(@Body() createManufacturingListDto: CreateManufacturingListDto) {
-    // TODO: Get actual user ID from authentication
-    const userId = 'user-1'; // Placeholder
-    return await this.manufacturingListService.create(createManufacturingListDto, userId);
+  async create(
+    @Body() createManufacturingListDto: CreateManufacturingListDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return await this.manufacturingListService.create(createManufacturingListDto, user.id);
   }
 
   @Get()
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get all manufacturing lists',
     description: 'Retrieves all manufacturing lists with optional filtering by branch and status',
@@ -86,11 +105,16 @@ export class ManufacturingListController {
       },
     ],
   })
-  async findAll(@Query('branchId') branchId?: string, @Query('status') status?: MLStatus) {
-    return await this.manufacturingListService.findAll(branchId, status);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('branchId') branchId?: string,
+    @Query('status') status?: MLStatus
+  ) {
+    return await this.manufacturingListService.findAll(user, branchId, status);
   }
 
   @Get(':id')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get manufacturing list by ID',
     description:
@@ -126,11 +150,12 @@ export class ManufacturingListController {
     },
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async findOne(@Param('id') id: string) {
-    return await this.manufacturingListService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.findOne(id, user);
   }
 
   @Patch(':id')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.UPDATE)
   @ApiOperation({
     summary: 'Update manufacturing list',
     description: 'Updates a manufacturing list (only allowed in DRAFT status)',
@@ -155,12 +180,14 @@ export class ManufacturingListController {
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateManufacturingListDto: UpdateManufacturingListDto
+    @Body() updateManufacturingListDto: UpdateManufacturingListDto,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return await this.manufacturingListService.update(id, updateManufacturingListDto);
+    return await this.manufacturingListService.update(id, updateManufacturingListDto, user);
   }
 
   @Delete(':id')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete manufacturing list',
@@ -180,12 +207,13 @@ export class ManufacturingListController {
     description: 'Cannot delete non-draft manufacturing list',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async remove(@Param('id') id: string) {
-    return await this.manufacturingListService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.remove(id, user);
   }
 
   // Workflow endpoints
   @Post(':id/start')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.UPDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Start production',
@@ -209,16 +237,16 @@ export class ManufacturingListController {
     description: 'Can only start DRAFT manufacturing lists',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async startProduction(@Param('id') id: string) {
-    return await this.manufacturingListService.startProduction(id);
+  async startProduction(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.startProduction(id, user);
   }
 
   @Post(':id/complete')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.UPDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Complete production',
-    description:
-      'Completes production for a manufacturing list. Deducts raw materials and adds finished goods to stock.',
+    description: 'Completes production for a manufacturing list (changes status to COMPLETED)',
   })
   @ApiParam({
     name: 'id',
@@ -238,15 +266,16 @@ export class ManufacturingListController {
     description: 'Can only complete IN_PROGRESS manufacturing lists',
   })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async completeProduction(@Param('id') id: string) {
-    return await this.manufacturingListService.completeProduction(id);
+  async completeProduction(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.completeProduction(id, user);
   }
 
   @Post(':id/cancel')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.REJECT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Cancel manufacturing list',
-    description: 'Cancels a manufacturing list (cannot cancel COMPLETED lists)',
+    summary: 'Cancel production',
+    description: 'Cancels production for a manufacturing list',
   })
   @ApiParam({
     name: 'id',
@@ -255,27 +284,22 @@ export class ManufacturingListController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Manufacturing list cancelled successfully',
+    description: 'Production cancelled successfully',
     example: {
       id: '550e8400-e29b-41d4-a716-446655440000',
       status: 'CANCELLED',
     },
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Cannot cancel completed manufacturing lists',
-  })
   @ApiResponse({ status: 404, description: 'Manufacturing list not found' })
-  async cancel(@Param('id') id: string) {
-    return await this.manufacturingListService.cancel(id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.cancel(id, user);
   }
 
-  // Reporting endpoints
-  @Get('branch/:branchId/summary')
+  @Get('production-summary/:branchId')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.READ)
   @ApiOperation({
-    summary: 'Get production summary for branch',
-    description:
-      'Retrieves production summary statistics for a specific branch within a date range',
+    summary: 'Get production summary for a branch',
+    description: 'Retrieves production statistics and summaries for a specific branch',
   })
   @ApiParam({
     name: 'branchId',
@@ -285,25 +309,27 @@ export class ManufacturingListController {
   @ApiQuery({
     name: 'startDate',
     required: false,
-    description: 'Start date for the summary period (ISO 8601 format)',
+    description: 'Start date for the summary period',
     example: '2025-06-01',
   })
   @ApiQuery({
     name: 'endDate',
     required: false,
-    description: 'End date for the summary period (ISO 8601 format)',
+    description: 'End date for the summary period',
     example: '2025-06-30',
   })
   @ApiResponse({
     status: 200,
     description: 'Production summary retrieved successfully',
     example: {
-      branchId: '550e8400-e29b-41d4-a716-446655440002',
-      totalManufacturingLists: 15,
-      completedProductions: 12,
-      inProgressProductions: 2,
-      totalOutputQuantity: 1500,
-      period: { startDate: '2025-06-01', endDate: '2025-06-30' },
+      totalProduction: 150,
+      completedProduction: 120,
+      inProgressProduction: 20,
+      cancelledProduction: 10,
+      topProducts: [
+        { productName: 'Product A', quantity: 80 },
+        { productName: 'Product B', quantity: 40 },
+      ],
     },
   })
   async getProductionSummary(
@@ -317,9 +343,10 @@ export class ManufacturingListController {
   }
 
   @Get('branch/:branchId')
+  @RequirePermissions(MANUFACTURING_LIST_PERMISSIONS.READ)
   @ApiOperation({
     summary: 'Get manufacturing lists by branch',
-    description: 'Retrieves all manufacturing lists for a specific branch',
+    description: 'Retrieves manufacturing lists for a specific branch',
   })
   @ApiParam({
     name: 'branchId',
@@ -328,18 +355,9 @@ export class ManufacturingListController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Manufacturing lists for branch retrieved successfully',
-    example: [
-      {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        mlNumber: 'ML000001',
-        title: 'Weekly production batch for Product A',
-        status: 'DRAFT',
-        outputQuantity: 100,
-      },
-    ],
+    description: 'Branch manufacturing lists retrieved successfully',
   })
-  async findByBranch(@Param('branchId') branchId: string) {
-    return await this.manufacturingListService.findAll(branchId);
+  async findByBranch(@Param('branchId') branchId: string, @CurrentUser() user: AuthenticatedUser) {
+    return await this.manufacturingListService.findAll(user, branchId);
   }
 }

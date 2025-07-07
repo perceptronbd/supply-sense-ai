@@ -1,5 +1,4 @@
-﻿import { PrismaService } from '@app/prisma.service';
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Inject,
@@ -7,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../app/prisma.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { QuerySupplierDto } from './dto/query-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
@@ -18,102 +18,139 @@ export class SupplierService {
   /**
    * Get suppliers with optional pagination and search
    */
-  async findAll(query: QuerySupplierDto = {}) {
-    const { search, page, limit, includeInactive = false } = query;
+  async findAll(companyId: string, query: QuerySupplierDto = {}) {
+    const { search, includeInactive = false } = query;
+    const { page, limit } = this.validateAndParseParams(query);
 
-    // Only validate pagination constraints if page is provided
+    const where = this.buildWhereClause(companyId, search, includeInactive);
+
+    if (page && limit) {
+      return this.findAllPaginated(where, page, limit);
+    }
+
+    return this.findAllUnpaginated(where);
+  }
+
+  /**
+   * Validate and parse pagination parameters
+   */
+  private validateAndParseParams(query: QuerySupplierDto) {
+    let page = query.page;
+    let limit = query.limit;
+
+    if (typeof page === 'string') {
+      page = Number.parseInt(page, 10);
+    }
+
+    if (typeof limit === 'string') {
+      limit = Number.parseInt(limit, 10);
+    }
+
+    if (page !== undefined && page < 1) {
+      throw new BadRequestException('Page must be greater than 0');
+    }
+
+    if (limit !== undefined && limit < 1) {
+      throw new BadRequestException('Limit must be greater than 0');
+    }
+
     if (page && !limit) {
       throw new BadRequestException('Limit must be provided when page is specified');
     }
 
-    if (page && page < 1) {
-      throw new BadRequestException('Page must be greater than 0');
+    if (limit && !page) {
+      throw new BadRequestException('Page must be provided when limit is specified');
     }
 
-    if (limit && (limit < 1 || limit > 100)) {
+    if (limit && limit > 100) {
       throw new BadRequestException('Limit must be between 1 and 100');
     }
 
-    // Build where clause
-    const where: Prisma.SupplierWhereInput = {};
+    return { page, limit };
+  }
 
-    // Filter by active status unless includeInactive is true
+  /**
+   * Build where clause for supplier queries
+   */
+  private buildWhereClause(
+    companyId: string,
+    search?: string,
+    includeInactive = false
+  ): Prisma.SupplierWhereInput {
+    const where: Prisma.SupplierWhereInput = {
+      companyId,
+    };
+
     if (!includeInactive) {
       where.isActive = true;
     }
 
-    // Add search filter
     if (search) {
       where.OR = [
-        {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          code: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          contactPerson: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
+        { name: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+        { contactPerson: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    // If pagination is requested
-    if (page && limit) {
-      const skip = (page - 1) * limit;
+    return where;
+  }
 
-      const [suppliers, total] = await Promise.all([
-        this.prisma.supplier.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: {
-            name: 'asc',
-          },
-        }),
-        this.prisma.supplier.count({ where }),
-      ]);
+  /**
+   * Handle paginated supplier queries
+   */
+  private async findAllPaginated(where: Prisma.SupplierWhereInput, page: number, limit: number) {
+    const skip = (page - 1) * limit;
 
-      const totalPages = Math.ceil(total / limit);
+    const [suppliers, total] = await Promise.all([
+      this.prisma.supplier.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
 
-      return {
-        data: suppliers,
-        page,
-        limit,
-        total,
-        pages: totalPages,
-      };
-    }
+    return {
+      data: suppliers,
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    };
+  }
 
-    // No pagination - return all suppliers
-    const suppliers = await this.prisma.supplier.findMany({
+  /**
+   * Handle non-paginated supplier queries
+   */
+  private async findAllUnpaginated(where: Prisma.SupplierWhereInput) {
+    return this.prisma.supplier.findMany({
       where,
-      orderBy: {
-        name: 'asc',
-      },
+      orderBy: { name: 'asc' },
     });
-
-    return suppliers;
   }
 
   /**
    * Get a single supplier by ID
    */
-  async findOne(id: string) {
+  async findOne(id: string, companyId: string) {
     const supplier = await this.prisma.supplier.findUnique({
-      where: { id },
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
       include: {
         items: {
+          where: { isActive: true },
           include: {
-            item: true,
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
           },
         },
         purchaseOrders: {
@@ -124,16 +161,14 @@ export class SupplierService {
             orderDate: true,
             totalAmount: true,
           },
-          orderBy: {
-            orderDate: 'desc',
-          },
+          orderBy: { orderDate: 'desc' },
           take: 5, // Last 5 purchase orders
         },
       },
     });
 
     if (!supplier) {
-      throw new NotFoundException(`Supplier with id ${id} not found`);
+      throw new NotFoundException('Supplier not found');
     }
 
     return supplier;
@@ -142,18 +177,28 @@ export class SupplierService {
   /**
    * Create a new supplier
    */
-  async create(createSupplierDto: CreateSupplierDto) {
+  async create(createSupplierDto: CreateSupplierDto, companyId: string) {
+    // Validate required fields (only name and code are required)
+    if (!createSupplierDto.name?.trim()) {
+      throw new BadRequestException('Name is required');
+    }
+
+    if (!createSupplierDto.code?.trim()) {
+      throw new BadRequestException('Code is required');
+    }
+
     try {
       const supplier = await this.prisma.supplier.create({
         data: {
-          name: createSupplierDto.name,
-          code: createSupplierDto.code,
-          contactPerson: createSupplierDto.contactPerson,
-          email: createSupplierDto.email,
-          phone: createSupplierDto.phone,
-          address: createSupplierDto.address,
-          averageLeadTime: createSupplierDto.averageLeadTime,
+          name: createSupplierDto.name.trim(),
+          code: createSupplierDto.code.trim(),
+          contactPerson: createSupplierDto.contactPerson?.trim() || null,
+          email: createSupplierDto.email?.trim() || null,
+          phone: createSupplierDto.phone?.trim() || null,
+          address: createSupplierDto.address?.trim() || null,
+          averageLeadTime: createSupplierDto.averageLeadTime || null,
           isActive: createSupplierDto.isActive ?? true,
+          companyId, // Add company isolation
         },
       });
 
@@ -161,7 +206,7 @@ export class SupplierService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ConflictException('A supplier with this code already exists');
+          throw new ConflictException('Supplier with this code already exists');
         }
       }
       throw error;
@@ -169,42 +214,41 @@ export class SupplierService {
   }
 
   /**
-   * Update an existing supplier
+   * Update a supplier
    */
-  async update(id: string, updateSupplierDto: UpdateSupplierDto) {
-    // Check if supplier exists
+  async update(id: string, updateSupplierDto: UpdateSupplierDto, companyId: string) {
+    // Check if supplier exists and belongs to company
     const existingSupplier = await this.prisma.supplier.findUnique({
-      where: { id },
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingSupplier) {
-      throw new NotFoundException(`Supplier with ID ${id} not found`);
+      throw new NotFoundException('Supplier not found');
     }
 
     try {
-      const supplier = await this.prisma.supplier.update({
+      const updatedSupplier = await this.prisma.supplier.update({
         where: { id },
         data: {
-          ...(updateSupplierDto.name && { name: updateSupplierDto.name }),
-          ...(updateSupplierDto.code && { code: updateSupplierDto.code }),
-          ...(updateSupplierDto.contactPerson !== undefined && {
-            contactPerson: updateSupplierDto.contactPerson,
-          }),
-          ...(updateSupplierDto.email !== undefined && { email: updateSupplierDto.email }),
-          ...(updateSupplierDto.phone !== undefined && { phone: updateSupplierDto.phone }),
-          ...(updateSupplierDto.address !== undefined && { address: updateSupplierDto.address }),
-          ...(updateSupplierDto.averageLeadTime !== undefined && {
-            averageLeadTime: updateSupplierDto.averageLeadTime,
-          }),
-          ...(updateSupplierDto.isActive !== undefined && { isActive: updateSupplierDto.isActive }),
+          name: updateSupplierDto.name?.trim(),
+          code: updateSupplierDto.code?.trim(),
+          contactPerson: updateSupplierDto.contactPerson?.trim(),
+          email: updateSupplierDto.email?.trim(),
+          phone: updateSupplierDto.phone?.trim(),
+          address: updateSupplierDto.address?.trim(),
+          averageLeadTime: updateSupplierDto.averageLeadTime,
+          isActive: updateSupplierDto.isActive,
         },
       });
 
-      return supplier;
+      return updatedSupplier;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ConflictException('A supplier with this code already exists');
+          throw new ConflictException('Supplier with this code already exists');
         }
       }
       throw error;
@@ -212,69 +256,90 @@ export class SupplierService {
   }
 
   /**
-   * Soft delete a supplier (set isActive to false)
+   * Soft delete a supplier
    */
-  async remove(id: string) {
-    // Check if supplier exists
+  async remove(id: string, companyId: string) {
+    // Check if supplier exists and belongs to company
     const existingSupplier = await this.prisma.supplier.findUnique({
-      where: { id },
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingSupplier) {
-      throw new NotFoundException(`Supplier with ID ${id} not found`);
+      throw new NotFoundException('Supplier not found');
     }
 
-    // Check if supplier has active references
-    const hasActiveReferences = await this.checkSupplierReferences(id);
+    // Check for active references
+    const [itemReferences, orderReferences] = await Promise.all([
+      this.prisma.itemSupplier.count({
+        where: { supplierId: id, isActive: true },
+      }),
+      this.prisma.purchaseOrder.count({
+        where: { supplierId: id, status: { in: ['DRAFT', 'SENT_TO_SUPPLIER', 'CONFIRMED'] } },
+      }),
+    ]);
 
-    if (hasActiveReferences) {
-      throw new BadRequestException('Cannot delete supplier as it has active records');
+    if (itemReferences > 0) {
+      throw new BadRequestException('Cannot delete supplier with active item references');
     }
 
-    const supplier = await this.prisma.supplier.update({
+    if (orderReferences > 0) {
+      throw new BadRequestException('Cannot delete supplier with active purchase order references');
+    }
+
+    // Soft delete by setting isActive to false
+    const softDeletedSupplier = await this.prisma.supplier.update({
       where: { id },
       data: { isActive: false },
     });
 
-    return supplier;
+    return softDeletedSupplier;
   }
 
   /**
-   * Hard delete a supplier (only if no references exist)
+   * Hard delete a supplier (permanent)
    */
-  async hardDelete(id: string): Promise<void> {
-    // Check if supplier exists
+  async hardDelete(id: string, companyId: string): Promise<void> {
+    // Check if supplier exists and belongs to company
     const existingSupplier = await this.prisma.supplier.findUnique({
-      where: { id },
+      where: {
+        id,
+        companyId, // Add company isolation
+      },
     });
 
     if (!existingSupplier) {
-      throw new NotFoundException(`Supplier with ID ${id} not found`);
+      throw new NotFoundException('Supplier not found');
     }
 
-    // Check if supplier has any references
+    // Check for any references before hard deletion
     const hasReferences = await this.checkSupplierReferences(id);
 
     if (hasReferences) {
-      throw new BadRequestException(
-        'Cannot permanently delete supplier as it has references in the system'
-      );
+      throw new BadRequestException('Cannot delete supplier with existing references');
     }
 
+    // Permanently delete
     await this.prisma.supplier.delete({
       where: { id },
     });
   }
 
   /**
-   * Check if supplier has any references in other tables
+   * Check if supplier has any references in the system
    */
   private async checkSupplierReferences(supplierId: string): Promise<boolean> {
-    const [itemSupplierCount, purchaseOrdersCount] = await Promise.all([
-      this.prisma.itemSupplier.count({ where: { supplierId } }),
-      this.prisma.purchaseOrder.count({ where: { supplierId } }),
+    const [itemReferences, orderReferences] = await Promise.all([
+      this.prisma.itemSupplier.count({
+        where: { supplierId },
+      }),
+      this.prisma.purchaseOrder.count({
+        where: { supplierId },
+      }),
     ]);
 
-    return itemSupplierCount > 0 || purchaseOrdersCount > 0;
+    return itemReferences > 0 || orderReferences > 0;
   }
 }

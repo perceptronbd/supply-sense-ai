@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsDateString,
   IsNumber,
@@ -122,10 +124,9 @@ export class CreatePurchaseOrderDto {
     type: [CreatePOItemDto],
   })
   @IsArray()
+  @ArrayMinSize(1, { message: 'At least one item is required' })
+  @ArrayMaxSize(100, { message: 'Maximum 100 items allowed per order' })
   @ValidateNested({ each: true })
   @Type(() => CreatePOItemDto)
-  // TODO: VALIDATION - Add minimum items validation
-  // TODO: @ArrayMinSize(1, { message: 'At least one item is required' })
-  // TODO: @ArrayMaxSize(100, { message: 'Maximum 100 items allowed per order' })
   items: CreatePOItemDto[];
 }

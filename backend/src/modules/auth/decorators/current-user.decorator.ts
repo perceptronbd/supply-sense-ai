@@ -2,6 +2,7 @@ import { type ExecutionContext, createParamDecorator } from '@nestjs/common';
 
 /**
  * Interface representing an authenticated user after JWT validation
+ * Updated for multi-tenant SaaS architecture
  */
 export interface AuthenticatedUser {
   /**
@@ -20,9 +21,24 @@ export interface AuthenticatedUser {
   username: string;
 
   /**
-   * User's role (SYSTEM_ADMIN, BRANCH_MANAGER, etc.)
+   * Company ID the user belongs to (tenant isolation)
    */
-  role: string;
+  companyId: string;
+
+  /**
+   * User's roles (array of role names)
+   */
+  roles: string[];
+
+  /**
+   * User's permissions (array of permission strings)
+   */
+  permissions: string[];
+
+  /**
+   * Branch IDs the user has access to
+   */
+  branchIds: string[];
 
   /**
    * User's first name
@@ -35,17 +51,33 @@ export interface AuthenticatedUser {
   lastName: string;
 
   /**
-   * ID of the branch the user belongs to
+   * Whether the user is a super admin
    */
-  branchId: string;
+  isSuperAdmin: boolean;
 }
 
 /**
- * Decorator to extract the current authenticated user from the request
+ * Parameter decorator to inject the current authenticated user into a route handler
+ *
+ * @example
+ * ```typescript
+ * @Get('profile')
+ * async getProfile(@CurrentUser() user: AuthenticatedUser) {
+ *   return { message: `Hello ${user.firstName}!` };
+ * }
+ * ```
+ *
+ * @param data - Optional property name to extract from user object
+ * @returns The authenticated user object or specific property if data is provided
  */
 export const CurrentUser = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): AuthenticatedUser => {
+  (
+    data: keyof AuthenticatedUser | undefined,
+    ctx: ExecutionContext
+  ): AuthenticatedUser | AuthenticatedUser[keyof AuthenticatedUser] => {
     const request = ctx.switchToHttp().getRequest();
-    return request.user;
+    const user = request.user as AuthenticatedUser;
+
+    return data ? user?.[data] : user;
   }
 );

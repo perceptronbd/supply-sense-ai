@@ -14,7 +14,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {},
+    "paths": {
+      "@supplysense/types": ["libs/shared/src/index.ts"]
+    },
     "noImplicitAny": true
   },
   "exclude": ["node_modules", "tmp"]

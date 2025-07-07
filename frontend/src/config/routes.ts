@@ -10,9 +10,12 @@ export const ROUTE_PATHS = {
 
   // Auth routes (redirect authenticated users)
   LOGIN: '/login',
+  REGISTER: '/register',
+
+  // Dashboard
+  DASHBOARD: '/dashboard',
 
   // Protected routes (require authentication)
-  DASHBOARD: '/dashboard',
   CHAT: '/chat',
   PURCHASE_REQUESTS: '/purchase-requests',
   PURCHASE_ORDERS: '/purchase-orders',
@@ -23,6 +26,8 @@ export const ROUTE_PATHS = {
   MATERIAL_REQUISITION: '/material-requisition',
   BRANCHES: '/branches',
   REQUEST_FORMS: '/request-forms',
+  USERS: '/users',
+  ROLES: '/roles',
 } as const;
 
 // Create union types from the route paths
@@ -38,9 +43,11 @@ export type ProtectedRoutePath =
   | (typeof ROUTE_PATHS)['MANUFACTURING_LIST']
   | (typeof ROUTE_PATHS)['MATERIAL_REQUISITION']
   | (typeof ROUTE_PATHS)['BRANCHES']
-  | (typeof ROUTE_PATHS)['REQUEST_FORMS'];
+  | (typeof ROUTE_PATHS)['REQUEST_FORMS']
+  | (typeof ROUTE_PATHS)['USERS']
+  | (typeof ROUTE_PATHS)['ROLES'];
 
-export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'];
+export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'] | (typeof ROUTE_PATHS)['REGISTER'];
 export type PublicRoutePath = (typeof ROUTE_PATHS)['ROOT'];
 
 // Route configuration with access levels
@@ -68,13 +75,21 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     title: 'Login - SupplySense',
     description: 'Sign in to your SupplySense account',
   },
+  REGISTER: {
+    path: ROUTE_PATHS.REGISTER,
+    requiresAuth: false,
+    redirectIfAuthenticated: true,
+    title: 'Register - SupplySense',
+    description: 'Register your company with SupplySense',
+  },
   DASHBOARD: {
     path: ROUTE_PATHS.DASHBOARD,
     requiresAuth: true,
     redirectIfAuthenticated: false,
     title: 'Dashboard - SupplySense',
-    description: 'Overview of your supply chain operations',
+    description: 'SupplySense dashboard and overview',
   },
+
   CHAT: {
     path: ROUTE_PATHS.CHAT,
     requiresAuth: true,
@@ -144,6 +159,20 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     redirectIfAuthenticated: false,
     title: 'Request Forms - SupplySense',
     description: 'Custom request forms and workflows',
+  },
+  USERS: {
+    path: ROUTE_PATHS.USERS,
+    requiresAuth: true,
+    redirectIfAuthenticated: false,
+    title: 'Users - SupplySense',
+    description: 'Manage user accounts and permissions',
+  },
+  ROLES: {
+    path: ROUTE_PATHS.ROLES,
+    requiresAuth: true,
+    redirectIfAuthenticated: false,
+    title: 'Roles - SupplySense',
+    description: 'Manage roles and permissions',
   },
 } as const;
 

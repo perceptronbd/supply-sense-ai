@@ -201,7 +201,7 @@ import { google } from '@ai-sdk/google';
 const mcpClient = new MCPClient({
   servers: {
     supplySense: {
-      url: new URL('http://localhost:3002/mcp'),
+      url: new URL(process.env.MCP_SERVER_URL + process.env.MCP_SERVER_ENDPOINT || 'http://localhost:3002/mcp'),
       timeout: 30000,
     },
   },

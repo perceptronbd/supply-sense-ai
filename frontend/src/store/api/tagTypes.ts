@@ -11,6 +11,9 @@ export const TAG_TYPES = {
 
   // Core Entities
   USER_PROFILE: 'UserProfile',
+  USER: 'User',
+  ROLE: 'Role',
+  PERMISSION: 'Permission',
   BRANCH: 'Branch',
   ITEM: 'Item',
 
@@ -95,6 +98,10 @@ export const TAG_TYPE_GROUPS = {
   INVENTORY_MODULE: getTagTypes(['STOCK', 'INVENTORY', 'ITEM', 'BRANCH', 'CATEGORY']),
 
   AUTH_MODULE: getTagTypes(['AUTH', 'USER_PROFILE']),
+
+  USER_MODULE: getTagTypes(['USER', 'ROLE', 'PERMISSION', 'BRANCH']),
+
+  ROLE_MODULE: getTagTypes(['ROLE', 'PERMISSION', 'USER']),
 
   CHAT_MODULE: getTagTypes(['CHAT_SESSION', 'CHAT_MESSAGE']),
 } as const;

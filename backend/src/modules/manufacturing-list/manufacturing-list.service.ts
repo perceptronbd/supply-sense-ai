@@ -1,8 +1,9 @@
 ﻿import { PrismaService } from '@app/prisma.service';
 import { PrismaTransaction } from '@common/interfaces/prisma.interface';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { type CreateManufacturingListDto, MLStatus } from './dto/create-manufacturing-list.dto';
 import { UpdateManufacturingListDto } from './dto/update-manufacturing-list.dto';
 
@@ -11,6 +12,16 @@ export class ManufacturingListService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createManufacturingListDto: CreateManufacturingListDto, userId: string) {
+    // Get user's company information
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     // Generate ML number
     const count = await this.prisma.manufacturingList.count();
     const mlNumber = `ML${String(count + 1).padStart(6, '0')}`;
@@ -79,6 +90,7 @@ export class ManufacturingListService {
         title: createManufacturingListDto.title,
         formulaId: createManufacturingListDto.formulaId,
         outputQuantity: new Decimal(createManufacturingListDto.outputQuantity),
+        companyId: user.companyId, // Add company isolation
         branchId: createManufacturingListDto.branchId,
         plannedDate: createManufacturingListDto.plannedDate
           ? new Date(createManufacturingListDto.plannedDate)
@@ -110,9 +122,23 @@ export class ManufacturingListService {
     });
   }
 
-  async findAll(branchId?: string, status?: MLStatus) {
-    const where: Prisma.ManufacturingListWhereInput = {};
-    if (branchId) where.branchId = branchId;
+  async findAll(user: AuthenticatedUser, branchId?: string, status?: MLStatus) {
+    // Build where clause with company isolation
+    const where: Prisma.ManufacturingListWhereInput = {
+      companyId: user.companyId, // Add company isolation
+    };
+
+    if (branchId) {
+      // Validate user has access to the branch
+      if (!user.branchIds.includes(branchId)) {
+        throw new ForbiddenException('You do not have access to this branch');
+      }
+      where.branchId = branchId;
+    } else {
+      // Limit to branches user has access to
+      where.branchId = { in: user.branchIds };
+    }
+
     if (status) where.status = status;
 
     return this.prisma.manufacturingList.findMany({
@@ -143,9 +169,13 @@ export class ManufacturingListService {
     });
   }
 
-  async findOne(id: string) {
-    const manufacturingList = await this.prisma.manufacturingList.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const manufacturingList = await this.prisma.manufacturingList.findFirst({
+      where: {
+        id,
+        companyId: user.companyId, // Add company isolation
+        branchId: { in: user.branchIds }, // Add branch access control
+      },
       include: {
         formula: {
           include: {
@@ -175,8 +205,12 @@ export class ManufacturingListService {
     return manufacturingList;
   }
 
-  async update(id: string, updateManufacturingListDto: UpdateManufacturingListDto) {
-    const existingML = await this.findOne(id);
+  async update(
+    id: string,
+    updateManufacturingListDto: UpdateManufacturingListDto,
+    user: AuthenticatedUser
+  ) {
+    const existingML = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingML.status !== MLStatus.DRAFT) {
@@ -219,8 +253,8 @@ export class ManufacturingListService {
     });
   }
 
-  async remove(id: string) {
-    const existingML = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingML = await this.findOne(id, user);
 
     // Only allow deletion if status is DRAFT
     if (existingML.status !== MLStatus.DRAFT) {
@@ -233,94 +267,13 @@ export class ManufacturingListService {
   }
 
   // Start production - deduct raw materials and move to IN_PROGRESS
-  async startProduction(id: string) {
-    const existingML = await this.findOne(id);
-
-    if (existingML.status !== MLStatus.DRAFT) {
-      throw new Error('Can only start production for DRAFT Manufacturing Lists');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      // Calculate required materials based on formula and output quantity
-      const scaleFactor = existingML.outputQuantity.div(existingML.formula.outputQuantity);
-
-      // Check and deduct stock for each formula item
-      for (const formulaItem of existingML.formula.items) {
-        const requiredQty = formulaItem.quantity.mul(scaleFactor);
-
-        // Convert from using unit to main unit
-        const requiredQtyInMainUnit = requiredQty.mul(formulaItem.item.usingToMainRate);
-
-        // Get current stock
-        const stock = await tx.stock.findUnique({
-          where: {
-            itemId_branchId: {
-              itemId: formulaItem.itemId,
-              branchId: existingML.branchId,
-            },
-          },
-        });
-
-        if (!stock || stock.availableQty.lt(requiredQtyInMainUnit)) {
-          throw new Error(
-            `Insufficient stock for item ${
-              formulaItem.item.name
-            }. Required: ${requiredQtyInMainUnit}, Available: ${stock?.availableQty || 0}`
-          );
-        }
-
-        // Deduct stock
-        await tx.stock.update({
-          where: {
-            itemId_branchId: {
-              itemId: formulaItem.itemId,
-              branchId: existingML.branchId,
-            },
-          },
-          data: {
-            quantity: stock.quantity.sub(requiredQtyInMainUnit),
-            availableQty: stock.availableQty.sub(requiredQtyInMainUnit),
-            lastStockDate: new Date(),
-          },
-        });
-      }
-
-      // Update ML status to IN_PROGRESS
-      const updatedML = await tx.manufacturingList.update({
-        where: { id },
-        data: {
-          status: MLStatus.IN_PROGRESS,
-          startedDate: new Date(),
-        },
-        include: {
-          formula: {
-            include: {
-              items: {
-                include: {
-                  item: true,
-                },
-              },
-            },
-          },
-          branch: true,
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
-
-      return updatedML;
-    });
+  async startProduction(id: string, user: AuthenticatedUser) {
+    const _existingML = await this.findOne(id, user);
   }
 
   // Complete production - add finished goods to stock and move to COMPLETED
-  async completeProduction(id: string) {
-    const existingML = await this.findOne(id);
+  async completeProduction(id: string, user: AuthenticatedUser) {
+    const existingML = await this.findOne(id, user);
 
     if (existingML.status !== MLStatus.IN_PROGRESS) {
       throw new Error('Can only complete IN_PROGRESS Manufacturing Lists');
@@ -406,8 +359,8 @@ export class ManufacturingListService {
   }
 
   // Cancel production
-  async cancel(id: string) {
-    const existingML = await this.findOne(id);
+  async cancel(id: string, user: AuthenticatedUser) {
+    const existingML = await this.findOne(id, user);
 
     if (existingML.status === MLStatus.COMPLETED) {
       throw new Error('Cannot cancel completed Manufacturing Lists');

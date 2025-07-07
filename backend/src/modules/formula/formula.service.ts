@@ -8,10 +8,15 @@ import { UpdateFormulaDto } from './dto/update-formula.dto';
 export class FormulaService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async create(createFormulaDto: CreateFormulaDto, userId: string) {
-    // Check if code is unique
+  async create(createFormulaDto: CreateFormulaDto, userId: string, companyId: string) {
+    // Check if code is unique within the company
     const existingFormula = await this.prisma.formula.findUnique({
-      where: { code: createFormulaDto.code },
+      where: {
+        companyId_code: {
+          companyId,
+          code: createFormulaDto.code,
+        },
+      },
     });
 
     if (existingFormula) {
@@ -47,7 +52,12 @@ export class FormulaService {
         outputItem: createFormulaDto.outputItem,
         outputQuantity: new Decimal(createFormulaDto.outputQuantity || 1),
         isActive: createFormulaDto.isActive ?? true,
-        createdById: userId,
+        company: {
+          connect: { id: companyId },
+        },
+        createdBy: {
+          connect: { id: userId },
+        },
         items: {
           create: createFormulaDto.items.map((item) => ({
             itemId: item.itemId,
@@ -81,9 +91,10 @@ export class FormulaService {
     });
   }
 
-  async findAll(isActive?: boolean) {
-    const where: { isActive?: boolean } = {};
+  async findAll(isActive?: boolean, companyId?: string) {
+    const where: { isActive?: boolean; companyId?: string } = {};
     if (typeof isActive === 'boolean') where.isActive = isActive;
+    if (companyId) where.companyId = companyId;
 
     return this.prisma.formula.findMany({
       where,
@@ -115,9 +126,14 @@ export class FormulaService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, companyId?: string) {
+    const where: { id: string; companyId?: string } = { id };
+    if (companyId) {
+      where.companyId = companyId;
+    }
+
     const formula = await this.prisma.formula.findUnique({
-      where: { id },
+      where,
       include: {
         items: {
           include: {
@@ -150,21 +166,18 @@ export class FormulaService {
     return formula;
   }
 
-  async findByCode(code: string) {
+  async findByCode(code: string, companyId: string) {
     const formula = await this.prisma.formula.findUnique({
-      where: { code },
+      where: {
+        companyId_code: {
+          companyId,
+          code,
+        },
+      },
       include: {
         items: {
           include: {
             item: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
           },
         },
       },
@@ -177,13 +190,18 @@ export class FormulaService {
     return formula;
   }
 
-  async update(id: string, updateFormulaDto: UpdateFormulaDto) {
+  async update(id: string, updateFormulaDto: UpdateFormulaDto, companyId: string) {
     const existingFormula = await this.findOne(id);
 
     // Check if code is being updated and is unique
     if (updateFormulaDto.code && updateFormulaDto.code !== existingFormula.code) {
       const codeExists = await this.prisma.formula.findUnique({
-        where: { code: updateFormulaDto.code },
+        where: {
+          companyId_code: {
+            companyId,
+            code: updateFormulaDto.code,
+          },
+        },
       });
       if (codeExists) {
         throw new ConflictException(`Formula with code ${updateFormulaDto.code} already exists`);
@@ -260,8 +278,8 @@ export class FormulaService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id); // Validate formula exists
+  async remove(id: string, companyId?: string) {
+    await this.findOne(id, companyId); // Validate formula exists
 
     // Check if formula is being used in any active manufacturing lists
     const activeMLs = await this.prisma.manufacturingList.findMany({
@@ -283,8 +301,8 @@ export class FormulaService {
   }
 
   // Activate/Deactivate formula
-  async toggleActive(id: string) {
-    const existingFormula = await this.findOne(id);
+  async toggleActive(id: string, companyId?: string) {
+    const existingFormula = await this.findOne(id, companyId);
 
     // If trying to deactivate, check if used in any manufacturing lists
     if (existingFormula.isActive) {
@@ -326,7 +344,7 @@ export class FormulaService {
   }
 
   // Clone formula with new version
-  async cloneFormula(id: string, newVersion: string, userId: string) {
+  async cloneFormula(id: string, newVersion: string, userId: string, companyId: string) {
     const originalFormula = await this.findOne(id);
 
     // Generate new code based on original
@@ -334,7 +352,12 @@ export class FormulaService {
 
     // Check if new code is unique
     const codeExists = await this.prisma.formula.findUnique({
-      where: { code: newCode },
+      where: {
+        companyId_code: {
+          companyId,
+          code: newCode,
+        },
+      },
     });
     if (codeExists) {
       throw new ConflictException(`Formula with code ${newCode} already exists`);
@@ -349,7 +372,12 @@ export class FormulaService {
         outputItem: originalFormula.outputItem,
         outputQuantity: originalFormula.outputQuantity,
         isActive: true,
-        createdById: userId,
+        company: {
+          connect: { id: companyId },
+        },
+        createdBy: {
+          connect: { id: userId },
+        },
         items: {
           create: originalFormula.items.map((item) => ({
             itemId: item.itemId,
@@ -362,14 +390,6 @@ export class FormulaService {
         items: {
           include: {
             item: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
           },
         },
       },
@@ -387,7 +407,10 @@ export class FormulaService {
     // Check if this version already exists
     const versionExists = await this.prisma.formula.findUnique({
       where: {
-        code: originalFormula.code,
+        companyId_code: {
+          companyId: originalFormula.companyId,
+          code: originalFormula.code,
+        },
       },
     });
 
@@ -407,7 +430,12 @@ export class FormulaService {
         outputItem: originalFormula.outputItem,
         outputQuantity: originalFormula.outputQuantity,
         isActive: true,
-        createdById: userId,
+        company: {
+          connect: { id: originalFormula.companyId },
+        },
+        createdBy: {
+          connect: { id: userId },
+        },
         items: {
           create: originalFormula.items.map((item) => ({
             itemId: item.itemId,
@@ -435,8 +463,8 @@ export class FormulaService {
   }
 
   // Calculate material requirements for given output quantity
-  async calculateMaterialRequirements(id: string, outputQuantity: number) {
-    const formula = await this.findOne(id);
+  async calculateMaterialRequirements(id: string, outputQuantity: number, companyId?: string) {
+    const formula = await this.findOne(id, companyId);
 
     if (!formula.isActive) {
       throw new Error('Cannot calculate requirements for inactive formula');

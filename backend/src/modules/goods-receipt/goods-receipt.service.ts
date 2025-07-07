@@ -2,6 +2,7 @@
 import { PrismaTransaction } from '@common/interfaces/prisma.interface';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto';
 import { UpdateGoodsReceiptDto } from './dto/update-goods-receipt.dto';
 
@@ -16,7 +17,7 @@ enum GRStatus {
 export class GoodsReceiptService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async create(createGoodsReceiptDto: CreateGoodsReceiptDto, userId: string) {
+  async create(createGoodsReceiptDto: CreateGoodsReceiptDto, user: AuthenticatedUser) {
     // Generate GR number
     const count = await this.prisma.goodsReceipt.count();
     const grNumber = `GR${String(count + 1).padStart(9, '0')}`;
@@ -37,8 +38,9 @@ export class GoodsReceiptService {
           ? new Date(createGoodsReceiptDto.receiptDate)
           : new Date(),
         documentNumber: createGoodsReceiptDto.documentNumber,
+        companyId: user.companyId, // Add company isolation
         branchId: createGoodsReceiptDto.branchId,
-        receivedById: userId,
+        receivedById: user.id,
         remarks: createGoodsReceiptDto.remarks,
         status: GRStatus.DRAFT,
         items: {
@@ -82,9 +84,28 @@ export class GoodsReceiptService {
     });
   }
 
-  async findAll(branchId?: string) {
+  async findAll(user: AuthenticatedUser, branchId?: string) {
+    // Build where clause with company isolation
+    const where: {
+      companyId: string;
+      branchId?: string | { in: string[] };
+    } = {
+      companyId: user.companyId, // Add company isolation
+    };
+
+    // Add branch filtering if specified and validate user access
+    if (branchId) {
+      if (!user.branchIds.includes(branchId)) {
+        throw new BadRequestException('You do not have access to this branch');
+      }
+      where.branchId = branchId;
+    } else {
+      // Limit to branches user has access to
+      where.branchId = { in: user.branchIds };
+    }
+
     return this.prisma.goodsReceipt.findMany({
-      where: branchId ? { branchId } : undefined,
+      where,
       include: {
         items: {
           include: {
@@ -113,9 +134,13 @@ export class GoodsReceiptService {
     });
   }
 
-  async findOne(id: string) {
-    const goodsReceipt = await this.prisma.goodsReceipt.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const goodsReceipt = await this.prisma.goodsReceipt.findFirst({
+      where: {
+        id,
+        companyId: user.companyId, // Add company isolation
+        branchId: { in: user.branchIds }, // Add branch access control
+      },
       include: {
         items: {
           include: {
@@ -160,8 +185,8 @@ export class GoodsReceiptService {
     return goodsReceipt;
   }
 
-  async update(id: string, updateGoodsReceiptDto: UpdateGoodsReceiptDto) {
-    const existingGR = await this.findOne(id);
+  async update(id: string, updateGoodsReceiptDto: UpdateGoodsReceiptDto, user: AuthenticatedUser) {
+    const existingGR = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
@@ -223,10 +248,10 @@ export class GoodsReceiptService {
     });
   }
 
-  async remove(id: string) {
-    const existingGR = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingGR = await this.findOne(id, user);
 
-    // Only allow deletion if status is DRAFT
+    // Only allow removal if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
       throw new BadRequestException('Can only delete Goods Receipts in DRAFT status');
     }
@@ -236,9 +261,10 @@ export class GoodsReceiptService {
     });
   }
 
-  async post(id: string) {
-    const existingGR = await this.findOne(id);
+  async post(id: string, user: AuthenticatedUser) {
+    const existingGR = await this.findOne(id, user);
 
+    // Only allow posting if status is DRAFT
     if (existingGR.status !== GRStatus.DRAFT) {
       throw new BadRequestException('Can only post Goods Receipts in DRAFT status');
     }
@@ -296,11 +322,12 @@ export class GoodsReceiptService {
     });
   }
 
-  async cancel(id: string) {
-    const existingGR = await this.findOne(id);
+  async cancel(id: string, user: AuthenticatedUser) {
+    const existingGR = await this.findOne(id, user);
 
-    if (existingGR.status === GRStatus.CANCELLED) {
-      throw new BadRequestException('Goods Receipt is already cancelled');
+    // Only allow cancellation if status is POSTED
+    if (existingGR.status !== GRStatus.POSTED) {
+      throw new BadRequestException('Can only cancel Goods Receipts in POSTED status');
     }
 
     return this.prisma.goodsReceipt.update({
@@ -404,7 +431,7 @@ export class GoodsReceiptService {
   }
 
   // Create GR from PO
-  async createFromPO(poId: string, userId: string) {
+  async createFromPO(poId: string, user: AuthenticatedUser) {
     const po = await this.prisma.purchaseOrder.findUnique({
       where: { id: poId },
       include: {
@@ -441,11 +468,11 @@ export class GoodsReceiptService {
       items: grItems,
     };
 
-    return this.create(createDto, userId);
+    return this.create(createDto, user);
   }
 
   // Create GR from MR
-  async createFromMR(mrId: string, userId: string) {
+  async createFromMR(mrId: string, user: AuthenticatedUser) {
     const mr = await this.prisma.materialRequisition.findUnique({
       where: { id: mrId },
       include: {
@@ -480,6 +507,6 @@ export class GoodsReceiptService {
       items: grItems,
     };
 
-    return this.create(createDto, userId);
+    return this.create(createDto, user);
   }
 }

@@ -1,6 +1,9 @@
 import { BanIcon, DotsVerticalIcon, EditIcon, EyeIcon, TrashIcon } from '@/components/icons';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Item } from '@/store/api/itemApi';
 import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
+import { ITEM_PERMISSIONS } from '@supplysense/types';
+import { useMemo } from 'react';
 
 interface ActionsDropdownProps {
   item: Item;
@@ -10,6 +13,50 @@ interface ActionsDropdownProps {
 }
 
 export function ActionsDropdown({ item, onViewDetails, onEdit, onDelete }: ActionsDropdownProps) {
+  const { hasPermission } = usePermissions();
+
+  const actions = useMemo(() => {
+    const actionsList = [
+      {
+        key: 'view',
+        label: 'View Details',
+        icon: <EyeIcon className="w-4 h-4" />,
+        onPress: () => onViewDetails(item.id),
+        className: '',
+      },
+    ];
+
+    if (hasPermission(ITEM_PERMISSIONS.UPDATE)) {
+      actionsList.push({
+        key: 'edit',
+        label: 'Edit',
+        icon: <EditIcon className="w-4 h-4" />,
+        onPress: () => onEdit(item),
+        className: '',
+      });
+
+      actionsList.push({
+        key: 'deactivate',
+        label: item.isActive ? 'Deactivate' : 'Activate',
+        icon: <BanIcon className="w-4 h-4" />,
+        onPress: () => onDelete(item, 'soft'),
+        className: 'text-warning',
+      });
+    }
+
+    if (hasPermission(ITEM_PERMISSIONS.DELETE)) {
+      actionsList.push({
+        key: 'delete',
+        label: 'Delete Permanently',
+        icon: <TrashIcon className="w-4 h-4" />,
+        onPress: () => onDelete(item, 'hard'),
+        className: 'text-danger',
+      });
+    }
+
+    return actionsList;
+  }, [hasPermission, item, onViewDetails, onEdit, onDelete]);
+
   return (
     <Dropdown>
       <DropdownTrigger>
@@ -18,38 +65,16 @@ export function ActionsDropdown({ item, onViewDetails, onEdit, onDelete }: Actio
         </Button>
       </DropdownTrigger>
       <DropdownMenu aria-label="Item actions">
-        <DropdownItem
-          key="view"
-          startContent={<EyeIcon className="w-4 h-4" />}
-          onPress={() => onViewDetails(item.id)}
-        >
-          View Details
-        </DropdownItem>
-        <DropdownItem
-          key="edit"
-          startContent={<EditIcon className="w-4 h-4" />}
-          onPress={() => onEdit(item)}
-        >
-          Edit
-        </DropdownItem>
-        <DropdownItem
-          key="deactivate"
-          className="text-warning"
-          color="warning"
-          startContent={<BanIcon className="w-4 h-4" />}
-          onPress={() => onDelete(item, 'soft')}
-        >
-          {item.isActive ? 'Deactivate' : 'Activate'}
-        </DropdownItem>
-        <DropdownItem
-          key="delete"
-          className="text-danger"
-          color="danger"
-          startContent={<TrashIcon className="w-4 h-4" />}
-          onPress={() => onDelete(item, 'hard')}
-        >
-          Delete Permanently
-        </DropdownItem>
+        {actions.map((action) => (
+          <DropdownItem
+            key={action.key}
+            startContent={action.icon}
+            onPress={action.onPress}
+            className={action.className}
+          >
+            {action.label}
+          </DropdownItem>
+        ))}
       </DropdownMenu>
     </Dropdown>
   );

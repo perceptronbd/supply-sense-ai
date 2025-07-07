@@ -1,0 +1,99 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Item Module Development Guide
+
+## Overview
+The item module is a core component of the supply chain management system, implementing PRD requirements FR-1, FR-2, FR-3, and FR-9 for multi-tenant SaaS architecture.
+
+## Key Files Structure
+- [backend/src/modules/item/item.controller.ts](mdc:backend/src/modules/item/item.controller.ts) - Main API endpoints
+- [backend/src/modules/item/item.service.ts](mdc:backend/src/modules/item/item.service.ts) - Business logic and unit conversions
+- [backend/src/modules/item/dto/create-item.dto.ts](mdc:backend/src/modules/item/dto/create-item.dto.ts) - Enhanced validation rules
+- [backend/src/modules/item/dto/query-item.dto.ts](mdc:backend/src/modules/item/dto/query-item.dto.ts) - Filtering capabilities
+- [backend/prisma/schema.prisma](mdc:backend/prisma/schema.prisma) - Database schema (Item model)
+
+## PRD Requirements Implementation
+
+### FR-1: Item Definition ✅
+- Items have name, SKU, and main unit with company-scoped isolation
+- Located in: Item model in schema.prisma
+- Validation: SKU must be uppercase alphanumeric with hyphens/underscores only
+
+### FR-2: Unit Conversions ✅
+- Support for buying, transfer, using units with conversion rates
+- Implementation: `UnitConversion` interface and helper methods in item.service.ts
+- All rates are relative to main unit (1 buying unit = X main units)
+
+### FR-3: Main Unit Storage ✅
+- All stock quantities stored in main units only
+- Real-time conversions happen in service layer using `transformSingleItem()`
+- Database stores only main unit quantities in Stock model
+
+### FR-9: AI Stock Monitoring ✅
+- Safety stock level triggers and reorder level tracking
+- Implementation: `filterByStockLevels()` method for post-processing
+- API endpoint: `GET /items/monitoring/alerts` for AI agent consumption
+
+## Key API Endpoints
+
+### Unit Conversion System
+- `GET /items/:id/conversions` - Get conversion rates and calculations
+- Supports query params: `buyingQty`, `transferQty`, `usingQty`
+- Returns rates, units, and optional conversions
+
+### AI Monitoring
+- `GET /items/monitoring/alerts` - Get items needing attention
+- Supports `alertType` filter: outOfStock, belowSafetyStock, belowReorderLevel, lowStock
+- Returns data array and summary statistics
+
+### Enhanced Filtering
+- Stock-level filters: `belowSafetyStock`, `belowReorderLevel`, `outOfStock`, `lowStock`
+- Applied via `filterByStockLevels()` in post-processing
+- Requires `branchId` and `includeStock=true`
+
+## Development Patterns
+
+### Unit Conversion Usage
+```typescript
+// Create converter for an item
+const converter = this.createUnitConverter(item);
+const mainUnits = converter.toMainUnit(quantity, 'buying');
+const buyingUnits = converter.fromMainUnit(quantity, 'buying');
+```
+
+### Company Isolation
+Always include `companyId` in database queries:
+```typescript
+where: {
+  companyId, // Essential for multi-tenant isolation
+  // other conditions
+}
+```
+
+### Stock Filtering
+Use post-processing for complex stock comparisons:
+```typescript
+let transformedItems = this.transformItems(items, includeStock);
+if (includeStock && query.branchId) {
+  transformedItems = this.filterByStockLevels(transformedItems, query);
+}
+```
+
+## Testing Guidelines
+- E2E tests in [backend-e2e/src/modules/item/item.e2e-spec.ts](mdc:backend-e2e/src/modules/item/item.e2e-spec.ts)
+- Test categories: Unit Conversions, Enhanced Validation, Stock Level Filtering, AI Monitoring
+- Always test with proper authentication and role-based access
+
+## Role-Based Access Control
+- **System Admin / Branch Manager**: Create, update, delete items
+- **All Roles**: View items, search, get conversions
+- **Specific Roles**: Access monitoring alerts (excludes Production Planner)
+
+## Common Pitfalls
+1. Forgetting company isolation in queries
+2. Not handling paginated vs non-paginated responses in filtering
+3. Missing unit conversion when displaying quantities
+4. Incorrect role permissions for new endpoints

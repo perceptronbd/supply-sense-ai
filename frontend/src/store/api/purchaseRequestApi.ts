@@ -1,7 +1,8 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { TAG_TYPES, TAG_TYPE_GROUPS } from './tagTypes';
+import { config } from '../../config/env';
+import { TAG_TYPES } from './tagTypes';
 
 // API Response Types
 export interface PurchaseRequestItem {
@@ -101,7 +102,7 @@ export interface PurchaseRequestTemplate {
 export const purchaseRequestApi = createApi({
   reducerPath: 'purchaseRequestApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000/api/purchase-request',
+    baseUrl: config.getApiUrl('/api/purchase-request'),
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;
@@ -110,7 +111,13 @@ export const purchaseRequestApi = createApi({
       }
     },
   }),
-  tagTypes: TAG_TYPE_GROUPS.PURCHASE_REQUEST_MODULE,
+  tagTypes: [
+    TAG_TYPES.PURCHASE_REQUEST,
+    TAG_TYPES.PURCHASE_REQUEST_TEMPLATE,
+    TAG_TYPES.PURCHASE_ORDER,
+    TAG_TYPES.BRANCH,
+    TAG_TYPES.ITEM,
+  ],
   endpoints: (builder) => ({
     // Purchase Request endpoints
     createPurchaseRequest: builder.mutation<PurchaseRequest, CreatePurchaseRequestRequest>({
@@ -147,7 +154,10 @@ export const purchaseRequestApi = createApi({
         body: data,
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, { id }) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     deletePurchaseRequest: builder.mutation<void, string>({
@@ -155,7 +165,7 @@ export const purchaseRequestApi = createApi({
         url: `/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [TAG_TYPES.PURCHASE_REQUEST],
+      invalidatesTags: [TAG_TYPES.PURCHASE_REQUEST, TAG_TYPES.PURCHASE_ORDER],
     }),
     submitPurchaseRequest: builder.mutation<PurchaseRequest, string>({
       query: (id) => ({
@@ -163,7 +173,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
     approvePurchaseRequest: builder.mutation<PurchaseRequest, string>({
       query: (id) => ({
@@ -171,7 +184,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     rejectPurchaseRequest: builder.mutation<PurchaseRequest, string>({
@@ -180,7 +196,10 @@ export const purchaseRequestApi = createApi({
         method: 'POST',
       }),
       transformResponse: (response: ApiResponse<PurchaseRequest>) => transformApiResponse(response),
-      invalidatesTags: (_result, _error, id) => [{ type: TAG_TYPES.PURCHASE_REQUEST, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: TAG_TYPES.PURCHASE_REQUEST, id },
+        TAG_TYPES.PURCHASE_ORDER,
+      ],
     }),
 
     getPurchaseRequestTemplates: builder.query<PurchaseRequestTemplate[], { branchId?: string }>({

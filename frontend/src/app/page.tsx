@@ -13,7 +13,7 @@ export default function Index() {
 
   useEffect(() => {
     if (isAuthenticated && token) {
-      router.push(ROUTE_PATHS.DASHBOARD);
+      router.push(ROUTE_PATHS.CHAT);
     } else {
       router.push(ROUTE_PATHS.LOGIN);
     }

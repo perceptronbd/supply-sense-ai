@@ -58,4 +58,36 @@ export class QueryItemDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   includeStock?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter items below safety stock level (requires branchId and includeStock)',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  belowSafetyStock?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter items below reorder level (requires branchId and includeStock)',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  belowReorderLevel?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter items with zero or negative stock (requires branchId and includeStock)',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  outOfStock?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter items with low stock (below 20% of safety stock level)',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  lowStock?: boolean;
 }

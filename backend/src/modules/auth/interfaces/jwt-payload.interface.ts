@@ -1,5 +1,6 @@
 /**
  * JWT Payload structure - This represents what is stored in the JWT token
+ * Updated for multi-tenant SaaS architecture
  */
 export interface JwtPayload {
   /**
@@ -13,9 +14,24 @@ export interface JwtPayload {
   sub: string;
 
   /**
-   * User's role
+   * Company ID the user belongs to (tenant isolation)
    */
-  role: string;
+  companyId: string;
+
+  /**
+   * User's roles (array of role names)
+   */
+  roles: string[];
+
+  /**
+   * User's permissions (array of permission strings)
+   */
+  permissions: string[];
+
+  /**
+   * Branch IDs the user has access to
+   */
+  branchIds: string[];
 
   /**
    * User's first name
@@ -28,9 +44,9 @@ export interface JwtPayload {
   lastName: string;
 
   /**
-   * Branch ID the user belongs to
+   * Whether the user is a super admin
    */
-  branchId: string;
+  isSuperAdmin: boolean;
 
   /**
    * Token issued at timestamp

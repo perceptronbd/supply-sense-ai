@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  Allow,
   IsBoolean,
   IsEmail,
   IsInt,
@@ -9,6 +10,7 @@ import {
   IsPhoneNumber,
   IsString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateSupplierDto {
@@ -40,8 +42,10 @@ export class CreateSupplierDto {
     description: 'Supplier email address',
     example: 'orders@premiummaterials.com',
   })
-  @IsOptional()
-  @IsEmail()
+  @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
+  @IsEmail({}, { message: 'email must be a valid email address' })
+  @ValidateIf((o) => o.email === undefined || o.email === null || o.email === '')
+  @Allow()
   email?: string;
 
   @ApiPropertyOptional({

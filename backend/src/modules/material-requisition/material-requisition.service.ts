@@ -1,7 +1,8 @@
 ﻿import { PrismaService } from '@app/prisma.service';
 import { type ItemForDeduction, type PrismaTransaction } from '@common/interfaces/prisma.interface';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { type CreateMaterialRequisitionDto, MRType } from './dto/create-material-requisition.dto';
 import { UpdateMaterialRequisitionDto } from './dto/update-material-requisition.dto';
 
@@ -18,6 +19,16 @@ export class MaterialRequisitionService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async create(createMaterialRequisitionDto: CreateMaterialRequisitionDto, userId: string) {
+    // Get user's company information
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     // Generate MR number
     const count = await this.prisma.materialRequisition.count();
     const mrNumber = `MR${String(count + 1).padStart(6, '0')}`;
@@ -44,6 +55,7 @@ export class MaterialRequisitionService {
         type: createMaterialRequisitionDto.type,
         fromBranchId: createMaterialRequisitionDto.fromBranchId,
         toBranchId: createMaterialRequisitionDto.toBranchId,
+        companyId: user.companyId, // Add company isolation
         branchId: createMaterialRequisitionDto.branchId,
         transferDate: createMaterialRequisitionDto.transferDate
           ? new Date(createMaterialRequisitionDto.transferDate)
@@ -80,19 +92,36 @@ export class MaterialRequisitionService {
       },
     });
   }
-  async findAll(branchId?: string, type?: MRType) {
+  async findAll(user: AuthenticatedUser, branchId?: string, type?: MRType) {
+    // Build where clause with company isolation
     const where: {
+      companyId: string;
       OR?: Array<{
-        fromBranchId?: string;
-        toBranchId?: string;
-        branchId?: string;
+        fromBranchId?: string | { in: string[] };
+        toBranchId?: string | { in: string[] };
+        branchId?: string | { in: string[] };
       }>;
       type?: MRType;
-    } = {};
+    } = {
+      companyId: user.companyId, // Add company isolation
+    };
+
     if (branchId) {
+      // Validate user has access to the branch
+      if (!user.branchIds.includes(branchId)) {
+        throw new ForbiddenException('You do not have access to this branch');
+      }
       // For filtering by branch, include both transfer and trim/waste MRs
       where.OR = [{ fromBranchId: branchId }, { toBranchId: branchId }, { branchId: branchId }];
+    } else {
+      // Limit to branches user has access to
+      where.OR = [
+        { fromBranchId: { in: user.branchIds } },
+        { toBranchId: { in: user.branchIds } },
+        { branchId: { in: user.branchIds } },
+      ];
     }
+
     if (type) where.type = type;
 
     return this.prisma.materialRequisition.findMany({
@@ -135,9 +164,17 @@ export class MaterialRequisitionService {
     });
   }
 
-  async findOne(id: string) {
-    const materialRequisition = await this.prisma.materialRequisition.findUnique({
-      where: { id },
+  async findOne(id: string, user: AuthenticatedUser) {
+    const materialRequisition = await this.prisma.materialRequisition.findFirst({
+      where: {
+        id,
+        companyId: user.companyId, // Add company isolation
+        OR: [
+          { fromBranchId: { in: user.branchIds } },
+          { toBranchId: { in: user.branchIds } },
+          { branchId: { in: user.branchIds } },
+        ],
+      },
       include: {
         items: {
           include: {
@@ -184,8 +221,12 @@ export class MaterialRequisitionService {
     return materialRequisition;
   }
 
-  async update(id: string, updateMaterialRequisitionDto: UpdateMaterialRequisitionDto) {
-    const existingMR = await this.findOne(id);
+  async update(
+    id: string,
+    updateMaterialRequisitionDto: UpdateMaterialRequisitionDto,
+    user: AuthenticatedUser
+  ) {
+    const existingMR = await this.findOne(id, user);
 
     // Only allow updates if status is DRAFT
     if (existingMR.status !== MRStatus.DRAFT) {
@@ -236,8 +277,8 @@ export class MaterialRequisitionService {
     });
   }
 
-  async remove(id: string) {
-    const existingMR = await this.findOne(id);
+  async remove(id: string, user: AuthenticatedUser) {
+    const existingMR = await this.findOne(id, user);
 
     // Only allow deletion if status is DRAFT
     if (existingMR.status !== MRStatus.DRAFT) {
@@ -250,8 +291,8 @@ export class MaterialRequisitionService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async approve(id: string, _userId: string) {
-    const existingMR = await this.findOne(id);
+  async approve(id: string, _userId: string, user: AuthenticatedUser) {
+    const existingMR = await this.findOne(id, user);
 
     if (existingMR.status !== MRStatus.DRAFT) {
       throw new Error('Can only approve Material Requisitions in DRAFT status');
@@ -326,8 +367,8 @@ export class MaterialRequisitionService {
     });
   }
 
-  async complete(id: string) {
-    const existingMR = await this.findOne(id);
+  async complete(id: string, user: AuthenticatedUser) {
+    const existingMR = await this.findOne(id, user);
 
     if (existingMR.status !== MRStatus.APPROVED) {
       throw new Error('Can only complete APPROVED Material Requisitions');
@@ -402,8 +443,8 @@ export class MaterialRequisitionService {
     });
   }
 
-  async cancel(id: string) {
-    const existingMR = await this.findOne(id);
+  async cancel(id: string, user: AuthenticatedUser) {
+    const existingMR = await this.findOne(id, user);
 
     if (existingMR.status === MRStatus.COMPLETED) {
       throw new Error('Cannot cancel completed Material Requisitions');

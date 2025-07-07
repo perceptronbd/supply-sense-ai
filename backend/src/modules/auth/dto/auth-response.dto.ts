@@ -26,17 +26,55 @@ export class UserResponseDto {
   lastName: string;
 
   @ApiProperty({
-    description: 'User role',
-    example: 'SYSTEM_ADMIN',
-    enum: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROCUREMENT_SPECIALIST', 'INVENTORY_CLERK'],
-  })
-  role: string;
-
-  @ApiProperty({
-    description: 'Branch ID the user belongs to',
+    description: 'Company ID the user belongs to',
     example: '7beb5368-e1ae-4677-82f6-cb529c14cb51',
   })
-  branchId: string;
+  companyId: string;
+
+  @ApiProperty({
+    description: 'Company name',
+    example: 'Manufacturing Corp',
+  })
+  companyName: string;
+
+  @ApiProperty({
+    description: 'User roles',
+    example: ['Super Admin', 'Branch Manager'],
+    type: [String],
+  })
+  roles: string[];
+
+  @ApiProperty({
+    description: 'User permissions',
+    example: ['PURCHASE_REQUESTS:CREATE', 'INVENTORY_MANAGEMENT:VIEW'],
+    type: [String],
+  })
+  permissions: string[];
+
+  @ApiProperty({
+    description: 'Branch IDs the user has access to',
+    example: ['7beb5368-e1ae-4677-82f6-cb529c14cb51'],
+    type: [String],
+  })
+  branchIds: string[];
+
+  @ApiProperty({
+    description: 'Branch information the user has access to',
+    example: [{ id: '7beb5368-e1ae-4677-82f6-cb529c14cb51', name: 'Headquarters', code: 'HQ001' }],
+    type: 'array',
+  })
+  branches: Array<{
+    id: string;
+    name: string;
+    code: string;
+    isHQ: boolean;
+  }>;
+
+  @ApiProperty({
+    description: 'Whether the user is a super admin',
+    example: false,
+  })
+  isSuperAdmin: boolean;
 
   @ApiProperty({
     description: 'Whether the user account is active',

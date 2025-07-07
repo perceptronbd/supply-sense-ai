@@ -36,42 +36,54 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [message]);
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex gap-2 p-4 border-t border-divider bg-content1"
-      aria-label="Send message form"
-    >
-      <div className="flex-1">
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask me about your SupplySense data..."
-          minRows={1}
-          maxRows={6}
-          disabled={disabled}
-          aria-label="Message input"
-          classNames={{
-            base: 'w-full',
-            input: 'resize-none text-foreground',
-            inputWrapper: 'bg-content2 border-divider',
-          }}
-        />
+    <div className="p-6 bg-background">
+      <div className="mx-auto max-w-4xl">
+        <form
+          onSubmit={handleSubmit}
+          className="relative rounded-xl border bg-content1 border-divider shadow-small"
+          aria-label="Send message form"
+        >
+          <div className="flex gap-3 items-start p-4">
+            {/* Text Input */}
+            <div className="flex-1">
+              <Textarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask a question or make a request..."
+                minRows={1}
+                maxRows={6}
+                disabled={disabled}
+                aria-label="Message input"
+                variant="flat"
+                classNames={{
+                  base: 'w-full',
+                  input: 'resize-none text-foreground text-medium bg-transparent',
+                  inputWrapper: 'bg-transparent border-none shadow-none',
+                }}
+              />
+            </div>
+
+            {/* Send Button */}
+            <Button
+              type="submit"
+              color="primary"
+              isIconOnly
+              isLoading={isLoading}
+              disabled={!message.trim() || disabled}
+              className="mb-1 rounded-full rotate-45"
+              aria-label="Send message"
+              size="sm"
+              variant="flat"
+            >
+              {!isLoading && <SendIcon className="w-4 h-4" />}
+            </Button>
+          </div>
+        </form>
       </div>
-      <Button
-        type="submit"
-        color="primary"
-        isIconOnly
-        isLoading={isLoading}
-        disabled={!message.trim() || disabled}
-        className="self-end"
-        aria-label="Send message"
-        size="lg"
-      >
-        {!isLoading && <SendIcon className="w-4 h-4" />}
-      </Button>
-    </form>
+    </div>
   );
 }
