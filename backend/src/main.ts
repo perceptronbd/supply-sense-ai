@@ -125,8 +125,10 @@ async function bootstrap() {
     `🔑 Gemini API: ${process.env.GEMINI_API_KEY ? 'Configured' : 'NOT SET - AI features may not work'}`
   );
   console.log('');
-  await app.listen(port);
-  Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
+  await app.listen(port, '0.0.0.0');
+  Logger.log(
+    `🚀 Application is running on: http://localhost:${port}/${globalPrefix} (bound to 0.0.0.0)`
+  );
   // Logger.log(`📚 API Documentation is available at: http://localhost:${port}/api/docs`);
 }
 
