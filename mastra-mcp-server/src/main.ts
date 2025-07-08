@@ -68,12 +68,11 @@ async function main() {
       }
     });
 
-    httpServer.listen(Number(port), host, () => {
+    httpServer.listen(Number(port), () => {
       console.log('✅ SupplySense MCP Server is now running!');
       console.log('🔗 Ready to connect from MCP clients (VS Code, Chat applications, etc.)');
       console.log('📡 Server details:');
       console.log('   - Transport: HTTP (Server-Sent Events)');
-      console.log(`   - URL: http://${host}:${port}/mcp`);
       console.log('   - Protocol: Model Context Protocol (MCP)');
     });
   } catch (error) {
