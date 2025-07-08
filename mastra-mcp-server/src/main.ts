@@ -55,7 +55,7 @@ async function main() {
     const httpServer = http.createServer(async (req, res) => {
       try {
         await mcpServer.startSSE({
-          url: new URL(req.url || '', `http://${host}:${port}`),
+          url: new URL(req.url || '', `http://localhost:${port}`),
           ssePath: '/mcp',
           messagePath: '/message',
           req,
