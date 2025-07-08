@@ -33,6 +33,245 @@ import { Text } from '@/components/ui/Text';
 import { ROUTE_PATHS } from '@/config/routes';
 import { usePermissions } from '@/hooks/usePermissions';
 
+// Type definitions
+interface Permission {
+  id: string;
+  module: string;
+  action: string;
+  description?: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  permissions?: Permission[];
+  userCount?: number;
+}
+
+// Helper function to extract error message
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'data' in error &&
+    typeof error.data === 'object' &&
+    error.data !== null &&
+    'message' in error.data
+  ) {
+    return String(error.data.message);
+  }
+
+  return 'Failed to delete role';
+};
+
+// Helper function to group permissions by module
+const groupPermissionsByModule = (permissions: Permission[] = []) => {
+  return permissions.reduce(
+    (acc, permission) => {
+      const module = permission.module;
+      if (!acc[module]) {
+        acc[module] = [];
+      }
+      acc[module].push(permission);
+      return acc;
+    },
+    {} as Record<string, Permission[]>
+  );
+};
+
+// Component for role information section
+const RoleInformation = ({ role }: { role: Role }) => (
+  <Card>
+    <CardHeader>
+      <Text variant="titleMedium" weight="medium">
+        Role Information
+      </Text>
+    </CardHeader>
+    <CardBody>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-4">
+          <div>
+            <Text variant="bodySmall" color="muted" className="mb-1">
+              Role Name
+            </Text>
+            <Text variant="bodyMedium" weight="medium">
+              {role.name}
+            </Text>
+          </div>
+          <div>
+            <Text variant="bodySmall" color="muted" className="mb-1">
+              Description
+            </Text>
+            <Text variant="bodyMedium" weight="medium">
+              {role.description || 'No description provided'}
+            </Text>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <Text variant="bodySmall" color="muted" className="mb-1">
+              Status
+            </Text>
+            <Switch size="sm" isSelected={role.isActive} color="success" isDisabled>
+              <Text variant="bodySmall" color={role.isActive ? 'success' : 'default'}>
+                {role.isActive ? 'Active' : 'Inactive'}
+              </Text>
+            </Switch>
+          </div>
+          <div>
+            <Text variant="bodySmall" color="muted" className="mb-1">
+              Created
+            </Text>
+            <Text variant="bodyMedium" weight="medium">
+              {format(new Date(role.createdAt), 'PPpp')}
+            </Text>
+          </div>
+          <div>
+            <Text variant="bodySmall" color="muted" className="mb-1">
+              Last Updated
+            </Text>
+            <Text variant="bodyMedium" weight="medium">
+              {format(new Date(role.updatedAt), 'PPpp')}
+            </Text>
+          </div>
+        </div>
+      </div>
+    </CardBody>
+  </Card>
+);
+
+// Component for permissions section
+const RolePermissions = ({ role }: { role: Role }) => {
+  const permissionsByModule = groupPermissionsByModule(role.permissions);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            <Text variant="titleMedium" weight="medium">
+              Permissions
+            </Text>
+          </div>
+          <Chip color="primary" variant="flat" size="sm">
+            {role.permissions?.length || 0} permissions
+          </Chip>
+        </div>
+      </CardHeader>
+      <CardBody>
+        {role.permissions && role.permissions.length > 0 ? (
+          <div className="space-y-2">
+            {Object.entries(permissionsByModule).map(([module, permissions]) => (
+              <div key={module} className="border rounded-lg border-divider bg-content1">
+                <div className="flex items-center justify-between p-3 border-b bg-content2/50 border-divider">
+                  <div className="flex items-center gap-3">
+                    <Switch size="sm" isSelected={true} color="success" isDisabled />
+                    <Text variant="bodyMedium" weight="semiBold" className="capitalize">
+                      {module.replace(/_/g, ' ').toLowerCase()}
+                    </Text>
+                    <Chip size="sm" variant="flat" color="success">
+                      {permissions.length} permissions
+                    </Chip>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <div className="space-y-2">
+                    {permissions.map((permission) => (
+                      <div
+                        key={permission.id}
+                        className="flex items-center justify-between p-2 rounded-md bg-content2/20"
+                      >
+                        <div className="flex-1">
+                          <Text variant="bodySmall" weight="medium">
+                            {permission.action.replace(/_/g, ' ').toLowerCase()}
+                          </Text>
+                          {permission.description && (
+                            <Text variant="bodyXSmall" color="muted" className="mt-1">
+                              {permission.description}
+                            </Text>
+                          )}
+                        </div>
+                        <Switch size="sm" isSelected={true} color="success" isDisabled />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-4 text-default-300" />
+            <Text variant="bodyMedium" color="muted">
+              No permissions assigned to this role
+            </Text>
+            <Text variant="bodySmall" color="muted" className="mt-1">
+              Users with this role will have no access to system features
+            </Text>
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  );
+};
+
+// Component for users section
+const RoleUsers = ({
+  role,
+  roleId,
+  hasPermission,
+  router,
+}: {
+  role: Role;
+  roleId: string;
+  hasPermission: (permission: string) => boolean;
+  router: { push: (path: string) => void };
+}) => (
+  <Card>
+    <CardHeader>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          <Text variant="titleMedium" weight="medium">
+            Users with this Role
+          </Text>
+        </div>
+        <Chip color="secondary" variant="flat" size="sm">
+          {role.userCount || 0} users
+        </Chip>
+      </div>
+    </CardHeader>
+    <CardBody>
+      <div className="py-8 text-center">
+        <Users className="w-12 h-12 mx-auto mb-4 text-default-300" />
+        <Text variant="bodyMedium" color="muted">
+          {role.userCount || 0} users have this role
+        </Text>
+        <Text variant="bodySmall" color="muted" className="mt-1">
+          User management for roles is handled through the Users module
+        </Text>
+        {hasPermission(ROLE_PERMISSIONS.READ) && (
+          <Button
+            variant="flat"
+            color="primary"
+            className="mt-4"
+            onPress={() => router.push(`${ROUTE_PATHS.USERS}?role=${roleId}`)}
+          >
+            View Users with this Role
+          </Button>
+        )}
+      </div>
+    </CardBody>
+  </Card>
+);
+
 export default function RoleDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -68,21 +307,9 @@ export default function RoleDetailPage() {
       onDeleteOpenChange();
       router.push(ROUTE_PATHS.ROLES);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'object' &&
-              error !== null &&
-              'data' in error &&
-              typeof error.data === 'object' &&
-              error.data !== null &&
-              'message' in error.data
-            ? String(error.data.message)
-            : 'Failed to delete role';
-
       addToast({
         title: 'Error',
-        description: errorMessage,
+        description: getErrorMessage(error),
         color: 'danger',
       });
     }
@@ -117,20 +344,6 @@ export default function RoleDetailPage() {
       </AuthGuard>
     );
   }
-
-  // Group permissions by module for display
-  const permissionsByModule =
-    role.permissions?.reduce(
-      (acc, permission) => {
-        const module = permission.module;
-        if (!acc[module]) {
-          acc[module] = [];
-        }
-        acc[module].push(permission);
-        return acc;
-      },
-      {} as Record<string, typeof role.permissions>
-    ) || {};
 
   return (
     <AuthGuard requireAuth={true}>
@@ -187,175 +400,9 @@ export default function RoleDetailPage() {
             </div>
           </header>
 
-          {/* Role Information */}
-          <Card>
-            <CardHeader>
-              <Text variant="titleMedium" weight="medium">
-                Role Information
-              </Text>
-            </CardHeader>
-            <CardBody>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <div>
-                    <Text variant="bodySmall" color="muted" className="mb-1">
-                      Role Name
-                    </Text>
-                    <Text variant="bodyMedium" weight="medium">
-                      {role.name}
-                    </Text>
-                  </div>
-                  <div>
-                    <Text variant="bodySmall" color="muted" className="mb-1">
-                      Description
-                    </Text>
-                    <Text variant="bodyMedium" weight="medium">
-                      {role.description || 'No description provided'}
-                    </Text>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <Text variant="bodySmall" color="muted" className="mb-1">
-                      Status
-                    </Text>
-                    <Switch size="sm" isSelected={role.isActive} color="success" isDisabled>
-                      <Text variant="bodySmall" color={role.isActive ? 'success' : 'default'}>
-                        {role.isActive ? 'Active' : 'Inactive'}
-                      </Text>
-                    </Switch>
-                  </div>
-                  <div>
-                    <Text variant="bodySmall" color="muted" className="mb-1">
-                      Created
-                    </Text>
-                    <Text variant="bodyMedium" weight="medium">
-                      {format(new Date(role.createdAt), 'PPpp')}
-                    </Text>
-                  </div>
-                  <div>
-                    <Text variant="bodySmall" color="muted" className="mb-1">
-                      Last Updated
-                    </Text>
-                    <Text variant="bodyMedium" weight="medium">
-                      {format(new Date(role.updatedAt), 'PPpp')}
-                    </Text>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Permissions - Discord Style */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <Text variant="titleMedium" weight="medium">
-                    Permissions
-                  </Text>
-                </div>
-                <Chip color="primary" variant="flat" size="sm">
-                  {role.permissions?.length || 0} permissions
-                </Chip>
-              </div>
-            </CardHeader>
-            <CardBody>
-              {role.permissions && role.permissions.length > 0 ? (
-                <div className="space-y-2">
-                  {Object.entries(permissionsByModule).map(([module, permissions]) => (
-                    <div key={module} className="border rounded-lg border-divider bg-content1">
-                      {/* Module Header - Discord Style */}
-                      <div className="flex items-center justify-between p-3 border-b bg-content2/50 border-divider">
-                        <div className="flex items-center gap-3">
-                          <Switch size="sm" isSelected={true} color="success" isDisabled />
-                          <Text variant="bodyMedium" weight="semiBold" className="capitalize">
-                            {module.replace(/_/g, ' ').toLowerCase()}
-                          </Text>
-                          <Chip size="sm" variant="flat" color="success">
-                            {permissions.length} permissions
-                          </Chip>
-                        </div>
-                      </div>
-
-                      {/* Permission List - Discord Style */}
-                      <div className="p-3">
-                        <div className="space-y-2">
-                          {permissions.map((permission) => (
-                            <div
-                              key={permission.id}
-                              className="flex items-center justify-between p-2 rounded-md bg-content2/20"
-                            >
-                              <div className="flex-1">
-                                <Text variant="bodySmall" weight="medium">
-                                  {permission.action.replace(/_/g, ' ').toLowerCase()}
-                                </Text>
-                                {permission.description && (
-                                  <Text variant="bodyXSmall" color="muted" className="mt-1">
-                                    {permission.description}
-                                  </Text>
-                                )}
-                              </div>
-                              <Switch size="sm" isSelected={true} color="success" isDisabled />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Shield className="w-12 h-12 mx-auto mb-4 text-default-300" />
-                  <Text variant="bodyMedium" color="muted">
-                    No permissions assigned to this role
-                  </Text>
-                  <Text variant="bodySmall" color="muted" className="mt-1">
-                    Users with this role will have no access to system features
-                  </Text>
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Users with this Role */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  <Text variant="titleMedium" weight="medium">
-                    Users with this Role
-                  </Text>
-                </div>
-                <Chip color="secondary" variant="flat" size="sm">
-                  {role.userCount || 0} users
-                </Chip>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <div className="py-8 text-center">
-                <Users className="w-12 h-12 mx-auto mb-4 text-default-300" />
-                <Text variant="bodyMedium" color="muted">
-                  {role.userCount || 0} users have this role
-                </Text>
-                <Text variant="bodySmall" color="muted" className="mt-1">
-                  User management for roles is handled through the Users module
-                </Text>
-                {hasPermission(ROLE_PERMISSIONS.READ) && (
-                  <Button
-                    variant="flat"
-                    color="primary"
-                    className="mt-4"
-                    onPress={() => router.push(`${ROUTE_PATHS.USERS}?role=${roleId}`)}
-                  >
-                    View Users with this Role
-                  </Button>
-                )}
-              </div>
-            </CardBody>
-          </Card>
+          <RoleInformation role={role} />
+          <RolePermissions role={role} />
+          <RoleUsers role={role} roleId={roleId} hasPermission={hasPermission} router={router} />
 
           {/* Delete Confirmation Modal */}
           <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} size="md">
