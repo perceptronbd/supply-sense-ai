@@ -17,6 +17,7 @@ This document outlines end-to-end developer instructions for implementing the us
 - **Enterprise**: Paid. Highest limits, premium features, priority support.
 
 Each package defines:
+
 - Maximum monthly API/chat rate limit (requests/messages).
 - Monthly token quota (for LLM/AI usage).
 - Feature access.
@@ -85,8 +86,7 @@ Next.js pages `/auth/signup` & `/auth/login`
 NestJS AuthController:
 
 - `POST /auth/register`: validate email/password, hash password, create Company
-- `POST /auth/login`: verify hash, issue JWT 
-
+- `POST /auth/login`: verify hash, issue JWT
 
 ---
 
@@ -280,14 +280,6 @@ CREATE TABLE table_relationships (
 
 Single `<textarea>` "Describe your business & goals (1–2 sentences)."
 
-#### App DB Table
-
-```sql
-CREATE TABLE tenant_context (
-  tenant_id UUID PRIMARY KEY,
-  description TEXT
-);
-```
 
 #### API
 
