@@ -1,0 +1,76 @@
+{
+  "name": "landing-page",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "landing-page",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project landing-page --web",
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "options": {
+        "outputPath": "dist/landing-page"
+      },
+      "configurations": {
+        "production": {
+          "dev": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/next:server",
+      "options": {
+        "buildTarget": "landing-page:build",
+        "dev": true
+      },
+      "configurations": {
+        "production": {
+          "dev": false
+        }
+      }
+    },
+    "dev": {
+      "executor": "@nx/next:server",
+      "options": {
+        "buildTarget": "landing-page:build",
+        "dev": true,
+        "port": 3002
+      }
+    },
+    "export": {
+      "executor": "@nx/next:export",
+      "options": {
+        "buildTarget": "landing-page:build:production",
+        "outputPath": "dist/landing-page-exported"
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "{projectRoot}/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}
