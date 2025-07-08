@@ -1,3 +1,4 @@
+import { DbConnectionModule } from '@/modules/db-connection/db-connection.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
@@ -42,6 +43,7 @@ import { PrismaModule } from './prisma.module';
     ChatModule,
     RoleModule,
     UserModule,
+    DbConnectionModule,
   ],
   controllers: [AppController],
   providers: [AppService, Reflector],
