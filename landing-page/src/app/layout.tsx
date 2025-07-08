@@ -1,3 +1,4 @@
+import Provider from '../providers/Provider';
 import './global.css';
 
 export const metadata = {
@@ -12,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <Provider>{children}</Provider>
+      </body>
     </html>
   );
 }

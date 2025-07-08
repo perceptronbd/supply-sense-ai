@@ -1,6 +1,6 @@
 const LandingPage = () => {
   return (
-    <div>
+    <div className="">
       <h1 className="text-pomegranate-500">This is LandingPage Component</h1>
     </div>
   );
