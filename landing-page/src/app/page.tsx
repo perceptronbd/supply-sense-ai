@@ -1,7 +1,19 @@
+import Banner from '../components/sections/Banner';
+import Data from '../components/sections/Data';
+import Navbar from '../components/ui/Navbar';
+
 const LandingPage = () => {
   return (
     <div className="">
-      <h1 className="text-pomegranate-500">This is LandingPage Component</h1>
+      {/* navbar with horizontal line */}
+      <Navbar />
+      <div className="border-b-[1px] border-secondary" />
+
+      {/* Banner */}
+      <Banner />
+
+      {/* Data section */}
+      <Data />
     </div>
   );
 };
