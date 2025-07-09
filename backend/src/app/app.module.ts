@@ -1,4 +1,4 @@
-import { DbConnectionModule } from '@/modules/db-connection/db-connection.module';
+import { DbConnectionModule } from '@/modules/onboarding/onboarding.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';

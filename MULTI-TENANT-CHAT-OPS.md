@@ -203,14 +203,14 @@ Searchable, paginated checklist with defaults (order%, inventory%)
 
 ```sql
 CREATE TABLE table_metadata (
-  tenant_id UUID,
+  company_id UUID,
   table_name TEXT,
   friendly_label TEXT,
   purpose TEXT,
   update_frequency TEXT,
   data_sensitivity TEXT[],
   sample_questions TEXT[],
-  PRIMARY KEY (tenant_id, table_name)
+  PRIMARY KEY (company_id, table_name)
 );
 ```
 
@@ -260,13 +260,13 @@ For each relation, prompt: "Does orders.customer_id refer to customers.id?" with
 
 ```sql
 CREATE TABLE table_relationships (
-  tenant_id UUID,
+  company_id UUID,
   table_name TEXT,
   column_name TEXT,
   ref_table TEXT,
   ref_column TEXT,
   is_confirmed BOOLEAN,
-  PRIMARY KEY (tenant_id, table_name, column_name)
+  PRIMARY KEY (company_id, table_name, column_name)
 );
 ```
 

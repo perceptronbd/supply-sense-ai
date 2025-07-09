@@ -40,3 +40,8 @@ export class SaveDbConnectionDto {
   @Type(() => DbCredentialsDto)
   credentials: DbCredentialsDto;
 }
+
+export class GetTablesDto {
+  @IsString()
+  companyId: string;
+}
