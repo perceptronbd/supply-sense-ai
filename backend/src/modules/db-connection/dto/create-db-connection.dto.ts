@@ -20,6 +20,10 @@ export class DbCredentialsDto {
   @IsBoolean()
   @IsOptional()
   sslEnabled?: boolean = false;
+
+  @IsString()
+  @IsOptional()
+  title?: string;
 }
 
 export class TestConnectionDto {

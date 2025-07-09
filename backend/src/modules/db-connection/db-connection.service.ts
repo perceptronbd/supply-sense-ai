@@ -206,6 +206,7 @@ export class DbConnectionService {
           database: dto.credentials.database,
           username: dto.credentials.username,
           encryptedPassword,
+          title: dto.credentials.title || dto.credentials.database, // Use database name as default title
           sslEnabled: dto.credentials.sslEnabled || false,
           connectionHash,
         },
