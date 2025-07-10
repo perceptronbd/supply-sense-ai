@@ -21,7 +21,7 @@ const Data = () => {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 md:px-0">
+    <div className="max-w-3xl mx-auto px-4 lg:px-0">
       <h1 className="max-w-2xl pt-20 font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
         You've Got Data. But Getting Answers Is Still a Pain.
       </h1>
@@ -35,7 +35,7 @@ const Data = () => {
           <Card
             key={feature.title}
             classNames={{
-              base: 'w-60 bg-secondary-50 opacity-90',
+              base: 'w-60 bg-secondary-50 opacity-90 h-64',
             }}
           >
             <CardBody className="flex flex-col items-center text-center p-8 space-y-4">
