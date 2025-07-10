@@ -1,18 +1,27 @@
-import * as crypto from 'node:crypto';
 import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
-import { SaveDbConnectionDto } from './dto/db-connection.dto';
+import { type CaptureMetadataDto, SaveDbConnectionDto } from './dto/db-connect.dto';
+import {
+  closeAllConnections,
+  decryptPassword,
+  encryptPassword,
+  formatTableName,
+  generateConnectionHash,
+  testConnection,
+  withDbConnection,
+} from './helpers/db-connection.helper';
 import type { DbCredentials, SaveConnectionResult } from './types/db-connection.type';
 
 @Injectable()
 export class OnboardingService {
-  private readonly connectionPools = new Map<string, Pool>();
   private readonly encryptionKey: string;
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     // Use environment variable for encryption key
-    this.encryptionKey = process.env.DB_ENCRYPTION_KEY || 'your-32-character-secret-key-here';
+    this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
+    if (!this.encryptionKey) {
+      throw new Error('DB_ENCRYPTION_KEY environment variable is not set');
+    }
   }
 
   /**
@@ -52,7 +61,7 @@ export class OnboardingService {
       }
 
       // Test connection first
-      const isConnected = await this.testConnection(dto.credentials);
+      const isConnected = await testConnection(dto.credentials);
       if (!isConnected) {
         return {
           success: false,
@@ -61,10 +70,10 @@ export class OnboardingService {
       }
 
       // Encrypt password
-      const encryptedPassword = this.encryptPassword(dto.credentials.password);
+      const encryptedPassword = encryptPassword(dto.credentials.password, this.encryptionKey);
 
       // Generate connection hash
-      const connectionHash = this.generateConnectionHash(dto.credentials);
+      const connectionHash = generateConnectionHash(dto.credentials);
 
       // Save to database
       const savedConnection = await this.prisma.dbConnection.create({
@@ -116,221 +125,140 @@ export class OnboardingService {
    * This method connects to the database and retrieves the table names from the public schema.
    */
 
-  async getTables(companyId: string) {
-    const connection = await this.getDbConnection(companyId);
-    if (!connection) {
-      throw new Error('Database connection not found');
+  async getTables(companyId: string, connectionId?: string) {
+    const connections = await this.getDbConnections(companyId);
+
+    if (connections.length === 0) {
+      throw new Error('No database connections found for this company');
     }
 
-    // Generate connection hash to get or create pool
-    const connectionHash = this.generateConnectionHash(connection);
-    let pool = this.connectionPools.get(connectionHash);
-
-    if (!pool) {
-      pool = this.createPool(connection);
-      this.connectionPools.set(connectionHash, pool);
+    // If connectionId is provided, use that specific connection
+    if (connectionId) {
+      const connection = connections.find((conn) => conn.id === connectionId);
+      if (!connection) {
+        throw new Error('Specified database connection not found');
+      }
+      return this.getTablesForConnection(connection);
     }
 
-    const client = await pool.connect();
-    try {
+    // Otherwise, get tables from all connections
+    const allTables = {
+      connectionId: '',
+      tables: [] as Array<{ tableName: string; displayName: string }>,
+    };
+    for (const connection of connections) {
+      const data = await this.getTablesForConnection(connection);
+      allTables.connectionId = connection.id;
+      allTables.tables = data.tables;
+    }
+
+    return allTables;
+  }
+
+  private async getTablesForConnection(connection: DbCredentials & { id: string; title?: string }) {
+    return withDbConnection(connection, async (client) => {
       const result = await client.query(
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
       );
-
       // Transform the result to include human-readable table names
-      const formattedTables = result.rows.map((row) => ({
-        table_name: row.table_name,
-        display_name: this.formatTableName(row.table_name),
-      }));
-
-      return formattedTables;
-    } catch (error) {
-      console.error('Failed to retrieve table schema:', error);
-      throw new Error('Failed to retrieve table schema');
-    } finally {
-      client.release();
-    }
-  }
-
-  // helper methods
-  /**
-   * Convert table name to human-readable format
-   * Examples:
-   * - "Item_Master" -> "Item Master"
-   * - "itemMaster" -> "Item Master"
-   * - "item-master" -> "Item Master"
-   * - "user_profiles" -> "User Profiles"
-   */
-  private formatTableName(tableName: string): string {
-    return (
-      tableName
-        // Replace underscores and hyphens with spaces
-        .replace(/[_-]/g, ' ')
-        // Split camelCase words
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        // Split consecutive capitals (like "XMLHttpRequest" -> "XML Http Request")
-        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-        // Capitalize first letter of each word
-        .replace(/\b\w/g, (char) => char.toUpperCase())
-        // Clean up extra spaces
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
-  }
-
-  /**
-   * Encrypt password for storage
-   */
-  encryptPassword(password: string): string {
-    try {
-      const algorithm = 'aes-256-gcm';
-      const iv = crypto.randomBytes(16);
-
-      // Create a 32-byte key from the encryption key
-      const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
-
-      const cipher = crypto.createCipheriv(algorithm, key, iv);
-
-      let encrypted = cipher.update(password, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
-
-      const authTag = cipher.getAuthTag();
-
-      // Combine iv + authTag + encrypted data
-      return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-    } catch (error) {
-      console.error('Password encryption failed:', error);
-      throw new Error('Failed to encrypt password');
-    }
-  }
-
-  /**
-   * Decrypt password for use
-   */
-  decryptPassword(encryptedPassword: string): string {
-    try {
-      const parts = encryptedPassword.split(':');
-      if (parts.length !== 3) {
-        throw new Error('Invalid encrypted password format');
+      const data = {
+        connectionId: connection.id,
+        tables: [] as Array<{ tableName: string; displayName: string }>,
+      };
+      for (const row of result.rows) {
+        data.tables.push({
+          tableName: row.table_name,
+          displayName: formatTableName(row.table_name),
+        });
       }
+      return data;
+    });
+  }
 
-      const iv = Buffer.from(parts[0], 'hex');
-      const authTag = Buffer.from(parts[1], 'hex');
-      const encrypted = parts[2];
+  async captureMetadata(dto: CaptureMetadataDto) {
+    const connections = await this.getDbConnections(dto.companyId);
 
-      // Create a 32-byte key from the encryption key
-      const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
-
-      const algorithm = 'aes-256-gcm';
-      const decipher = crypto.createDecipheriv(algorithm, key, iv);
-      decipher.setAuthTag(authTag);
-
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-
-      return decrypted;
-    } catch (error) {
-      console.error('Password decryption failed:', error);
-      throw new Error('Failed to decrypt password');
+    if (connections.length === 0) {
+      throw new Error('No database connections found for this company');
     }
-  }
-  /**
-   * Test database connection
-   */
-  async testConnection(credentials: DbCredentials): Promise<boolean> {
-    let pool: Pool;
-    let client: PoolClient;
 
-    try {
-      pool = this.createPool(credentials);
-      client = await pool.connect();
-
-      // Test with a simple query
-      await client.query('SELECT 1');
-
-      return true;
-    } catch (error) {
-      console.error('Database connection test failed:', error);
-      return false;
-    } finally {
-      if (client) {
-        client.release();
-      }
-      if (pool) {
-        await pool.end();
-      }
+    // If connectionId is provided, use that specific connection
+    if (!dto.connectionId) {
+      throw new Error('No connectionId provided');
     }
-  }
-  /**
-   * Generate connection hash for uniqueness
-   */
-  generateConnectionHash(credentials: DbCredentials): string {
-    const connectionString = `${credentials.host}:${credentials.port}:${credentials.database}:${credentials.username}`;
-    return crypto.createHash('sha256').update(connectionString).digest('hex');
+
+    const connection = connections.find((conn) => conn.id === dto.connectionId);
+    if (!connection) {
+      throw new Error('Specified database connection not found');
+    }
+    return this.captureMetadataForConnection(connection, dto.tables);
   }
 
-  /**
-   * Create a new connection pool
-   */
-  private createPool(credentials: DbCredentials): Pool {
-    const poolConfig = {
-      host: credentials.host,
-      port: credentials.port,
-      database: credentials.database,
-      user: credentials.username,
-      password: credentials.password,
-      ssl: credentials.sslEnabled ? { rejectUnauthorized: false } : false,
-      max: 10, // Maximum number of connections
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    };
+  private async captureMetadataForConnection(
+    connection: DbCredentials & { id: string; title?: string },
+    tables: Array<{ tableName: string }>
+  ) {
+    return withDbConnection(connection, async (client) => {
+      // Extract table names from the tables array
+      const tableNames = tables.map((table) => table.tableName);
 
-    return new Pool(poolConfig);
+      // Use parameterized query to prevent SQL injection
+      const query = {
+        text: `
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = ANY($1::text[])
+        `,
+        values: [tableNames],
+      };
+
+      const result = await client.query(query);
+      return {
+        connectionId: connection.id,
+        connectionTitle: connection.title || 'Default Connection',
+        tables: result.rows,
+      };
+    });
   }
 
   /**
    * Get database connection for a company
    */
-  async getDbConnection(companyId: string): Promise<DbCredentials | null> {
+  async getDbConnections(
+    companyId: string
+  ): Promise<Array<DbCredentials & { id: string; title?: string }>> {
     try {
-      const connection = await this.prisma.dbConnection.findUnique({
+      const connections = await this.prisma.dbConnection.findMany({
         where: { companyId },
+        select: {
+          id: true,
+          host: true,
+          port: true,
+          database: true,
+          username: true,
+          encryptedPassword: true,
+          sslEnabled: true,
+          title: true,
+        },
       });
 
-      if (!connection) {
-        return null;
-      }
-
-      // Decrypt password
-      const decryptedPassword = this.decryptPassword(connection.encryptedPassword);
-
-      return {
-        host: connection.host,
-        port: connection.port,
-        database: connection.database,
-        username: connection.username,
-        password: decryptedPassword,
-        sslEnabled: connection.sslEnabled,
-      };
+      return connections.map((connection) => ({
+        ...connection,
+        id: connection.id,
+        title: connection.title,
+        password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
+      }));
     } catch (error) {
-      console.error('Failed to retrieve database connection:', error);
-      throw new Error('Failed to retrieve database connection');
+      console.error('Failed to retrieve database connections:', error);
+      throw new Error('Failed to retrieve database connections');
     }
-  }
-
-  /**
-   * Close all connection pools
-   */
-  async closeAllConnections(): Promise<void> {
-    const closePromises = Array.from(this.connectionPools.values()).map((pool) => pool.end());
-    await Promise.all(closePromises);
-    this.connectionPools.clear();
   }
 
   /**
    * Clean up on application shutdown
    */
   async onModuleDestroy(): Promise<void> {
-    await this.closeAllConnections();
+    await closeAllConnections();
   }
 }

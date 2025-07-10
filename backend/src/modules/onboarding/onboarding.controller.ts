@@ -11,7 +11,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connection.dto';
+import { type CaptureMetadataDto, GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
 import { OnboardingService } from './onboarding.service';
 
 @Controller('onboarding')
@@ -38,5 +38,11 @@ export class DbConnectionController {
   @HttpCode(HttpStatus.OK)
   async getTables(@Param() dto: GetTablesDto) {
     return await this.dynamicDbService.getTables(dto.companyId);
+  }
+
+  @Post('/:companyId/capture-metadata')
+  @HttpCode(HttpStatus.OK)
+  async captureMetadata(@Body() dto: CaptureMetadataDto) {
+    return await this.dynamicDbService.captureMetadata(dto);
   }
 }
