@@ -15,7 +15,7 @@ const Banner = () => {
     setMessage('');
   };
   return (
-    <div className="px-4 my-20 max-w-3xl mx-auto">
+    <div className="px-4 my-20 max-w-3xl mx-auto px-4 md:px-0">
       <h1 className="font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
         Know Your Operations. Ask Anything. Get Instant Answers
       </h1>

@@ -21,7 +21,7 @@ const Data = () => {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4 md:px-0">
       <h1 className="max-w-2xl pt-20 font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
         You've Got Data. But Getting Answers Is Still a Pain.
       </h1>
@@ -30,13 +30,12 @@ const Data = () => {
         If finding out what's happening in your supply chain means:
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-16">
+      <div className="flex flex-wrap gap-6 mb-16 justify-center items-center">
         {features.map((feature) => (
           <Card
             key={feature.title}
-            className="h-full"
             classNames={{
-              base: 'w-64 bg-secondary-50 opacity-90',
+              base: 'w-60 bg-secondary-50 opacity-90',
             }}
           >
             <CardBody className="flex flex-col items-center text-center p-8 space-y-4">
