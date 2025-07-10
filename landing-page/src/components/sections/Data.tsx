@@ -1,5 +1,6 @@
-import { Card, CardBody } from '@heroui/react';
+import { Avatar, Card, CardBody } from '@heroui/react';
 import { FileText, Phone, Table } from 'lucide-react';
+import SectionWrapper from '../ui/SectionWrapper';
 
 const Data = () => {
   const features = [
@@ -21,12 +22,12 @@ const Data = () => {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 lg:px-0">
-      <h1 className="max-w-2xl pt-20 font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
+    <SectionWrapper>
+      <h1 className="max-w-2xl pt-20 font-display leading-snug text-2xl md:text-4xl font-bold text-foreground text-center mx-auto">
         You've Got Data. But Getting Answers Is Still a Pain.
       </h1>
 
-      <p className="mt-4 mx-auto text-center text-foreground px-6 mb-16">
+      <p className="mt-4 mx-auto text-center text-foreground px-6 mb-16 font-medium text-lg">
         If finding out what's happening in your supply chain means:
       </p>
 
@@ -35,13 +36,14 @@ const Data = () => {
           <Card
             key={feature.title}
             classNames={{
-              base: 'w-60 bg-secondary-50 opacity-90 h-64',
+              base: 'w-60 bg-secondary-50 opacity-90 h-72',
             }}
           >
             <CardBody className="flex flex-col items-center text-center p-8 space-y-4">
-              <div className="w-16 h-16 rounded-full border-2 flex items-center justify-center">
-                <feature.icon size={28} />
-              </div>
+              <Avatar
+                className="w-16 h-16 bg-inherit border-2"
+                fallback={<feature.icon size={28} />}
+              />
 
               <h3 className="text-lg font-bold leading-tight text-foreground font-display">
                 {feature.title}
@@ -55,10 +57,10 @@ const Data = () => {
         ))}
       </div>
 
-      <p className="mx-auto text-center font-medium text-lg font-display mb-16">
+      <p className="mx-auto text-center font-medium text-lg font-display">
         Then you're already wasting time and missing context.
       </p>
-    </div>
+    </SectionWrapper>
   );
 };
 

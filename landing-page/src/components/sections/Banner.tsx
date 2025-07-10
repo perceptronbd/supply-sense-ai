@@ -5,6 +5,7 @@ import { Send } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import logo from '../../../public/assets/full-logo.svg';
+import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
   const [message, setMessage] = useState('');
@@ -15,7 +16,7 @@ const Banner = () => {
     setMessage('');
   };
   return (
-    <div className="px-4 my-20 max-w-3xl mx-auto lg:px-0">
+    <SectionWrapper>
       <h1 className="font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
         Know Your Operations. Ask Anything. Get Instant Answers
       </h1>
@@ -30,7 +31,7 @@ const Banner = () => {
           <CardHeader className="flex justify-between items-center px-6 py-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <Image src={logo} alt="logo" width={40} height={20} className="w-24 h-10" />
+                <Image src={logo} alt="logo" width={40} height={20} className="w-24" />
               </div>
             </div>
             <Button variant="ghost" size="sm" className="text-sm border-none text-secondary">
@@ -65,7 +66,7 @@ const Banner = () => {
           </CardBody>
         </Card>
       </div>
-    </div>
+    </SectionWrapper>
   );
 };
 
