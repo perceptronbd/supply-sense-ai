@@ -29,7 +29,7 @@ const SupplySense = () => {
 
   return (
     <SectionWrapper>
-      <h1 className="max-w-2xl pt-20 font-display leading-snug text-xl md:text-2xl font-bold text-foreground text-center mx-auto">
+      <h1 className="max-w-2xl pt-12 font-display leading-snug text-xl md:text-2xl font-bold text-foreground text-center mx-auto">
         You've Got Data. But Getting Answers Is Still a Pain.
       </h1>
 
