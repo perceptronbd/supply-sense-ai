@@ -92,9 +92,9 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       scrollBehavior="inside"
       classNames={{
         base: 'max-h-[90vh] bg-background',
-        header: 'border-b border-divider',
+        header: 'border-b border-divider border-foreground/20',
         body: 'p-0',
-        footer: 'border-t border-divider',
+        footer: 'border-t border-divider border-foreground/20',
         backdrop: 'bg-background/70',
       }}
     >
@@ -186,18 +186,18 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   {isLoading && (
                     <div className="flex gap-3 justify-start">
                       <Avatar
-                        icon={<Bot className="w-4 h-4" />}
-                        size="sm"
+                        icon={<Bot className="w-5 h-5" />}
                         classNames={{
-                          base: 'bg-secondary-100 flex-shrink-0',
-                          icon: 'text-secondary-600',
+                          base: 'bg-default-800 flex-shrink-0',
+                          icon: 'text-primary',
                         }}
+                        size="sm"
                       />
                       <div className="bg-content2 rounded-2xl px-4 py-3">
                         <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-content3-foreground rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-content3-foreground rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-content3-foreground rounded-full animate-bounce delay-200" />
+                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce delay-100" />
+                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce delay-200" />
                         </div>
                       </div>
                     </div>
