@@ -5,16 +5,19 @@ import { Send } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import logo from '../../../public/assets/full-logo.svg';
+import ChatBoxModal from '../ui/ChatBoxModal';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
   const [message, setMessage] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Message:', message);
     setMessage('');
   };
+
   return (
     <SectionWrapper>
       <h1 className="font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
@@ -34,7 +37,12 @@ const Banner = () => {
                 <Image src={logo} alt="logo" width={40} height={20} className="w-24" />
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-sm border-none text-secondary">
+            <Button
+              onPress={() => setMessage('')}
+              variant="ghost"
+              size="sm"
+              className="text-sm border-none text-secondary"
+            >
               Clear Chat
             </Button>
           </CardHeader>
@@ -42,6 +50,7 @@ const Banner = () => {
           <CardBody className="px-6 pb-6">
             <form onSubmit={handleSubmit} className="relative">
               <Input
+                onClick={() => setIsModalOpen(true)}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="content"
@@ -66,6 +75,13 @@ const Banner = () => {
           </CardBody>
         </Card>
       </div>
+
+      {/* Chat Modal */}
+      <ChatBoxModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onOpenChange={setIsModalOpen}
+      />
     </SectionWrapper>
   );
 };
