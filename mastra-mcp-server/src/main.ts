@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { MCPServer } from '@mastra/mcp';
 import { mastra } from './mastra/index.js';
+import { analyzeTableMetadataTool } from './mastra/tools/metadata-tool.js';
 import { supplyChainTool } from './mastra/tools/supply-chain-tool.js';
 
 async function main() {
@@ -20,7 +21,7 @@ async function main() {
       // Expose agents, workflows, and tools
       agents,
       workflows,
-      tools: { supplyChainTool }, // Include standalone tools
+      tools: { supplyChainTool, analyzeTableMetadataTool }, // Include standalone tools
     });
 
     console.log('✅ MCP Server initialized successfully');
@@ -46,7 +47,8 @@ async function main() {
 
     // Log available tools
     console.log('🔧 Direct Tools:');
-    console.log('   - supplyChainTool: Get supply chain status and metrics'); // Start the MCP server using HTTP transport with SSE
+    console.log('   - supplyChainTool: Get supply chain status and metrics');
+    console.log('   - analyzeTableMetadataTool: Analyze database schema and generate metadata'); // Start the MCP server using HTTP transport with SSE
     const port = process.env.PORT || process.env.MCP_PORT || 3002;
     const host = process.env.MCP_HOST || '0.0.0.0';
     console.log(`🔌 Starting MCP Server with HTTP/SSE transport on ${host}:${port}...`);

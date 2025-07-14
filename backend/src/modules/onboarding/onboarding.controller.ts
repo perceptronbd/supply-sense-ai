@@ -11,15 +11,22 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { type CaptureMetadataDto, GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
-import { OnboardingService } from './onboarding.service';
+import {
+  CaptureMetadataDto,
+  GetTablesDto,
+  SaveDbConnectionDto,
+  TableMetadataDto,
+} from './dto/db-connect.dto';
+import { MetadataService } from './services/metadata.service';
+import { OnboardingService } from './services/onboarding.service';
 
 @Controller('onboarding')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class DbConnectionController {
   constructor(
     @Inject(OnboardingService)
-    private readonly dynamicDbService: OnboardingService
+    private readonly onboardingService: OnboardingService,
+    @Inject(MetadataService) private readonly metadataService: MetadataService
   ) {}
 
   /**
@@ -28,7 +35,7 @@ export class DbConnectionController {
   @Post('/db-connect')
   @HttpCode(HttpStatus.CREATED)
   async saveConnection(@Body() dto: SaveDbConnectionDto) {
-    return await this.dynamicDbService.saveDbConnection(dto);
+    return await this.onboardingService.saveDbConnection(dto);
   }
 
   /**
@@ -37,12 +44,17 @@ export class DbConnectionController {
   @Get('/:companyId/tables')
   @HttpCode(HttpStatus.OK)
   async getTables(@Param() dto: GetTablesDto) {
-    return await this.dynamicDbService.getTables(dto.companyId);
+    return await this.onboardingService.getTables(dto.companyId);
   }
 
   @Post('/:companyId/capture-metadata')
   @HttpCode(HttpStatus.OK)
   async captureMetadata(@Body() dto: CaptureMetadataDto) {
-    return await this.dynamicDbService.captureMetadata(dto);
+    return await this.onboardingService.captureMetadata(dto);
+  }
+  @Post('/:companyId/save-metadata')
+  @HttpCode(HttpStatus.CREATED)
+  async saveMetadata(@Body() dto: TableMetadataDto) {
+    return await this.metadataService.saveTableMetadata(dto);
   }
 }

@@ -1245,6 +1245,7 @@ model DbConnection {
 
   @@unique(companyId)
   @@unique([companyId, username], name: "unique_db_connection")
+  @@index([companyId,id], name: "idx_db_connections_company_id")
   @@index([username], name: "idx_db_connections_username")
   @@map("db_connections")
 }
@@ -1262,6 +1263,7 @@ model TableRelations {
 
   @@unique([dbConnectionId, tableName, columnName], name: "unique_table_relation")
   @@index([tableName, columnName], name: "idx_table_relations_table_column")
+  @@index([dbConnectionId, id], name: "idx_table_relations_db_connection")
   @@map("table_relations")
 }
 
@@ -1271,13 +1273,14 @@ model TableMetadata {
   friendlyLabel   String
   purpose         String
   updateFrequency String
-  dataSensitivity String[]
+  dataSensitivity String
   sampleQuestions String[]
 
   dbConnectionId String       @unique // One-to-one relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([dbConnectionId, tableName], name: "unique_table_metadata")
+  @@index([dbConnectionId, id], name: "idx_table_metadata_db_connection")
   @@map("table_metadata")
 }
 

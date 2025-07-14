@@ -16,5 +16,5 @@ export interface QueryResult {
 export interface SaveConnectionResult {
   success: boolean;
   message: string;
-  connectionId?: string;
+  dbConnectionId?: string;
 }
