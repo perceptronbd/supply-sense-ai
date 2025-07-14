@@ -2,7 +2,7 @@ import { Avatar, Card, CardBody } from '@heroui/react';
 import { CheckCircle, Database, LucideMessageSquareText, User } from 'lucide-react';
 import Image from 'next/image';
 import fullLogo from '../../../public/assets/full-logo.svg';
-import logo from '../../../public/assets/logo.svg';
+import { Logo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const SupplySense = () => {
@@ -90,15 +90,15 @@ const SupplySense = () => {
                     "What items were requested in the last hour from Branch A?"
                   </p>
                 </div>
-                <div className="bg-secondary-100 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5" />
+                <div className="bg-secondary w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-bigStone-400" />
                 </div>
               </div>
 
               {/* Bot Response */}
               <div className="flex items-start gap-3">
-                <div className="bg-secondary-100 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Image src={logo} width={40} height={40} alt="Logo" className="w-6" />
+                <div className="bg-secondary w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Logo className="w-8 text-bigStone-400" />
                 </div>
                 <div className="bg-secondary-50 max-w-2xl rounded-xl p-4">
                   <p className="text-foreground text-sm">
