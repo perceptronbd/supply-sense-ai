@@ -309,3 +309,15 @@ export type CreatePermission<
   TResource extends Resource,
   TAction extends Action,
 > = `${TResource}:${TAction}`;
+
+export interface IDatabaseClient {
+  query(text: string): Promise<{ rows: IDatabaseRow[] }>;
+  query(config: {
+    text: string;
+    values: unknown[];
+  }): Promise<{ rows: IDatabaseRow[] }>;
+}
+
+export interface IDatabaseRow {
+  [key: string]: unknown;
+}

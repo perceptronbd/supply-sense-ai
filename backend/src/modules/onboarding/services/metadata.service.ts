@@ -1,22 +1,193 @@
 import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type {
+  IDatabaseClient,
+  IDatabaseRow,
   ITableColumn,
   ITableMetadataRecord,
+  ITableRelationship,
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
 import { McpClientService } from '../../chat/services/mcp-client.service';
-import type { TableMetadataDto } from '../dto/db-connect.dto';
+import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
+import { withDbConnection } from '../helpers/db-connection.helper';
+import type { DbCredentials } from '../types/db-connection.type';
+import { OnboardingService } from './onboarding.service';
 
 @Injectable()
 export class MetadataService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(McpClientService) private readonly mcpClient: McpClientService,
+    @Inject(OnboardingService) private readonly onboarding: OnboardingService,
+
     private readonly logger = new Logger(MetadataService.name)
   ) {}
+
+  async captureMetadata(dto: CaptureMetadataDto) {
+    const connection = await this.onboarding.getCompanyConnection(
+      dto.companyId,
+      dto.dbConnectionId
+    );
+
+    if (!connection) {
+      throw new Error('Specified database connection not found');
+    }
+
+    const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
+
+    // Save the generated metadata to the database
+    // const savedMetadata = await this.saveTableMetadata(generatedMetadata);
+
+    return {
+      success: true,
+      message: 'Metadata captured and saved successfully',
+      metadata: generatedMetadata,
+    };
+  }
+
+  private async captureMetadataForConnection(
+    connection: DbCredentials & { dbConnectionId: string; title?: string },
+    tables: Array<{ tableName: string }>
+  ) {
+    return withDbConnection(connection, async (client) => {
+      // Extract table names from the tables array
+      const tableNames = tables.map((table) => table.tableName);
+
+      const metadataResults = [];
+
+      for (const tableName of tableNames) {
+        try {
+          // Get detailed table schema
+          const tableSchema = await this.getTableSchema(client, tableName);
+          //Call MCP agent to generate metadata
+          const metadata = await this.generateTableMetadataWithAgent(
+            tableName,
+            tableSchema,
+            connection.dbConnectionId
+          );
+          metadataResults.push(metadata);
+        } catch (error) {
+          console.error(`Error processing table ${tableName}:`, error);
+          // Continue with other tables even if one fails
+        }
+      }
+
+      return {
+        dbConnectionId: connection.dbConnectionId,
+        connectionTitle: connection.title || 'Default Connection',
+        generatedMetadata: metadataResults,
+      };
+    });
+  }
+
+  private async getTableSchema(
+    client: IDatabaseClient,
+    tableName: string
+  ): Promise<ITableSchemaInput> {
+    // Get column information
+    const columnQuery = {
+      text: `
+        SELECT 
+          c.column_name,
+          c.data_type,
+          c.is_nullable,
+          c.column_default,
+          c.character_maximum_length,
+          c.numeric_precision,
+          c.numeric_scale,
+          CASE WHEN pk.column_name IS NOT NULL THEN true ELSE false END as is_primary_key,
+          CASE WHEN fk.ku_column_name IS NOT NULL THEN true ELSE false END as is_foreign_key,
+          fk.foreign_table_name,
+          fk.foreign_column_name,
+          col_description(pgc.oid, c.ordinal_position) as column_comment
+        FROM information_schema.columns c
+        LEFT JOIN (
+          SELECT ku.table_name, ku.column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
+          WHERE tc.constraint_type = 'PRIMARY KEY'
+        ) pk ON c.table_name = pk.table_name AND c.column_name = pk.column_name
+        LEFT JOIN (
+          SELECT 
+            ku.table_name, 
+            ku.column_name AS ku_column_name,
+            ccu.table_name AS foreign_table_name,
+            ccu.column_name AS foreign_column_name,
+            tc.constraint_type,
+            (SELECT COUNT(*) 
+             FROM information_schema.key_column_usage kcu 
+             WHERE kcu.constraint_name = tc.constraint_name) as key_count,
+            (SELECT COUNT(*) 
+             FROM information_schema.key_column_usage kcu 
+             WHERE kcu.table_name = ccu.table_name 
+             AND kcu.constraint_name IN (
+               SELECT constraint_name 
+               FROM information_schema.table_constraints 
+               WHERE table_name = ccu.table_name 
+               AND constraint_type = 'UNIQUE'
+             )) as unique_keys_count
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
+          JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
+          WHERE tc.constraint_type = 'FOREIGN KEY'
+        ) fk ON c.table_name = fk.table_name AND c.column_name = fk.ku_column_name
+        LEFT JOIN pg_class pgc ON pgc.relname = c.table_name
+        WHERE c.table_name = $1 AND c.table_schema = 'public'
+        ORDER BY c.ordinal_position
+      `,
+      values: [tableName],
+    };
+
+    const columnResult = await client.query(columnQuery);
+
+    // // Transform the result to match our interface
+    const columns = columnResult.rows.map((row: IDatabaseRow) => ({
+      columnName: String(row.column_name),
+      dataType: String(row.data_type),
+      isNullable: row.is_nullable === 'YES',
+      isPrimaryKey: Boolean(row.is_primary_key),
+      isForeignKey: Boolean(row.is_foreign_key),
+      referencedTable: row.foreign_table_name ? String(row.foreign_table_name) : undefined,
+      referencedColumn: row.foreign_column_name ? String(row.foreign_column_name) : undefined,
+      columnComment: row.column_comment ? String(row.column_comment) : undefined,
+    }));
+
+    // Get relationships (simplified for now)
+    const relationships = columnResult.rows
+      .filter((row: IDatabaseRow) => row.is_foreign_key)
+      .map((row: IDatabaseRow) => {
+        // If the foreign key references a unique constraint, it's one-to-one, otherwise many-to-one
+        const isOneToOne = Number(row.unique_keys_count) > 0;
+        const type = isOneToOne ? 'one-to-one' : 'many-to-one';
+        return {
+          type: type as ITableRelationship['type'],
+          targetTable: String(row.foreign_table_name),
+          foreignKey: String(row.column_name),
+          description: `Foreign key relationship to ${String(row.foreign_table_name)}`,
+        };
+      });
+
+    return {
+      columns,
+      relationships,
+    };
+  }
+
+  private async generateTableMetadataWithAgent(
+    tableName: string,
+    tableSchema: ITableSchemaInput,
+    dbConnectionId: string
+  ) {
+    // Use the MetadataService to generate metadata with MCP agent
+    const metadata = await this.generateTableMetadata(tableName, tableSchema, dbConnectionId);
+    // Save the generated metadata to the database
+    // await this.metadataService.saveTableMetadata(metadata);
+
+    return metadata;
+  }
 
   /**
    * Call the MCP agent to generate metadata for a table

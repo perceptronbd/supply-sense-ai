@@ -1,7 +1,8 @@
 import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable } from '@nestjs/common';
-import type { ITableRelationship, ITableSchemaInput } from '@supplysense/types';
-import { type CaptureMetadataDto, SaveDbConnectionDto } from '../dto/db-connect.dto';
+import type { IDatabaseClient } from '@supplysense/types';
+import { SaveDbConnectionDto } from '../dto/db-connect.dto';
+import type { TableRelationshipDto } from '../dto/table-relationship.dto';
 import {
   closeAllConnections,
   decryptPassword,
@@ -12,28 +13,12 @@ import {
   withDbConnection,
 } from '../helpers/db-connection.helper';
 import type { DbCredentials, SaveConnectionResult } from '../types/db-connection.type';
-import { MetadataService } from './metadata.service';
-
-interface DatabaseClient {
-  query(text: string): Promise<{ rows: DatabaseRow[] }>;
-  query(config: {
-    text: string;
-    values: unknown[];
-  }): Promise<{ rows: DatabaseRow[] }>;
-}
-
-interface DatabaseRow {
-  [key: string]: unknown;
-}
 
 @Injectable()
 export class OnboardingService {
   private readonly encryptionKey: string;
 
-  constructor(
-    @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(MetadataService) private readonly metadataService: MetadataService
-  ) {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     // Use environment variable for encryption key
     this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
     if (!this.encryptionKey) {
@@ -191,179 +176,29 @@ export class OnboardingService {
       return data;
     });
   }
-
-  async captureMetadata(dto: CaptureMetadataDto) {
-    const connections = await this.getDbConnections(dto.companyId);
-
-    if (connections.length === 0) {
-      throw new Error('No database connections found for this company');
-    }
-
-    // If dbConnectionId is provided, use that specific connection
-    if (!dto.dbConnectionId) {
-      throw new Error('No dbConnectionId provided');
-    }
-
-    const connection = connections.find((conn) => conn.id === dto.dbConnectionId);
-    if (!connection) {
-      throw new Error('Specified database connection not found');
-    }
-
-    const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
-
-    // Save the generated metadata to the database
-    // const savedMetadata = await this.saveTableMetadata(generatedMetadata);
-
-    return {
-      success: true,
-      message: 'Metadata captured and saved successfully',
-      metadata: generatedMetadata,
-    };
-  }
-
-  private async captureMetadataForConnection(
-    connection: DbCredentials & { id: string; title?: string },
-    tables: Array<{ tableName: string }>
-  ) {
-    return withDbConnection(connection, async (client) => {
-      // Extract table names from the tables array
-      const tableNames = tables.map((table) => table.tableName);
-
-      const metadataResults = [];
-
-      for (const tableName of tableNames) {
-        try {
-          // Get detailed table schema
-          const tableSchema = await this.getTableSchema(client, tableName);
-          //Call MCP agent to generate metadata
-          const metadata = await this.generateTableMetadataWithAgent(
-            tableName,
-            tableSchema,
-            connection.id
-          );
-          metadataResults.push(metadata);
-        } catch (error) {
-          console.error(`Error processing table ${tableName}:`, error);
-          // Continue with other tables even if one fails
-        }
-      }
-
-      return {
-        dbConnectionId: connection.id,
-        connectionTitle: connection.title || 'Default Connection',
-        generatedMetadata: metadataResults,
-      };
+  /**
+   * Get database connection for a company by ID
+   */
+  async getCompanyConnection(companyId: string, dbConnectionId: string) {
+    // Find the company's database connection
+    const connection = await this.prisma.dbConnection.findFirst({
+      where: { companyId, id: dbConnectionId },
     });
-  }
+    if (!connection) {
+      throw new Error('Database connection not found');
+    }
 
-  private async getTableSchema(
-    client: DatabaseClient,
-    tableName: string
-  ): Promise<ITableSchemaInput> {
-    // Get column information
-    const columnQuery = {
-      text: `
-        SELECT 
-          c.column_name,
-          c.data_type,
-          c.is_nullable,
-          c.column_default,
-          c.character_maximum_length,
-          c.numeric_precision,
-          c.numeric_scale,
-          CASE WHEN pk.column_name IS NOT NULL THEN true ELSE false END as is_primary_key,
-          CASE WHEN fk.ku_column_name IS NOT NULL THEN true ELSE false END as is_foreign_key,
-          fk.foreign_table_name,
-          fk.foreign_column_name,
-          col_description(pgc.oid, c.ordinal_position) as column_comment
-        FROM information_schema.columns c
-        LEFT JOIN (
-          SELECT ku.table_name, ku.column_name
-          FROM information_schema.table_constraints tc
-          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
-          WHERE tc.constraint_type = 'PRIMARY KEY'
-        ) pk ON c.table_name = pk.table_name AND c.column_name = pk.column_name
-        LEFT JOIN (
-          SELECT 
-            ku.table_name, 
-            ku.column_name AS ku_column_name,
-            ccu.table_name AS foreign_table_name,
-            ccu.column_name AS foreign_column_name,
-            tc.constraint_type,
-            (SELECT COUNT(*) 
-             FROM information_schema.key_column_usage kcu 
-             WHERE kcu.constraint_name = tc.constraint_name) as key_count,
-            (SELECT COUNT(*) 
-             FROM information_schema.key_column_usage kcu 
-             WHERE kcu.table_name = ccu.table_name 
-             AND kcu.constraint_name IN (
-               SELECT constraint_name 
-               FROM information_schema.table_constraints 
-               WHERE table_name = ccu.table_name 
-               AND constraint_type = 'UNIQUE'
-             )) as unique_keys_count
-          FROM information_schema.table_constraints tc
-          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
-          JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
-          WHERE tc.constraint_type = 'FOREIGN KEY'
-        ) fk ON c.table_name = fk.table_name AND c.column_name = fk.ku_column_name
-        LEFT JOIN pg_class pgc ON pgc.relname = c.table_name
-        WHERE c.table_name = $1 AND c.table_schema = 'public'
-        ORDER BY c.ordinal_position
-      `,
-      values: [tableName],
-    };
-
-    const columnResult = await client.query(columnQuery);
-
-    // // Transform the result to match our interface
-    const columns = columnResult.rows.map((row: DatabaseRow) => ({
-      columnName: String(row.column_name),
-      dataType: String(row.data_type),
-      isNullable: row.is_nullable === 'YES',
-      isPrimaryKey: Boolean(row.is_primary_key),
-      isForeignKey: Boolean(row.is_foreign_key),
-      referencedTable: row.foreign_table_name ? String(row.foreign_table_name) : undefined,
-      referencedColumn: row.foreign_column_name ? String(row.foreign_column_name) : undefined,
-      columnComment: row.column_comment ? String(row.column_comment) : undefined,
-    }));
-
-    // Get relationships (simplified for now)
-    const relationships = columnResult.rows
-      .filter((row: DatabaseRow) => row.is_foreign_key)
-      .map((row: DatabaseRow) => {
-        // If the foreign key references a unique constraint, it's one-to-one, otherwise many-to-one
-        const isOneToOne = Number(row.unique_keys_count) > 0;
-        const type = isOneToOne ? 'one-to-one' : 'many-to-one';
-        return {
-          type: type as ITableRelationship['type'],
-          targetTable: String(row.foreign_table_name),
-          foreignKey: String(row.column_name),
-          description: `Foreign key relationship to ${String(row.foreign_table_name)}`,
-        };
-      });
-
+    // Prepare DbCredentials object with decrypted password
     return {
-      columns,
-      relationships,
+      host: connection.host,
+      port: connection.port,
+      database: connection.database,
+      username: connection.username,
+      password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
+      sslEnabled: connection.sslEnabled,
+      dbConnectionId: connection.id,
+      title: connection.title,
     };
-  }
-
-  private async generateTableMetadataWithAgent(
-    tableName: string,
-    tableSchema: ITableSchemaInput,
-    dbConnectionId: string
-  ) {
-    // Use the MetadataService to generate metadata with MCP agent
-    const metadata = await this.metadataService.generateTableMetadata(
-      tableName,
-      tableSchema,
-      dbConnectionId
-    );
-    // Save the generated metadata to the database
-    // await this.metadataService.saveTableMetadata(metadata);
-
-    return metadata;
   }
 
   /**
@@ -389,13 +224,112 @@ export class OnboardingService {
 
       return connections.map((connection) => ({
         ...connection,
-        id: connection.id,
+        dbConnectionId: connection.id,
         title: connection.title,
         password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
       }));
     } catch (error) {
       console.error('Failed to retrieve database connections:', error);
       throw new Error('Failed to retrieve database connections');
+    }
+  }
+
+  /**
+   * Get table relationships for a company's database connection
+   */
+  async getTableRelationships(companyId: string, dbConnectionId: string) {
+    try {
+      // Find the company's database connection
+      const connection = await this.getCompanyConnection(companyId, dbConnectionId);
+      // Prepare DbCredentials object with decrypted password
+
+      // Query foreign key relationships from the database
+      return await withDbConnection(connection, async (client: IDatabaseClient) => {
+        const { rows } = await client.query({
+          text: `
+            SELECT
+              tc.table_name AS foreign_table,
+              kcu.column_name AS foreign_column,
+              ccu.table_name AS primary_table,
+              ccu.column_name AS primary_column
+            FROM information_schema.table_constraints AS tc
+            JOIN information_schema.key_column_usage AS kcu
+              ON tc.constraint_name = kcu.constraint_name
+            JOIN information_schema.constraint_column_usage AS ccu
+              ON ccu.constraint_name = tc.constraint_name
+            WHERE constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema = $1;
+          `,
+          values: ['public'], // Using public schema by default
+        });
+
+        // Format the results to match our DTO
+        return rows.map((row) => ({
+          tableName: row.foreign_table as string,
+          columnName: row.foreign_column as string,
+          refTable: row.primary_table as string,
+          refColumn: row.primary_column as string,
+          isConfirmed: false, // Default to false for new relationships
+          dbConnectionId: connection.dbConnectionId,
+        }));
+      });
+    } catch (error) {
+      console.error('Failed to retrieve table relationships:', error);
+      throw new Error(`Failed to retrieve table relationships: ${error.message}`);
+    }
+  }
+
+  /**
+   * Upsert table relationships for a company
+   */
+  async upsertTableRelationships(data: {
+    companyId: string;
+    dbConnectionId: string;
+    relationships: TableRelationshipDto[];
+  }) {
+    try {
+      // Find the company's database connection
+      const connection = await this.getCompanyConnection(data.companyId, data.dbConnectionId);
+      if (!connection) {
+        throw new Error('Database connection not found');
+      }
+
+      // For each relationship, create or update in the database
+      const results = await Promise.all(
+        data.relationships.map(async (relationship) => {
+          return this.prisma.tableRelations.upsert({
+            where: {
+              unique_table_relation: {
+                dbConnectionId: data.dbConnectionId,
+                tableName: relationship.tableName,
+                columnName: relationship.columnName,
+              },
+            },
+            update: {
+              refTable: relationship.refTable,
+              refColumn: relationship.refColumn,
+              isConfirmed: relationship.isConfirmed || false,
+            },
+            create: {
+              dbConnectionId: data.dbConnectionId,
+              tableName: relationship.tableName,
+              columnName: relationship.columnName,
+              refTable: relationship.refTable,
+              refColumn: relationship.refColumn,
+              isConfirmed: relationship.isConfirmed || false,
+            },
+          });
+        })
+      );
+
+      return {
+        success: true,
+        count: results.length,
+        message: `Successfully saved ${results.length} table relationships`,
+      };
+    } catch (error) {
+      console.error('Failed to save table relationships:', error);
+      throw new Error(`Failed to save table relationships: ${error.message}`);
     }
   }
 

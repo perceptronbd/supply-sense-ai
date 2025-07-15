@@ -11,12 +11,9 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import {
-  CaptureMetadataDto,
-  GetTablesDto,
-  SaveDbConnectionDto,
-  TableMetadataDto,
-} from './dto/db-connect.dto';
+import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
+import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
+import type { GetRelationshipsDto, UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';
 
@@ -50,11 +47,32 @@ export class DbConnectionController {
   @Post('/:companyId/capture-metadata')
   @HttpCode(HttpStatus.OK)
   async captureMetadata(@Body() dto: CaptureMetadataDto) {
-    return await this.onboardingService.captureMetadata(dto);
+    return await this.metadataService.captureMetadata(dto);
   }
   @Post('/:companyId/save-metadata')
   @HttpCode(HttpStatus.CREATED)
   async saveMetadata(@Body() dto: TableMetadataDto) {
     return await this.metadataService.saveTableMetadata(dto);
+  }
+  /**
+   * Get foreign key relationships for selected tables
+   */
+  @Get('/:companyId/:dbConnectionId/relationships')
+  @HttpCode(HttpStatus.OK)
+  async getRelationships(@Param() params: GetRelationshipsDto) {
+    // Should return array of TableRelationshipDto (unconfirmed)
+    return await this.onboardingService.getTableRelationships(
+      params.companyId,
+      params.dbConnectionId
+    );
+  }
+
+  /**
+   * Upsert confirmed table relationships
+   */
+  @Post('/table-relationships')
+  @HttpCode(HttpStatus.CREATED)
+  async upsertRelationships(@Body() dto: UpsertRelationshipsDto) {
+    return await this.onboardingService.upsertTableRelationships(dto);
   }
 }
