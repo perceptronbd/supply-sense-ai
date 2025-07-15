@@ -13,17 +13,21 @@ import {
 } from '@nestjs/common';
 import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
 import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
+import { GetSchemaDto } from './dto/schema.dto';
 import type { GetRelationshipsDto, UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';
+import { SchemaBuilderService } from './services/schema-builder.service';
 
 @Controller('onboarding')
 @UsePipes(new ValidationPipe({ transform: true }))
-export class DbConnectionController {
+export class OnboardingController {
   constructor(
     @Inject(OnboardingService)
     private readonly onboardingService: OnboardingService,
-    @Inject(MetadataService) private readonly metadataService: MetadataService
+    @Inject(MetadataService) private readonly metadataService: MetadataService,
+    @Inject(SchemaBuilderService)
+    private readonly schemaBuilderService: SchemaBuilderService
   ) {}
 
   /**
@@ -74,5 +78,15 @@ export class DbConnectionController {
   @HttpCode(HttpStatus.CREATED)
   async upsertRelationships(@Body() dto: UpsertRelationshipsDto) {
     return await this.onboardingService.upsertTableRelationships(dto);
+  }
+
+  /**
+   * Get the cached schema for a company's database connection
+   * If the cache is expired (24h), it will rebuild the schema
+   */
+  @Get('/:companyId/:dbConnectionId/schema')
+  @HttpCode(HttpStatus.OK)
+  async getSchema(@Param() params: GetSchemaDto) {
+    return await this.schemaBuilderService.getSchema(params.companyId, params.dbConnectionId);
   }
 }

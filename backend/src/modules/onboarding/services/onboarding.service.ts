@@ -1,5 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
 import { SaveDbConnectionDto } from '../dto/db-connect.dto';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
@@ -13,12 +13,17 @@ import {
   withDbConnection,
 } from '../helpers/db-connection.helper';
 import type { DbCredentials, SaveConnectionResult } from '../types/db-connection.type';
+import { SchemaBuilderService } from './schema-builder.service';
 
 @Injectable()
 export class OnboardingService {
   private readonly encryptionKey: string;
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => SchemaBuilderService))
+    private readonly schemaBuilderService: SchemaBuilderService
+  ) {
     // Use environment variable for encryption key
     this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
     if (!this.encryptionKey) {
@@ -322,10 +327,13 @@ export class OnboardingService {
         })
       );
 
+      // After relationships are saved successfully, build and cache the schema
+      await this.schemaBuilderService.buildAndCacheSchema(data.companyId, data.dbConnectionId);
+
       return {
         success: true,
         count: results.length,
-        message: `Successfully saved ${results.length} table relationships`,
+        message: `Successfully saved ${results.length} table relationships and updated schema cache`,
       };
     } catch (error) {
       console.error('Failed to save table relationships:', error);

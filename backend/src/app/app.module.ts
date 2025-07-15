@@ -1,4 +1,4 @@
-import { DbConnectionModule } from '@/modules/onboarding/onboarding.module';
+import { OnboardingModule } from '@/modules/onboarding/onboarding.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
@@ -43,7 +43,7 @@ import { PrismaModule } from './prisma.module';
     ChatModule,
     RoleModule,
     UserModule,
-    DbConnectionModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [AppService, Reflector],
