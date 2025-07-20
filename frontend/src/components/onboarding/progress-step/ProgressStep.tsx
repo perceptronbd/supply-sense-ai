@@ -1,71 +1,57 @@
 import { Text } from '@/components/ui/Text';
 import { cn } from '@/lib/utils';
 import { Circle } from '.';
+
 interface IProps {
   currentStep: number;
 }
 
+const steps = [
+  { label: 'Database Connection' },
+  { label: 'Table Discovery & Selection' },
+  { label: 'Metadata Capture' },
+  { label: 'Relationship Confirmation' },
+];
+
 const ProgressStep = ({ currentStep }: IProps) => {
-  const isActive = (step: number) => step < currentStep || step === currentStep;
+  const isActive = (step: number) => step === currentStep;
+  const completeStep = (step: number) => step < currentStep;
+  const renderLine = (step: number) => completeStep(step) || isActive(step);
 
   return (
-    <div className="flex items-center gap-x-8 ">
-      {/* step one */}
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <Circle variant={isActive(1) ? 'active' : 'inactive'} />
-        <div
-          className={cn(
-            'h-px w-full absolute top-1/2 left-20 z-20 translate-x-0 -translate-y-4',
-            isActive(1) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Text variant={'bodySmall'}>Database Connection</Text>
-      </div>
-      {/* step two */}
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <div
-          className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            isActive(2) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Circle variant={isActive(2) ? 'active' : 'inactive'} />
-        <Text variant={'bodySmall'}>Table Discovery & Selection</Text>
-        <div
-          className={cn(
-            'h-px w-full absolute top-1/2 left-14 z-20 translate-x-0 -translate-y-4',
-            isActive(2) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-      </div>
-
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <div
-          className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            isActive(3) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Circle variant={isActive(3) ? 'active' : 'inactive'} />
-        <Text variant={'bodySmall'}>Metadata Capture</Text>
-        <div
-          className={cn(
-            'h-px w-full absolute top-1/2 left-20 z-20 translate-x-0 -translate-y-4',
-            isActive(3) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-      </div>
-
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <div
-          className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            isActive(4) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Circle variant={isActive(4) ? 'active' : 'inactive'} />
-        <Text variant={'bodySmall'}>Relationship Confirmation</Text>
-      </div>
+    <div className="flex items-center gap-x-8">
+      {steps.map((step, idx) => {
+        const stepNum = idx + 1;
+        return (
+          <div key={step.label} className="flex items-center flex-col gap-y-2 relative">
+            {/* Left line for all except first step */}
+            {stepNum !== 1 && (
+              <div
+                className={cn(
+                  'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
+                  renderLine(stepNum) ? 'bg-primary' : 'bg-default-500'
+                )}
+              />
+            )}
+            <Circle
+              variant={isActive(stepNum) ? 'active' : 'inactive'}
+              isComplete={completeStep(stepNum)}
+            />
+            <Text variant="bodySmall">{step.label}</Text>
+            {/* Right line for all except last step */}
+            {stepNum !== steps.length && (
+              <div
+                className={cn(
+                  `h-px w-full absolute top-1/2 left-${
+                    stepNum === 2 ? '14' : '20'
+                  } z-20 translate-x-0 -translate-y-4`,
+                  renderLine(stepNum) ? 'bg-primary' : 'bg-default-500'
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

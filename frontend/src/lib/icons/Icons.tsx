@@ -1,7 +1,9 @@
+import { Check } from 'lucide-react';
 import type { SVGProps } from 'react';
 type IconType = SVGProps<SVGSVGElement>;
 
 export const Icons = {
+  Check,
   Logo: (props: IconType) => (
     <svg
       {...props}
