@@ -50,7 +50,7 @@ export function LogoLoader({
       {/* Loading Text */}
       {showText && (
         <div className="flex flex-col items-center gap-2">
-          <Text variant={text} weight="semiBold" className={`font-display ${colorClass}`} as="div">
+          <Text variant={text} weight="semiBold" className={`font-manrope ${colorClass}`} as="div">
             Supply Chain AI
           </Text>
           <Text variant="bodySmall" className="text-foreground-500 animate-pulse" as="div">
