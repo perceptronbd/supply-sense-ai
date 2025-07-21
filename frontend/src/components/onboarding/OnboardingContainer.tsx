@@ -1,10 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { DbConnection, MetadataCapture, TableDiscoverySelection } from '.';
-import { ProgressStep } from './progress-step';
+import {
+  DbConnection,
+  MetadataCapture,
+  ProgressStep,
+  RelationshipConfirmation,
+  TableDiscoverySelection,
+} from '.';
 
 const OnboardingContainer = () => {
-  const [currentStep] = useState(3);
+  const [currentStep] = useState(4);
   return (
     <section className="h-screen flex flex-col py-12 w-full container gap-y-7">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 flex-grow">
@@ -14,6 +19,8 @@ const OnboardingContainer = () => {
         {currentStep === 2 && <TableDiscoverySelection />}
         {/* step three - metadata capture */}
         {currentStep === 3 && <MetadataCapture />}
+        {/* step four - relationship confirmation */}
+        {currentStep === 4 && <RelationshipConfirmation />}
       </div>
       {/* progress step */}
       <ProgressStep currentStep={currentStep} />

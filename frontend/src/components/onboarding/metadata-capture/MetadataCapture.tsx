@@ -9,6 +9,7 @@ const MetadataCapture = () => {
         header="Help the Agent"
         headerHighlight="Understand Your Data"
         description="Provide a short description for each table so the agent knows how to interpret your schema."
+        as="p"
       />
 
       {/* right side form */}
