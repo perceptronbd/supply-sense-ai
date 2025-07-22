@@ -33,12 +33,6 @@ export class DbCredentialsDto {
   title?: string;
 }
 
-export class TestConnectionDto {
-  @ValidateNested()
-  @Type(() => DbCredentialsDto)
-  credentials: DbCredentialsDto;
-}
-
 export class SaveDbConnectionDto {
   @IsString()
   companyId: string;

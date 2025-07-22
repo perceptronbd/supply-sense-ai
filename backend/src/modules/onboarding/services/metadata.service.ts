@@ -1,6 +1,6 @@
-import { PrismaService } from '@/app/prisma.service';
-import { ConnectionsService } from '@/modules/connections/connections.service';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from "@/app/prisma.service";
+import { ConnectionsService } from "@/modules/connections/connections.service";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import type {
   IDatabaseClient,
   IDatabaseRow,
@@ -10,12 +10,13 @@ import type {
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
-} from '@supplysense/types';
-import { withDbConnection } from 'src/helpers/db-connection.helper';
-import { McpClientService } from '../../chat/services/mcp-client.service';
-import { GET_TABLES_QUERY } from '../constant/table-schema';
-import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
-import type { DbCredentials } from '../types/db-connection.type';
+} from "@supplysense/types";
+import { withDbConnection } from "src/helpers/db-connection.helper";
+import { McpClientService } from "../../chat/services/mcp-client.service";
+import { GET_TABLES_QUERY } from "../constant/table-schema";
+import type { CaptureMetadataDto, TableMetadataDto } from "../dto/metadata.dto";
+import type { DbCredentials } from "../types/db-connection.type";
+import { metadataAgentInstructions } from "../constant/metadata-agent-instraction";
 
 @Injectable()
 export class MetadataService {
@@ -35,14 +36,17 @@ export class MetadataService {
     );
 
     if (!connection) {
-      throw new Error('Specified database connection not found');
+      throw new Error("Specified database connection not found");
     }
 
-    const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
+    const generatedMetadata = await this.captureMetadataForConnection(
+      connection,
+      dto.tables
+    );
 
     return {
       success: true,
-      message: 'Metadata captured and saved successfully',
+      message: "Metadata captured and saved successfully",
       metadata: generatedMetadata,
     };
   }
@@ -62,7 +66,10 @@ export class MetadataService {
           // Get detailed table schema
           const tableSchema = await this.getTableSchema(client, tableName);
           //Call MCP agent to generate metadata
-          const metadata = await this.generateTableMetadata(tableName, tableSchema);
+          const metadata = await this.generateTableMetadata(
+            tableName,
+            tableSchema
+          );
           metadataResults.push(metadata);
         } catch (error) {
           console.error(`Error processing table ${tableName}:`, error);
@@ -72,7 +79,7 @@ export class MetadataService {
 
       return {
         dbConnectionId: connection.dbConnectionId,
-        connectionTitle: connection.title || 'Default Connection',
+        connectionTitle: connection.title || "Default Connection",
         generatedMetadata: metadataResults,
       };
     });
@@ -94,12 +101,18 @@ export class MetadataService {
     const columns = columnResult.rows.map((row: IDatabaseRow) => ({
       columnName: String(row.column_name),
       dataType: String(row.data_type),
-      isNullable: row.is_nullable === 'YES',
+      isNullable: row.is_nullable === "YES",
       isPrimaryKey: Boolean(row.is_primary_key),
       isForeignKey: Boolean(row.is_foreign_key),
-      referencedTable: row.foreign_table_name ? String(row.foreign_table_name) : undefined,
-      referencedColumn: row.foreign_column_name ? String(row.foreign_column_name) : undefined,
-      columnComment: row.column_comment ? String(row.column_comment) : undefined,
+      referencedTable: row.foreign_table_name
+        ? String(row.foreign_table_name)
+        : undefined,
+      referencedColumn: row.foreign_column_name
+        ? String(row.foreign_column_name)
+        : undefined,
+      columnComment: row.column_comment
+        ? String(row.column_comment)
+        : undefined,
     }));
 
     // Get relationships (simplified for now)
@@ -108,12 +121,14 @@ export class MetadataService {
       .map((row: IDatabaseRow) => {
         // Check if THIS foreign key column has a unique constraint
         const isOneToOne = Boolean(row.fk_is_unique);
-        const type = isOneToOne ? 'one-to-one' : 'many-to-one';
+        const type = isOneToOne ? "one-to-one" : "many-to-one";
         return {
-          type: type as ITableRelationship['type'],
+          type: type as ITableRelationship["type"],
           targetTable: String(row.foreign_table_name),
           foreignKey: String(row.column_name),
-          description: `Foreign key relationship to ${String(row.foreign_table_name)}`,
+          description: `Foreign key relationship to ${String(
+            row.foreign_table_name
+          )}`,
         };
       });
 
@@ -134,7 +149,11 @@ export class MetadataService {
     try {
       // In a real implementation, this would call the MCP server
       // For now, we'll simulate the agent response
-      const agentResponse = await this.callMCPAgent(tableName, tableSchema, businessContext);
+      const agentResponse = await this.callMCPTableMetadataAgent(
+        tableName,
+        tableSchema,
+        businessContext
+      );
       return {
         tableName,
         friendlyLabel: agentResponse.friendlyLabel,
@@ -151,7 +170,9 @@ export class MetadataService {
   /**
    * Save generated metadata to the database
    */
-  async saveTableMetadata(input: TableMetadataDto): Promise<ITableMetadataRecord> {
+  async saveTableMetadata(
+    input: TableMetadataDto
+  ): Promise<ITableMetadataRecord> {
     const { companyId, ...data } = input;
     try {
       const isValidConnectionId = await this.prisma.dbConnection.findUnique({
@@ -159,7 +180,7 @@ export class MetadataService {
       });
 
       if (!isValidConnectionId) {
-        throw new Error('Invalid database connection');
+        throw new Error("Invalid database connection");
       }
       // Save the metadata record
       const metadataRecord = await this.prisma.tableMetadata.create({
@@ -167,15 +188,15 @@ export class MetadataService {
       });
       return metadataRecord;
     } catch (error) {
-      console.error('Error saving metadata for table ', error);
-      throw new Error('Failed to save metadata for table');
+      console.error("Error saving metadata for table ", error);
+      throw new Error("Failed to save metadata for table");
     }
   }
 
   /**
    * Call the MCP agent to generate metadata for a table
    */
-  private async callMCPAgent(
+  private async callMCPTableMetadataAgent(
     tableName: string,
     tableSchema: ITableSchemaInput,
     businessContext?: string
@@ -185,48 +206,30 @@ export class MetadataService {
       const toolInput = {
         tableName,
         tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
+        businessContext:
+          businessContext || `Database table analysis for ${tableName}`,
       };
 
-      // Create a more explicit and structured prompt for the MCP agent
-      const query = [
-        'You are an expert data analyst. Your task is to analyze the following database table and generate structured metadata for it.',
-        '',
-        `Table Name: "${tableName}"`,
-        'Table Schema:',
-        JSON.stringify(tableSchema, null, 2),
-        businessContext ? `Business Context: ${businessContext}` : '',
-        '',
-        'Please provide the following metadata as a JSON object with these fields:',
-        '{',
-        '  "tableName": string, // The table\'s name',
-        '  "friendlyLabel": string, // A human-friendly label for the table',
-        '  "purpose": string, // A concise business purpose for this table (do not use asterisks or markdown)',
-        '  "updateFrequency": string, // One of: "real-time", "daily", "weekly", "monthly", "rarely"',
-        '  "sampleQuestions": string[] // 5-8 diverse, creative sample questions users might ask about this data',
-        '}',
-        '',
-        'Use the analyze-table-metadata tool with this input:',
-        JSON.stringify(toolInput, null, 2),
-        '',
-        'Important:',
-        '- Do NOT use markdown or asterisks in any field values.',
-        '- Make sure the JSON is valid and all fields are present.',
-        '- Sample questions should be unique, relevant, and phrased as natural questions.',
-        '- The purpose should be a single, clear sentence.',
-      ]
-        .filter(Boolean)
-        .join('\n');
+      const query = metadataAgentInstructions({
+        tableName,
+        tableSchema,
+        toolInput,
+        businessContext,
+      });
+
       // Call the MCP agent through the client service
       const response = await this.mcpClient.querySupplyChainAgent(query, {
         tableName,
         tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
+        businessContext:
+          businessContext || `Database table analysis for ${tableName}`,
       });
-      this.logger.log(`MCP agent response for table ${tableName}: ${JSON.stringify(response)}`);
+      this.logger.log(
+        `MCP agent response for table ${tableName}: ${JSON.stringify(response)}`
+      );
 
       if (!response.success) {
-        throw new Error(response.error || 'MCP agent query failed');
+        throw new Error(response.error || "MCP agent query failed");
       }
 
       // Parse the response to extract metadata
@@ -235,7 +238,7 @@ export class MetadataService {
 
       try {
         // Try to parse if the response contains JSON
-        const responseText = response.response || '';
+        const responseText = response.response || "";
         const jsonRegex = /\{[\s\S]*\}/;
         const jsonMatch = jsonRegex.exec(responseText);
 
@@ -243,19 +246,29 @@ export class MetadataService {
           const parsedData = JSON.parse(jsonMatch[0]);
           metadata = {
             tableName: parsedData.tableName || tableName,
-            friendlyLabel: parsedData.friendlyLabel || this.generateFriendlyLabel(tableName),
+            friendlyLabel:
+              parsedData.friendlyLabel || this.generateFriendlyLabel(tableName),
             purpose: parsedData.purpose || `Data storage for ${tableName}`,
             updateFrequency:
-              parsedData.updateFrequency || this.determineUpdateFrequency(tableSchema),
+              parsedData.updateFrequency ||
+              this.determineUpdateFrequency(tableSchema),
             sampleQuestions:
-              parsedData.sampleQuestions || this.generateBasicSampleQuestions(tableName),
+              parsedData.sampleQuestions ||
+              this.generateBasicSampleQuestions(tableName),
           };
         } else {
           // Fallback: extract information from text response
-          metadata = this.parseTextResponse(responseText, tableName, tableSchema);
+          metadata = this.parseTextResponse(
+            responseText,
+            tableName,
+            tableSchema
+          );
         }
       } catch (parseError) {
-        console.warn('Failed to parse MCP response, using fallback logic:', parseError);
+        console.warn(
+          "Failed to parse MCP response, using fallback logic:",
+          parseError
+        );
         // Fallback to local generation
         metadata = {
           tableName,
@@ -285,57 +298,68 @@ export class MetadataService {
     return (
       tableName
         // Replace underscores and hyphens with spaces
-        .replace(/[_-]/g, ' ')
+        .replace(/[_-]/g, " ")
         // Split camelCase words
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
         // Split consecutive capitals (like "XMLHttpRequest" -> "XML Http Request")
-        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+        .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
         // Capitalize first letter of each word
         .replace(/\b\w/g, (char) => char.toUpperCase())
         // Clean up extra spaces
-        .replace(/\s+/g, ' ')
+        .replace(/\s+/g, " ")
         .trim()
     );
   }
 
-  private generatePurpose(tableName: string, tableSchema: ITableSchemaInput): string {
+  private generatePurpose(
+    tableName: string,
+    tableSchema: ITableSchemaInput
+  ): string {
     const columns = tableSchema.columns || [];
     const hasTimestamps = columns.some(
       (col: ITableColumn) =>
-        col.columnName.includes('created_at') || col.columnName.includes('updated_at')
+        col.columnName.includes("created_at") ||
+        col.columnName.includes("updated_at")
     );
     const hasStatus = columns.some(
-      (col: ITableColumn) => col.columnName.includes('status') || col.columnName.includes('state')
+      (col: ITableColumn) =>
+        col.columnName.includes("status") || col.columnName.includes("state")
     );
 
     if (hasTimestamps && hasStatus) {
       return `Transactional table for managing ${tableName.replace(
         /_/g,
-        ' '
+        " "
       )} with status tracking`;
     }
     if (hasTimestamps) {
-      return `Data table for storing ${tableName.replace(/_/g, ' ')} information`;
+      return `Data table for storing ${tableName.replace(
+        /_/g,
+        " "
+      )} information`;
     }
-    return `Reference table for ${tableName.replace(/_/g, ' ')} data`;
+    return `Reference table for ${tableName.replace(/_/g, " ")} data`;
   }
 
-  private determineUpdateFrequency(tableSchema: ITableSchemaInput): TUpdateFrequency {
+  private determineUpdateFrequency(
+    tableSchema: ITableSchemaInput
+  ): TUpdateFrequency {
     const columns = tableSchema.columns || [];
     const hasStatus = columns.some(
-      (col: ITableColumn) => col.columnName.includes('status') || col.columnName.includes('state')
+      (col: ITableColumn) =>
+        col.columnName.includes("status") || col.columnName.includes("state")
     );
     const hasTimestamps = columns.some((col: ITableColumn) =>
-      col.columnName.includes('updated_at')
+      col.columnName.includes("updated_at")
     );
 
     if (hasStatus && hasTimestamps) {
-      return 'real-time';
+      return "real-time";
     }
     if (hasTimestamps) {
-      return 'daily';
+      return "daily";
     }
-    return 'rarely';
+    return "rarely";
   }
 
   /**
@@ -348,16 +372,20 @@ export class MetadataService {
   ): MCPTableMetadataAgentRes {
     // Extract information using simple text parsing
     const friendlyLabel =
-      this.extractFromText(responseText, 'friendly label') || this.generateFriendlyLabel(tableName);
+      this.extractFromText(responseText, "friendly label") ||
+      this.generateFriendlyLabel(tableName);
 
     const purpose =
-      this.extractFromText(responseText, 'purpose') || this.generatePurpose(tableName, tableSchema);
+      this.extractFromText(responseText, "purpose") ||
+      this.generatePurpose(tableName, tableSchema);
 
     const updateFrequency =
-      this.extractUpdateFrequency(responseText) || this.determineUpdateFrequency(tableSchema);
+      this.extractUpdateFrequency(responseText) ||
+      this.determineUpdateFrequency(tableSchema);
 
     const sampleQuestions =
-      this.extractSampleQuestions(responseText) || this.generateBasicSampleQuestions(tableName);
+      this.extractSampleQuestions(responseText) ||
+      this.generateBasicSampleQuestions(tableName);
 
     return {
       tableName,
@@ -372,7 +400,7 @@ export class MetadataService {
    * Extract specific information from text response
    */
   private extractFromText(text: string, field: string): string | null {
-    const regex = new RegExp(`${field}[:\\s]*(.*?)(?:\n|$)`, 'i');
+    const regex = new RegExp(`${field}[:\\s]*(.*?)(?:\n|$)`, "i");
     const match = regex.exec(text);
     return match ? match[1].trim() : null;
   }
@@ -381,7 +409,7 @@ export class MetadataService {
    * Extract update frequency from text response
    */
   private extractUpdateFrequency(text: string): TUpdateFrequency | null {
-    const frequencies = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'];
+    const frequencies = ["real-time", "daily", "weekly", "monthly", "rarely"];
     for (const freq of frequencies) {
       if (text.toLowerCase().includes(freq)) {
         return freq as TUpdateFrequency;
@@ -395,7 +423,7 @@ export class MetadataService {
    */
   private extractSampleQuestions(text: string): string[] {
     // Simplified regex to find question lists
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     const questions: string[] = [];
     let inQuestionSection = false;
 
@@ -414,7 +442,7 @@ export class MetadataService {
         const questionMatch = /^(?:\d+\.|-|\*|•)\s*(.+)/.exec(trimmedLine);
         if (questionMatch) {
           questions.push(questionMatch[1].trim());
-        } else if (!trimmedLine.includes(':')) {
+        } else if (!trimmedLine.includes(":")) {
           // Plain text question (not a field label)
           questions.push(trimmedLine);
         } else {
