@@ -1,4 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
+import { ConnectionsService } from '@/modules/connections/connections.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type {
   IDatabaseClient,
@@ -10,24 +11,25 @@ import type {
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
+import { withDbConnection } from 'src/helpers/db-connection.helper';
 import { McpClientService } from '../../chat/services/mcp-client.service';
+import { GET_TABLES_QUERY } from '../constant/table-schema';
 import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
-import { withDbConnection } from '../helpers/db-connection.helper';
 import type { DbCredentials } from '../types/db-connection.type';
-import { OnboardingService } from './onboarding.service';
 
 @Injectable()
 export class MetadataService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(McpClientService) private readonly mcpClient: McpClientService,
-    @Inject(OnboardingService) private readonly onboarding: OnboardingService,
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService,
 
     private readonly logger = new Logger(MetadataService.name)
   ) {}
 
   async captureMetadata(dto: CaptureMetadataDto) {
-    const connection = await this.onboarding.getCompanyConnection(
+    const connection = await this.connectionsService.getCompanyConnection(
       dto.companyId,
       dto.dbConnectionId
     );
@@ -37,9 +39,6 @@ export class MetadataService {
     }
 
     const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
-
-    // Save the generated metadata to the database
-    // const savedMetadata = await this.saveTableMetadata(generatedMetadata);
 
     return {
       success: true,
@@ -63,11 +62,7 @@ export class MetadataService {
           // Get detailed table schema
           const tableSchema = await this.getTableSchema(client, tableName);
           //Call MCP agent to generate metadata
-          const metadata = await this.generateTableMetadataWithAgent(
-            tableName,
-            tableSchema,
-            connection.dbConnectionId
-          );
+          const metadata = await this.generateTableMetadata(tableName, tableSchema);
           metadataResults.push(metadata);
         } catch (error) {
           console.error(`Error processing table ${tableName}:`, error);
@@ -89,61 +84,13 @@ export class MetadataService {
   ): Promise<ITableSchemaInput> {
     // Get column information
     const columnQuery = {
-      text: `
-        SELECT 
-          c.column_name,
-          c.data_type,
-          c.is_nullable,
-          c.column_default,
-          c.character_maximum_length,
-          c.numeric_precision,
-          c.numeric_scale,
-          CASE WHEN pk.column_name IS NOT NULL THEN true ELSE false END as is_primary_key,
-          CASE WHEN fk.ku_column_name IS NOT NULL THEN true ELSE false END as is_foreign_key,
-          fk.foreign_table_name,
-          fk.foreign_column_name,
-          col_description(pgc.oid, c.ordinal_position) as column_comment
-        FROM information_schema.columns c
-        LEFT JOIN (
-          SELECT ku.table_name, ku.column_name
-          FROM information_schema.table_constraints tc
-          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
-          WHERE tc.constraint_type = 'PRIMARY KEY'
-        ) pk ON c.table_name = pk.table_name AND c.column_name = pk.column_name
-        LEFT JOIN (
-          SELECT 
-            ku.table_name, 
-            ku.column_name AS ku_column_name,
-            ccu.table_name AS foreign_table_name,
-            ccu.column_name AS foreign_column_name,
-            tc.constraint_type,
-            (SELECT COUNT(*) 
-             FROM information_schema.key_column_usage kcu 
-             WHERE kcu.constraint_name = tc.constraint_name) as key_count,
-            (SELECT COUNT(*) 
-             FROM information_schema.key_column_usage kcu 
-             WHERE kcu.table_name = ccu.table_name 
-             AND kcu.constraint_name IN (
-               SELECT constraint_name 
-               FROM information_schema.table_constraints 
-               WHERE table_name = ccu.table_name 
-               AND constraint_type = 'UNIQUE'
-             )) as unique_keys_count
-          FROM information_schema.table_constraints tc
-          JOIN information_schema.key_column_usage ku ON tc.constraint_name = ku.constraint_name
-          JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
-          WHERE tc.constraint_type = 'FOREIGN KEY'
-        ) fk ON c.table_name = fk.table_name AND c.column_name = fk.ku_column_name
-        LEFT JOIN pg_class pgc ON pgc.relname = c.table_name
-        WHERE c.table_name = $1 AND c.table_schema = 'public'
-        ORDER BY c.ordinal_position
-      `,
+      qry: GET_TABLES_QUERY,
       values: [tableName],
     };
 
     const columnResult = await client.query(columnQuery);
 
-    // // Transform the result to match our interface
+    // Transform the result to match our interface
     const columns = columnResult.rows.map((row: IDatabaseRow) => ({
       columnName: String(row.column_name),
       dataType: String(row.data_type),
@@ -159,8 +106,8 @@ export class MetadataService {
     const relationships = columnResult.rows
       .filter((row: IDatabaseRow) => row.is_foreign_key)
       .map((row: IDatabaseRow) => {
-        // If the foreign key references a unique constraint, it's one-to-one, otherwise many-to-one
-        const isOneToOne = Number(row.unique_keys_count) > 0;
+        // Check if THIS foreign key column has a unique constraint
+        const isOneToOne = Boolean(row.fk_is_unique);
         const type = isOneToOne ? 'one-to-one' : 'many-to-one';
         return {
           type: type as ITableRelationship['type'],
@@ -176,19 +123,6 @@ export class MetadataService {
     };
   }
 
-  private async generateTableMetadataWithAgent(
-    tableName: string,
-    tableSchema: ITableSchemaInput,
-    dbConnectionId: string
-  ) {
-    // Use the MetadataService to generate metadata with MCP agent
-    const metadata = await this.generateTableMetadata(tableName, tableSchema, dbConnectionId);
-    // Save the generated metadata to the database
-    // await this.metadataService.saveTableMetadata(metadata);
-
-    return metadata;
-  }
-
   /**
    * Call the MCP agent to generate metadata for a table
    */
@@ -201,8 +135,6 @@ export class MetadataService {
       // In a real implementation, this would call the MCP server
       // For now, we'll simulate the agent response
       const agentResponse = await this.callMCPAgent(tableName, tableSchema, businessContext);
-      console.log('🚀 ~ MetadataService ~ agentResponse:', agentResponse);
-
       return {
         tableName,
         friendlyLabel: agentResponse.friendlyLabel,
@@ -220,7 +152,6 @@ export class MetadataService {
    * Save generated metadata to the database
    */
   async saveTableMetadata(input: TableMetadataDto): Promise<ITableMetadataRecord> {
-    console.log('🚀 ~ MetadataService ~ input:', input);
     const { companyId, ...data } = input;
     try {
       const isValidConnectionId = await this.prisma.dbConnection.findUnique({
@@ -310,7 +241,6 @@ export class MetadataService {
 
         if (jsonMatch) {
           const parsedData = JSON.parse(jsonMatch[0]);
-          console.log('🚀 ~ parsedData:', parsedData);
           metadata = {
             tableName: parsedData.tableName || tableName,
             friendlyLabel: parsedData.friendlyLabel || this.generateFriendlyLabel(tableName),

@@ -7,7 +7,6 @@ import {
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
 } from '../constants/system-instructions/sample-questions';
-import { analyzeTableMetadataTool } from '../tools/metadata-tool';
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -16,27 +15,12 @@ export interface GenerateQuestionsInput {
   businessContext?: string;
 }
 
-// Define the agent configuration type
-type AgentConfig = {
-  name: string;
-  description: string;
-  instructions: string;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  model: any;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  tools: { [key: string]: any };
-};
-
-// Create the agent configuration
-const agentConfig: AgentConfig = {
+export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   instructions: SAMPLE_QUESTIONS_INSTRUCTION,
   model: google(AI_MODEL_NAME),
-  tools: { analyzeTableMetadataTool },
-};
-
-export const sampleQuestionsAgent = new Agent(agentConfig);
+});
 
 // Custom function to use the agent
 export async function generateSampleQuestions({

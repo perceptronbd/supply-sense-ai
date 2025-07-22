@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nest
 
 import { PrismaService } from '@/app/prisma.service';
 import { SchemaCache } from '@prisma/client';
-import { withDbConnection } from '../helpers/db-connection.helper';
+import { withDbConnection } from 'src/helpers/db-connection.helper';
 import { OnboardingService } from './onboarding.service';
 
 interface TableSchema {

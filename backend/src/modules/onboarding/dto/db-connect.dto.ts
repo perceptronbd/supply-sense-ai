@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class DbCredentialsDto {
   @IsString()
@@ -43,5 +50,10 @@ export class SaveDbConnectionDto {
 
 export class GetTablesDto {
   @IsString()
+  @IsNotEmpty()
   companyId: string;
+
+  @IsString()
+  @IsOptional()
+  dbConnectionId?: string;
 }

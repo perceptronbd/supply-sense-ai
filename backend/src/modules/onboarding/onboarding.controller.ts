@@ -11,6 +11,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ConnectionsService } from '../connections/connections.service';
 import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
 import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
 import { GetSchemaDto } from './dto/schema.dto';
@@ -27,7 +28,9 @@ export class OnboardingController {
     private readonly onboardingService: OnboardingService,
     @Inject(MetadataService) private readonly metadataService: MetadataService,
     @Inject(SchemaBuilderService)
-    private readonly schemaBuilderService: SchemaBuilderService
+    private readonly schemaBuilderService: SchemaBuilderService,
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService
   ) {}
 
   /**
@@ -36,7 +39,7 @@ export class OnboardingController {
   @Post('/db-connect')
   @HttpCode(HttpStatus.CREATED)
   async saveConnection(@Body() dto: SaveDbConnectionDto) {
-    return await this.onboardingService.saveDbConnection(dto);
+    return await this.connectionsService.saveDbConnection(dto);
   }
 
   /**
@@ -45,7 +48,7 @@ export class OnboardingController {
   @Get('/:companyId/tables')
   @HttpCode(HttpStatus.OK)
   async getTables(@Param() dto: GetTablesDto) {
-    return await this.onboardingService.getTables(dto.companyId);
+    return await this.onboardingService.getTables(dto.companyId, dto.dbConnectionId);
   }
 
   @Post('/:companyId/capture-metadata')
@@ -53,6 +56,7 @@ export class OnboardingController {
   async captureMetadata(@Body() dto: CaptureMetadataDto) {
     return await this.metadataService.captureMetadata(dto);
   }
+
   @Post('/:companyId/save-metadata')
   @HttpCode(HttpStatus.CREATED)
   async saveMetadata(@Body() dto: TableMetadataDto) {

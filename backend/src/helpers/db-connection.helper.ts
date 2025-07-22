@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto';
 import { Pool, PoolClient } from 'pg';
-import type { DbCredentials } from '../types/db-connection.type';
+import { ALGORITHM } from '../modules/onboarding/constant';
+import type { DbCredentials } from '../modules/onboarding/types/db-connection.type';
 
 // Module-level connection pools storage
 const connectionPools = new Map<string, Pool>();
@@ -30,18 +31,21 @@ export function formatTableName(tableName: string): string {
   );
 }
 
+// Create a 32-byte key from the encryption key
+export const createEncryptionKey = (encryptionKey: string) => {
+  return crypto.createHash('sha256').update(encryptionKey).digest();
+};
+
 /**
  * Encrypt password for storage
  */
 export function encryptPassword(password: string, encryptionKey: string): string {
   try {
-    const algorithm = 'aes-256-gcm';
     const iv = crypto.randomBytes(16);
 
-    // Create a 32-byte key from the encryption key
-    const key = crypto.createHash('sha256').update(encryptionKey).digest();
+    const key = createEncryptionKey(encryptionKey);
 
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
     let encrypted = cipher.update(password, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -71,10 +75,9 @@ export function decryptPassword(encryptedPassword: string, encryptionKey: string
     const encrypted = parts[2];
 
     // Create a 32-byte key from the encryption key
-    const key = crypto.createHash('sha256').update(encryptionKey).digest();
+    const key = createEncryptionKey(encryptionKey);
 
-    const algorithm = 'aes-256-gcm';
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');

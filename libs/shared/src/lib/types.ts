@@ -311,9 +311,9 @@ export type CreatePermission<
 > = `${TResource}:${TAction}`;
 
 export interface IDatabaseClient {
-  query(text: string): Promise<{ rows: IDatabaseRow[] }>;
+  query(qry: string): Promise<{ rows: IDatabaseRow[] }>;
   query(config: {
-    text: string;
+    qry: string;
     values: unknown[];
   }): Promise<{ rows: IDatabaseRow[] }>;
 }

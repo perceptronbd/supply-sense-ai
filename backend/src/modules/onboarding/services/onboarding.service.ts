@@ -1,131 +1,20 @@
 import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
-import { SaveDbConnectionDto } from '../dto/db-connect.dto';
+import { closeAllConnections, withDbConnection } from 'src/helpers/db-connection.helper';
+import { ConnectionsService } from '../../connections/connections.service';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
-import {
-  closeAllConnections,
-  decryptPassword,
-  encryptPassword,
-  formatTableName,
-  generateConnectionHash,
-  testConnection,
-  withDbConnection,
-} from '../helpers/db-connection.helper';
-import type { DbCredentials, SaveConnectionResult } from '../types/db-connection.type';
 import { SchemaBuilderService } from './schema-builder.service';
 
 @Injectable()
 export class OnboardingService {
-  private readonly encryptionKey: string;
-
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(forwardRef(() => SchemaBuilderService))
-    private readonly schemaBuilderService: SchemaBuilderService
-  ) {
-    // Use environment variable for encryption key
-    this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
-    if (!this.encryptionKey) {
-      throw new Error('DB_ENCRYPTION_KEY environment variable is not set');
-    }
-  }
-
-  /**
-   * Save database connection with full validation and error handling
-   */
-  async saveDbConnection(dto: SaveDbConnectionDto): Promise<SaveConnectionResult> {
-    try {
-      // Validate that the company exists
-      const company = await this.prisma.company.findUnique({
-        where: { id: dto.companyId },
-      });
-
-      if (!company) {
-        return {
-          success: false,
-          message: 'Company not found',
-        };
-      }
-
-      if (!company.isActive) {
-        return {
-          success: false,
-          message: 'Cannot create connection for inactive company',
-        };
-      }
-
-      // Check if connection already exists for this company
-      const existingConnection = await this.prisma.dbConnection.findUnique({
-        where: { companyId: dto.companyId },
-      });
-
-      if (existingConnection) {
-        return {
-          success: false,
-          message: 'Database connection already exists for this company',
-        };
-      }
-
-      // Test connection first
-      const isConnected = await testConnection(dto.credentials);
-      if (!isConnected) {
-        return {
-          success: false,
-          message: 'Cannot save connection - connection test failed',
-        };
-      }
-
-      // Encrypt password
-      const encryptedPassword = encryptPassword(dto.credentials.password, this.encryptionKey);
-
-      // Generate connection hash
-      const connectionHash = generateConnectionHash(dto.credentials);
-
-      // Save to database
-      const savedConnection = await this.prisma.dbConnection.create({
-        data: {
-          companyId: dto.companyId,
-          host: dto.credentials.host,
-          port: dto.credentials.port,
-          database: dto.credentials.database,
-          username: dto.credentials.username,
-          encryptedPassword,
-          title: dto.credentials.title || dto.credentials.database, // Use database name as default title
-          sslEnabled: dto.credentials.sslEnabled || false,
-          connectionHash,
-        },
-      });
-
-      return {
-        success: true,
-        message: 'Connection saved successfully',
-        dbConnectionId: savedConnection.id,
-      };
-    } catch (error) {
-      console.error('Failed to save connection:', error);
-
-      // Handle specific Prisma errors
-      if (error.code === 'P2002') {
-        return {
-          success: false,
-          message: 'A database connection with these details already exists',
-        };
-      }
-
-      if (error.code === 'P2003') {
-        return {
-          success: false,
-          message: 'Invalid company ID - company not found',
-        };
-      }
-
-      return {
-        success: false,
-        message: `Failed to save connection: ${error.message}`,
-      };
-    }
-  }
+    private readonly schemaBuilderService: SchemaBuilderService,
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService
+  ) {}
 
   /*
    * Retrieve the schema of the database tables for a specific company
@@ -133,7 +22,7 @@ export class OnboardingService {
    */
 
   async getTables(companyId: string, dbConnectionId?: string) {
-    const connections = await this.getDbConnections(companyId);
+    const connections = await this.connectionsService.getDbConnections(companyId);
 
     if (connections.length === 0) {
       throw new Error('No database connections found for this company');
@@ -145,98 +34,12 @@ export class OnboardingService {
       if (!connection) {
         throw new Error('Specified database connection not found');
       }
-      return this.getTablesForConnection(connection);
+      return this.connectionsService.getTablesForConnection(connection);
     }
 
-    // Otherwise, get tables from all connections
-    const allTables = {
-      dbConnectionId: '',
-      tables: [] as Array<{ tableName: string; displayName: string }>,
-    };
-    for (const connection of connections) {
-      const data = await this.getTablesForConnection(connection);
-      allTables.dbConnectionId = connection.id;
-      allTables.tables = data.tables;
-    }
-
-    return allTables;
-  }
-
-  private async getTablesForConnection(connection: DbCredentials & { id: string; title?: string }) {
-    return withDbConnection(connection, async (client) => {
-      const result = await client.query(
-        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-      );
-      // Transform the result to include human-readable table names
-      const data = {
-        dbConnectionId: connection.id,
-        tables: [] as Array<{ tableName: string; displayName: string }>,
-      };
-      for (const row of result.rows) {
-        data.tables.push({
-          tableName: row.table_name,
-          displayName: formatTableName(row.table_name),
-        });
-      }
-      return data;
-    });
-  }
-  /**
-   * Get database connection for a company by ID
-   */
-  async getCompanyConnection(companyId: string, dbConnectionId: string) {
-    // Find the company's database connection
-    const connection = await this.prisma.dbConnection.findFirst({
-      where: { companyId, id: dbConnectionId },
-    });
-    if (!connection) {
-      throw new Error('Database connection not found');
-    }
-
-    // Prepare DbCredentials object with decrypted password
-    return {
-      host: connection.host,
-      port: connection.port,
-      database: connection.database,
-      username: connection.username,
-      password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
-      sslEnabled: connection.sslEnabled,
-      dbConnectionId: connection.id,
-      title: connection.title,
-    };
-  }
-
-  /**
-   * Get database connection for a company
-   */
-  async getDbConnections(
-    companyId: string
-  ): Promise<Array<DbCredentials & { id: string; title?: string }>> {
-    try {
-      const connections = await this.prisma.dbConnection.findMany({
-        where: { companyId },
-        select: {
-          id: true,
-          host: true,
-          port: true,
-          database: true,
-          username: true,
-          encryptedPassword: true,
-          sslEnabled: true,
-          title: true,
-        },
-      });
-
-      return connections.map((connection) => ({
-        ...connection,
-        dbConnectionId: connection.id,
-        title: connection.title,
-        password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
-      }));
-    } catch (error) {
-      console.error('Failed to retrieve database connections:', error);
-      throw new Error('Failed to retrieve database connections');
-    }
+    // Otherwise, use the first connection by default
+    const firstConnection = connections[0];
+    return this.connectionsService.getTablesForConnection(firstConnection);
   }
 
   /**
@@ -245,13 +48,16 @@ export class OnboardingService {
   async getTableRelationships(companyId: string, dbConnectionId: string) {
     try {
       // Find the company's database connection
-      const connection = await this.getCompanyConnection(companyId, dbConnectionId);
+      const connection = await this.connectionsService.getCompanyConnection(
+        companyId,
+        dbConnectionId
+      );
       // Prepare DbCredentials object with decrypted password
 
       // Query foreign key relationships from the database
       return await withDbConnection(connection, async (client: IDatabaseClient) => {
         const { rows } = await client.query({
-          text: `
+          qry: `
             SELECT
               tc.table_name AS foreign_table,
               kcu.column_name AS foreign_column,
@@ -294,7 +100,10 @@ export class OnboardingService {
   }) {
     try {
       // Find the company's database connection
-      const connection = await this.getCompanyConnection(data.companyId, data.dbConnectionId);
+      const connection = await this.connectionsService.getCompanyConnection(
+        data.companyId,
+        data.dbConnectionId
+      );
       if (!connection) {
         throw new Error('Database connection not found');
       }
