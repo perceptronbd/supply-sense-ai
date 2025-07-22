@@ -2,10 +2,9 @@
 
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { Send } from 'lucide-react';
-import Image from 'next/image';
 import { useState } from 'react';
-import logo from '../../../public/assets/full-logo.svg';
 import ChatBoxModal from '../ui/ChatBoxModal';
+import { FullLogo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
@@ -20,28 +19,33 @@ const Banner = () => {
 
   return (
     <SectionWrapper>
-      <h1 className="font-display leading-snug text-3xl md:text-5xl font-bold text-foreground text-center mx-auto">
+      {/* logo */}
+      <div className="mx-auto text-center mb-16 mt-4 flex justify-center items-center">
+        <FullLogo className="w-96 text-primary" />
+      </div>
+
+      <h1 className="font-brand text-3xl md:text-5xl font-bold text-foreground text-center mx-auto bg-clip-text text-transparent bg-gradient-to-r from-content1-foreground to-focus ">
         Know Your Operations. Ask Anything. Get Instant Answers
       </h1>
-      <p className="mt-4 mx-auto text-center text-foreground px-6 mb-24">
+      <p className="mt-4 mx-auto text-center text-content2-foreground px-6 mb-20">
         Ask questions like “What’s low in stock at Branch A?” or “Who approved that PO last Friday?”
         — and get real answers from your data instantly.
       </p>
 
       {/* chat box */}
       <div>
-        <Card className="border border-secondary-50 rounded-xl">
+        <Card className="border border-focus rounded-xl">
           <CardHeader className="flex justify-between items-center px-6 py-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <Image src={logo} alt="logo" width={40} height={20} className="w-24" />
+                <FullLogo className="w-24 text-primary" />
               </div>
             </div>
             <Button
               onPress={() => setMessage('')}
               variant="ghost"
               size="sm"
-              className="text-sm border-none text-secondary"
+              className="text-sm border-none text-primary"
             >
               Clear Chat
             </Button>
@@ -58,8 +62,8 @@ const Banner = () => {
                 variant="flat"
                 size="lg"
                 classNames={{
-                  input: 'border-none bg-secondary placeholder:text-secondary',
-                  inputWrapper: 'bg-secondary-50',
+                  input: 'placeholder:text-primary',
+                  inputWrapper: 'bg-default',
                 }}
               />
               <Button
@@ -67,7 +71,7 @@ const Banner = () => {
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                className="border-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary mr-2"
+                className="border-none absolute right-2 top-1/2 -translate-y-1/2 text-primary mr-2"
               >
                 <Send className="" />
               </Button>

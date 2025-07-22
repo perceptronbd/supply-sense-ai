@@ -1,8 +1,6 @@
 export const FullLogo = ({ className }: { className?: string }) => {
   return (
     <svg
-      width="216"
-      height="40"
       viewBox="0 0 216 40"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -25,8 +23,6 @@ export const Logo = ({
 }) => {
   return (
     <svg
-      width="220"
-      height="220"
       viewBox="0 0 220 220"
       className={className}
       fill={bg ? bg : 'none'}
