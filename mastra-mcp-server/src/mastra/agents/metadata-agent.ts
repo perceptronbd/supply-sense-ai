@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
-import { AI_MODEL_NAME } from '../constants';
+import { AI_MODEL_NAME } from '@supplysense/constant';
 import {
   METADATA_AGENT_DESCRIPTION,
   METADATA_AGENT_INSTRUCTIONS,

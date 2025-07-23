@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import type { ITableSchemaInput } from '@supplysense/types';
+import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
 import { generatePurpose } from '../agents/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/sample-questions-agent';
@@ -45,7 +46,7 @@ export const analyzeTableMetadataTool = createTool({
     updateFrequency: z.enum(['real-time', 'daily', 'weekly', 'monthly', 'rarely']),
     sampleQuestions: z.array(z.string()),
   }),
-  execute: async ({ context }: any) => {
+  execute: async ({ context }) => {
     const { tableName, tableSchema } = context as {
       tableName: string;
       tableSchema: unknown;
@@ -142,21 +143,4 @@ function determineUpdateFrequency(
 
   // Default to daily for operational tables
   return 'daily';
-}
-
-function generateFriendlyLabel(tableName: string): string {
-  return (
-    tableName
-      // Replace underscores and hyphens with spaces
-      .replace(/[_-]/g, ' ')
-      // Split camelCase words
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      // Split consecutive capitals (like "XMLHttpRequest" -> "XML Http Request")
-      .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-      // Capitalize first letter of each word
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-      // Clean up extra spaces
-      .replace(/\s+/g, ' ')
-      .trim()
-  );
 }

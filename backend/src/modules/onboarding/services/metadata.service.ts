@@ -11,6 +11,7 @@ import type {
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
+import { generateFriendlyLabel } from '@supplysense/utils';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
 import { McpClientService } from '../../chat/services/mcp-client.service';
 import { metadataAgentInstructions } from '../constant/metadata-agent-instructions';
@@ -226,7 +227,7 @@ export class MetadataService {
           const parsedData = JSON.parse(jsonMatch[0]);
           metadata = {
             tableName: parsedData.tableName || tableName,
-            friendlyLabel: parsedData.friendlyLabel || this.generateFriendlyLabel(tableName),
+            friendlyLabel: parsedData.friendlyLabel || generateFriendlyLabel(tableName),
             purpose: parsedData.purpose || `Data storage for ${tableName}`,
             updateFrequency:
               parsedData.updateFrequency || this.determineUpdateFrequency(tableSchema),
@@ -242,7 +243,7 @@ export class MetadataService {
         // Fallback to local generation
         metadata = {
           tableName,
-          friendlyLabel: this.generateFriendlyLabel(tableName),
+          friendlyLabel: generateFriendlyLabel(tableName),
           purpose: this.generatePurpose(tableName, tableSchema),
           updateFrequency: this.determineUpdateFrequency(tableSchema),
           sampleQuestions: this.generateBasicSampleQuestions(tableName),
@@ -256,29 +257,12 @@ export class MetadataService {
       // Fallback to local generation if MCP fails
       return {
         tableName,
-        friendlyLabel: this.generateFriendlyLabel(tableName),
+        friendlyLabel: generateFriendlyLabel(tableName),
         purpose: this.generatePurpose(tableName, tableSchema),
         updateFrequency: this.determineUpdateFrequency(tableSchema),
         sampleQuestions: this.generateBasicSampleQuestions(tableName),
       };
     }
-  }
-
-  private generateFriendlyLabel(tableName: string): string {
-    return (
-      tableName
-        // Replace underscores and hyphens with spaces
-        .replace(/[_-]/g, ' ')
-        // Split camelCase words
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        // Split consecutive capitals (like "XMLHttpRequest" -> "XML Http Request")
-        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-        // Capitalize first letter of each word
-        .replace(/\b\w/g, (char) => char.toUpperCase())
-        // Clean up extra spaces
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
   }
 
   private generatePurpose(tableName: string, tableSchema: ITableSchemaInput): string {
@@ -331,7 +315,7 @@ export class MetadataService {
   ): MCPTableMetadataAgentRes {
     // Extract information using simple text parsing
     const friendlyLabel =
-      this.extractFromText(responseText, 'friendly label') || this.generateFriendlyLabel(tableName);
+      this.extractFromText(responseText, 'friendly label') || generateFriendlyLabel(tableName);
 
     const purpose =
       this.extractFromText(responseText, 'purpose') || this.generatePurpose(tableName, tableSchema);
@@ -414,7 +398,7 @@ export class MetadataService {
    * Generate basic sample questions as fallback
    */
   private generateBasicSampleQuestions(tableName: string): string[] {
-    const friendlyName = this.generateFriendlyLabel(tableName);
+    const friendlyName = generateFriendlyLabel(tableName);
     return [
       `What is the total count of records in ${friendlyName}?`,
       `What are the most recent entries in ${friendlyName}?`,

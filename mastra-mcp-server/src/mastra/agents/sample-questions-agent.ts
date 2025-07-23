@@ -1,7 +1,7 @@
 import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
+import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
-import { AI_MODEL_NAME } from '../constants';
 import {
   SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   SAMPLE_QUESTIONS_AGENT_NAME,
