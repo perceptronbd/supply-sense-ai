@@ -1,4 +1,5 @@
 import { createTool } from '@mastra/core/tools';
+import type { ITableSchemaInput } from '@supplysense/types';
 import { z } from 'zod';
 import { generatePurpose } from '../agents/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/sample-questions-agent';
@@ -47,7 +48,7 @@ export const analyzeTableMetadataTool = createTool({
   execute: async ({ context }: any) => {
     const { tableName, tableSchema } = context as {
       tableName: string;
-      tableSchema: any;
+      tableSchema: unknown;
       businessContext?: string;
     };
 
@@ -68,12 +69,12 @@ export const analyzeTableMetadataTool = createTool({
 
       const purpose = await generatePurpose({
         tableName,
-        tableSchema,
+        tableSchema: tableSchema as ITableSchemaInput,
         businessContext: context.businessContext || `Database table analysis for ${tableName}`,
       });
       const sampleQuestions = await generateSampleQuestions({
         tableName,
-        tableSchema,
+        tableSchema: tableSchema as ITableSchemaInput,
         purpose,
         businessContext: context.businessContext || `Database table analysis for ${tableName}`,
       });

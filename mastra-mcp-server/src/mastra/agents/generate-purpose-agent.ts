@@ -1,5 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
+import type { ITableSchemaInput } from '@supplysense/types';
 import { AI_MODEL_NAME } from '../constants';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
@@ -15,9 +16,10 @@ export const generatePurposeAgent = new Agent({
 });
 
 // Custom function to use the agent for generating table purpose
+
 export interface GeneratePurposeInput {
   tableName: string;
-  tableSchema: any;
+  tableSchema: ITableSchemaInput;
   businessContext?: string;
 }
 

@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@supplysense/constant": ["libs/shared/constant/src/index.ts"],
       "@supplysense/types": ["libs/shared/src/index.ts"]
     },
     "noImplicitAny": true
