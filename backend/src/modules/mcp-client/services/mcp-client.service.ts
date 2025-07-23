@@ -56,6 +56,7 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     await this.disconnect();
   }
+
   private async initializeMcpClient(): Promise<void> {
     try {
       this.logger.log('Initializing MCP client connection to Mastra server...');
@@ -74,7 +75,9 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       // Get tools from MCP server and initialize agent
       const tools = await this.mcpClient.getTools();
       this.logger.log(
-        `📋 Loaded ${Object.keys(tools).length} tools from MCP server: ${Object.keys(tools).join(', ')}`
+        `📋 Loaded ${
+          Object.keys(tools).length
+        } tools from MCP server: ${Object.keys(tools).join(', ')}`
       );
 
       // Initialize agent with Gemini model and MCP tools
@@ -86,6 +89,9 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         model: google('gemini-2.0-flash'),
         tools, // Pass MCP tools directly to the agent
       });
+
+      // Test the connection to ensure it's working
+      await this.testConnection();
 
       this.isConnected = true;
       this.logger.log('✅ MCP client and agent successfully initialized');
@@ -136,7 +142,8 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Connection test failed:', error);
       throw error;
     }
-  } /**
+  }
+  /**
    * Get tools dynamically for a specific request/user context
    */
   async getToolsets(): Promise<Record<string, unknown>> {
@@ -168,7 +175,8 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Failed to get tools from MCP server:', error);
       return {};
     }
-  } /**
+  }
+  /**
    * Query the supply chain agent using natural language
    * The agent will automatically select and use appropriate MCP tools
    */
@@ -231,7 +239,11 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
       );
 
       // Create a natural language request for the workflow
-      const workflowQuery = `Execute a supply chain workflow with the following parameters: ${JSON.stringify(workflowInput, null, 2)}`;
+      const workflowQuery = `Execute a supply chain workflow with the following parameters: ${JSON.stringify(
+        workflowInput,
+        null,
+        2
+      )}`;
 
       // Use the agent to process the workflow request
       const response = await this.agent.generate(
@@ -392,5 +404,19 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         timestamp: new Date().toISOString(),
       };
     }
+  }
+
+  /**
+   * Get MCP client instance for direct access
+   */
+  getMcpClient(): MCPClient | null {
+    return this.mcpClient;
+  }
+
+  /**
+   * Check if MCP client is connected
+   */
+  isClientConnected(): boolean {
+    return this.isConnected;
   }
 }

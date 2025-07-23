@@ -1,4 +1,5 @@
 import { createTool } from '@mastra/core/tools';
+import { ANALYZE_METADATA_TOOL } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
@@ -6,9 +7,8 @@ import { generatePurpose } from '../agents/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/sample-questions-agent';
 
 export const analyzeTableMetadataTool = createTool({
-  id: 'analyze-table-metadata',
-  description:
-    'Analyze database table schema and generate intelligent metadata including friendly labels, purpose, update frequency, data sensitivity, and sample questions',
+  id: ANALYZE_METADATA_TOOL.NAME,
+  description: ANALYZE_METADATA_TOOL.DESCRIPTION,
   inputSchema: z.object({
     tableName: z.string().describe('Name of the table to analyze'),
     tableSchema: z

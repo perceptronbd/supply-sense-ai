@@ -1,8 +1,8 @@
+import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AIChatResponse, ChatMessage, QueryContext } from '../interfaces/chat.interface';
 import { DatabaseSchemaService } from './database-schema.service';
 import { DynamicSQLService } from './dynamic-sql.service';
-import { McpClientService } from './mcp-client.service';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
 
@@ -12,9 +12,12 @@ export class ChatService {
   constructor(
     @Inject(SessionService) private readonly sessionService: SessionService,
     @Inject(MessageService) private readonly messageService: MessageService,
-    @Inject(DynamicSQLService) private readonly dynamicSQLService: DynamicSQLService,
-    @Inject(DatabaseSchemaService) private readonly databaseSchemaService: DatabaseSchemaService,
-    @Inject(McpClientService) private readonly mcpClientService: McpClientService
+    @Inject(DynamicSQLService)
+    private readonly dynamicSQLService: DynamicSQLService,
+    @Inject(DatabaseSchemaService)
+    private readonly databaseSchemaService: DatabaseSchemaService,
+    @Inject(McpClientService)
+    private readonly mcpClientService: McpClientService
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
   }
@@ -171,7 +174,9 @@ export class ChatService {
       }
 
       this.logger.log(
-        `🔗 MCP connected with ${mcpHealth.toolsCount} tools: ${mcpHealth.availableTools.join(', ')}`
+        `🔗 MCP connected with ${
+          mcpHealth.toolsCount
+        } tools: ${mcpHealth.availableTools.join(', ')}`
       );
 
       // Execute MCP query or workflow
@@ -272,7 +277,9 @@ export class ChatService {
       // Generate suggestions based on the MCP response
       suggestions = this.generateMcpSuggestions(message, response);
     } else {
-      responseMessage = `I encountered an issue with the supply chain analysis: ${response.error || 'Unknown error'}`;
+      responseMessage = `I encountered an issue with the supply chain analysis: ${
+        response.error || 'Unknown error'
+      }`;
 
       if (response.toolsAvailable && response.toolsAvailable.length > 0) {
         responseMessage += `\n\nAvailable tools: ${response.toolsAvailable.join(', ')}`;
@@ -545,7 +552,11 @@ Guidelines:
     try {
       this.logger.log('Starting dynamic SQL query processing');
       this.logger.log(
-        `User context: ${JSON.stringify({ userId, branchId: context.branchId, userRole: context.userRole })}`
+        `User context: ${JSON.stringify({
+          userId,
+          branchId: context.branchId,
+          userRole: context.userRole,
+        })}`
       );
 
       // Use dynamic SQL service for complex natural language queries
@@ -665,7 +676,8 @@ Guidelines:
       }
 
       this.logger.log(
-        `McpClientService querySupplyChainAgent method: ${typeof this.mcpClientService.querySupplyChainAgent}`
+        `McpClientService querySupplyChainAgent method: ${typeof this.mcpClientService
+          .querySupplyChainAgent}`
       );
 
       // Try to execute the supply chain agent query

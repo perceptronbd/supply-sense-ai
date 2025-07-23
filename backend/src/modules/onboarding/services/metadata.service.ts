@@ -1,20 +1,15 @@
 import { PrismaService } from '@/app/prisma.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
+import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type {
   IDatabaseClient,
   IDatabaseRow,
-  ITableColumn,
   ITableMetadataRecord,
   ITableRelationship,
   ITableSchemaInput,
-  MCPTableMetadataAgentRes,
-  TUpdateFrequency,
 } from '@supplysense/types';
-import { generateFriendlyLabel } from '@supplysense/utils';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
-import { McpClientService } from '../../chat/services/mcp-client.service';
-import { metadataAgentInstructions } from '../constant/metadata-agent-instructions';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
 import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';
@@ -23,7 +18,8 @@ import type { DbCredentials } from '../types/db-connection.type';
 export class MetadataService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(McpClientService) private readonly mcpClient: McpClientService,
+    @Inject(TableMetadataAgentService)
+    private readonly tableMetadataAgent: TableMetadataAgentService,
     @Inject(ConnectionsService)
     private readonly connectionsService: ConnectionsService,
 
@@ -126,7 +122,7 @@ export class MetadataService {
   }
 
   /**
-   * Call the MCP agent to generate metadata for a table
+   * Generate metadata for a table using the specialized table metadata agent
    */
   async generateTableMetadata(
     tableName: string,
@@ -134,13 +130,13 @@ export class MetadataService {
     businessContext?: string
   ) {
     try {
-      // In a real implementation, this would call the MCP server
-      // For now, we'll simulate the agent response
-      const agentResponse = await this.callMCPTableMetadataAgent(
+      // Use the dedicated table metadata agent service
+      const agentResponse = await this.tableMetadataAgent.generateTableMetadata({
         tableName,
         tableSchema,
-        businessContext
-      );
+        businessContext,
+      });
+
       return {
         tableName,
         friendlyLabel: agentResponse.friendlyLabel,
@@ -149,7 +145,7 @@ export class MetadataService {
         sampleQuestions: agentResponse.sampleQuestions,
       };
     } catch (error) {
-      console.error(`Error generating metadata for table ${tableName}:`, error);
+      this.logger.error(`Error generating metadata for table ${tableName}:`, error);
       throw new Error(`Failed to generate metadata for table ${tableName}`);
     }
   }
@@ -176,235 +172,5 @@ export class MetadataService {
       console.error('Error saving metadata for table ', error);
       throw new Error('Failed to save metadata for table');
     }
-  }
-
-  /**
-   * Call the MCP agent to generate metadata for a table
-   */
-  private async callMCPTableMetadataAgent(
-    tableName: string,
-    tableSchema: ITableSchemaInput,
-    businessContext?: string
-  ): Promise<MCPTableMetadataAgentRes> {
-    try {
-      // Prepare the input for the metadata analysis tool
-      const toolInput = {
-        tableName,
-        tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
-      };
-
-      const query = metadataAgentInstructions({
-        tableName,
-        tableSchema,
-        toolInput,
-        businessContext,
-      });
-
-      // Call the MCP agent through the client service
-      const response = await this.mcpClient.querySupplyChainAgent(query, {
-        tableName,
-        tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
-      });
-      this.logger.log(`MCP agent response for table ${tableName}: ${JSON.stringify(response)}`);
-
-      if (!response.success) {
-        throw new Error(response.error || 'MCP agent query failed');
-      }
-
-      // Parse the response to extract metadata
-      // The response.response should contain the structured metadata
-      let metadata: MCPTableMetadataAgentRes;
-
-      try {
-        // Try to parse if the response contains JSON
-        const responseText = response.response || '';
-        const jsonRegex = /\{[\s\S]*\}/;
-        const jsonMatch = jsonRegex.exec(responseText);
-
-        if (jsonMatch) {
-          const parsedData = JSON.parse(jsonMatch[0]);
-          metadata = {
-            tableName: parsedData.tableName || tableName,
-            friendlyLabel: parsedData.friendlyLabel || generateFriendlyLabel(tableName),
-            purpose: parsedData.purpose || `Data storage for ${tableName}`,
-            updateFrequency:
-              parsedData.updateFrequency || this.determineUpdateFrequency(tableSchema),
-            sampleQuestions:
-              parsedData.sampleQuestions || this.generateBasicSampleQuestions(tableName),
-          };
-        } else {
-          // Fallback: extract information from text response
-          metadata = this.parseTextResponse(responseText, tableName, tableSchema);
-        }
-      } catch (parseError) {
-        console.warn('Failed to parse MCP response, using fallback logic:', parseError);
-        // Fallback to local generation
-        metadata = {
-          tableName,
-          friendlyLabel: generateFriendlyLabel(tableName),
-          purpose: this.generatePurpose(tableName, tableSchema),
-          updateFrequency: this.determineUpdateFrequency(tableSchema),
-          sampleQuestions: this.generateBasicSampleQuestions(tableName),
-        };
-      }
-
-      return metadata;
-    } catch (error) {
-      console.error(`Error calling MCP agent for table ${tableName}:`, error);
-
-      // Fallback to local generation if MCP fails
-      return {
-        tableName,
-        friendlyLabel: generateFriendlyLabel(tableName),
-        purpose: this.generatePurpose(tableName, tableSchema),
-        updateFrequency: this.determineUpdateFrequency(tableSchema),
-        sampleQuestions: this.generateBasicSampleQuestions(tableName),
-      };
-    }
-  }
-
-  private generatePurpose(tableName: string, tableSchema: ITableSchemaInput): string {
-    const columns = tableSchema.columns || [];
-    const hasTimestamps = columns.some(
-      (col: ITableColumn) =>
-        col.columnName.includes('created_at') || col.columnName.includes('updated_at')
-    );
-    const hasStatus = columns.some(
-      (col: ITableColumn) => col.columnName.includes('status') || col.columnName.includes('state')
-    );
-
-    if (hasTimestamps && hasStatus) {
-      return `Transactional table for managing ${tableName.replace(
-        /_/g,
-        ' '
-      )} with status tracking`;
-    }
-    if (hasTimestamps) {
-      return `Data table for storing ${tableName.replace(/_/g, ' ')} information`;
-    }
-    return `Reference table for ${tableName.replace(/_/g, ' ')} data`;
-  }
-
-  private determineUpdateFrequency(tableSchema: ITableSchemaInput): TUpdateFrequency {
-    const columns = tableSchema.columns || [];
-    const hasStatus = columns.some(
-      (col: ITableColumn) => col.columnName.includes('status') || col.columnName.includes('state')
-    );
-    const hasTimestamps = columns.some((col: ITableColumn) =>
-      col.columnName.includes('updated_at')
-    );
-
-    if (hasStatus && hasTimestamps) {
-      return 'real-time';
-    }
-    if (hasTimestamps) {
-      return 'daily';
-    }
-    return 'rarely';
-  }
-
-  /**
-   * Parse text response from MCP agent when JSON parsing fails
-   */
-  private parseTextResponse(
-    responseText: string,
-    tableName: string,
-    tableSchema: ITableSchemaInput
-  ): MCPTableMetadataAgentRes {
-    // Extract information using simple text parsing
-    const friendlyLabel =
-      this.extractFromText(responseText, 'friendly label') || generateFriendlyLabel(tableName);
-
-    const purpose =
-      this.extractFromText(responseText, 'purpose') || this.generatePurpose(tableName, tableSchema);
-
-    const updateFrequency =
-      this.extractUpdateFrequency(responseText) || this.determineUpdateFrequency(tableSchema);
-
-    const sampleQuestions =
-      this.extractSampleQuestions(responseText) || this.generateBasicSampleQuestions(tableName);
-
-    return {
-      tableName,
-      friendlyLabel,
-      purpose,
-      updateFrequency,
-      sampleQuestions,
-    };
-  }
-
-  /**
-   * Extract specific information from text response
-   */
-  private extractFromText(text: string, field: string): string | null {
-    const regex = new RegExp(`${field}[:\\s]*(.*?)(?:\n|$)`, 'i');
-    const match = regex.exec(text);
-    return match ? match[1].trim() : null;
-  }
-
-  /**
-   * Extract update frequency from text response
-   */
-  private extractUpdateFrequency(text: string): TUpdateFrequency | null {
-    const frequencies = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'];
-    for (const freq of frequencies) {
-      if (text.toLowerCase().includes(freq)) {
-        return freq as TUpdateFrequency;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Extract sample questions from text response
-   */
-  private extractSampleQuestions(text: string): string[] {
-    // Simplified regex to find question lists
-    const lines = text.split('\n');
-    const questions: string[] = [];
-    let inQuestionSection = false;
-
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-
-      // Check if we're entering a questions section
-      if (/questions?|queries?/i.test(trimmedLine)) {
-        inQuestionSection = true;
-        continue;
-      }
-
-      // If we're in a questions section, look for list items
-      if (inQuestionSection && trimmedLine) {
-        // Check for list markers: 1., -, *, •
-        const questionMatch = /^(?:\d+\.|-|\*|•)\s*(.+)/.exec(trimmedLine);
-        if (questionMatch) {
-          questions.push(questionMatch[1].trim());
-        } else if (!trimmedLine.includes(':')) {
-          // Plain text question (not a field label)
-          questions.push(trimmedLine);
-        } else {
-          // End of questions section
-          inQuestionSection = false;
-        }
-      }
-    }
-
-    return questions.length > 0 ? questions.slice(0, 5) : []; // Limit to 5 questions
-  }
-
-  /**
-   * Generate basic sample questions as fallback
-   */
-  private generateBasicSampleQuestions(tableName: string): string[] {
-    const friendlyName = generateFriendlyLabel(tableName);
-    return [
-      `What is the total count of records in ${friendlyName}?`,
-      `What are the most recent entries in ${friendlyName}?`,
-      `How many ${friendlyName} records were created this month?`,
-      `What is the distribution of ${friendlyName} by status?`,
-      `Show me the top 10 ${friendlyName} records by value`,
-    ];
   }
 }

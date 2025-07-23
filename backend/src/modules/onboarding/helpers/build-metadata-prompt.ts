@@ -1,6 +1,6 @@
 import type { ITableSchemaInput } from '@supplysense/types';
 
-interface IMetadataAgentInstructions {
+interface IBuildMetadataPrompt {
   tableName: string;
   tableSchema: ITableSchemaInput;
   toolInput: {
@@ -11,12 +11,12 @@ interface IMetadataAgentInstructions {
   businessContext?: string;
 }
 
-export const metadataAgentInstructions = ({
+export const buildMetadataPrompt = ({
   tableName,
   tableSchema,
   toolInput,
   businessContext,
-}: IMetadataAgentInstructions): string => {
+}: IBuildMetadataPrompt): string => {
   return [
     'You are an expert data analyst. Your task is to analyze the following database table and generate structured metadata for it.',
     '',

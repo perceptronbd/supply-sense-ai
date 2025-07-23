@@ -1,5 +1,6 @@
 ﻿import { PrismaModule } from '@app/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { McpClientModule } from '@modules/mcp-client/mcp-client.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -8,7 +9,6 @@ import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
 import { DatabaseSchemaService } from './services/database-schema.service';
 import { DynamicSQLService } from './services/dynamic-sql.service';
-import { McpClientService } from './services/mcp-client.service';
 import { MessageService } from './services/message.service';
 import { SessionService } from './services/session.service';
 
@@ -17,6 +17,7 @@ import { SessionService } from './services/session.service';
     ConfigModule,
     PrismaModule,
     AuthModule,
+    McpClientModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '24h' },
@@ -29,9 +30,8 @@ import { SessionService } from './services/session.service';
     SessionService,
     DynamicSQLService,
     DatabaseSchemaService,
-    McpClientService,
-    ChatService, // Move ChatService after McpClientService
+    ChatService,
   ],
-  exports: [ChatService, MessageService, SessionService, McpClientService],
+  exports: [ChatService, MessageService, SessionService],
 })
 export class ChatModule {}

@@ -1,7 +1,7 @@
 import { PrismaService } from '@app/prisma.service';
+import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseSchemaService } from './database-schema.service';
-import { McpClientService } from './mcp-client.service';
 
 interface SQLQueryResult {
   sql: string | null;
@@ -22,7 +22,8 @@ export class DynamicSQLService {
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(McpClientService) private mcpClientService: McpClientService,
-    @Inject(DatabaseSchemaService) private databaseSchemaService: DatabaseSchemaService
+    @Inject(DatabaseSchemaService)
+    private databaseSchemaService: DatabaseSchemaService
   ) {}
 
   /**
@@ -647,7 +648,10 @@ REMEMBER: Users should never see database IDs in your response - only human-read
     } catch (_manualError) {
       // console.log('🚫 Manual extraction failed:', (manualError as Error).message);
       throw new Error(
-        `AI returned invalid JSON format that could not be fixed. Response: ${cleanResponse.substring(0, 300)}...`
+        `AI returned invalid JSON format that could not be fixed. Response: ${cleanResponse.substring(
+          0,
+          300
+        )}...`
       );
     }
   }
