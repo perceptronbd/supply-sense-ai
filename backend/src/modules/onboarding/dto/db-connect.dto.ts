@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -37,9 +38,16 @@ export class SaveDbConnectionDto {
   @IsString()
   companyId: string;
 
+  @ValidateIf((o) => !o.connectionString)
+  @IsOptional()
   @ValidateNested()
   @Type(() => DbCredentialsDto)
-  credentials: DbCredentialsDto;
+  credentials?: DbCredentialsDto;
+
+  @ValidateIf((o) => !o.credentials)
+  @IsString()
+  @IsOptional()
+  connectionString?: string;
 }
 
 export class GetTablesDto {

@@ -91,6 +91,47 @@ export function decryptPassword(encryptedPassword: string, encryptionKey: string
 }
 
 /**
+ * Parse connection string into DbCredentials
+ * Supports PostgreSQL connection strings like:
+ * postgresql://username:password@host:port/database
+ * postgres://username:password@host:port/database
+ */
+export function parseConnectionString(connectionString: string): DbCredentials {
+  try {
+    const url = new URL(connectionString);
+
+    if (!['postgresql:', 'postgres:'].includes(url.protocol)) {
+      throw new Error('Only PostgreSQL connection strings are supported');
+    }
+
+    const host = url.hostname;
+    const port = url.port ? Number.parseInt(url.port, 10) : 5432;
+    const database = url.pathname.slice(1); // Remove leading slash
+    const username = url.username;
+    const password = decodeURIComponent(url.password);
+
+    // Check for SSL parameter
+    const sslEnabled =
+      url.searchParams.get('sslmode') === 'require' || url.searchParams.get('ssl') === 'true';
+
+    if (!host || !database || !username || !password) {
+      throw new Error('Connection string must include host, database, username, and password');
+    }
+
+    return {
+      host,
+      port,
+      database,
+      username,
+      password,
+      sslEnabled,
+    };
+  } catch (error) {
+    throw new Error(`Invalid connection string: ${error.message}`);
+  }
+}
+
+/**
  * Test database connection
  */
 export async function testConnection(credentials: DbCredentials): Promise<boolean> {

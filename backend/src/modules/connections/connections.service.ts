@@ -5,6 +5,7 @@ import {
   encryptPassword,
   formatTableName,
   generateConnectionHash,
+  parseConnectionString,
   testConnection,
   withDbConnection,
 } from 'src/helpers/db-connection.helper';
@@ -58,8 +59,24 @@ export class ConnectionsService {
         };
       }
 
+      // Parse credentials from either connection string or credentials object
+      let credentials: DbCredentials;
+
+      if (dto.connectionString) {
+        // Parse connection string into credentials
+        credentials = parseConnectionString(dto.connectionString);
+      } else if (dto.credentials) {
+        // Use provided credentials
+        credentials = dto.credentials;
+      } else {
+        return {
+          success: false,
+          message: 'Either connectionString or credentials must be provided',
+        };
+      }
+
       // Test connection first
-      const isConnected = await testConnection(dto.credentials);
+      const isConnected = await testConnection(credentials);
       if (!isConnected) {
         return {
           success: false,
@@ -68,22 +85,22 @@ export class ConnectionsService {
       }
 
       // Encrypt password
-      const encryptedPassword = encryptPassword(dto.credentials.password, this.encryptionKey);
+      const encryptedPassword = encryptPassword(credentials.password, this.encryptionKey);
 
       // Generate connection hash
-      const connectionHash = generateConnectionHash(dto.credentials);
+      const connectionHash = generateConnectionHash(credentials);
 
       // Save to database
       const savedConnection = await this.prisma.dbConnection.create({
         data: {
           companyId: dto.companyId,
-          host: dto.credentials.host,
-          port: dto.credentials.port,
-          database: dto.credentials.database,
-          username: dto.credentials.username,
+          host: credentials.host,
+          port: credentials.port,
+          database: credentials.database,
+          username: credentials.username,
           encryptedPassword,
-          title: dto.credentials.title || dto.credentials.database, // Use database name as default title
-          sslEnabled: dto.credentials.sslEnabled || false,
+          title: credentials.title || credentials.database, // Use database name as default title
+          sslEnabled: credentials.sslEnabled || false,
           connectionHash,
         },
       });

@@ -1,4 +1,5 @@
 export interface DbCredentials {
+  title?: string;
   host: string;
   port: number;
   database: string;
