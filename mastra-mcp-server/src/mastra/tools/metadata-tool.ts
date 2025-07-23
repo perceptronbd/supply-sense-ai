@@ -5,6 +5,7 @@ import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
 import { generatePurpose } from '../agents/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/sample-questions-agent';
+import { determineUpdateFrequency as determineUpdateFrequencyAgent } from '../agents/update-frequency-agent';
 
 export const analyzeTableMetadataTool = createTool({
   id: ANALYZE_METADATA_TOOL.NAME,
@@ -60,19 +61,19 @@ export const analyzeTableMetadataTool = createTool({
       // Generate friendly label by converting table name to human-readable format
       const friendlyLabel = generateFriendlyLabel(tableName);
 
-      // Determine update frequency based on table characteristics
-      const updateFrequency = determineUpdateFrequency(tableName);
-
-      // Use workflow to generate purpose and sample questions
-      // const { purpose, sampleQuestions } = await tableMetadataWorkflow.execute(
-      //   {inputData:context}
-      // );
+      // Determine update frequency using AI agent
+      const updateFrequency = await determineUpdateFrequencyAgent({
+        tableName,
+        tableSchema: tableSchema as ITableSchemaInput,
+        businessContext: context.businessContext || `Database table analysis for ${tableName}`,
+      });
 
       const purpose = await generatePurpose({
         tableName,
         tableSchema: tableSchema as ITableSchemaInput,
         businessContext: context.businessContext || `Database table analysis for ${tableName}`,
       });
+
       const sampleQuestions = await generateSampleQuestions({
         tableName,
         tableSchema: tableSchema as ITableSchemaInput,
@@ -93,54 +94,3 @@ export const analyzeTableMetadataTool = createTool({
     }
   },
 });
-/**
- * Determine update frequency based on table characteristics
- */
-function determineUpdateFrequency(
-  tableName: string
-): 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely' {
-  const name = tableName.toLowerCase();
-
-  const frequencyKeywords: { [key: string]: string[] } = {
-    'real-time': ['log', 'audit', 'notification', 'alert', 'session', 'token', 'cache'],
-    daily: [
-      'request',
-      'order',
-      'requisition',
-      'transaction',
-      'payment',
-      'receipt',
-      'inventory',
-      'stock',
-      'manufacturing',
-      'production',
-    ],
-    weekly: ['report', 'analytics', 'schedule', 'planning'],
-    monthly: ['summary', 'aggregate', 'billing', 'invoice'],
-    rarely: [
-      'config',
-      'setting',
-      'template',
-      'user',
-      'employee',
-      'branch',
-      'supplier',
-      'vendor',
-      'customer',
-      'item',
-      'product',
-      'material',
-      'formula',
-      'calculation',
-    ],
-  };
-
-  for (const [frequency, keywords] of Object.entries(frequencyKeywords)) {
-    if (keywords.some((keyword) => name.includes(keyword))) {
-      return frequency as 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely';
-    }
-  }
-
-  // Default to daily for operational tables
-  return 'daily';
-}
