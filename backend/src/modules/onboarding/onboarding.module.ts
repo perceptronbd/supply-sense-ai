@@ -8,7 +8,7 @@ import { OnboardingService } from './services/onboarding.service';
 import { SchemaBuilderService } from './services/schema-builder.service';
 
 @Module({
-  imports: [PrismaModule, ConnectionsModule, McpClientModule],
+  imports: [PrismaModule, McpClientModule, ConnectionsModule],
   controllers: [OnboardingController],
   providers: [OnboardingService, MetadataService, SchemaBuilderService],
   exports: [OnboardingService, MetadataService, SchemaBuilderService], // Export the services if other modules need them
