@@ -19,9 +19,9 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
+import { McpClientService } from '../mcp-client';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
-import { McpClientService } from './services/mcp-client.service';
 
 @ApiTags('chat')
 @Controller('chat')
