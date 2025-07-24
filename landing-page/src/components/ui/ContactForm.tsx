@@ -18,11 +18,15 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="p-4 bg-gradient-to-b from-primary-100/10 to-primary-300/20 rounded-xl">
-      <div className="w-full rounded-2xl p-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Row 1: Name and Company */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="max-w-xl flex-1 mx-auto xl:mx-0">
+      <div className="bg-gradient-to-b from-primary-100/50 to-primary-300 rounded-xl p-0.5">
+        <div className="bg-default-50 backdrop-blur-lg rounded-xl w-full p-6">
+          <h2 className="text-center text-2xl md:text-3xl font-brand font-bold text-content1-foreground mb-8">
+            Schedule A Demo
+          </h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Row 1: Name and Company */}
+
             {/* Name Field */}
             <Controller
               name="name"
@@ -39,22 +43,55 @@ export default function ContactForm() {
                   {...field}
                   type="text"
                   label="Name"
+                  labelPlacement="inside"
                   placeholder="Enter Your Name"
-                  startContent={<User className="h-5 w-5 text-secondary" />}
+                  startContent={<User className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.name}
                   errorMessage={errors.name?.message?.toString()}
                   variant="flat"
                   classNames={{
                     base: 'w-full',
-                    inputWrapper: 'bg-bigStone-800',
-                    input: 'text-secondary placeholder:text-secondary',
-                    label: 'text-secondary',
+                    inputWrapper: 'bg-default-100 border-2 border-default-200',
+                    input: 'placeholder:text-default-500',
+                    label: 'text-primary text-sm',
                   }}
                 />
               )}
             />
 
-            {/* Company Field */}
+            {/* Row 2: Email */}
+            <Controller
+              name="email"
+              control={control}
+              rules={{
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address',
+                },
+              }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="email"
+                  label="Email"
+                  placeholder="Email address"
+                  labelPlacement="inside"
+                  startContent={<Mail className="h-5 w-5 text-default-500" />}
+                  isInvalid={!!errors.email}
+                  errorMessage={errors.email?.message?.toString()}
+                  variant="flat"
+                  classNames={{
+                    base: 'w-full',
+                    inputWrapper: 'bg-default-100 border-2 border-default-200',
+                    input: 'placeholder:text-default-500',
+                    label: 'text-primary text-sm',
+                  }}
+                />
+              )}
+            />
+
+            {/*Row 3: Company Field */}
             <Controller
               name="company"
               control={control}
@@ -63,104 +100,75 @@ export default function ContactForm() {
                   {...field}
                   type="text"
                   label="Company"
+                  labelPlacement="inside"
                   placeholder="Company Name"
-                  startContent={<Building className="h-5 w-5 text-secondary" />}
+                  startContent={<Building className="h-5 w-5 text-default-500" />}
                   variant="flat"
                   classNames={{
                     base: 'w-full',
-                    inputWrapper: 'bg-bigStone-800',
-                    input: 'text-secondary placeholder:text-secondary',
-                    label: 'text-secondary',
+                    inputWrapper: 'bg-default-100 border-2 border-default-200',
+                    input: 'placeholder:text-default-500',
+                    label: 'text-primary text-sm',
                   }}
                 />
               )}
             />
-          </div>
 
-          {/* Row 2: Email */}
-          <Controller
-            name="email"
-            control={control}
-            rules={{
-              required: 'Email is required',
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Invalid email address',
-              },
-            }}
-            render={({ field }) => (
-              <Input
-                {...field}
-                type="email"
-                label="Email"
-                placeholder="Email address"
-                startContent={<Mail className="h-5 w-5 text-secondary" />}
-                isInvalid={!!errors.email}
-                errorMessage={errors.email?.message?.toString()}
-                variant="flat"
-                classNames={{
-                  base: 'w-full',
-                  inputWrapper: 'bg-bigStone-800',
-                  input: 'text-secondary placeholder:text-secondary',
-                  label: 'text-secondary',
-                }}
-              />
-            )}
-          />
+            {/*Row 4: Message Field */}
+            <Controller
+              name="message"
+              control={control}
+              rules={{
+                required: 'Message is required',
+                minLength: {
+                  value: 10,
+                  message: 'Message must be at least 10 characters',
+                },
+              }}
+              render={({ field }) => (
+                <Textarea
+                  {...field}
+                  label="Message"
+                  labelPlacement="inside"
+                  placeholder="How can we assist you?"
+                  startContent={<MessageSquare className="h-5 w-5 text-default-500" />}
+                  isInvalid={!!errors.message}
+                  errorMessage={errors.message?.message?.toString()}
+                  variant="flat"
+                  minRows={4}
+                  classNames={{
+                    base: 'w-full',
+                    inputWrapper: 'bg-default-100 border-2 border-default-200',
+                    input: 'placeholder:text-default-500',
+                    label: 'text-primary text-sm',
+                  }}
+                />
+              )}
+            />
 
-          {/*Row 3: Message Field */}
-          <Controller
-            name="message"
-            control={control}
-            rules={{
-              required: 'Message is required',
-              minLength: {
-                value: 10,
-                message: 'Message must be at least 10 characters',
-              },
-            }}
-            render={({ field }) => (
-              <Textarea
-                {...field}
-                label="Message"
-                placeholder="How can we assist you?"
-                startContent={<MessageSquare className="h-5 w-5 text-secondary" />}
-                isInvalid={!!errors.message}
-                errorMessage={errors.message?.message?.toString()}
-                variant="flat"
-                minRows={4}
-                classNames={{
-                  base: 'w-full',
-                  inputWrapper: 'bg-bigStone-800',
-                  input: 'text-secondary placeholder:text-secondary resize-none',
-                  label: 'text-secondary',
-                }}
-              />
-            )}
-          />
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button
+                type="submit"
+                variant="solid"
+                color="primary"
+                className="flex-1 py-3"
+                startContent={<Send className="h-5 w-5" />}
+              >
+                Submit
+              </Button>
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button
-              type="submit"
-              variant="solid"
-              color="secondary"
-              className="flex-1 py-3"
-              startContent={<Send className="h-5 w-5" />}
-            >
-              Submit
-            </Button>
-
-            <Button
-              type="button"
-              variant="bordered"
-              className="flex-1 border-secondary py-3"
-              startContent={<Phone className="h-5 w-5" />}
-            >
-              Reach out
-            </Button>
-          </div>
-        </form>
+              <Button
+                type="button"
+                variant="bordered"
+                className="flex-1 border-primary py-3 text-primary"
+                startContent={<Phone className="h-5 w-5 text-primary" />}
+              >
+                Reach out
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

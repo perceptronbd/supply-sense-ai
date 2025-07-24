@@ -24,7 +24,7 @@ const Banner = () => {
         <FullLogo className="w-96 text-primary" />
       </div>
 
-      <h1 className="font-brand text-3xl md:text-5xl font-bold text-foreground text-center mx-auto bg-clip-text text-transparent bg-gradient-to-r from-content1-foreground to-focus ">
+      <h1 className="font-brand text-4xl md:text-5xl font-bold text-foreground text-center mx-auto bg-clip-text text-transparent bg-gradient-to-r from-content1-foreground to-focus ">
         Know Your Operations. Ask Anything. Get Instant Answers
       </h1>
       <p className="mt-4 mx-auto text-center text-content2-foreground px-6 mb-20">
@@ -34,7 +34,12 @@ const Banner = () => {
 
       {/* chat box */}
       <div>
-        <Card className="border border-focus rounded-xl">
+        <Card
+          classNames={{
+            base: 'bg-background',
+          }}
+          className="border border-focus rounded-xl"
+        >
           <CardHeader className="flex justify-between items-center px-6 py-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
@@ -57,13 +62,13 @@ const Banner = () => {
                 onClick={() => setIsModalOpen(true)}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="content"
+                placeholder="Ask anything about your business"
                 className="rounded-xl"
                 variant="flat"
                 size="lg"
                 classNames={{
-                  input: 'placeholder:text-primary',
-                  inputWrapper: 'bg-default',
+                  input: 'placeholder:text-content3 placeholder:text-sm',
+                  inputWrapper: 'bg-content1 border-1 border-primary',
                 }}
               />
               <Button

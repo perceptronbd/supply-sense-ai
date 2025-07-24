@@ -1,19 +1,16 @@
 import { User } from 'lucide-react';
-import Image from 'next/image';
-import fullLogo from '../../../public/assets/full-logo.svg';
-import { Logo } from '../ui/Logo';
-import SectionWrapper from '../ui/SectionWrapper';
+import { FullLogo, Logo } from './Logo';
 
-const BuiltSection = () => {
+const ChatBox = () => {
   return (
-    <SectionWrapper size="large">
-      <div className="flex flex-col xl:flex-row items-start justify-center xl:justify-between gap-6 md:gap-16 bg-background">
-        {/* first column - chat box  */}
-        <div className="bg-gradient-to-r from-primary-50 to-secondary-200 p-0.5 rounded-2xl mx-auto xl:mx-0">
+    <div>
+      {/* chat box */}
+      <div className="w-full max-w-3xl mx-auto">
+        <div className="bg-gradient-to-r from-primary-50 to-secondary-200 p-0.5 rounded-2xl">
           <div className="bg-background rounded-2xl p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <Image src={fullLogo} width={40} height={20} alt="fullLogo" className="w-36" />
+              <FullLogo className="" />
               <button type="button" className="px-4 py-2 rounded-lg text-secondary">
                 Clear Chat
               </button>
@@ -47,22 +44,9 @@ const BuiltSection = () => {
             </div>
           </div>
         </div>
-
-        {/* second column */}
-        <div className="max-w-xl mx-auto xl:mx-0">
-          <h1 className="font-brand text-4xl md:text-5xl font-bold text-content1-foreground text-center xl:text-start mb-6">
-            Built for Clarity — Not Complexity
-          </h1>
-
-          <p className="text-content1-foreground text-center md:pr-10 xl:text-start">
-            No dashboards to learn. No training required. Just ask questions in plain language and
-            get clear, grounded answers from your system — whether it’s about stock, people,
-            documents, or vendors.
-          </p>
-        </div>
       </div>
-    </SectionWrapper>
+    </div>
   );
 };
 
-export default BuiltSection;
+export default ChatBox;

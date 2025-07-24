@@ -18,3 +18,9 @@ body {
   background-color: hsl(var(--nextui-background));
   color: hsl(var(--nextui-foreground));
 }
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  box-shadow: inset 2px 2px 4px 0 hsl(var(--primary) / 0.2), inset -2px -2px 4px 0
+    hsl(var(--primary) / 0.2);
+}

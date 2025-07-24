@@ -1,8 +1,7 @@
 import { Mailbox, MapPin, Phone } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { FiFacebook, FiInstagram, FiLinkedin, FiYoutube } from 'react-icons/fi';
-import fullLogo from '../../../public/assets/full-logo.svg';
+import { FullLogo } from './Logo';
 
 const Footer = () => {
   return (
@@ -11,13 +10,8 @@ const Footer = () => {
       <div className="flex justify-center flex-col lg:flex-row gap-y-12 lg:justify-between items-start mb-12 ">
         {/* first column */}
         <div className="mx-auto lg:mx-0 flex-1">
-          <Image
-            src={fullLogo}
-            width={150}
-            height={20}
-            alt="fullLogo"
-            className="w-56 mb-5 mx-auto xl:mx-0"
-          />
+          <FullLogo className="text-primary w-56 mb-5" />
+
           <p className="text-content1-foreground mb-6 lg:mb-10 text-center xl:text-start">
             Making operational data accessible through natural language.
           </p>
@@ -83,7 +77,7 @@ const Footer = () => {
       </div>
 
       {/* second row */}
-      <div className="border-t-2 border-content1-foreground rounded-xl flex flex-col md:flex-row justify-center lg:justify-between gap-y-5 items-center">
+      <div className="border-t-2 border-content1-foreground flex flex-col md:flex-row justify-center lg:justify-between gap-y-5 items-center">
         {/* first column */}
         <div className="flex gap-6 justify-center lg:justify-start items-center mt-4">
           <p className="text-content1-foreground font-medium">Terms of Use</p>
