@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE, persistStore } from 'redux-persist';
 import { aiApi } from './api/aiApi';
 import { authApi } from './api/authApi';
+import { baseApi } from './api/baseApi';
 import { branchApi } from './api/branchApi';
 import { chatApi } from './api/chatApi';
 import { goodsReceiptApi } from './api/goodsReceiptApi';
@@ -18,6 +19,7 @@ export const store = configureStore({
   reducer: {
     auth: authSlice,
     theme: themeSlice,
+    [baseApi.reducerPath]: baseApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,
     [chatApi.reducerPath]: chatApi.reducer,
@@ -36,6 +38,7 @@ export const store = configureStore({
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }).concat(
+      baseApi.middleware,
       authApi.middleware,
       branchApi.middleware,
       chatApi.middleware,

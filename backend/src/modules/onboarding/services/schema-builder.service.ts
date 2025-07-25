@@ -1,9 +1,9 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/app/prisma.service';
+import { ConnectionsService } from '@/modules/connections/connections.service';
 import { SchemaCache } from '@prisma/client';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
-import { OnboardingService } from './onboarding.service';
 
 interface TableSchema {
   label: string;
@@ -27,8 +27,8 @@ export class SchemaBuilderService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => OnboardingService))
-    private readonly onboardingService: OnboardingService
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService
   ) {}
 
   /**
@@ -54,7 +54,7 @@ export class SchemaBuilderService {
       }
 
       // Get full connection details with decrypted password
-      const connectionDetails = await this.onboardingService.getCompanyConnection(
+      const connectionDetails = await this.connectionsService.getCompanyConnection(
         companyId,
         dbConnectionId
       );

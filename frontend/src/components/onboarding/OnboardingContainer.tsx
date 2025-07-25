@@ -9,7 +9,7 @@ import {
 } from '.';
 
 const OnboardingContainer = () => {
-  const [currentStep] = useState(4);
+  const [currentStep] = useState(1);
   return (
     <section className="h-screen flex flex-col py-12 w-full container gap-y-7">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 flex-grow">
