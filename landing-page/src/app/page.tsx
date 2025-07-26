@@ -8,7 +8,7 @@ import Footer from '../components/ui/Footer';
 
 const LandingPage = () => {
   return (
-    <div className="">
+    <div className="relative overflow-x-hidden">
       {/* Banner */}
       <Banner />
 
@@ -17,6 +17,8 @@ const LandingPage = () => {
 
       {/* Supply sense */}
       <SupplySense />
+
+      {/* background radial effect */}
 
       {/* Questions and answers */}
       <QuestionSection />
