@@ -13,7 +13,7 @@ import {
   ScrollShadow,
 } from '@heroui/react';
 import { Send, User } from 'lucide-react';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { FullLogo, Logo } from './Logo';
 
 interface ChatMessage {
@@ -41,7 +41,8 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     if (!message.trim()) return;
 
     const userMessage: ChatMessage = {
@@ -88,9 +89,8 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       closeButton={false}
       scrollBehavior="inside"
       classNames={{
-        base: 'max-h-[90vh] bg-background border-focus border-1',
+        base: 'max-h-[90vh] bg-background/95 backdrop-blur-sm border-focus/80 border-1 relative shadow-inner shadow-focus/90',
         body: 'p-0',
-        backdrop: '',
       }}
     >
       <ModalContent>
@@ -110,7 +110,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
             </ModalHeader>
 
             {/* Chat Messages */}
-            <ModalBody className="flex flex-col h-[500px]">
+            <ModalBody className="flex flex-col h-[500px] relative z-10">
               <ScrollShadow className="flex-1 px-4 py-2">
                 <div className="space-y-4">
                   {messages.map((msg) => (
@@ -190,8 +190,8 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
             </ModalBody>
 
             {/* Input Footer */}
-            <ModalFooter className="p-4">
-              <Form className="w-full border-none relative">
+            <ModalFooter className="p-4 relative z-10">
+              <Form onSubmit={handleSubmit} className="w-full border-none relative">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -202,17 +202,17 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   classNames={{
                     base: '',
                     mainWrapper: '',
-                    input: 'border-none bg-secondary placeholder:text-content3 placeholder:text-sm',
-                    inputWrapper: 'bg-content1 border-2 border-primary rounded-xl',
+                    input: 'border-none placeholder:text-content3 placeholder:text-sm',
+                    inputWrapper: 'bg-content1 border-2 border-primary rounded-xl py-8',
                   }}
                 />
                 <Button
-                  onPress={() => handleSubmit()}
                   type="submit"
+                  radius="lg"
                   isIconOnly
                   variant="ghost"
                   size="sm"
-                  className="border-none absolute right-0 top-2 -translate-x-5 bg-primary"
+                  className="w-10 h-10 border-none absolute right-2 top-1/2 -translate-y-1/2 bg-primary mr-2"
                 >
                   <Send size={20} className="" />
                 </Button>

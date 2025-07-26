@@ -48,7 +48,8 @@ export default function ContactForm() {
                   startContent={<User className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.name}
                   errorMessage={errors.name?.message?.toString()}
-                  variant="flat"
+                  variant="faded"
+                  color="primary"
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
@@ -80,7 +81,8 @@ export default function ContactForm() {
                   startContent={<Mail className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message?.toString()}
-                  variant="flat"
+                  variant="faded"
+                  color="primary"
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
@@ -103,7 +105,8 @@ export default function ContactForm() {
                   labelPlacement="inside"
                   placeholder="Company Name"
                   startContent={<Building className="h-5 w-5 text-default-500" />}
-                  variant="flat"
+                  variant="faded"
+                  color="primary"
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
@@ -134,7 +137,8 @@ export default function ContactForm() {
                   startContent={<MessageSquare className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.message}
                   errorMessage={errors.message?.message?.toString()}
-                  variant="flat"
+                  variant="faded"
+                  color="primary"
                   minRows={4}
                   classNames={{
                     base: 'w-full',
