@@ -89,13 +89,16 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       closeButton={false}
       scrollBehavior="inside"
       classNames={{
-        base: 'max-h-[90vh] bg-background/95 backdrop-blur-sm border-focus/80 border-1 relative shadow-inner shadow-focus/90',
+        base: 'max-h-[90vh] bg-background/95 backdrop-blur-sm border-focus/80 border-1 relative shadow-inner shadow-focus/90 overflow-hidden',
         body: 'p-0',
       }}
     >
       <ModalContent>
         {() => (
           <>
+            {/* Glow effect - positioned inside the card header */}
+            <div className="absolute z-30 bottom-[40%] left-1/2 -translate-x-1/2 w-[25vw] h-[25vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" />
+
             {/* Header */}
             <ModalHeader className="flex items-center justify-between p-4">
               <FullLogo className="w-28 text-primary" />
