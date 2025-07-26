@@ -66,3 +66,17 @@ export const dbConnectionSchema = z
   });
 
 export type DbConnectionFormData = z.infer<typeof dbConnectionSchema>;
+
+export const defaultDbConnectionValues: DbConnectionFormData = {
+  title: '',
+  credential: {
+    host: '',
+    port: '',
+    username: '',
+    password: '',
+    database: '',
+    sslEnabled: false,
+  },
+  aboutYourBusiness: '',
+  connectionString: '',
+};

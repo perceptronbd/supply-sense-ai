@@ -1,3 +1,5 @@
+import type { ApiResponse } from '@supplysense/types';
+
 interface IDbCredential {
   host: string;
   port: number;
@@ -12,3 +14,7 @@ export interface IDbConnectPayload {
   credentials?: IDbCredential;
   connectionString?: string;
 }
+
+export type TDbConnectionResponse = ApiResponse<{
+  dbConnectionId: string;
+}>;

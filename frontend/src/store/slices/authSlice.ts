@@ -12,6 +12,7 @@ interface User {
   permissions: string[];
   branchId: string;
   isActive: boolean;
+  companyId: string;
 }
 
 interface AuthState {

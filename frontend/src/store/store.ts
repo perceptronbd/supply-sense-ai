@@ -13,12 +13,14 @@ import { roleApi } from './api/roleApi';
 import { supplierApi } from './api/supplierApi';
 import { userApi } from './api/userApi';
 import authSlice from './slices/authSlice';
+import onboardingSlice from './slices/onboardingSlice';
 import themeSlice from './slices/themeSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authSlice,
     theme: themeSlice,
+    onboarding: onboardingSlice,
     [baseApi.reducerPath]: baseApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,

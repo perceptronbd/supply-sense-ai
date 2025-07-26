@@ -4,6 +4,7 @@ import './global.css';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import WithoutSidebar from '@/components/WithoutSidebar';
 import ClarityProvider from '@/components/analytics/Clarity';
 import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ import { persistor, store } from '@/store/store';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import { Manrope, Montserrat } from 'next/font/google';
 import localFont from 'next/font/local';
+import { usePathname } from 'next/navigation';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
@@ -39,6 +41,10 @@ export default function RootLayout({
 }: {
   readonly children: React.ReactNode;
 }) {
+  const pathName = usePathname();
+  const componentsWithoutSidebars = ['/onboarding'];
+  const isWithoutSidebar = componentsWithoutSidebars.includes(pathName);
+
   return (
     <html
       lang="en"
@@ -77,7 +83,11 @@ export default function RootLayout({
             <AuthProvider>
               <ThemeProvider>
                 <HeroUIProvider>
-                  <MainLayout>{children}</MainLayout>
+                  {isWithoutSidebar ? (
+                    <WithoutSidebar>{children}</WithoutSidebar>
+                  ) : (
+                    <MainLayout>{children}</MainLayout>
+                  )}
                   <ToastProvider placement="bottom-right" />
                 </HeroUIProvider>
               </ThemeProvider>

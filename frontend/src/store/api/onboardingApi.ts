@@ -1,9 +1,12 @@
-import type { IDbConnectPayload } from '@/components/onboarding/db-connection/types';
+import type {
+  IDbConnectPayload,
+  TDbConnectionResponse,
+} from '@/components/onboarding/db-connection/types';
 import { baseApi } from './baseApi';
 
 export const onboardingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    dbConnect: builder.mutation<unknown, IDbConnectPayload>({
+    dbConnect: builder.mutation<TDbConnectionResponse, IDbConnectPayload>({
       query(body) {
         return {
           url: '/onboarding/db-connect',

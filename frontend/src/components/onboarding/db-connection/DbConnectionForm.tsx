@@ -1,13 +1,16 @@
 'use client';
 
 import { Text } from '@/components/ui/Text';
+import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useDbConnectMutation } from '@/store/api/onboardingApi';
+import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { Button, Card, Switch, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { handleAsyncOperation } from '@supplysense/utils';
 import { Controller, useForm } from 'react-hook-form';
 import { useCheckHasCredential } from './hooks/useCheckHasCredential';
 import { useGetRenderInput } from './hooks/useGetRenderInput';
-import { type DbConnectionFormData, dbConnectionSchema } from './schema';
+import { type DbConnectionFormData, dbConnectionSchema, defaultDbConnectionValues } from './schema';
 import type { IDbConnectPayload } from './types';
 
 const DbConnectionForm = () => {
@@ -15,60 +18,67 @@ const DbConnectionForm = () => {
     control,
     handleSubmit,
     watch,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<DbConnectionFormData>({
     resolver: zodResolver(dbConnectionSchema),
-    defaultValues: {
-      title: '',
-      credential: {
-        host: '',
-        port: '',
-        username: '',
-        password: '',
-        database: '',
-        sslEnabled: false,
-      },
-      aboutYourBusiness: '',
-      connectionString: '',
-    },
+    defaultValues: defaultDbConnectionValues,
   });
   // Use custom hook for error handling
   const { error, checkHasCredentials } = useCheckHasCredential({ watch });
 
-  const { renderInput } = useGetRenderInput({ control, errors });
-  console.log('🚀 ~ errors:', errors);
+  const { companyId } = useGetCompanyId(); // Get company ID from the store
 
   // Mutation hook for connecting to the database
   const [dbConnect, { isLoading }] = useDbConnectMutation();
 
-  const onSubmit = async (data: DbConnectionFormData) => {
-    const hasCredentials = checkHasCredentials(data);
-    if (!hasCredentials) return; // Prevent submission if validation fails
+  const { renderInput } = useGetRenderInput({ control, errors });
 
-    try {
-      // Transform form data to API payload
-      const payload: IDbConnectPayload = {
-        companyId: 'demo-company-id',
+  // Use onboarding store to manage steps
+  const { setOnboardingStep, saveDbConnectionId } = useOnboardingStore();
+
+  // Helper to build payload
+  const buildPayload = (data: DbConnectionFormData): IDbConnectPayload => {
+    const payload: IDbConnectPayload = { companyId };
+    if (data.credential && !data.connectionString) {
+      payload.credentials = {
+        host: data.credential.host ?? '',
+        port: Number(data.credential.port),
+        username: data.credential.username ?? '',
+        password: data.credential.password ?? '',
+        database: data.credential.database ?? '',
+        sslEnabled: data.credential.sslEnabled ?? false,
       };
-
-      if (data.credential && !data.connectionString) {
-        payload.credentials = {
-          host: data.credential.host ?? '',
-          port: Number(data.credential.port),
-          username: data.credential.username ?? '',
-          password: data.credential.password ?? '',
-          database: data.credential.database ?? '',
-          sslEnabled: data.credential.sslEnabled ?? false,
-        };
-      } else if (data.connectionString && !data.credential) {
-        payload.connectionString = data.connectionString;
-      }
-
-      const result = await dbConnect(payload).unwrap();
-      console.log('🚀 ~ result:', result);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } else if (data.connectionString && !data?.credential?.host) {
+      payload.connectionString = data.connectionString;
     }
+    return payload;
+  };
+
+  const onSubmit = async (data: DbConnectionFormData) => {
+    const shouldShowError = checkHasCredentials(data);
+    if (shouldShowError) return;
+
+    if (data?.credential?.host && data.connectionString) {
+      setError('connectionString', {
+        type: 'manual',
+        message: 'Please provide either credentials or a connection string, not both.',
+      });
+      return;
+    }
+
+    return await handleAsyncOperation(
+      async () => {
+        const payload = buildPayload(data);
+        return await dbConnect(payload).unwrap();
+      },
+      {
+        onSuccess(result) {
+          setOnboardingStep(2); // Move to the next step on success
+          saveDbConnectionId(result.data.dbConnectionId);
+        },
+      }
+    );
   };
 
   return (
