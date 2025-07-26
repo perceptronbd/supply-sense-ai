@@ -14,18 +14,12 @@ export const FullLogo = ({ className }: { className?: string }) => {
   );
 };
 
-export const Logo = ({
-  className,
-  bg,
-}: {
-  className?: string;
-  bg?: string;
-}) => {
+export const Logo = ({ className }: { className?: string; bg?: string }) => {
   return (
     <svg
       viewBox="0 0 220 220"
       className={className}
-      fill={bg ? bg : 'none'}
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path

@@ -3,9 +3,7 @@
 import {
   Avatar,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
+  Form,
   Input,
   Modal,
   ModalBody,
@@ -14,10 +12,9 @@ import {
   ModalHeader,
   ScrollShadow,
 } from '@heroui/react';
-import { Bot, Send, User } from 'lucide-react';
-import Image from 'next/image';
+import { Send, User } from 'lucide-react';
 import { useState } from 'react';
-import logo from '../../../public/assets/full-logo.svg';
+import { FullLogo, Logo } from './Logo';
 
 interface ChatMessage {
   id: string;
@@ -91,11 +88,9 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       closeButton={false}
       scrollBehavior="inside"
       classNames={{
-        base: 'max-h-[90vh] bg-background',
-        header: 'border-b border-divider border-foreground/20',
+        base: 'max-h-[90vh] bg-background border-focus border-1',
         body: 'p-0',
-        footer: 'border-t border-divider border-foreground/20',
-        backdrop: 'bg-background/70',
+        backdrop: '',
       }}
     >
       <ModalContent>
@@ -103,25 +98,15 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
           <>
             {/* Header */}
             <ModalHeader className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar
-                    icon={<Bot className="w-5 h-5" />}
-                    classNames={{
-                      base: 'bg-default-800',
-                      icon: 'text-primary',
-                    }}
-                    size="sm"
-                  />
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Supply Sense AI</h3>
-                  <p className="text-sm text-content2-foreground">
-                    Your intelligent supply chain assistant
-                  </p>
-                </div>
-              </div>
+              <FullLogo className="w-28 text-primary" />
+              <Button
+                onPress={() => handleClearChat()}
+                variant="ghost"
+                size="sm"
+                className="text-sm border-none text-primary mr-5"
+              >
+                Clear Chat
+              </Button>
             </ModalHeader>
 
             {/* Chat Messages */}
@@ -138,9 +123,9 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                       {/* ai message */}
                       {msg.sender === 'ai' && (
                         <Avatar
-                          icon={<Bot className="w-5 h-5" />}
+                          icon={<Logo className="w-5 text-primary" />}
                           classNames={{
-                            base: 'bg-default-800',
+                            base: 'bg-background',
                             icon: 'text-primary',
                           }}
                           size="sm"
@@ -148,17 +133,15 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                       )}
                       <div
                         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          msg.sender === 'user'
-                            ? 'bg-primary-500 text-primary-foreground'
-                            : 'bg-content2 text-content2-foreground'
+                          msg.sender === 'user' ? 'bg-primary/20' : 'bg-inherit'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.content}</p>
                         <p
                           className={`text-xs mt-1 opacity-70 ${
                             msg.sender === 'user'
-                              ? 'text-primary-foreground'
-                              : 'text-content3-foreground'
+                              ? 'text-content1-foreground'
+                              : 'text-content1-foreground'
                           }`}
                         >
                           {msg.timestamp.toLocaleTimeString([], {
@@ -186,18 +169,18 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   {isLoading && (
                     <div className="flex gap-3 justify-start">
                       <Avatar
-                        icon={<Bot className="w-5 h-5" />}
+                        icon={<Logo className="w-5 text-primary" />}
                         classNames={{
-                          base: 'bg-default-800 flex-shrink-0',
+                          base: 'bg-background',
                           icon: 'text-primary',
                         }}
                         size="sm"
                       />
-                      <div className="bg-content2 rounded-2xl px-4 py-3">
+                      <div className="bg-inherit rounded-2xl px-4 py-3">
                         <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-foreground rounded-full animate-bounce delay-200" />
+                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce delay-100" />
+                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce delay-200" />
                         </div>
                       </div>
                     </div>
@@ -208,48 +191,32 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
 
             {/* Input Footer */}
             <ModalFooter className="p-4">
-              <Card className="border border-secondary-50 rounded-xl w-full">
-                <CardHeader className="flex justify-between items-center px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <Image src={logo} alt="logo" width={40} height={20} className="w-24" />
-                    </div>
-                  </div>
-                  <Button
-                    onPress={() => handleClearChat()}
-                    variant="ghost"
-                    size="sm"
-                    className="text-sm border-none text-secondary"
-                  >
-                    Clear Chat
-                  </Button>
-                </CardHeader>
-
-                <CardBody className="px-6 pb-6">
-                  <Input
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="content"
-                    className="rounded-xl"
-                    variant="flat"
-                    size="lg"
-                    classNames={{
-                      input: 'border-none bg-secondary placeholder:text-secondary',
-                      inputWrapper: 'bg-secondary-50',
-                    }}
-                  />
-                  <Button
-                    onPress={() => handleSubmit()}
-                    type="submit"
-                    isIconOnly
-                    variant="ghost"
-                    size="sm"
-                    className="border-none absolute right-0 top-5 -translate-x-10 text-secondary"
-                  >
-                    <Send className="" />
-                  </Button>
-                </CardBody>
-              </Card>
+              <Form className="w-full border-none relative">
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Ask anything about your business"
+                  className="rounded-xl"
+                  variant="flat"
+                  size="lg"
+                  classNames={{
+                    base: '',
+                    mainWrapper: '',
+                    input: 'border-none bg-secondary placeholder:text-content3 placeholder:text-sm',
+                    inputWrapper: 'bg-content1 border-2 border-primary rounded-xl',
+                  }}
+                />
+                <Button
+                  onPress={() => handleSubmit()}
+                  type="submit"
+                  isIconOnly
+                  variant="ghost"
+                  size="sm"
+                  className="border-none absolute right-0 top-2 -translate-x-5 bg-primary"
+                >
+                  <Send size={20} className="" />
+                </Button>
+              </Form>
             </ModalFooter>
           </>
         )}

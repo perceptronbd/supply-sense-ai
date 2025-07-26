@@ -12,7 +12,7 @@ const Footer = () => {
         <div className="mx-auto lg:mx-0 flex-1">
           <FullLogo className="text-primary w-56 mb-5" />
 
-          <p className="text-content1-foreground mb-6 lg:mb-10 text-center xl:text-start">
+          <p className="text-content1-foreground mb-6 lg:mb-10 text-center xl:text-start w-72">
             Making operational data accessible through natural language.
           </p>
           <div className="flex gap-6 justify-center xl:justify-start items-center">
