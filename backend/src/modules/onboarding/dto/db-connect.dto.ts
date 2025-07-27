@@ -28,10 +28,6 @@ export class DbCredentialsDto {
   @IsBoolean()
   @IsOptional()
   sslEnabled?: boolean = false;
-
-  @IsString()
-  @IsOptional()
-  title?: string;
 }
 
 export class SaveDbConnectionDto {
@@ -48,6 +44,14 @@ export class SaveDbConnectionDto {
   @IsString()
   @IsOptional()
   connectionString?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  businessContext: string;
+
+  @IsString()
+  @IsNotEmpty()
+  title: string;
 }
 
 export class GetTablesDto {
@@ -57,5 +61,5 @@ export class GetTablesDto {
 
   @IsString()
   @IsOptional()
-  dbConnectionId?: string;
+  dbConnectionId: string;
 }

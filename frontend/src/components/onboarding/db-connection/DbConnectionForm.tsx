@@ -1,5 +1,6 @@
 'use client';
 
+import type { IDbConnectPayload } from '@/components/onboarding/types/db-connection';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useDbConnectMutation } from '@/store/api/onboardingApi';
@@ -11,7 +12,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { useCheckHasCredential } from './hooks/useCheckHasCredential';
 import { useGetRenderInput } from './hooks/useGetRenderInput';
 import { type DbConnectionFormData, dbConnectionSchema, defaultDbConnectionValues } from './schema';
-import type { IDbConnectPayload } from './types';
 
 const DbConnectionForm = () => {
   const {
@@ -39,7 +39,11 @@ const DbConnectionForm = () => {
 
   // Helper to build payload
   const buildPayload = (data: DbConnectionFormData): IDbConnectPayload => {
-    const payload: IDbConnectPayload = { companyId };
+    const payload: IDbConnectPayload = {
+      companyId,
+      title: data.title,
+      businessContext: data.aboutYourBusiness,
+    };
     if (data.credential && !data.connectionString) {
       payload.credentials = {
         host: data.credential.host ?? '',

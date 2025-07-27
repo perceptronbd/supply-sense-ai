@@ -10,6 +10,8 @@ interface IDbCredential {
 }
 
 export interface IDbConnectPayload {
+  title: string;
+  businessContext: string;
   companyId: string;
   credentials?: IDbCredential;
   connectionString?: string;

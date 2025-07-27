@@ -1,32 +1,67 @@
 'use client';
 import { Button } from '@/components/ui/Button';
+import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
+import { useCaptureMetadataMutation, useGetTablesQuery } from '@/store/api/onboardingApi';
+import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { Select, SelectItem } from '@heroui/react';
 import type { SharedSelection } from '@heroui/react';
+import { handleAsyncOperation } from '@supplysense/utils';
 import { useState } from 'react';
 import Summary from '../Summary';
-
-export const animals = [
-  { key: 'branch', label: 'Branch' },
-  { key: 'category', label: 'Category' },
-  { key: 'customer', label: 'Customer' },
-  { key: 'customer_group', label: 'Customer Group' },
-  { key: 'customer_segment', label: 'Customer Segment' },
-  { key: 'item', label: 'Item' },
-  { key: 'item_group', label: 'Item Group' },
-  { key: 'location', label: 'Location' },
-  { key: 'location_group', label: 'Location Group' },
-  { key: 'order', label: 'Order' },
-  { key: 'order_item', label: 'Order Item' },
-  { key: 'product', label: 'Product' },
-  { key: 'product_group', label: 'Product Group' },
-];
+import type { ICaptureMetadataPayload } from '../types';
+import type { ITableDiscoverySelection } from '../types/table-discovery-selection';
 
 const TableDiscoverySelection = () => {
-  const [values, setValues] = useState<SharedSelection>(new Set([]) as unknown as SharedSelection);
+  // Store selected table keys (tableName)
+  const [values, setValues] = useState<SharedSelection>(new Set() as SharedSelection);
+
+  // Store selected table objects
+  const [selectedTables, setSelectedTables] = useState<ITableDiscoverySelection['tables']>([]);
+
+  const { companyId } = useGetCompanyId();
+
+  const { dbConnectionId, currentStep, setOnboardingStep } = useOnboardingStore();
+
+  const [captureMetadata, { isLoading: isCapturing }] = useCaptureMetadataMutation();
+
+  // Fetch tables based on companyId and dbConnectionId
+  const { data: tableResponse = { data: { tables: [] } }, isLoading } = useGetTablesQuery(
+    {
+      companyId,
+      dbConnectionId,
+    },
+    {
+      skip: !(companyId && dbConnectionId && currentStep === 2),
+    }
+  );
+
+  // Compute table options and map (React 19 will optimize reactivity)
+  const tableOptions = tableResponse.data.tables.map(({ tableName, displayName }) => ({
+    key: tableName,
+    label: displayName,
+  }));
+
+  const tableMap = new Map<string, ITableDiscoverySelection['tables'][number]>();
+
+  for (const option of tableOptions) {
+    if (!tableMap.has(option.key)) {
+      tableMap.set(option.key, {
+        tableName: option.key,
+        displayName: option.label,
+      });
+    }
+  }
+
   // Function to handle selection changes
   const handleSelectChange = (selectedKeys: SharedSelection) => {
     setValues(selectedKeys);
+    // Map selected keys to table objects
+    const selectedTableData = Array.from(selectedKeys)
+      .map((key) => tableMap.get(key as string))
+      .filter(Boolean) as ITableDiscoverySelection['tables'];
+    setSelectedTables(selectedTableData);
   };
 
   // Remove a selected value when clicking X
@@ -35,6 +70,22 @@ const TableDiscoverySelection = () => {
       const updated = new Set(Array.from(prev));
       updated.delete(value);
       return updated as SharedSelection;
+    });
+    setSelectedTables((prev) => prev.filter((table) => table.tableName !== value));
+  };
+
+  const handleContinue = async () => {
+    const payload: ICaptureMetadataPayload = {
+      companyId,
+      dbConnectionId,
+      tables: selectedTables,
+    };
+
+    await handleAsyncOperation(async () => await captureMetadata(payload).unwrap(), {
+      onSuccess(result) {
+        console.log('Metadata captured successfully:', result);
+        setOnboardingStep(3); // Move to the next step in onboarding
+      },
     });
   };
 
@@ -49,7 +100,21 @@ const TableDiscoverySelection = () => {
 
       {/* right side form */}
       <div className="flex flex-col">
-        <Button variant="light" color="default" className="text-default-500 mb-3 ms-auto w-fit">
+        <Button
+          variant="light"
+          color="default"
+          className={cn(
+            'mb-3 ms-auto w-fit',
+            selectedTables.length > 0 ? 'text-primary-400' : 'text-default-500',
+            {
+              'opacity-50 cursor-not-allowed':
+                isLoading || isCapturing || selectedTables.length === 0,
+            }
+          )}
+          onClick={handleContinue}
+          disabled={isLoading || selectedTables.length === 0 || isCapturing}
+          isLoading={isCapturing}
+        >
           Confirm <Icons.ArrowRight className="size-4" />
         </Button>
         <div className="w-[80%] ms-auto">
@@ -60,20 +125,21 @@ const TableDiscoverySelection = () => {
             selectionMode="multiple"
             selectedKeys={values}
             onSelectionChange={handleSelectChange}
+            isLoading={isLoading}
           >
-            {animals.map((animal) => (
+            {tableOptions.map((animal) => (
               <SelectItem key={animal.key}>{animal.label}</SelectItem>
             ))}
           </Select>
           <div className="flex w-full flex-wrap gap-2 mt-2">
-            {Array.from(values).map((value) => (
+            {selectedTables.map(({ tableName, displayName }) => (
               <button
-                key={value}
+                key={tableName}
                 type="button"
                 className="flex items-center justify-center text-sm  gap-x-2 bg-default-400 rounded-md px-3 py-1"
-                onClick={() => handleRemove(value as string)}
+                onClick={() => handleRemove(tableName)}
               >
-                {value} <Icons.X className="size-4" />
+                {displayName} <Icons.X className="size-4" />
               </button>
             ))}
           </div>

@@ -8,6 +8,7 @@ import {
   Inject,
   Param,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -47,8 +48,11 @@ export class OnboardingController {
    */
   @Get('/:companyId/tables')
   @HttpCode(HttpStatus.OK)
-  async getTables(@Param() dto: GetTablesDto) {
-    return await this.onboardingService.getTables(dto.companyId, dto.dbConnectionId);
+  async getTables(
+    @Param('companyId') companyId: GetTablesDto['companyId'],
+    @Query('dbConnectionId') dbConnectionId: GetTablesDto['dbConnectionId']
+  ) {
+    return await this.onboardingService.getTables(companyId, dbConnectionId);
   }
 
   @Post('/:companyId/capture-metadata')

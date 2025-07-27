@@ -6,11 +6,11 @@ import storage from 'redux-persist/lib/storage';
 const persistConfig = {
   key: 'onboarding',
   storage,
-  whitelist: ['currentStep', 'dbConnectionId'] as OnboardingState[], // Only persist these fields
+  whitelist: ['currentSteps', 'dbConnectionId'] as OnboardingState[], // Only persist these fields
 };
 
 const initialState = {
-  currentStep: 1,
+  currentSteps: {} as Record<string, number>, // Maps companyId to current step
   dbConnectionId: '',
 };
 
@@ -20,8 +20,8 @@ const onboardingSlice = createSlice({
   name: 'onboarding',
   initialState,
   reducers: {
-    setCurrentStep: (state, action: PayloadAction<number>) => {
-      state.currentStep = action.payload;
+    setCurrentSteps: (state, action: PayloadAction<Record<string, number>>) => {
+      state.currentSteps = action.payload;
     },
     setDbConnectionId: (state, action: PayloadAction<string>) => {
       state.dbConnectionId = action.payload;
@@ -29,7 +29,7 @@ const onboardingSlice = createSlice({
   },
 });
 
-export const { setCurrentStep, setDbConnectionId } = onboardingSlice.actions;
+export const { setCurrentSteps, setDbConnectionId } = onboardingSlice.actions;
 
 const persistedOnboardingReducer = persistReducer(persistConfig, onboardingSlice.reducer);
 
