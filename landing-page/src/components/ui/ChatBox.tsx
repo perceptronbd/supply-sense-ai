@@ -1,8 +1,9 @@
 'use client';
 
 import { Avatar, Button } from '@heroui/react';
+import gsap from 'gsap';
 import { User } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { FullLogo, Logo } from './Logo';
 
 interface ChatMessage {
@@ -13,8 +14,8 @@ interface ChatMessage {
 }
 
 const ChatBox = () => {
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messages: ChatMessage[] = [
     {
       id: '1',
       content: 'What items were requested in the last hour from Branch A?',
@@ -27,12 +28,88 @@ const ChatBox = () => {
       sender: 'ai',
       timestamp: new Date(),
     },
-  ]);
+  ];
+
+  // Animation for messages
+  useEffect(() => {
+    if (!messagesEndRef.current) return;
+
+    const messageElements = Array.from(messagesEndRef.current.children);
+    const userMessage = messageElements[0];
+    const aiMessage = messageElements[1];
+    const aiContent = aiMessage.querySelector('.message-content');
+    const originalAIText = aiContent?.textContent || '';
+
+    // Set initial states
+    gsap.set([userMessage, aiMessage], {
+      opacity: 0,
+      x: (i) => (i === 0 ? 50 : 0),
+    });
+
+    // Create master timeline
+    const masterTl = gsap.timeline({
+      repeat: -1,
+      repeatDelay: 2,
+    });
+
+    masterTl
+      // User message animation
+      .to(userMessage, {
+        opacity: 1,
+        x: 0,
+        duration: 1,
+        ease: 'sine.in',
+      })
+      // AI message container animation
+      .to(
+        aiMessage,
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.05,
+          onStart: () => {
+            if (aiContent) aiContent.textContent = '';
+          },
+        },
+        '+=1' // Start after 1 second
+      )
+      // AI message typing effect
+      .to(
+        {},
+        {
+          duration: originalAIText.length * 0.05,
+          onStart: () => {
+            if (aiContent) aiContent.textContent = '';
+          },
+          onUpdate: function () {
+            const progress = this.progress();
+            const currentLength = Math.floor(originalAIText.length * progress);
+            if (aiContent) {
+              aiContent.textContent = originalAIText.slice(0, currentLength);
+            }
+          },
+        }
+      )
+      // Fade out both messages
+      .to(
+        [userMessage, aiMessage],
+        {
+          opacity: 0,
+          x: (i) => (i === 0 ? 50 : 0),
+          duration: 0.3,
+        },
+        '+=2' // delay before fading out
+      );
+
+    return () => {
+      masterTl.kill();
+    };
+  }, []);
 
   return (
     <>
       {/* chat box */}
-      <div className="w-full max-w-3xl mx-auto border-1 border-focus rounded-xl">
+      <div className="w-full max-w-3xl mx-auto border-1 border-focus rounded-xl min-h-64">
         <div className="bg-background rounded-2xl p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -43,11 +120,13 @@ const ChatBox = () => {
           </div>
 
           {/* Chat Messages */}
-          <div className="space-y-4">
+          <div className="space-y-4" ref={messagesEndRef}>
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 ${
+                  msg.sender === 'user' ? 'justify-end user-message' : 'justify-start ai-message'
+                }`}
               >
                 {/* ai message */}
                 {msg.sender === 'ai' && (
@@ -65,7 +144,7 @@ const ChatBox = () => {
                     msg.sender === 'user' ? 'bg-primary/20' : 'bg-inherit'
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className="message-content text-sm leading-relaxed">{msg.content}</p>
                   <p
                     className={`text-xs mt-1 opacity-70 ${
                       msg.sender === 'user'
