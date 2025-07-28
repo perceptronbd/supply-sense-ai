@@ -1,8 +1,13 @@
-import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
 import { MCPClient } from '@mastra/mcp';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { AI_MODEL_NAME } from '@supplysense/constant';
 import { appConfig } from '../../../config/app.config';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 interface AgentResponse {
   success: boolean;
@@ -86,7 +91,7 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         description: 'AI assistant specialized in supply chain management and logistics',
         instructions:
           'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
-        model: google('gemini-2.0-flash'),
+        model: openrouter(AI_MODEL_NAME),
         tools, // Pass MCP tools directly to the agent
       });
 

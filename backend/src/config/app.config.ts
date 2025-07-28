@@ -52,7 +52,7 @@ export function validateConfig(): void {
   }
 
   // Warn about missing optional but important variables
-  const important = ['GEMINI_API_KEY', 'JWT_SECRET'];
+  const important = ['OPENROUTER_API_KEY', 'JWT_SECRET'];
   const missingImportant = important.filter((key) => !process.env[key]);
 
   if (missingImportant.length > 0) {

@@ -57,7 +57,7 @@ export class OnboardingService {
       // Query foreign key relationships from the database
       return await withDbConnection(connection, async (client: IDatabaseClient) => {
         const { rows } = await client.query({
-          qry: `
+          text: `
             SELECT
               tc.table_name AS foreign_table,
               kcu.column_name AS foreign_column,

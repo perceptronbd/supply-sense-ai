@@ -1,15 +1,18 @@
 import { buildMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
-import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
-import { Injectable, Logger } from '@nestjs/common';
-import { AI_MODEL_NAME, ANALYZE_METADATA_TOOL } from '@supplysense/constant';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { AI_MODEL_NAME } from '@supplysense/constant';
 import type {
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
-import { McpClientService } from './mcp-client.service';
+import { McpClientService } from './mcp-client.service'; // Keep this import
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 interface TableMetadataInput {
   tableName: string;
@@ -21,11 +24,16 @@ interface TableMetadataInput {
  * Specialized service for generating table metadata using MCP tools
  * This service focuses specifically on table analysis and metadata generation
  */
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+
 @Injectable()
 export class TableMetadataAgentService {
   private readonly logger = new Logger(TableMetadataAgentService.name);
   private metadataAgent: Agent | null = null;
-  constructor(private readonly mcpClientService: McpClientService) {}
+  constructor(
+    @Inject(forwardRef(() => McpClientService))
+    private readonly mcpClientService: McpClientService
+  ) {}
 
   /**
    * Initialize the table metadata agent with specific tools for table analysis
@@ -50,7 +58,7 @@ export class TableMetadataAgentService {
           'AI agent specialized in analyzing database table schemas and generating metadata',
         instructions:
           'Analyze table schema and generate comprehensive metadata including friendly labels, purpose, update frequency, and sample business questions.',
-        model: google(AI_MODEL_NAME),
+        model: openrouter(AI_MODEL_NAME),
         tools,
       });
 
@@ -59,6 +67,50 @@ export class TableMetadataAgentService {
       this.logger.error('❌ Failed to initialize table metadata agent:', error);
       throw error;
     }
+  }
+
+  /**
+   * Generate with retry logic for rate limiting
+   */
+  private async generateWithRetry(
+    messages: any[],
+    options: any,
+    tableName: string,
+    maxRetries = 3,
+    baseDelay = 1000
+  ): Promise<any> {
+    let lastError: Error;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (!this.metadataAgent) {
+          throw new Error('Table metadata agent not initialized');
+        }
+
+        return await this.metadataAgent.generate(messages, options);
+      } catch (error) {
+        lastError = error as Error;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if it's a rate limiting error
+        if (errorMessage.includes('Too Many Requests') || errorMessage.includes('429')) {
+          const delay = baseDelay * 2 ** (attempt - 1); // Exponential backoff
+          this.logger.warn(
+            `Rate limit hit for table ${tableName}, attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`
+          );
+
+          if (attempt < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+
+        // If it's not a rate limiting error, or we've exhausted retries, throw immediately
+        throw error;
+      }
+    }
+
+    throw lastError!;
   }
 
   /**
@@ -91,8 +143,8 @@ export class TableMetadataAgentService {
 
       this.logger.log(`🔍 Analyzing table metadata for: ${tableName}`);
 
-      // Use the specialized agent to generate metadata
-      const response = await this.metadataAgent.generate(
+      // Use the specialized agent to generate metadata with retry logic
+      const response = await this.generateWithRetry(
         [
           {
             role: 'user',
@@ -102,9 +154,10 @@ export class TableMetadataAgentService {
         {
           toolChoice: {
             type: 'tool',
-            toolName: ANALYZE_METADATA_TOOL.NAME,
+            toolName: 'supplySense_analyzeTableMetadataTool',
           },
-        }
+        },
+        tableName
       );
 
       this.logger.log('✅ Table metadata generated successfully');

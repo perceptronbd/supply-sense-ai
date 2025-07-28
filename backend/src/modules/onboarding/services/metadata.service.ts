@@ -82,7 +82,7 @@ export class MetadataService {
   ): Promise<ITableSchemaInput> {
     // Get column information
     const columnQuery = {
-      qry: GET_TABLES_QUERY,
+      text: GET_TABLES_QUERY,
       values: [tableName],
     };
 

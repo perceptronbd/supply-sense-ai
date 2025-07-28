@@ -313,7 +313,7 @@ export type CreatePermission<
 export interface IDatabaseClient {
   query(qry: string): Promise<{ rows: IDatabaseRow[] }>;
   query(config: {
-    qry: string;
+    text: string;
     values: unknown[];
   }): Promise<{ rows: IDatabaseRow[] }>;
 }

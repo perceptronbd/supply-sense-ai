@@ -1,5 +1,5 @@
-import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import {
@@ -7,6 +7,10 @@ import {
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
 } from '../constants/system-instructions/sample-questions';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -19,7 +23,7 @@ export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   instructions: SAMPLE_QUESTIONS_INSTRUCTION,
-  model: google(AI_MODEL_NAME),
+  model: openrouter(AI_MODEL_NAME),
 });
 
 // Custom function to use the agent
