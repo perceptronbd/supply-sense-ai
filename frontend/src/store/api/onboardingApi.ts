@@ -2,6 +2,7 @@ import type {
   ICaptureMetadataPayload,
   IDbConnectPayload,
   IGetTablesDto,
+  ISaveMetadataPayload,
   TCaptureMetadataResponse,
   TDbConnectionResponse,
   TGetTablesResponse,
@@ -34,9 +35,20 @@ export const onboardingApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+    saveMetadata: builder.mutation<TCaptureMetadataResponse, ISaveMetadataPayload>({
+      query: ({ companyId, payload }) => ({
+        url: `/onboarding/${companyId}/save-metadata`,
+        method: 'POST',
+        body: { ...payload },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useDbConnectMutation, useGetTablesQuery, useCaptureMetadataMutation } =
-  onboardingApi;
+export const {
+  useDbConnectMutation,
+  useGetTablesQuery,
+  useCaptureMetadataMutation,
+  useSaveMetadataMutation,
+} = onboardingApi;

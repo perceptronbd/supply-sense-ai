@@ -22,7 +22,8 @@ const TableDiscoverySelection = () => {
 
   const { companyId } = useGetCompanyId();
 
-  const { dbConnectionId, currentStep, setOnboardingStep } = useOnboardingStore();
+  const { dbConnectionId, currentStep, setOnboardingStep, saveGeneratedMetadata } =
+    useOnboardingStore();
 
   const [captureMetadata, { isLoading: isCapturing }] = useCaptureMetadataMutation();
 
@@ -83,7 +84,7 @@ const TableDiscoverySelection = () => {
 
     await handleAsyncOperation(async () => await captureMetadata(payload).unwrap(), {
       onSuccess(result) {
-        console.log('Metadata captured successfully:', result);
+        saveGeneratedMetadata(result.data.metadata.generatedMetadata);
         setOnboardingStep(3); // Move to the next step in onboarding
       },
     });
@@ -115,7 +116,13 @@ const TableDiscoverySelection = () => {
           disabled={isLoading || selectedTables.length === 0 || isCapturing}
           isLoading={isCapturing}
         >
-          Confirm <Icons.ArrowRight className="size-4" />
+          {isCapturing ? (
+            'Capturing Metadata...'
+          ) : (
+            <>
+              Confirm <Icons.ArrowRight className="size-4" />
+            </>
+          )}
         </Button>
         <div className="w-[80%] ms-auto">
           <Select

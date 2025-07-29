@@ -153,8 +153,10 @@ export class MetadataService {
   /**
    * Save generated metadata to the database
    */
-  async saveTableMetadata(input: TableMetadataDto): Promise<ITableMetadataRecord> {
-    const { companyId, ...data } = input;
+  async saveTableMetadata(
+    companyId: string,
+    data: TableMetadataDto
+  ): Promise<ITableMetadataRecord> {
     try {
       const isValidConnectionId = await this.prisma.dbConnection.findUnique({
         where: { id: data.dbConnectionId, companyId },
@@ -163,9 +165,15 @@ export class MetadataService {
       if (!isValidConnectionId) {
         throw new Error('Invalid database connection');
       }
-      // Save the metadata record
+      // Save the metadata record with correct dbConnection relation
+      const { dbConnectionId, ...rest } = data;
       const metadataRecord = await this.prisma.tableMetadata.create({
-        data,
+        data: {
+          ...rest,
+          dbConnection: {
+            connect: { id: dbConnectionId },
+          },
+        },
       });
       return metadataRecord;
     } catch (error) {

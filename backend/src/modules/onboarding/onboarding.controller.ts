@@ -13,10 +13,10 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ConnectionsService } from '../connections/connections.service';
-import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
+import { SaveDbConnectionDto } from './dto/db-connect.dto';
 import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
 import { GetSchemaDto } from './dto/schema.dto';
-import type { GetRelationshipsDto, UpsertRelationshipsDto } from './dto/table-relationship.dto';
+import type { UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';
 import { SchemaBuilderService } from './services/schema-builder.service';
@@ -49,8 +49,8 @@ export class OnboardingController {
   @Get('/:companyId/tables')
   @HttpCode(HttpStatus.OK)
   async getTables(
-    @Param('companyId') companyId: GetTablesDto['companyId'],
-    @Query('dbConnectionId') dbConnectionId: GetTablesDto['dbConnectionId']
+    @Param('companyId') companyId: string,
+    @Query('dbConnectionId') dbConnectionId: string
   ) {
     return await this.onboardingService.getTables(companyId, dbConnectionId);
   }
@@ -63,20 +63,20 @@ export class OnboardingController {
 
   @Post('/:companyId/save-metadata')
   @HttpCode(HttpStatus.CREATED)
-  async saveMetadata(@Body() dto: TableMetadataDto) {
-    return await this.metadataService.saveTableMetadata(dto);
+  async saveMetadata(@Param('companyId') companyId: string, @Body() dto: TableMetadataDto) {
+    return await this.metadataService.saveTableMetadata(companyId, dto);
   }
   /**
    * Get foreign key relationships for selected tables
    */
-  @Get('/:companyId/:dbConnectionId/relationships')
+  @Get('/:companyId/relationships')
   @HttpCode(HttpStatus.OK)
-  async getRelationships(@Param() params: GetRelationshipsDto) {
+  async getRelationships(
+    @Param('companyId') companyId: string,
+    @Query('dbConnectionId') dbConnectionId: string
+  ) {
     // Should return array of TableRelationshipDto (unconfirmed)
-    return await this.onboardingService.getTableRelationships(
-      params.companyId,
-      params.dbConnectionId
-    );
+    return await this.onboardingService.getTableRelationships(companyId, dbConnectionId);
   }
 
   /**

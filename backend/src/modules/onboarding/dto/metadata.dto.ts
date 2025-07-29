@@ -27,10 +27,6 @@ export class CaptureMetadataDto {
 
 export class TableMetadataDto {
   @IsString()
-  @IsNotEmpty({ message: 'Company ID is required' })
-  companyId: string;
-
-  @IsString()
   @IsNotEmpty({ message: 'Database connection ID is required' })
   dbConnectionId: string;
 

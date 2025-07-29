@@ -53,13 +53,3 @@ export class SaveDbConnectionDto {
   @IsNotEmpty()
   title: string;
 }
-
-export class GetTablesDto {
-  @IsString()
-  @IsNotEmpty()
-  companyId: string;
-
-  @IsString()
-  @IsOptional()
-  dbConnectionId: string;
-}
