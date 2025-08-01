@@ -3,10 +3,13 @@ import type {
   IDbConnectPayload,
   IGetTablesDto,
   ISaveMetadataPayload,
+  IUpsertTableRelationshipsPayload,
   TCaptureMetadataResponse,
   TDbConnectionResponse,
   TGetTablesResponse,
+  TRelationshipTablesResponse,
 } from '@/components/onboarding/types';
+
 import { baseApi } from './baseApi';
 
 export const onboardingApi = baseApi.injectEndpoints({
@@ -20,6 +23,7 @@ export const onboardingApi = baseApi.injectEndpoints({
         };
       },
     }),
+
     getTables: builder.query<TGetTablesResponse, IGetTablesDto>({
       query: ({ companyId, dbConnectionId }) => ({
         url: `/onboarding/${companyId}/tables`,
@@ -35,11 +39,30 @@ export const onboardingApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+
     saveMetadata: builder.mutation<TCaptureMetadataResponse, ISaveMetadataPayload>({
       query: ({ companyId, payload }) => ({
         url: `/onboarding/${companyId}/save-metadata`,
         method: 'POST',
         body: { ...payload },
+      }),
+    }),
+    getTableRelationships: builder.query<TRelationshipTablesResponse, IGetTablesDto>({
+      query: ({ companyId, dbConnectionId }) => ({
+        url: `/onboarding/${companyId}/relationships`,
+        method: 'GET',
+        params: { dbConnectionId },
+      }),
+    }),
+
+    upsertTableRelationships: builder.mutation<
+      TRelationshipTablesResponse,
+      IUpsertTableRelationshipsPayload
+    >({
+      query: (body) => ({
+        url: '/onboarding/table-relationships',
+        method: 'POST',
+        body,
       }),
     }),
   }),
@@ -51,4 +74,6 @@ export const {
   useGetTablesQuery,
   useCaptureMetadataMutation,
   useSaveMetadataMutation,
+  useGetTableRelationshipsQuery,
+  useUpsertTableRelationshipsMutation,
 } = onboardingApi;

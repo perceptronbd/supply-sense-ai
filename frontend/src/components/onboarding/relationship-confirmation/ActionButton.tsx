@@ -1,7 +1,16 @@
-import { Button } from '@/components/ui/Button';
+import { Button, type ButtonProps } from '@/components/ui/Button';
 import { Icons } from '@/lib/icons/Icons';
 
-type TVariants = 'yes' | 'no' | 'not-sure';
+export const ACTION_BUTTON_VARIANTS = [
+  'yes',
+  'no',
+  'not-sure',
+  'uncertain',
+  'confirmed',
+  'edit',
+] as const;
+
+export type TActionButtonVariants = (typeof ACTION_BUTTON_VARIANTS)[number];
 
 type TVariantStyles =
   | 'flat'
@@ -22,14 +31,14 @@ type TVariantColors =
   | 'danger'
   | undefined;
 type TButtonConfig = Record<
-  TVariants,
+  TActionButtonVariants,
   { style: TVariantStyles; color: TVariantColors; icon: React.ReactNode }
 >;
-interface IProps {
-  variants: TVariants;
+interface IProps extends ButtonProps {
+  variants: TActionButtonVariants;
 }
 
-const ActionButton = ({ variants }: IProps) => {
+const ActionButton = ({ variants, ...props }: IProps) => {
   const buttonConfig: TButtonConfig = {
     yes: {
       style: 'flat',
@@ -46,13 +55,30 @@ const ActionButton = ({ variants }: IProps) => {
       color: 'warning',
       icon: <Icons.NotSure className="size-6" />,
     },
+    confirmed: {
+      style: 'flat',
+      color: 'success',
+      icon: <Icons.CheckCircle />,
+    },
+    uncertain: {
+      style: 'flat',
+      color: 'warning',
+      icon: <Icons.InfoCircle className="size-6" />,
+    },
+    edit: {
+      style: 'flat',
+      color: 'default',
+      icon: <Icons.Edit className="size-6" />,
+    },
   };
 
   return (
     <Button
-      className="capitalize size-fit pl-3 pr-4 py-2 text-lg items-center inline-flex"
+      className="capitalize  text-lg items-center inline-flex"
       variant={buttonConfig[variants].style}
       color={buttonConfig[variants].color}
+      size="sm"
+      {...props}
     >
       <span className="">{buttonConfig[variants].icon}</span> {variants.split('-').join(' ')}
     </Button>
