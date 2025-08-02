@@ -1240,10 +1240,9 @@ model DbConnection {
   companyId      String
   company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   TableRelations TableRelations[]
-  TableMetadata  TableMetadata?
+  TableMetadata  TableMetadata[]
   SchemaCache    SchemaCache?
 
-  @@unique(companyId)
   @@unique([companyId, username], name: "unique_db_connection")
   @@index([companyId,id], name: "idx_db_connections_company_id")
   @@index([username], name: "idx_db_connections_username")
@@ -1276,7 +1275,7 @@ model TableMetadata {
   dataSensitivity String
   sampleQuestions String[]
 
-  dbConnectionId String       @unique // One-to-one relationship with DbConnection
+  dbConnectionId String       // One-to-many relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([dbConnectionId, tableName], name: "unique_table_metadata")

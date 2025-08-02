@@ -11,7 +11,7 @@ import type {
 } from '@supplysense/types';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
-import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
+import type { BatchSaveMetadataDto, CaptureMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';
 
 @Injectable()
@@ -155,8 +155,8 @@ export class MetadataService {
    */
   async saveTableMetadata(
     companyId: string,
-    data: TableMetadataDto
-  ): Promise<ITableMetadataRecord> {
+    data: BatchSaveMetadataDto
+  ): Promise<ITableMetadataRecord[]> {
     try {
       const isValidConnectionId = await this.prisma.dbConnection.findUnique({
         where: { id: data.dbConnectionId, companyId },
@@ -165,17 +165,22 @@ export class MetadataService {
       if (!isValidConnectionId) {
         throw new Error('Invalid database connection');
       }
-      // Save the metadata record with correct dbConnection relation
-      const { dbConnectionId, ...rest } = data;
-      const metadataRecord = await this.prisma.tableMetadata.create({
-        data: {
-          ...rest,
-          dbConnection: {
-            connect: { id: dbConnectionId },
-          },
-        },
-      });
-      return metadataRecord;
+
+      // Use transaction to ensure all metadata records are saved together
+      const savedRecords = await this.prisma.$transaction(
+        data.tableMetadata.map((metadata) =>
+          this.prisma.tableMetadata.create({
+            data: {
+              ...metadata,
+              dbConnection: {
+                connect: { id: data.dbConnectionId },
+              },
+            },
+          })
+        )
+      );
+
+      return savedRecords;
     } catch (error) {
       console.error('Error saving metadata for table ', error);
       throw new Error('Failed to save metadata for table');

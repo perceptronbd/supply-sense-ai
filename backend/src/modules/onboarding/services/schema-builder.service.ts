@@ -66,43 +66,46 @@ export class SchemaBuilderService {
       };
 
       // Process each table that has metadata
-      if (dbConnection.TableMetadata) {
-        const tableMetadata = dbConnection.TableMetadata;
-
+      if (dbConnection.TableMetadata && Array.isArray(dbConnection.TableMetadata)) {
         // 3. Connect to Customer DB and query columns for each table
         await withDbConnection(connectionDetails, async (client) => {
-          // For each table, get its columns
-          const result = await client.query(
-            `
-            SELECT column_name, data_type
-            FROM information_schema.columns
-            WHERE table_name=$1
-          `,
-            [tableMetadata.tableName]
-          );
+          for (const tableMetadata of dbConnection.TableMetadata) {
+            // For each table, get its columns
+            const result = await client.query(
+              `
+              SELECT column_name, data_type
+              FROM information_schema.columns
+              WHERE table_name=$1
+            `,
+              [tableMetadata.tableName]
+            );
 
-          // Build columns object
-          const columns: Record<string, string> = {};
-          for (const row of result.rows) {
-            columns[row.column_name] = row.data_type;
+            // Build columns object
+            const columns: Record<string, string> = {};
+            for (const row of result.rows) {
+              columns[row.column_name] = row.data_type;
+            }
+
+            // Get relationships for this table
+            const relationships = dbConnection.TableRelations
+              ? dbConnection.TableRelations.filter(
+                  (relation) =>
+                    relation.tableName === tableMetadata.tableName && relation.isConfirmed
+                ).map((relation) => ({
+                  column: relation.columnName,
+                  refTable: relation.refTable,
+                  refColumn: relation.refColumn,
+                }))
+              : [];
+
+            // Add table to schema
+            schema.tables[tableMetadata.tableName] = {
+              label: tableMetadata.friendlyLabel,
+              purpose: tableMetadata.purpose,
+              columns,
+              relationships,
+            };
           }
-
-          // Get relationships for this table
-          const relationships = dbConnection.TableRelations.filter(
-            (relation) => relation.tableName === tableMetadata.tableName && relation.isConfirmed
-          ).map((relation) => ({
-            column: relation.columnName,
-            refTable: relation.refTable,
-            refColumn: relation.refColumn,
-          }));
-
-          // Add table to schema
-          schema.tables[tableMetadata.tableName] = {
-            label: tableMetadata.friendlyLabel,
-            purpose: tableMetadata.purpose,
-            columns,
-            relationships,
-          };
         });
       }
 

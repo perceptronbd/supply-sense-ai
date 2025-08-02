@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ConnectionsService } from '../connections/connections.service';
 import { SaveDbConnectionDto } from './dto/db-connect.dto';
-import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
+import type { BatchSaveMetadataDto, CaptureMetadataDto } from './dto/metadata.dto';
 import { GetSchemaDto } from './dto/schema.dto';
 import type { UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import { MetadataService } from './services/metadata.service';
@@ -63,9 +63,10 @@ export class OnboardingController {
 
   @Post('/:companyId/save-metadata')
   @HttpCode(HttpStatus.CREATED)
-  async saveMetadata(@Param('companyId') companyId: string, @Body() dto: TableMetadataDto) {
+  async saveMetadata(@Param('companyId') companyId: string, @Body() dto: BatchSaveMetadataDto) {
     return await this.metadataService.saveTableMetadata(companyId, dto);
   }
+
   /**
    * Get foreign key relationships for selected tables
    */

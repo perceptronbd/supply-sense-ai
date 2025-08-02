@@ -54,3 +54,13 @@ export class TableMetadataDto {
   @IsNotEmpty({ message: 'Sample questions are required' })
   sampleQuestions: string[];
 }
+
+export class BatchSaveMetadataDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Database connection ID is required' })
+  dbConnectionId: string;
+
+  @ValidateNested({ each: true })
+  @Type(() => TableMetadataDto)
+  tableMetadata: Omit<TableMetadataDto, 'dbConnectionId'>[];
+}

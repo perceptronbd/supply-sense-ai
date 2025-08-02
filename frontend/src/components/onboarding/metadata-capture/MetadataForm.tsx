@@ -1,12 +1,8 @@
-import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { Icons } from '@/lib/icons/Icons';
-import { useSaveMetadataMutation } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { Input, Radio, RadioGroup, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { handleAsyncOperation } from '@supplysense/utils';
 import { type ComponentPropsWithRef, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { IGeneratedMetadata } from '../types';
@@ -22,16 +18,14 @@ const UPDATE_FREQUENCY_OPTIONS = [
 interface IProps extends IGeneratedMetadata, ComponentPropsWithRef<'form'> {}
 
 const MetadataForm = (props: IProps) => {
-  const { tableName, friendlyLabel, purpose, updateFrequency, sampleQuestions } = props;
+  const { tableName, friendlyLabel, purpose, updateFrequency, dataSensitivity, sampleQuestions } =
+    props;
 
   const [newQuestion, setNewQuestion] = useState('');
-  const { updateMetadata, setOnboardingStep, dbConnectionId } = useOnboardingStore();
-  const { companyId } = useGetCompanyId();
-  const [saveMetadata, { isLoading: isSaving }] = useSaveMetadataMutation();
+  const { updateMetadata } = useOnboardingStore();
 
   const {
     control,
-    handleSubmit,
     watch,
     setValue,
     formState: { errors, isDirty },
@@ -41,7 +35,7 @@ const MetadataForm = (props: IProps) => {
       friendlyLabel,
       purpose,
       updateFrequency: updateFrequency as 'realtime' | 'hourly' | 'daily' | 'weekly',
-      dataSensitivity: '',
+      dataSensitivity: dataSensitivity || '',
       sampleQuestions,
     },
   });
@@ -53,7 +47,7 @@ const MetadataForm = (props: IProps) => {
     if (isDirty) {
       const timeoutId = setTimeout(() => {
         updateMetadata(tableName, watchedValues);
-      }, 500); // Debounce for 500ms
+      }, 100); // Debounce for 100ms
 
       return () => clearTimeout(timeoutId);
     }
@@ -85,36 +79,8 @@ const MetadataForm = (props: IProps) => {
     }
   };
 
-  const onSubmit = async (data: TMetadataFormData) => {
-    // Update the metadata in the store
-    updateMetadata(tableName, data);
-
-    const payload = {
-      dbConnectionId: dbConnectionId,
-      tableName,
-      friendlyLabel: data.friendlyLabel,
-      purpose: data.purpose,
-      updateFrequency: data.updateFrequency,
-      dataSensitivity: data.dataSensitivity,
-      sampleQuestions: data.sampleQuestions,
-    };
-    console.log('🚀 ~ payload:', payload);
-
-    await handleAsyncOperation(
-      async () => {
-        const result = await saveMetadata({ companyId, payload }).unwrap();
-        return result;
-      },
-      {
-        onSuccess() {
-          setOnboardingStep(4); // Move to the next step in onboarding
-        },
-      }
-    );
-  };
-
   return (
-    <form className="space-y-5 pb-5" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-5 pb-5">
       <Controller
         name="friendlyLabel"
         control={control}
@@ -222,16 +188,6 @@ const MetadataForm = (props: IProps) => {
           ))}
         </div>
       </div>
-
-      <Button
-        variant="solid"
-        color="primary"
-        className="mb-3 w-full"
-        type="submit"
-        isLoading={isSaving}
-      >
-        Capture
-      </Button>
     </form>
   );
 };

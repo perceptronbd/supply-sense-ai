@@ -10,6 +10,7 @@ export interface IGeneratedMetadata {
   friendlyLabel: string;
   purpose: string;
   updateFrequency: string;
+  dataSensitivity?: string;
   sampleQuestions: string[];
   dbConnectionId: string;
 }
@@ -24,15 +25,17 @@ export interface ICapturedMetadata {
 
 export type TCaptureMetadataResponse = ApiResponse<ICapturedMetadata>;
 
-export interface ISaveMetadataPayload {
+export interface IBatchSaveMetadataPayload {
   companyId: string;
   payload: {
     dbConnectionId: string;
-    tableName: string;
-    friendlyLabel: string;
-    purpose: string;
-    updateFrequency: string;
-    dataSensitivity: string;
-    sampleQuestions: string[];
+    tableMetadata: Array<{
+      tableName: string;
+      friendlyLabel: string;
+      purpose: string;
+      updateFrequency: string;
+      dataSensitivity: string;
+      sampleQuestions: string[];
+    }>;
   };
 }
