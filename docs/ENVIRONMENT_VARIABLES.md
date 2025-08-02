@@ -24,6 +24,9 @@ API_PREFIX=api
 GEMINI_API_KEY=your-gemini-api-key-here
 GEMINI_MODEL=gemini-2.0-flash
 
+# OpenRouter AI
+OPENROUTER_API_KEY=your-openrouter-api-key-here
+
 # MCP Server settings
 MCP_SERVER_URL=http://localhost:3002
 MCP_SERVER_ENDPOINT=/mcp
@@ -92,16 +95,19 @@ CYPRESS_BASE_URL=http://localhost:3000
 ## Environment-Specific Configurations
 
 ### Development
+
 - Use localhost URLs
 - Enable debug logging
 - Use development database
 
 ### Testing
+
 - Use test-specific API URLs
 - Use test database
 - Mock external services when needed
 
 ### Production
+
 - Use production domain URLs
 - Use environment-specific secrets
 - Enable production optimizations
@@ -110,6 +116,7 @@ CYPRESS_BASE_URL=http://localhost:3000
 ## Configuration Validation
 
 The backend includes configuration validation that will:
+
 - **Error** for missing required variables (DATABASE_URL)
 - **Warn** for missing important variables (GEMINI_API_KEY, JWT_SECRET)
 - Use sensible defaults for optional variables
@@ -119,21 +126,31 @@ The backend includes configuration validation that will:
 ### Common Issues
 
 1. **MCP Connection Failed**
+
    - Check MCP_SERVER_URL and MCP_SERVER_ENDPOINT
    - Ensure Mastra MCP Server is running on the correct port
    - Verify network connectivity
 
 2. **API Connection Failed**
+
    - Check NEXT_PUBLIC_API_URL in frontend
    - Ensure backend is running on the correct port
    - Verify CORS configuration
 
 3. **Database Connection Failed**
+
    - Check DATABASE_URL format
    - Ensure PostgreSQL is running
    - Verify database credentials
 
 4. **Gemini API Errors**
+
    - Check GEMINI_API_KEY is valid
    - Ensure API key has proper permissions
    - Verify API quota limits
+
+5. **OpenRouter API Errors**
+   - Check OPENROUTER_API_KEY is valid
+   - Ensure your OpenRouter account has sufficient credits
+   - Verify the model `deepseek/deepseek-chat` is accessible
+   - Check OpenRouter service status

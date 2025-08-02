@@ -3,6 +3,7 @@ import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from 'src/helpers/db-connection.helper';
 import { ConnectionsService } from '../../connections/connections.service';
+import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
 import { SchemaBuilderService } from './schema-builder.service';
 
@@ -13,7 +14,9 @@ export class OnboardingService {
     @Inject(forwardRef(() => SchemaBuilderService))
     private readonly schemaBuilderService: SchemaBuilderService,
     @Inject(ConnectionsService)
-    private readonly connectionsService: ConnectionsService
+    private readonly connectionsService: ConnectionsService,
+    @Inject(TableDescriptionAgentService)
+    private readonly tableDescriptionAgent: TableDescriptionAgentService
   ) {}
 
   /*
@@ -55,7 +58,7 @@ export class OnboardingService {
       // Prepare DbCredentials object with decrypted password
 
       // Query foreign key relationships from the database
-      return await withDbConnection(connection, async (client: IDatabaseClient) => {
+      const relationships = await withDbConnection(connection, async (client: IDatabaseClient) => {
         const { rows } = await client.query({
           text: `
             SELECT
@@ -82,8 +85,42 @@ export class OnboardingService {
           refColumn: row.primary_column as string,
           isConfirmed: false, // Default to false for new relationships
           dbConnectionId: connection.dbConnectionId,
+          description: '', // Will be populated by the agent
         }));
       });
+
+      // Generate descriptions for each relationship using the AI agent
+      const relationshipsWithDescriptions = await Promise.all(
+        relationships.map(async (relationship) => {
+          try {
+            const description = await this.tableDescriptionAgent.generateTableDescription({
+              tableName: relationship.tableName,
+              columnName: relationship.columnName,
+              refTable: relationship.refTable,
+              refColumn: relationship.refColumn,
+              // Optional: Add business context if available
+              businessContext: `Database relationship analysis for company ${companyId}`,
+            });
+
+            return {
+              ...relationship,
+              description,
+            };
+          } catch (error) {
+            console.error(
+              `Failed to generate description for relationship ${relationship.tableName}.${relationship.columnName}:`,
+              error
+            );
+            // Use fallback description if agent fails
+            return {
+              ...relationship,
+              description: `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
+            };
+          }
+        })
+      );
+
+      return relationshipsWithDescriptions;
     } catch (error) {
       console.error('Failed to retrieve table relationships:', error);
       throw new Error(`Failed to retrieve table relationships: ${error.message}`);
