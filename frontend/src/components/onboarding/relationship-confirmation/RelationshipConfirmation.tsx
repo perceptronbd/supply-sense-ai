@@ -1,6 +1,4 @@
 'use client';
-
-import { Loading } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -20,6 +18,7 @@ import type {
   IUpsertTableRelationshipsPayload,
 } from '../types/table-relationship';
 import MemoizedRelationshipCard from './MemoizedRelationshipCard';
+import RelationshipCardSkeleton from './RelationshipCardSkeleton';
 const RelationshipConfirmation = () => {
   // Get the current company ID from custom hook
   const { companyId } = useGetCompanyId();
@@ -138,7 +137,7 @@ const RelationshipConfirmation = () => {
       />
 
       {/* Right side: relationship confirmation form */}
-      <section className="flex flex-col gap-y-5 w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin ">
+      <section className="flex flex-col gap-y-5 w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] overflow-y-auto no-scrollbar bottom-fade ">
         <div className="flex items-center justify-between ">
           <div className="inline-flex items-center gap-x-2 ">
             <Icons.Exclamatory />{' '}
@@ -159,33 +158,29 @@ const RelationshipConfirmation = () => {
         </div>
 
         {/* Show loading spinner or the list of relationship cards */}
-        {isLoading ? (
-          <div className="mt-10">
-            <Loading />
-          </div>
-        ) : (
-          tableRelationships.data.map((table) => {
-            const leftKey = `${table.tableName}_${table.columnName}`;
+        {isLoading
+          ? Array.from({ length: 2 }, (_, index) => <RelationshipCardSkeleton key={index} />)
+          : tableRelationships.data.map((table) => {
+              const leftKey = `${table.tableName}_${table.columnName}`;
 
-            // Use Map for O(1) lookup instead of O(n) find
-            const selectedTable = relationTablesMap.get(leftKey);
-            const rightKey = selectedTable
-              ? `${selectedTable.refTable}_${selectedTable.refColumn}`
-              : `${table.refTable}_${table.refColumn}`;
+              // Use Map for O(1) lookup instead of O(n) find
+              const selectedTable = relationTablesMap.get(leftKey);
+              const rightKey = selectedTable
+                ? `${selectedTable.refTable}_${selectedTable.refColumn}`
+                : `${table.refTable}_${table.refColumn}`;
 
-            return (
-              <MemoizedRelationshipCard
-                key={leftKey}
-                table={table}
-                isLoading={isLoading}
-                rightSelectOptions={rightSelectOptions}
-                leftSelectedKey={leftKey}
-                rightSelectedKey={rightKey}
-                onRightSelectChange={handleRightSelectChange}
-              />
-            );
-          })
-        )}
+              return (
+                <MemoizedRelationshipCard
+                  key={leftKey}
+                  table={table}
+                  isLoading={isLoading}
+                  rightSelectOptions={rightSelectOptions}
+                  leftSelectedKey={leftKey}
+                  rightSelectedKey={rightKey}
+                  onRightSelectChange={handleRightSelectChange}
+                />
+              );
+            })}
       </section>
     </>
   );

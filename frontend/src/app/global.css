@@ -86,6 +86,11 @@ body {
 
 /* Utility classes for custom scrollbar styling */
 @layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
   }
@@ -129,6 +134,10 @@ body {
 
   .dark\:hover\:scrollbar-thumb-default-500:hover::-webkit-scrollbar-thumb {
     background: hsl(var(--nextui-default-500));
+  }
+  .bottom-fade {
+    -webkit-mask: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
+    mask: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
   }
 }
 
