@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "module": "commonjs",
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@supplysense/constant": ["libs/shared/constant/src/index.ts"],
+      "@supplysense/types": ["libs/shared/src/index.ts"],
+      "@supplysense/utils": ["libs/shared/utils/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]

@@ -1,0 +1,159 @@
+import { PrismaService } from '@/app/prisma.service';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import type { IDatabaseClient } from '@supplysense/types';
+import { closeAllConnections, withDbConnection } from 'src/helpers/db-connection.helper';
+import { ConnectionsService } from '../../connections/connections.service';
+import type { TableRelationshipDto } from '../dto/table-relationship.dto';
+import { SchemaBuilderService } from './schema-builder.service';
+
+@Injectable()
+export class OnboardingService {
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => SchemaBuilderService))
+    private readonly schemaBuilderService: SchemaBuilderService,
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService
+  ) {}
+
+  /*
+   * Retrieve the schema of the database tables for a specific company
+   * This method connects to the database and retrieves the table names from the public schema.
+   */
+
+  async getTables(companyId: string, dbConnectionId?: string) {
+    const connections = await this.connectionsService.getDbConnections(companyId);
+
+    if (connections.length === 0) {
+      throw new Error('No database connections found for this company');
+    }
+
+    // If dbConnectionId is provided, use that specific connection
+    if (dbConnectionId) {
+      const connection = connections.find((conn) => conn.id === dbConnectionId);
+      if (!connection) {
+        throw new Error('Specified database connection not found');
+      }
+      return this.connectionsService.getTablesForConnection(connection);
+    }
+
+    // Otherwise, use the first connection by default
+    const firstConnection = connections[0];
+    return this.connectionsService.getTablesForConnection(firstConnection);
+  }
+
+  /**
+   * Get table relationships for a company's database connection
+   */
+  async getTableRelationships(companyId: string, dbConnectionId: string) {
+    try {
+      // Find the company's database connection
+      const connection = await this.connectionsService.getCompanyConnection(
+        companyId,
+        dbConnectionId
+      );
+      // Prepare DbCredentials object with decrypted password
+
+      // Query foreign key relationships from the database
+      return await withDbConnection(connection, async (client: IDatabaseClient) => {
+        const { rows } = await client.query({
+          qry: `
+            SELECT
+              tc.table_name AS foreign_table,
+              kcu.column_name AS foreign_column,
+              ccu.table_name AS primary_table,
+              ccu.column_name AS primary_column
+            FROM information_schema.table_constraints AS tc
+            JOIN information_schema.key_column_usage AS kcu
+              ON tc.constraint_name = kcu.constraint_name
+            JOIN information_schema.constraint_column_usage AS ccu
+              ON ccu.constraint_name = tc.constraint_name
+            WHERE constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema = $1;
+          `,
+          values: ['public'], // Using public schema by default
+        });
+
+        // Format the results to match our DTO
+        return rows.map((row) => ({
+          tableName: row.foreign_table as string,
+          columnName: row.foreign_column as string,
+          refTable: row.primary_table as string,
+          refColumn: row.primary_column as string,
+          isConfirmed: false, // Default to false for new relationships
+          dbConnectionId: connection.dbConnectionId,
+        }));
+      });
+    } catch (error) {
+      console.error('Failed to retrieve table relationships:', error);
+      throw new Error(`Failed to retrieve table relationships: ${error.message}`);
+    }
+  }
+
+  /**
+   * Upsert table relationships for a company
+   */
+  async upsertTableRelationships(data: {
+    companyId: string;
+    dbConnectionId: string;
+    relationships: TableRelationshipDto[];
+  }) {
+    try {
+      // Find the company's database connection
+      const connection = await this.connectionsService.getCompanyConnection(
+        data.companyId,
+        data.dbConnectionId
+      );
+      if (!connection) {
+        throw new Error('Database connection not found');
+      }
+
+      // For each relationship, create or update in the database
+      const results = await Promise.all(
+        data.relationships.map(async (relationship) => {
+          return this.prisma.tableRelations.upsert({
+            where: {
+              unique_table_relation: {
+                dbConnectionId: data.dbConnectionId,
+                tableName: relationship.tableName,
+                columnName: relationship.columnName,
+              },
+            },
+            update: {
+              refTable: relationship.refTable,
+              refColumn: relationship.refColumn,
+              isConfirmed: relationship.isConfirmed || false,
+            },
+            create: {
+              dbConnectionId: data.dbConnectionId,
+              tableName: relationship.tableName,
+              columnName: relationship.columnName,
+              refTable: relationship.refTable,
+              refColumn: relationship.refColumn,
+              isConfirmed: relationship.isConfirmed || false,
+            },
+          });
+        })
+      );
+
+      // After relationships are saved successfully, build and cache the schema
+      await this.schemaBuilderService.buildAndCacheSchema(data.companyId, data.dbConnectionId);
+
+      return {
+        success: true,
+        count: results.length,
+        message: `Successfully saved ${results.length} table relationships and updated schema cache`,
+      };
+    } catch (error) {
+      console.error('Failed to save table relationships:', error);
+      throw new Error(`Failed to save table relationships: ${error.message}`);
+    }
+  }
+
+  /**
+   * Clean up on application shutdown
+   */
+  async onModuleDestroy(): Promise<void> {
+    await closeAllConnections();
+  }
+}

@@ -27,7 +27,6 @@ model Company {
   contactEmail    String  @unique
   isActive        Boolean @default(true)
   industry        String? // Added industry field
-  businessContext String? @default("") // Added business context field
 
   // Company settings
   defaultCurrency String @default("USD")
@@ -55,8 +54,7 @@ model Company {
   aiSuggestions        AISuggestion[]
   notifications        Notification[]
   auditLogs            AuditLog[]
-  SchemaCache          SchemaCache?
-  DbConnection         DbConnection?
+  DbConnection         DbConnection[]
   companySubscription  CompanySubscription?
   UsageTracking        UsageTracking[]
   purchaseHistory      PurchaseHistory[]
@@ -1214,34 +1212,40 @@ model AuditLog {
 // - ai_suggestions: view, accept, reject
 // - system_settings: view, edit
 model SchemaCache {
-  id        String   @id @default(uuid())
-  schema    Json
-  cachedAt  DateTime @default(now())
-  companyId String   @unique // One-to-one relationship with Company
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  schema         Json
+  cachedAt       DateTime     @default(now())
+  dbConnectionId String       @unique // One-to-one relationship with Company
+  dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
-  @@index([companyId], name: "idx_schema_cache_company_id")
+  @@index([dbConnectionId], name: "idx_schema_cache_db_connection")
   @@map("schema_cache")
 }
 
 model DbConnection {
-  id                String   @id @default(uuid())
-  host              String
-  port              Int
-  database          String
-  username          String
+  id              String  @id @default(uuid())
+  host            String
+  port            Int
+  database        String
+  username        String
+  title           String?
+  businessContext String? @default("") // Added business context field
+
   encryptedPassword String // Store encrypted password
   sslEnabled        Boolean  @default(false)
   connectionHash    String   @unique // Hash of connection details for uniqueness
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  companyId      String           @unique // One-to-one relationship with Company
+  companyId      String
   company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   TableRelations TableRelations[]
   TableMetadata  TableMetadata?
+  SchemaCache    SchemaCache?
 
+  @@unique(companyId)
   @@unique([companyId, username], name: "unique_db_connection")
+  @@index([companyId,id], name: "idx_db_connections_company_id")
   @@index([username], name: "idx_db_connections_username")
   @@map("db_connections")
 }
@@ -1259,6 +1263,7 @@ model TableRelations {
 
   @@unique([dbConnectionId, tableName, columnName], name: "unique_table_relation")
   @@index([tableName, columnName], name: "idx_table_relations_table_column")
+  @@index([dbConnectionId, id], name: "idx_table_relations_db_connection")
   @@map("table_relations")
 }
 
@@ -1268,13 +1273,14 @@ model TableMetadata {
   friendlyLabel   String
   purpose         String
   updateFrequency String
-  dataSensitivity String[]
+  dataSensitivity String
   sampleQuestions String[]
 
   dbConnectionId String       @unique // One-to-one relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([dbConnectionId, tableName], name: "unique_table_metadata")
+  @@index([dbConnectionId, id], name: "idx_table_metadata_db_connection")
   @@map("table_metadata")
 }
 
