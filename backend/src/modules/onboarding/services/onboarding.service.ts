@@ -146,9 +146,9 @@ export class OnboardingService {
       }
 
       // For each relationship, create or update in the database
-      const results = await Promise.all(
-        data.relationships.map(async (relationship) => {
-          return this.prisma.tableRelations.upsert({
+      const results = await this.prisma.$transaction(
+        data.relationships.map((relationship) =>
+          this.prisma.tableRelations.upsert({
             where: {
               unique_table_relation: {
                 dbConnectionId: data.dbConnectionId,
@@ -169,8 +169,8 @@ export class OnboardingService {
               refColumn: relationship.refColumn,
               isConfirmed: relationship.isConfirmed || false,
             },
-          });
-        })
+          })
+        )
       );
 
       // After relationships are saved successfully, build and cache the schema

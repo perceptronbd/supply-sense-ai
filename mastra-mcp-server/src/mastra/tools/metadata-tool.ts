@@ -61,14 +61,16 @@ export const analyzeTableMetadataTool = createTool({
       // Generate friendly label by converting table name to human-readable format
       const friendlyLabel = generateFriendlyLabel(tableName);
 
+      // First generate the purpose, then use it for sample questions
+      const purpose = await generatePurpose({
+        tableName,
+        tableSchema: tableSchema as ITableSchemaInput,
+        businessContext: context.businessContext || `Database table analysis for ${tableName}`,
+      });
+
       // Execute all AI agents in parallel using Promise.all
-      const [updateFrequency, purpose, sampleQuestions] = await Promise.all([
+      const [updateFrequency, sampleQuestions] = await Promise.all([
         determineUpdateFrequencyAgent({
-          tableName,
-          tableSchema: tableSchema as ITableSchemaInput,
-          businessContext: context.businessContext || `Database table analysis for ${tableName}`,
-        }),
-        generatePurpose({
           tableName,
           tableSchema: tableSchema as ITableSchemaInput,
           businessContext: context.businessContext || `Database table analysis for ${tableName}`,
@@ -76,11 +78,7 @@ export const analyzeTableMetadataTool = createTool({
         generateSampleQuestions({
           tableName,
           tableSchema: tableSchema as ITableSchemaInput,
-          purpose: await generatePurpose({
-            tableName,
-            tableSchema: tableSchema as ITableSchemaInput,
-            businessContext: context.businessContext || `Database table analysis for ${tableName}`,
-          }),
+          purpose: purpose,
           businessContext: context.businessContext || `Database table analysis for ${tableName}`,
         }),
       ]);

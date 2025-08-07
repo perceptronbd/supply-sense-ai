@@ -14,6 +14,12 @@ export interface GenerateDescriptionInput {
   refTable: string;
   refColumn: string;
   businessContext?: string;
+  timeoutMs?: number;
+}
+
+export interface TableDescriptionAgentConfig {
+  defaultTimeoutMs: number;
+  maxTimeoutMs: number;
 }
 
 /**
@@ -24,11 +30,82 @@ export interface GenerateDescriptionInput {
 export class TableDescriptionAgentService {
   private readonly logger = new Logger(TableDescriptionAgentService.name);
   private descriptionAgent: Agent | null = null;
+  private readonly config: TableDescriptionAgentConfig = {
+    defaultTimeoutMs: Number.parseInt(process.env.TABLE_DESCRIPTION_TIMEOUT_MS || '30000', 10),
+    maxTimeoutMs: Number.parseInt(process.env.TABLE_DESCRIPTION_MAX_TIMEOUT_MS || '120000', 10),
+  };
 
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
   ) {}
+
+  /**
+   * Creates a timeout promise that can be cancelled
+   */
+  private createTimeoutWithCancellation(timeoutMs: number): {
+    promise: Promise<never>;
+    cancel: () => void;
+  } {
+    let timeoutId: NodeJS.Timeout;
+    let cancelled = false;
+
+    const promise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        if (!cancelled) {
+          reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+        }
+      }, timeoutMs);
+    });
+
+    const cancel = () => {
+      cancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    return { promise, cancel };
+  }
+
+  /**
+   * Executes a promise with proper timeout and cancellation support
+   */
+  private async executeWithTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+    const { promise: timeoutPromise, cancel: cancelTimeout } =
+      this.createTimeoutWithCancellation(timeoutMs);
+
+    try {
+      const result = await Promise.race([operation, timeoutPromise]);
+      cancelTimeout();
+      return result;
+    } catch (error) {
+      cancelTimeout();
+      throw error;
+    }
+  }
+
+  /**
+   * Update timeout configuration
+   */
+  updateTimeoutConfig(config: Partial<TableDescriptionAgentConfig>): void {
+    if (config.defaultTimeoutMs !== undefined) {
+      this.config.defaultTimeoutMs = Math.max(1000, config.defaultTimeoutMs); // Minimum 1 second
+    }
+    if (config.maxTimeoutMs !== undefined) {
+      this.config.maxTimeoutMs = Math.max(this.config.defaultTimeoutMs, config.maxTimeoutMs);
+    }
+    this.logger.log(
+      `Updated timeout config: default=${this.config.defaultTimeoutMs}ms, max=${this.config.maxTimeoutMs}ms`
+    );
+  }
+
+  /**
+   * Get current timeout configuration
+   */
+  getTimeoutConfig(): TableDescriptionAgentConfig {
+    return { ...this.config };
+  }
 
   /**
    * Initialize the table description agent with specific tools for relationship analysis
@@ -129,9 +206,12 @@ Please explain what this relationship means for business users and how it helps 
 
       this.logger.debug('Sending prompt to agent:', { prompt });
 
-      // Add timeout to the agent call
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Agent call timed out after 30 seconds')), 30000)
+      // Determine timeout - use input override, or default, but cap at max
+      const requestedTimeout = input.timeoutMs || this.config.defaultTimeoutMs;
+      const timeoutMs = Math.min(requestedTimeout, this.config.maxTimeoutMs);
+
+      this.logger.debug(
+        `Using timeout: ${timeoutMs}ms (requested: ${requestedTimeout}ms, max: ${this.config.maxTimeoutMs}ms)`
       );
 
       const agentPromise = this.descriptionAgent.generate([
@@ -141,7 +221,7 @@ Please explain what this relationship means for business users and how it helps 
         },
       ]);
 
-      const response = (await Promise.race([agentPromise, timeoutPromise])) as {
+      const response = (await this.executeWithTimeout(agentPromise, timeoutMs)) as {
         text: string;
       };
 
@@ -168,10 +248,16 @@ Please explain what this relationship means for business users and how it helps 
       );
       return description;
     } catch (error) {
-      // Check for specific OpenRouter errors
+      // Check for specific error types
       if (error.message === 'Payment Required') {
         this.logger.error(
           '💳 OpenRouter account needs payment. Please add credits to your OpenRouter account at https://openrouter.ai/'
+        );
+      } else if (error.message?.includes('timed out')) {
+        this.logger.error(
+          `⏱️ Request timed out after ${
+            input.timeoutMs || this.config.defaultTimeoutMs
+          }ms. Consider increasing timeout or checking network connectivity.`
         );
       } else {
         this.logger.error(
@@ -185,6 +271,7 @@ Please explain what this relationship means for business users and how it helps 
               refTable: input.refTable,
               refColumn: input.refColumn,
               businessContext: input.businessContext,
+              timeoutMs: input.timeoutMs,
             },
           }
         );

@@ -34,7 +34,7 @@ export interface IBatchSaveMetadataPayload {
       friendlyLabel: string;
       purpose: string;
       updateFrequency: string;
-      dataSensitivity: string;
+      dataSensitivity?: string;
       sampleQuestions: string[];
     }>;
   };

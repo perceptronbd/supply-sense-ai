@@ -53,7 +53,7 @@ const DbConnectionForm = () => {
         database: data.credential.database ?? '',
         sslEnabled: data.credential.sslEnabled ?? false,
       };
-    } else if (data.connectionString && !data?.credential?.host) {
+    } else if (data.connectionString && !checkHasCredentials(data)) {
       payload.connectionString = data.connectionString;
     }
     return payload;

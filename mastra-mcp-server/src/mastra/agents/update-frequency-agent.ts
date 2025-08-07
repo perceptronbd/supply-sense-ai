@@ -1,22 +1,19 @@
 import { Agent } from '@mastra/core/agent';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
+import { GetOpenRouter } from '@supplysense/utils';
 import {
   UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   UPDATE_FREQUENCY_AGENT_NAME,
   UPDATE_FREQUENCY_INSTRUCTION,
 } from '../constants/system-instructions/update-frequency';
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+const openrouter = new GetOpenRouter();
 
 export const updateFrequencyAgent = new Agent({
   name: UPDATE_FREQUENCY_AGENT_NAME,
   description: UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   instructions: UPDATE_FREQUENCY_INSTRUCTION,
-  model: openrouter(AI_MODEL_NAME),
+  model: openrouter.getModel(),
 });
 
 // Custom function to use the agent for determining update frequency

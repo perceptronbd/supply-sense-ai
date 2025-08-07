@@ -33,8 +33,14 @@ export async function generateSampleQuestions({
   purpose,
   businessContext,
 }: GenerateQuestionsInput) {
-  if (!tableName || !tableSchema) {
-    throw new Error('Missing required tableName or tableSchema');
+  if (!tableName) {
+    throw new Error('Missing required parameter: tableName');
+  }
+  if (!tableSchema) {
+    throw new Error('Missing required parameter: tableSchema');
+  }
+  if (!tableSchema.columns || !Array.isArray(tableSchema.columns)) {
+    throw new Error('Invalid tableSchema: columns array is required');
   }
   try {
     // Add timestamp to ensure unique prompt each time
@@ -105,8 +111,12 @@ function generateFallbackQuestions(tableName: string, tableSchema: ITableSchemaI
     'Are there any anomalies in the {table} data we should investigate?',
   ];
 
-  // Shuffle the question templates to add randomness
-  const shuffled = [...questionTemplates].sort(() => 0.5 - Math.random());
+  // Properly shuffle the question templates using Fisher-Yates algorithm
+  const shuffled = [...questionTemplates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
 
   // Get some column names to use in the questions
   const columns = tableSchema.columns.map((c) => c.columnName);

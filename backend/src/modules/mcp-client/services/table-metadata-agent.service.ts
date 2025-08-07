@@ -1,18 +1,12 @@
 import { buildMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 import { Agent } from '@mastra/core/agent';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { AI_MODEL_NAME } from '@supplysense/constant';
 import type {
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
-import { generateFriendlyLabel } from '@supplysense/utils';
+import { GetOpenRouter, generateFriendlyLabel } from '@supplysense/utils';
 import { McpClientService } from './mcp-client.service'; // Keep this import
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 interface TableMetadataInput {
   tableName: string;
@@ -30,6 +24,7 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 export class TableMetadataAgentService {
   private readonly logger = new Logger(TableMetadataAgentService.name);
   private metadataAgent: Agent | null = null;
+  private readonly openrouter = new GetOpenRouter();
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
@@ -58,7 +53,7 @@ export class TableMetadataAgentService {
           'AI agent specialized in analyzing database table schemas and generating metadata',
         instructions:
           'Analyze table schema and generate comprehensive metadata including friendly labels, purpose, update frequency, and sample business questions.',
-        model: openrouter(AI_MODEL_NAME),
+        model: this.openrouter.getModel(),
         tools,
       });
 
@@ -79,7 +74,10 @@ export class TableMetadataAgentService {
     maxRetries = 3,
     baseDelay = 1000
   ): Promise<any> {
-    let lastError: Error;
+    let lastError: Error = new Error('No retry attempts made');
+    if (maxRetries <= 0) {
+      throw new Error('maxRetries must be greater than 0');
+    }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {

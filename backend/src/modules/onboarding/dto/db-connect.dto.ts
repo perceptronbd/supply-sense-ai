@@ -32,6 +32,7 @@ export class DbCredentialsDto {
 
 export class SaveDbConnectionDto {
   @IsString()
+  @IsNotEmpty()
   companyId: string;
 
   @ValidateIf((o) => !o.connectionString)

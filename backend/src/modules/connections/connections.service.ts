@@ -86,7 +86,7 @@ export class ConnectionsService {
           database: credentials.database,
           username: credentials.username,
           encryptedPassword,
-          title: credentials.title || credentials.database, // Use database name as default title
+          title: dto.title || credentials.database, // Use database name as default title
           sslEnabled: credentials.sslEnabled || false,
           connectionHash,
         },
@@ -112,21 +112,18 @@ export class ConnectionsService {
   }
 
   private async checkExistingConnection(dto: SaveDbConnectionDto) {
+    // If connection string is provided, parse it to extract credentials
+    const parsedConnection = dto.connectionString
+      ? parseConnectionString(dto.connectionString)
+      : null;
+
     return await this.prisma.dbConnection.findFirst({
       where: {
         companyId: dto.companyId,
-        host:
-          dto.credentials?.host ??
-          (dto.connectionString ? parseConnectionString(dto.connectionString).host : undefined),
-        port:
-          dto.credentials?.port ??
-          (dto.connectionString ? parseConnectionString(dto.connectionString).port : undefined),
-        database:
-          dto.credentials?.database ??
-          (dto.connectionString ? parseConnectionString(dto.connectionString).database : undefined),
-        username:
-          dto.credentials?.username ??
-          (dto.connectionString ? parseConnectionString(dto.connectionString).username : undefined),
+        host: dto.credentials?.host ?? parsedConnection?.host,
+        port: dto.credentials?.port ?? parsedConnection?.port,
+        database: dto.credentials?.database ?? parsedConnection?.database,
+        username: dto.credentials?.username ?? parsedConnection?.username,
       },
     });
   }

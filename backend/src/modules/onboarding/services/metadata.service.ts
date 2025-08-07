@@ -54,6 +54,7 @@ export class MetadataService {
       const tableNames = tables.map((table) => table.tableName);
 
       const metadataResults = [];
+      const failedTables = [];
 
       for (const tableName of tableNames) {
         try {
@@ -63,7 +64,8 @@ export class MetadataService {
           const metadata = await this.generateTableMetadata(tableName, tableSchema);
           metadataResults.push(metadata);
         } catch (error) {
-          console.error(`Error processing table ${tableName}:`, error);
+          this.logger.error(`Error processing table ${tableName}:`, error);
+          failedTables.push({ tableName, error: error.message });
           // Continue with other tables even if one fails
         }
       }
@@ -72,6 +74,7 @@ export class MetadataService {
         dbConnectionId: connection.dbConnectionId,
         connectionTitle: connection.title || 'Default Connection',
         generatedMetadata: metadataResults,
+        failedTables,
       };
     });
   }
@@ -166,24 +169,50 @@ export class MetadataService {
         throw new Error('Invalid database connection');
       }
 
-      // Use transaction to ensure all metadata records are saved together
-      const savedRecords = await this.prisma.$transaction(
-        data.tableMetadata.map((metadata) =>
-          this.prisma.tableMetadata.create({
-            data: {
-              ...metadata,
-              dbConnection: {
-                connect: { id: data.dbConnectionId },
+      // Validate metadata before saving
+      const validatedMetadata = data.tableMetadata.filter((metadata) => {
+        return (
+          metadata.tableName &&
+          metadata.friendlyLabel &&
+          metadata.purpose &&
+          metadata.updateFrequency &&
+          Array.isArray(metadata.sampleQuestions)
+        );
+      });
+
+      if (validatedMetadata.length !== data.tableMetadata.length) {
+        this.logger.warn(
+          `Filtered out ${
+            data.tableMetadata.length - validatedMetadata.length
+          } invalid metadata entries`
+        );
+      }
+
+      // Process in batches to avoid transaction size limits
+      const BATCH_SIZE = 50;
+      const savedRecords = [];
+
+      for (let i = 0; i < validatedMetadata.length; i += BATCH_SIZE) {
+        const batch = validatedMetadata.slice(i, i + BATCH_SIZE);
+        const batchResults = await this.prisma.$transaction(
+          batch.map((metadata) =>
+            this.prisma.tableMetadata.create({
+              data: {
+                ...metadata,
+                dbConnection: {
+                  connect: { id: data.dbConnectionId },
+                },
               },
-            },
-          })
-        )
-      );
+            })
+          )
+        );
+        savedRecords.push(...batchResults);
+      }
 
       return savedRecords;
     } catch (error) {
-      console.error('Error saving metadata for table ', error);
-      throw new Error('Failed to save metadata for table');
+      this.logger.error('Error saving table metadata:', error);
+      throw new Error(`Failed to save metadata: ${error.message || 'Unknown error'}`);
     }
   }
 }
