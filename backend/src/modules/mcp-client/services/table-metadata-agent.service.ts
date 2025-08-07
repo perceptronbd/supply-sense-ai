@@ -1,4 +1,3 @@
-import { buildMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 import { Agent } from '@mastra/core/agent';
 import type {
   ITableSchemaInput,
@@ -9,11 +8,11 @@ import { GetOpenRouter, generateFriendlyLabel } from '@supplysense/utils';
 import { McpClientService } from './mcp-client.service'; // Keep this import
 
 interface TableMetadataInput {
-  tableName: string;
-  tableSchema: ITableSchemaInput;
+  tables: Array<{ tableName: string; tableSchema: ITableSchemaInput }>;
   businessContext?: string;
 }
 
+import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 /**
  * Specialized service for generating table metadata using MCP tools
  * This service focuses specifically on table analysis and metadata generation
@@ -71,8 +70,8 @@ export class TableMetadataAgentService {
     messages: any[],
     options: any,
     tableName: string,
-    maxRetries = 3,
-    baseDelay = 1000
+    maxRetries = 5,
+    baseDelay = 2000
   ): Promise<any> {
     let lastError: Error = new Error('No retry attempts made');
     if (maxRetries <= 0) {
@@ -112,9 +111,9 @@ export class TableMetadataAgentService {
   }
 
   /**
-   * Generate table metadata using the specialized agent
+   * Generate table metadata using the specialized agent for multiple tables
    */
-  async generateTableMetadata(input: TableMetadataInput): Promise<MCPTableMetadataAgentRes> {
+  async generateTableMetadata(input: TableMetadataInput): Promise<MCPTableMetadataAgentRes[]> {
     try {
       await this.initializeMetadataAgent();
 
@@ -122,27 +121,34 @@ export class TableMetadataAgentService {
         throw new Error('Table metadata agent not initialized');
       }
 
-      const { tableName, tableSchema, businessContext } = input;
+      const { tables, businessContext } = input;
 
-      // Prepare the input for the metadata analysis tool
-      const toolInput = {
-        tableName,
-        tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
-      };
+      // Process all tables at once to avoid rate limiting
+      const results: MCPTableMetadataAgentRes[] = [];
 
-      // Create a focused prompt for table metadata generation
-      const prompt = buildMetadataPrompt({
-        tableName,
-        tableSchema,
-        toolInput,
-        businessContext,
-      });
+      // Create a focused prompt for multiple table metadata generation
+      const prompt = buildMultipleTablesMetadataPrompt(tables, businessContext);
+      this.logger.log('🚀 ~ prompt:', prompt);
 
-      this.logger.log(`🔍 Analyzing table metadata for: ${tableName}`);
+      this.logger.log(`🔍 Analyzing table metadata for ${tables.length} tables`);
 
-      // Use the specialized agent to generate metadata with retry logic
-      const response = await this.generateWithRetry(
+      // Use the specialized agent to generate metadata for all tables at once
+      // const response = await this.generateWithRetry(
+      //   [
+      //     {
+      //       role: 'user',
+      //       content: prompt,
+      //     },
+      //   ],
+      //   {
+      //     toolChoice: {
+      //       type: 'tool',
+      //       toolName: 'supplySense_analyzeTableMetadataTool',
+      //     },
+      //   },
+      //   `${tables.length} tables`
+      // );
+      const response = await this.metadataAgent.generate(
         [
           {
             role: 'user',
@@ -154,19 +160,101 @@ export class TableMetadataAgentService {
             type: 'tool',
             toolName: 'supplySense_analyzeTableMetadataTool',
           },
-        },
-        tableName
+        }
       );
 
-      this.logger.log('✅ Table metadata generated successfully');
+      this.logger.log('✅ Table metadata generated successfully for all tables');
 
-      // Parse the response to extract structured metadata
-      return this.parseMetadataResponse(response.text, tableName, tableSchema);
+      // Parse the response to extract structured metadata for all tables
+      const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
+      results.push(...parsedResults);
+
+      return results;
     } catch (error) {
-      this.logger.error(`❌ Failed to generate metadata for table ${input.tableName}:`, error);
+      this.logger.error('❌ Failed to generate metadata for tables:', error);
 
-      // Fallback to basic metadata generation
-      return this.generateFallbackMetadata(input.tableName, input.tableSchema);
+      // Fallback to basic metadata generation for all tables
+      return input.tables.map(({ tableName, tableSchema }) =>
+        this.generateFallbackMetadata(tableName, tableSchema)
+      );
+    }
+  }
+
+  /**
+   * Parse the agent response to extract structured metadata for multiple tables
+   */
+  private parseMultipleTablesResponse(
+    responseText: string,
+    tables: Array<{ tableName: string; tableSchema: ITableSchemaInput }>
+  ): MCPTableMetadataAgentRes[] {
+    try {
+      // Try to extract JSON from the response
+      const jsonRegex = /\{[\s\S]*\}/;
+      const jsonMatch = jsonRegex.exec(responseText);
+
+      if (jsonMatch) {
+        const parsedData = JSON.parse(jsonMatch[0]);
+
+        // Check if the response contains an array of table metadata
+        if (Array.isArray(parsedData)) {
+          return parsedData.map((tableData, index) => ({
+            tableName: tableData.tableName || tables[index]?.tableName || `table_${index}`,
+            friendlyLabel:
+              tableData.friendlyLabel ||
+              generateFriendlyLabel(
+                tableData.tableName || tables[index]?.tableName || `table_${index}`
+              ),
+            purpose:
+              tableData.purpose ||
+              `Data storage for ${tableData.tableName || tables[index]?.tableName}`,
+            updateFrequency:
+              this.validateUpdateFrequency(tableData.updateFrequency) ||
+              this.inferUpdateFrequency(
+                tables[index]?.tableSchema || { columns: [], relationships: [] }
+              ),
+            sampleQuestions: Array.isArray(tableData.sampleQuestions)
+              ? tableData.sampleQuestions.slice(0, 5)
+              : this.generateBasicSampleQuestions(
+                  tableData.tableName || tables[index]?.tableName || `table_${index}`
+                ),
+          }));
+        }
+
+        if (parsedData.tables && Array.isArray(parsedData.tables)) {
+          // Handle case where response is wrapped in a 'tables' property
+          return parsedData.tables.map((tableData: MCPTableMetadataAgentRes, index: number) => ({
+            tableName: tableData.tableName || tables[index]?.tableName || `table_${index}`,
+            friendlyLabel:
+              tableData.friendlyLabel ||
+              generateFriendlyLabel(
+                tableData.tableName || tables[index]?.tableName || `table_${index}`
+              ),
+            purpose:
+              tableData.purpose ||
+              `Data storage for ${tableData.tableName || tables[index]?.tableName}`,
+            updateFrequency:
+              this.validateUpdateFrequency(tableData.updateFrequency) ||
+              this.inferUpdateFrequency(
+                tables[index]?.tableSchema || { columns: [], relationships: [] }
+              ),
+            sampleQuestions: Array.isArray(tableData.sampleQuestions)
+              ? tableData.sampleQuestions.slice(0, 5)
+              : this.generateBasicSampleQuestions(
+                  tableData.tableName || tables[index]?.tableName || `table_${index}`
+                ),
+          }));
+        }
+      }
+
+      // If no valid JSON structure found, return fallback metadata for all tables
+      return tables.map(({ tableName, tableSchema }) =>
+        this.generateFallbackMetadata(tableName, tableSchema)
+      );
+    } catch (error) {
+      this.logger.warn('Failed to parse multiple tables metadata response, using fallback:', error);
+      return tables.map(({ tableName, tableSchema }) =>
+        this.generateFallbackMetadata(tableName, tableSchema)
+      );
     }
   }
 

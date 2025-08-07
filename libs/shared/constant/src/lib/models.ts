@@ -1,1 +1,1 @@
-export const AI_MODEL_NAME = 'deepseek/deepseek-chat';
+export const AI_MODEL_NAME = 'openrouter/horizon-beta';

@@ -13,6 +13,7 @@ export class GetOpenRouter {
     if (!process.env['OPENROUTER_API_KEY']) {
       throw new Error('OPENROUTER_API_KEY is not defined in the environment variables.');
     }
+    // console.log(`Using AI model: ${AI_MODEL_NAME}`);
 
     this.openrouter = createOpenRouter({
       // biome-ignore lint/complexity/useLiteralKeys: <explanation>

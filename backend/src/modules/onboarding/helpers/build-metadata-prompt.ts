@@ -1,48 +1,49 @@
 import type { ITableSchemaInput } from '@supplysense/types';
 
-interface IBuildMetadataPrompt {
-  tableName: string;
-  tableSchema: ITableSchemaInput;
-  toolInput: {
-    tableName: string;
-    tableSchema: ITableSchemaInput;
-    businessContext: string;
-  };
-  businessContext?: string;
-}
+export const buildMultipleTablesMetadataPrompt = (
+  tables: Array<{ tableName: string; tableSchema: ITableSchemaInput }>,
+  businessContext?: string
+): string => {
+  const tablesInfo = tables
+    .map(
+      ({ tableName, tableSchema }) => `
+Table Name: "${tableName}"
+Table Schema:
+${JSON.stringify(tableSchema, null, 2)}
+`
+    )
+    .join('\n---\n');
 
-export const buildMetadataPrompt = ({
-  tableName,
-  tableSchema,
-  toolInput,
-  businessContext,
-}: IBuildMetadataPrompt): string => {
   return [
-    'You are an expert data analyst. Your task is to analyze the following database table and generate structured metadata for it.',
+    'You are an expert data analyst. Your task is to analyze the following database tables and generate structured metadata for each one.',
     '',
-    `Table Name: "${tableName}"`,
-    'Table Schema:',
-    JSON.stringify(tableSchema, null, 2),
+    'Tables to analyze:',
+    tablesInfo,
     businessContext ? `Business Context: ${businessContext}` : '',
     '',
-    'Please provide the following metadata as a JSON object with these fields:',
-    '{',
-    '  "tableName": string, // The table\'s name',
-    '  "friendlyLabel": string, // A human-friendly label for the table',
-    '  "purpose": string, // A concise business purpose for this table (do not use asterisks or markdown)',
-    '  "updateFrequency": string, // One of: "real-time", "daily", "weekly", "monthly", "rarely"',
-    '  "sampleQuestions": string[] // 5-8 diverse, creative sample questions users might ask about this data',
-    '}',
+    'CRITICAL INSTRUCTIONS FOR UNIQUE RESPONSES:',
+    '1. Each table MUST have a completely different and unique response',
+    '2. Analyze the SPECIFIC column names, data types, and relationships for each table',
+    '3. DO NOT use generic templates or similar patterns across tables',
+    "4. The friendlyLabel should reflect the table's actual purpose based on its columns",
+    '5. The purpose should be specific to what THIS table does based on its schema structure',
+    '6. Sample questions MUST reference actual column names from each specific table',
+    '7. Consider foreign key relationships and primary keys when generating purpose and questions',
+    '8. Each table should have completely different sample questions that cannot be applied to other tables',
+    '9. Avoid generic phrases like "manage data" or "store information" - be specific about WHAT data and WHY',
     '',
-    'Use the analyze-table-metadata tool with this input:',
-    JSON.stringify(toolInput, null, 2),
+    'Please provide the metadata as a JSON array where each object contains these fields:',
+    '[',
+    '  {',
+    '    "tableName": string, // The table\'s name',
+    '    "friendlyLabel": string, // A human-readable label for the table (unique and specific to its columns)',
+    '    "purpose": string, // What this table is used for based on its specific column structure (2-3 sentences)',
+    '    "updateFrequency": "real-time" | "daily" | "weekly" | "monthly" | "rarely", // How often data changes',
+    '    "sampleQuestions": string[] // 3-5 business questions that reference ACTUAL column names from this specific table',
+    '  }',
+    ']',
     '',
-    'Important:',
-    '- Do NOT use markdown or asterisks in any field values.',
-    '- Make sure the JSON is valid and all fields are present.',
-    '- Sample questions should be unique, relevant, and phrased as natural questions.',
-    '- The purpose should be a single, clear sentence.',
-  ]
-    .filter(Boolean)
-    .join('\n');
+    'IMPORTANT: Each table must have completely different and unique metadata. No two tables should have similar purposes or sample questions.',
+    'Return only the JSON array, no additional text or formatting.',
+  ].join('\n');
 };

@@ -53,29 +53,35 @@ export class MetadataService {
       // Extract table names from the tables array
       const tableNames = tables.map((table) => table.tableName);
 
-      const metadataResults = [];
-      const failedTables = [];
-
-      for (const tableName of tableNames) {
-        try {
-          // Get detailed table schema
-          const tableSchema = await this.getTableSchema(client, tableName);
-          //Call MCP agent to generate metadata
-          const metadata = await this.generateTableMetadata(tableName, tableSchema);
-          metadataResults.push(metadata);
-        } catch (error) {
-          this.logger.error(`Error processing table ${tableName}:`, error);
-          failedTables.push({ tableName, error: error.message });
-          // Continue with other tables even if one fails
+      try {
+        // Get schemas for all tables
+        const tablesWithSchemas = [];
+        for (const tableName of tableNames) {
+          try {
+            const tableSchema = await this.getTableSchema(client, tableName);
+            tablesWithSchemas.push({ tableName, tableSchema });
+          } catch (error) {
+            this.logger.error(`Error getting schema for table ${tableName}:`, error);
+          }
         }
-      }
 
-      return {
-        dbConnectionId: connection.dbConnectionId,
-        connectionTitle: connection.title || 'Default Connection',
-        generatedMetadata: metadataResults,
-        failedTables,
-      };
+        // Send all tables at once to generateTableMetadata
+        const metadataResults = await this.generateTableMetadata(tablesWithSchemas);
+
+        return {
+          dbConnectionId: connection.dbConnectionId,
+          connectionTitle: connection.title || 'Default Connection',
+          generatedMetadata: metadataResults,
+        };
+      } catch (error) {
+        this.logger.error('Error processing tables:', error);
+        return {
+          dbConnectionId: connection.dbConnectionId,
+          connectionTitle: connection.title || 'Default Connection',
+          generatedMetadata: [] as ITableMetadataRecord[],
+          failedTables: tableNames.map((tableName) => ({ tableName, error: error.message })),
+        };
+      }
     });
   }
 
@@ -125,31 +131,29 @@ export class MetadataService {
   }
 
   /**
-   * Generate metadata for a table using the specialized table metadata agent
+   * Generate metadata for multiple tables using the specialized table metadata agent
    */
   async generateTableMetadata(
-    tableName: string,
-    tableSchema: ITableSchemaInput,
+    tablesWithSchemas: Array<{ tableName: string; tableSchema: ITableSchemaInput }>,
     businessContext?: string
   ) {
     try {
-      // Use the dedicated table metadata agent service
+      // Use the dedicated table metadata agent service to process all tables at once
       const agentResponse = await this.tableMetadataAgent.generateTableMetadata({
-        tableName,
-        tableSchema,
+        tables: tablesWithSchemas,
         businessContext,
       });
 
-      return {
-        tableName,
-        friendlyLabel: agentResponse.friendlyLabel,
-        purpose: agentResponse.purpose,
-        updateFrequency: agentResponse.updateFrequency,
-        sampleQuestions: agentResponse.sampleQuestions,
-      };
+      return agentResponse.map((response) => ({
+        tableName: response.tableName,
+        friendlyLabel: response.friendlyLabel,
+        purpose: response.purpose,
+        updateFrequency: response.updateFrequency,
+        sampleQuestions: response.sampleQuestions,
+      }));
     } catch (error) {
-      this.logger.error(`Error generating metadata for table ${tableName}:`, error);
-      throw new Error(`Failed to generate metadata for table ${tableName}`);
+      this.logger.error('Error generating metadata for tables:', error);
+      throw new Error('Failed to generate metadata for tables');
     }
   }
 
