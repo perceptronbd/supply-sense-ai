@@ -14,12 +14,6 @@ export interface GenerateDescriptionInput {
   refTable: string;
   refColumn: string;
   businessContext?: string;
-  timeoutMs?: number;
-}
-
-export interface TableDescriptionAgentConfig {
-  defaultTimeoutMs: number;
-  maxTimeoutMs: number;
 }
 
 /**
@@ -30,82 +24,11 @@ export interface TableDescriptionAgentConfig {
 export class TableDescriptionAgentService {
   private readonly logger = new Logger(TableDescriptionAgentService.name);
   private descriptionAgent: Agent | null = null;
-  private readonly config: TableDescriptionAgentConfig = {
-    defaultTimeoutMs: Number.parseInt(process.env.TABLE_DESCRIPTION_TIMEOUT_MS || '30000', 10),
-    maxTimeoutMs: Number.parseInt(process.env.TABLE_DESCRIPTION_MAX_TIMEOUT_MS || '120000', 10),
-  };
 
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
   ) {}
-
-  /**
-   * Creates a timeout promise that can be cancelled
-   */
-  private createTimeoutWithCancellation(timeoutMs: number): {
-    promise: Promise<never>;
-    cancel: () => void;
-  } {
-    let timeoutId: NodeJS.Timeout;
-    let cancelled = false;
-
-    const promise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        if (!cancelled) {
-          reject(new Error(`Operation timed out after ${timeoutMs}ms`));
-        }
-      }, timeoutMs);
-    });
-
-    const cancel = () => {
-      cancelled = true;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-
-    return { promise, cancel };
-  }
-
-  /**
-   * Executes a promise with proper timeout and cancellation support
-   */
-  private async executeWithTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
-    const { promise: timeoutPromise, cancel: cancelTimeout } =
-      this.createTimeoutWithCancellation(timeoutMs);
-
-    try {
-      const result = await Promise.race([operation, timeoutPromise]);
-      cancelTimeout();
-      return result;
-    } catch (error) {
-      cancelTimeout();
-      throw error;
-    }
-  }
-
-  /**
-   * Update timeout configuration
-   */
-  updateTimeoutConfig(config: Partial<TableDescriptionAgentConfig>): void {
-    if (config.defaultTimeoutMs !== undefined) {
-      this.config.defaultTimeoutMs = Math.max(1000, config.defaultTimeoutMs); // Minimum 1 second
-    }
-    if (config.maxTimeoutMs !== undefined) {
-      this.config.maxTimeoutMs = Math.max(this.config.defaultTimeoutMs, config.maxTimeoutMs);
-    }
-    this.logger.log(
-      `Updated timeout config: default=${this.config.defaultTimeoutMs}ms, max=${this.config.maxTimeoutMs}ms`
-    );
-  }
-
-  /**
-   * Get current timeout configuration
-   */
-  getTimeoutConfig(): TableDescriptionAgentConfig {
-    return { ...this.config };
-  }
 
   /**
    * Initialize the table description agent with specific tools for relationship analysis
@@ -172,17 +95,26 @@ export class TableDescriptionAgentService {
    * Generate a description for a table relationship
    */
   async generateTableDescription(input: GenerateDescriptionInput): Promise<string> {
-    try {
-      // Validate input parameters
-      const { tableName, columnName, refTable, refColumn, businessContext } = input;
+    const results = await this.generateDescriptions([input]);
+    return results[0];
+  }
 
-      if (!tableName || !columnName || !refTable || !refColumn) {
-        throw new Error('Missing required relationship parameters');
+  /**
+   * Core method to generate descriptions for single or multiple table relationships
+   */
+  private async generateDescriptions(inputs: GenerateDescriptionInput[]): Promise<string[]> {
+    try {
+      // Validate all input parameters
+      for (const input of inputs) {
+        const { tableName, columnName, refTable, refColumn } = input;
+        if (!tableName || !columnName || !refTable || !refColumn) {
+          throw new Error(
+            `Missing required relationship parameters for ${tableName}.${columnName}`
+          );
+        }
       }
 
-      this.logger.debug(
-        `Generating description for relationship: ${tableName}.${columnName} -> ${refTable}.${refColumn}`
-      );
+      this.logger.debug(`Generating descriptions for ${inputs.length} relationships`);
 
       // Check API key before initializing
       if (!process.env.OPENROUTER_API_KEY) {
@@ -196,116 +128,145 @@ export class TableDescriptionAgentService {
         throw new Error('Table description agent not initialized');
       }
 
-      const prompt = `Database Relationship Analysis:
-- Table: ${tableName}
-- Field: ${columnName}
-- Connected to: ${refTable}.${refColumn}
-${businessContext ? `\nBusiness Context: ${businessContext}` : ''}
+      // Build a comprehensive prompt for all relationships
+      const relationshipsData = inputs
+        .map((input, index) => {
+          const businessContextPart = input.businessContext
+            ? `\n   Business Context: ${input.businessContext}`
+            : '';
+          return `${index + 1}. Table: ${input.tableName}
+   Field: ${input.columnName}
+   Connected to: ${input.refTable}.${input.refColumn}${businessContextPart}`;
+        })
+        .join('\n\n');
 
-Please explain what this relationship means for business users and how it helps with data analysis. Write in simple, user-friendly language that explains the practical value.`;
+      const prompt = `Database Relationship Analysis for Multiple Relationships:
 
-      this.logger.debug('Sending prompt to agent:', { prompt });
+${relationshipsData}
 
-      // Determine timeout - use input override, or default, but cap at max
-      const requestedTimeout = input.timeoutMs || this.config.defaultTimeoutMs;
-      const timeoutMs = Math.min(requestedTimeout, this.config.maxTimeoutMs);
+Please generate user-friendly descriptions for each relationship above. Return your response as a JSON array where each element corresponds to the relationship in the same order. Each description should explain what the relationship means for business users and how it helps with data analysis.
 
-      this.logger.debug(
-        `Using timeout: ${timeoutMs}ms (requested: ${requestedTimeout}ms, max: ${this.config.maxTimeoutMs}ms)`
-      );
+Format your response as:
+["Description for relationship 1", "Description for relationship 2", ...]
 
-      const agentPromise = this.descriptionAgent.generate([
+Guidelines for each description:
+- Use simple, everyday business language
+- Start with "This means..." or "This shows..."
+- Explain the business relationship and its practical value
+- Keep under 200 characters
+- Focus on how it helps with analysis or insights`;
+
+      this.logger.debug('Sending batch prompt to agent for multiple relationships');
+
+      const response = (await this.descriptionAgent.generate([
         {
           role: 'user',
           content: prompt,
         },
-      ]);
-
-      const response = (await this.executeWithTimeout(agentPromise, timeoutMs)) as {
+      ])) as {
         text: string;
       };
 
-      this.logger.debug('Received response from agent:', {
-        text: response?.text,
+      this.logger.debug('Received batch response from agent:', {
         hasText: !!response?.text,
+        textLength: response?.text?.length,
       });
 
       if (!response?.text) {
         throw new Error('Agent returned empty or invalid response');
       }
 
-      let description = response.text.trim();
+      let responseText = response.text.trim();
 
-      if (!description) {
+      if (!responseText) {
         throw new Error('Agent returned empty description');
       }
 
-      // Remove leading and trailing quotes or markdown formatting if present
-      description = description.replace(/^["'`*]+\s*/, '').replace(/\s*["'`*]+$/, '');
+      // Try to parse JSON response
+      let descriptions: string[];
+      try {
+        // Remove any markdown code block formatting
+        responseText = responseText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+        descriptions = JSON.parse(responseText);
 
-      this.logger.log(
-        `✅ Generated description for ${tableName}.${columnName} -> ${refTable}.${refColumn}: ${description}`
-      );
-      return description;
-    } catch (error) {
-      // Check for specific error types
-      if (error.message === 'Payment Required') {
-        this.logger.error(
-          '💳 OpenRouter account needs payment. Please add credits to your OpenRouter account at https://openrouter.ai/'
+        if (!Array.isArray(descriptions)) {
+          throw new Error('Response is not an array');
+        }
+
+        if (descriptions.length !== inputs.length) {
+          this.logger.warn(`Expected ${inputs.length} descriptions but got ${descriptions.length}`);
+        }
+      } catch {
+        this.logger.warn(
+          'Failed to parse JSON response, attempting to extract descriptions manually'
         );
-      } else if (error.message?.includes('timed out')) {
-        this.logger.error(
-          `⏱️ Request timed out after ${
-            input.timeoutMs || this.config.defaultTimeoutMs
-          }ms. Consider increasing timeout or checking network connectivity.`
-        );
-      } else {
-        this.logger.error(
-          `❌ Error generating description for relationship ${input.tableName}.${input.columnName} -> ${input.refTable}.${input.refColumn}:`,
-          {
-            error: error.message || error,
-            stack: error.stack,
-            input: {
-              tableName: input.tableName,
-              columnName: input.columnName,
-              refTable: input.refTable,
-              refColumn: input.refColumn,
-              businessContext: input.businessContext,
-              timeoutMs: input.timeoutMs,
-            },
-          }
+        // Fallback: try to extract descriptions from text
+        descriptions = this.extractDescriptionsFromText(responseText, inputs.length);
+      }
+
+      // Ensure we have the right number of descriptions
+      while (descriptions.length < inputs.length) {
+        const missingIndex = descriptions.length;
+        const input = inputs[missingIndex];
+        descriptions.push(
+          `This means ${input.tableName} records are connected to ${input.refTable} records. This helps organize and link related data.`
         );
       }
 
-      // Return a user-friendly fallback description instead of throwing
-      const fallback = `This means ${input.tableName} records are connected to ${input.refTable} records. This helps organize and link related data.`;
-      this.logger.warn(`Using fallback description: ${fallback}`);
-      return fallback;
+      // Clean up descriptions
+      descriptions = descriptions.slice(0, inputs.length).map((desc) =>
+        desc
+          .replace(/^["'`*]+\s*/, '')
+          .replace(/\s*["'`*]+$/, '')
+          .trim()
+      );
+
+      this.logger.log(`✅ Generated ${descriptions.length} descriptions successfully`);
+      return descriptions;
+    } catch (error) {
+      this.logger.error('❌ Error generating batch descriptions:', error);
+
+      // Return fallback descriptions for all inputs
+      return inputs.map(
+        (input) =>
+          `This means ${input.tableName} records are connected to ${input.refTable} records. This helps organize and link related data.`
+      );
     }
+  }
+
+  /**
+   * Helper method to extract descriptions from non-JSON text response
+   */
+  private extractDescriptionsFromText(text: string, expectedCount: number): string[] {
+    // Try to find numbered or bulleted descriptions
+    const patterns = [
+      /\d+\.\s*["']?([^"'\n]+)["']?/g,
+      /[-*]\s*["']?([^"'\n]+)["']?/g,
+      /"([^"]+)"/g,
+    ];
+
+    for (const pattern of patterns) {
+      const matches = Array.from(text.matchAll(pattern));
+      if (matches.length >= expectedCount) {
+        return matches.slice(0, expectedCount).map((match) => match[1].trim());
+      }
+    }
+
+    // Fallback: split by lines and take meaningful ones
+    const linePattern = /^[\d\-*[\]{}]+\s*$/;
+    const lines = text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 10 && !linePattern.exec(line))
+      .slice(0, expectedCount);
+
+    return lines.length > 0 ? lines : [];
   }
 
   /**
    * Generate descriptions for multiple table relationships
    */
   async generateMultipleDescriptions(inputs: GenerateDescriptionInput[]): Promise<string[]> {
-    const descriptions: string[] = [];
-
-    for (const input of inputs) {
-      try {
-        const description = await this.generateTableDescription(input);
-        descriptions.push(description);
-      } catch (error) {
-        this.logger.error(
-          `❌ Error generating description for ${input.tableName}.${input.columnName}:`,
-          error
-        );
-        // Add user-friendly fallback description
-        descriptions.push(
-          `This means ${input.tableName} records are connected to ${input.refTable} records. This helps organize and link related data.`
-        );
-      }
-    }
-
-    return descriptions;
+    return this.generateDescriptions(inputs);
   }
 }

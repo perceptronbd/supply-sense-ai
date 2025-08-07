@@ -1,5 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from 'src/helpers/db-connection.helper';
 import { ConnectionsService } from '../../connections/connections.service';
@@ -9,6 +9,7 @@ import { SchemaBuilderService } from './schema-builder.service';
 
 @Injectable()
 export class OnboardingService {
+  private readonly logger = new Logger(OnboardingService.name);
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(forwardRef(() => SchemaBuilderService))
@@ -89,38 +90,37 @@ export class OnboardingService {
         }));
       });
 
-      // Generate descriptions for each relationship using the AI agent
-      const relationshipsWithDescriptions = await Promise.all(
-        relationships.map(async (relationship) => {
-          try {
-            const description = await this.tableDescriptionAgent.generateTableDescription({
-              tableName: relationship.tableName,
-              columnName: relationship.columnName,
-              refTable: relationship.refTable,
-              refColumn: relationship.refColumn,
-              // Optional: Add business context if available
-              businessContext: `Database relationship analysis for company ${companyId}`,
-            });
+      // Generate descriptions for all relationships at once using the AI agent
+      const descriptionInputs = relationships.map((relationship) => ({
+        tableName: relationship.tableName,
+        columnName: relationship.columnName,
+        refTable: relationship.refTable,
+        refColumn: relationship.refColumn,
+        // Optional: Add business context if available
+        businessContext: `Database relationship analysis for company ${companyId}`,
+      }));
 
-            return {
-              ...relationship,
-              description,
-            };
-          } catch (error) {
-            console.error(
-              `Failed to generate description for relationship ${relationship.tableName}.${relationship.columnName}:`,
-              error
-            );
-            // Use fallback description if agent fails
-            return {
-              ...relationship,
-              description: `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
-            };
-          }
-        })
-      );
+      try {
+        const descriptions =
+          await this.tableDescriptionAgent.generateMultipleDescriptions(descriptionInputs);
 
-      return relationshipsWithDescriptions;
+        // Combine relationships with descriptions
+        const relationshipsWithDescriptions = relationships.map((relationship, index) => ({
+          ...relationship,
+          description:
+            descriptions[index] ||
+            `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
+        }));
+
+        return relationshipsWithDescriptions;
+      } catch (error) {
+        this.logger.error('Failed to generate descriptions for relationships:', error);
+        // Use fallback descriptions if agent fails
+        return relationships.map((relationship) => ({
+          ...relationship,
+          description: `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
+        }));
+      }
     } catch (error) {
       console.error('Failed to retrieve table relationships:', error);
       throw new Error(`Failed to retrieve table relationships: ${error.message}`);
