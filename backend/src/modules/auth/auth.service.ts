@@ -160,17 +160,6 @@ export class AuthService {
         data: rolePermissions,
       });
 
-      // Create default headquarters branch
-      const hqBranch = await tx.branch.create({
-        data: {
-          name: 'Headquarters',
-          code: 'HQ',
-          address: registerDto.businessAddress || '',
-          isHQ: true,
-          companyId: company.id,
-        },
-      });
-
       // Create the super admin user
       const user = await tx.user.create({
         data: {
@@ -189,15 +178,6 @@ export class AuthService {
         data: {
           userId: user.id,
           roleId: superAdminRole.id,
-        },
-      });
-
-      // Assign user to headquarters branch
-      await tx.userBranch.create({
-        data: {
-          userId: user.id,
-          branchId: hqBranch.id,
-          isActive: true,
         },
       });
 
@@ -271,14 +251,8 @@ export class AuthService {
             },
           },
         },
-        userBranches: {
-          where: { isActive: true },
-          include: {
-            branch: true,
-          },
-        },
       },
-    })) as UserWithRelations | null;
+    })) as unknown as UserWithRelations | null;
 
     if (!user?.isActive) {
       return null;
@@ -322,14 +296,8 @@ export class AuthService {
             },
           },
         },
-        userBranches: {
-          where: { isActive: true },
-          include: {
-            branch: true,
-          },
-        },
       },
-    })) as UserWithRelations | null;
+    })) as unknown as UserWithRelations | null;
 
     if (!user?.isActive) {
       return null;
