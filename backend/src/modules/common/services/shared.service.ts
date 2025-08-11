@@ -1,0 +1,85 @@
+import { PrismaService } from '@/app/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import type { UsageRecord } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import {
+  AI_MODEL_INPUT_TOKEN_COST,
+  AI_MODEL_NAME,
+  AI_MODEL_OUTPUT_TOKEN_COST,
+  AI_MODEL_TOKENS_PER_CREDIT,
+} from '@supplysense/constant';
+
+/**
+ * Interface defining parameters for token price calculation
+ */
+interface ITokenPriceCalculate {
+  inputTokens: number;
+  outputTokens: number;
+  isDeductCredit: boolean; // Whether to deduct credits from company subscription
+  toolUsed?: string; // Name of the AI tool/model used
+  companyId: string; // ID of the company to charge
+  metadata?: Record<string, string>; // Additional metadata for usage tracking
+  tx: PrismaService; // Transactional Prisma service instance
+}
+
+/**
+ * Shared service for common business logic across the application
+ * Handles AI token usage calculation, billing, and usage tracking
+ */
+@Injectable()
+export class SharedService {
+  constructor(
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
+  ) {}
+
+  async tokenPriceCalculate({
+    inputTokens,
+    outputTokens,
+    isDeductCredit = false,
+    companyId,
+    toolUsed = AI_MODEL_NAME,
+    metadata = {},
+    tx = this.prismaService,
+  }: ITokenPriceCalculate) {
+    // Calculate input token cost (cost per 1M tokens converted to actual usage)
+    const calculatedInputPrice = (AI_MODEL_INPUT_TOKEN_COST / 1000000) * inputTokens;
+
+    // Calculate output token cost (cost per 1M tokens converted to actual usage)
+    const calculatedOutputPrice = (AI_MODEL_OUTPUT_TOKEN_COST / 1000000) * outputTokens;
+
+    // Calculate total tokens used
+    const totalTokens = inputTokens + outputTokens;
+
+    // Calculate total cost in USD
+    const totalTokenPrice = calculatedInputPrice + calculatedOutputPrice;
+
+    // Convert tokens to credits (rounded up to nearest whole credit)
+    const totalCredit = Math.ceil(totalTokens / AI_MODEL_TOKENS_PER_CREDIT);
+
+    // Deduct credits from company subscription if requested
+    if (isDeductCredit) {
+      await tx.companySubscription.update({
+        where: { id: companyId },
+        data: { remainingCredits: { decrement: totalCredit } },
+      });
+    }
+
+    // Prepare usage record data (excluding auto-generated fields)
+    const usageRecordInput: Omit<UsageRecord, 'id' | 'timestamp'> = {
+      companyId,
+      inputTokens,
+      outputTokens,
+      totalTokens,
+      toolUsed,
+      costUSD: new Decimal(totalTokenPrice), // Using Decimal for precise currency handling
+      creditsCharged: totalCredit,
+      metadata,
+    };
+
+    // Create usage record in database for tracking and analytics
+    await tx.usageRecord.create({
+      data: usageRecordInput,
+    });
+  }
+}

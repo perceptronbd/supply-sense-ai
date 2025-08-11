@@ -280,7 +280,7 @@ export class AuthService {
       },
     })) as UserWithRelations | null;
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       return null;
     }
 
@@ -331,7 +331,7 @@ export class AuthService {
       },
     })) as UserWithRelations | null;
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       return null;
     }
 

@@ -25,7 +25,7 @@
     "db:start": "docker-compose up -d postgres",
     "db:stop": "docker-compose stop postgres",
     "db:generate": "cd backend && npx prisma generate",
-    "db:seed": "cd backend && npx tsx prisma/seed.ts",
+    "db:seed": "cd backend && npx tsx prisma/seeds/index.ts",
     "start:dev": "pnpm run db:start && pnpm run backend:serve",
     "dev": "concurrently \"pnpm run db:start\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\" \"pnpm run mcp-server:serve\"",
     "lint": "biome check .",
