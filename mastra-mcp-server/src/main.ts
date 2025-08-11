@@ -3,6 +3,7 @@ import { MCPServer } from '@mastra/mcp';
 import { mastra } from './mastra/index.js';
 import { analyzeTableMetadataTool } from './mastra/tools/metadata-tool.js';
 import { supplyChainTool } from './mastra/tools/supply-chain-tool.js';
+import { testMetadataTool } from './mastra/tools/test-metadata-tool.js';
 
 async function main() {
   console.log('🚀 Starting SupplySense Mastra MCP Server...');
@@ -21,7 +22,7 @@ async function main() {
       // Expose agents, workflows, and tools
       agents,
       workflows,
-      tools: { supplyChainTool, analyzeTableMetadataTool }, // Include standalone tools
+      tools: { supplyChainTool, analyzeTableMetadataTool, testMetadataTool }, // Include standalone tools
     });
 
     console.log('✅ MCP Server initialized successfully');

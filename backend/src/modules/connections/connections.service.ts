@@ -89,6 +89,7 @@ export class ConnectionsService {
           title: dto.title || credentials.database, // Use database name as default title
           sslEnabled: credentials.sslEnabled || false,
           connectionHash,
+          businessContext: dto.businessContext || '',
         },
       });
 

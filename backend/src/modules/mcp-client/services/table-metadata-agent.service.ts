@@ -50,8 +50,21 @@ export class TableMetadataAgentService {
         name: 'TableMetadataAgent',
         description:
           'AI agent specialized in analyzing database table schemas and generating metadata',
-        instructions:
-          'Analyze table schema and generate comprehensive metadata including friendly labels, purpose, update frequency, and sample business questions.',
+        instructions: [
+          'You are an expert data analyst. Your task is to analyze the following database tables and generate structured metadata for each one.',
+          '',
+          'CRITICAL INSTRUCTIONS FOR UNIQUE RESPONSES:',
+          '1. Each table MUST have a completely different and unique response',
+          '2. Analyze the SPECIFIC column names, data types, and relationships for each table',
+          '3. DO NOT use generic templates or similar patterns across tables',
+          "4. The friendlyLabel should reflect the table's actual purpose based on its columns",
+          '5. The purpose should be specific to what THIS table does based on its schema structure',
+          '6. Sample questions MUST reference actual column names from each specific table',
+          '7. Consider foreign key relationships and primary keys when generating purpose and questions',
+          '8. Each table should have completely different sample questions that cannot be applied to other tables',
+          '9. Avoid generic phrases like "manage data" or "store information" - be specific about WHAT data and WHY',
+          '',
+        ].join('\n'),
         model: this.openrouter.getModel(),
         tools,
       });
@@ -66,12 +79,23 @@ export class TableMetadataAgentService {
   /**
    * Generate with retry logic for rate limiting
    */
+  private isRateLimitError(errorMessage: string): boolean {
+    return errorMessage.includes('Too Many Requests') || errorMessage.includes('429');
+  }
+
+  private async delayRetry(delay: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
   private async generateWithRetry(
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     messages: any[],
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     options: any,
     tableName: string,
     maxRetries = 5,
     baseDelay = 2000
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   ): Promise<any> {
     let lastError: Error = new Error('No retry attempts made');
     if (maxRetries <= 0) {
@@ -87,27 +111,39 @@ export class TableMetadataAgentService {
         return await this.metadataAgent.generate(messages, options);
       } catch (error) {
         lastError = error as Error;
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        // Check if it's a rate limiting error
-        if (errorMessage.includes('Too Many Requests') || errorMessage.includes('429')) {
-          const delay = baseDelay * 2 ** (attempt - 1); // Exponential backoff
-          this.logger.warn(
-            `Rate limit hit for table ${tableName}, attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`
-          );
-
-          if (attempt < maxRetries) {
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
+        if (this.shouldRetryOnRateLimit(error, tableName, attempt, maxRetries, baseDelay)) {
+          continue;
         }
-
-        // If it's not a rate limiting error, or we've exhausted retries, throw immediately
         throw error;
       }
     }
 
-    throw lastError!;
+    throw lastError;
+  }
+
+  /**
+   * Handles rate limit retry logic for generateWithRetry
+   */
+  private shouldRetryOnRateLimit(
+    error: unknown,
+    tableName: string,
+    attempt: number,
+    maxRetries: number,
+    baseDelay: number
+  ): boolean {
+    const errorMessage = error instanceof Error ? error.message : String(error as string);
+    if (this.isRateLimitError(errorMessage)) {
+      const delay = baseDelay * 2 ** (attempt - 1); // Exponential backoff
+      this.logger.warn(
+        `Rate limit hit for table ${tableName}, attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`
+      );
+
+      if (attempt < maxRetries) {
+        this.delayRetry(delay);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -121,38 +157,32 @@ export class TableMetadataAgentService {
         throw new Error('Table metadata agent not initialized');
       }
 
-      const { tables, businessContext } = input;
+      const { tables } = input;
 
       // Process all tables at once to avoid rate limiting
       const results: MCPTableMetadataAgentRes[] = [];
 
       // Create a focused prompt for multiple table metadata generation
-      const prompt = buildMultipleTablesMetadataPrompt(tables, businessContext);
-      this.logger.log('🚀 ~ prompt:', prompt);
+      const { systemPrompt } = buildMultipleTablesMetadataPrompt();
 
       this.logger.log(`🔍 Analyzing table metadata for ${tables.length} tables`);
 
+      const inputData = {
+        tables: tables.map(({ tableName, tableSchema }) => ({
+          tableName,
+          tableSchema,
+        })),
+      };
       // Use the specialized agent to generate metadata for all tables at once
-      // const response = await this.generateWithRetry(
-      //   [
-      //     {
-      //       role: 'user',
-      //       content: prompt,
-      //     },
-      //   ],
-      //   {
-      //     toolChoice: {
-      //       type: 'tool',
-      //       toolName: 'supplySense_analyzeTableMetadataTool',
-      //     },
-      //   },
-      //   `${tables.length} tables`
-      // );
-      const response = await this.metadataAgent.generate(
+      const response = await this.generateWithRetry(
         [
           {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
             role: 'user',
-            content: prompt,
+            content: JSON.stringify(inputData, null, 2),
           },
         ],
         {
@@ -160,11 +190,15 @@ export class TableMetadataAgentService {
             type: 'tool',
             toolName: 'supplySense_analyzeTableMetadataTool',
           },
-        }
+        },
+        `${tables.length} tables`
       );
 
-      this.logger.log('✅ Table metadata generated successfully for all tables');
+      this.logger.log('✅ Table metadata generated successfully for all tables', {
+        usage: response.usage,
+      });
 
+      this.logger.debug('Response text:', response.text);
       // Parse the response to extract structured metadata for all tables
       const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
       results.push(...parsedResults);
@@ -185,144 +219,20 @@ export class TableMetadataAgentService {
    */
   private parseMultipleTablesResponse(
     responseText: string,
-    tables: Array<{ tableName: string; tableSchema: ITableSchemaInput }>
+    table: {
+      tableName: string;
+      tableSchema: ITableSchemaInput;
+    }[]
   ): MCPTableMetadataAgentRes[] {
     try {
-      // Try to extract JSON from the response
-      const jsonRegex = /\{[\s\S]*\}/;
-      const jsonMatch = jsonRegex.exec(responseText);
-
-      if (jsonMatch) {
-        const parsedData = JSON.parse(jsonMatch[0]);
-
-        // Check if the response contains an array of table metadata
-        if (Array.isArray(parsedData)) {
-          return parsedData.map((tableData, index) => ({
-            tableName: tableData.tableName || tables[index]?.tableName || `table_${index}`,
-            friendlyLabel:
-              tableData.friendlyLabel ||
-              generateFriendlyLabel(
-                tableData.tableName || tables[index]?.tableName || `table_${index}`
-              ),
-            purpose:
-              tableData.purpose ||
-              `Data storage for ${tableData.tableName || tables[index]?.tableName}`,
-            updateFrequency:
-              this.validateUpdateFrequency(tableData.updateFrequency) ||
-              this.inferUpdateFrequency(
-                tables[index]?.tableSchema || { columns: [], relationships: [] }
-              ),
-            sampleQuestions: Array.isArray(tableData.sampleQuestions)
-              ? tableData.sampleQuestions.slice(0, 5)
-              : this.generateBasicSampleQuestions(
-                  tableData.tableName || tables[index]?.tableName || `table_${index}`
-                ),
-          }));
-        }
-
-        if (parsedData.tables && Array.isArray(parsedData.tables)) {
-          // Handle case where response is wrapped in a 'tables' property
-          return parsedData.tables.map((tableData: MCPTableMetadataAgentRes, index: number) => ({
-            tableName: tableData.tableName || tables[index]?.tableName || `table_${index}`,
-            friendlyLabel:
-              tableData.friendlyLabel ||
-              generateFriendlyLabel(
-                tableData.tableName || tables[index]?.tableName || `table_${index}`
-              ),
-            purpose:
-              tableData.purpose ||
-              `Data storage for ${tableData.tableName || tables[index]?.tableName}`,
-            updateFrequency:
-              this.validateUpdateFrequency(tableData.updateFrequency) ||
-              this.inferUpdateFrequency(
-                tables[index]?.tableSchema || { columns: [], relationships: [] }
-              ),
-            sampleQuestions: Array.isArray(tableData.sampleQuestions)
-              ? tableData.sampleQuestions.slice(0, 5)
-              : this.generateBasicSampleQuestions(
-                  tableData.tableName || tables[index]?.tableName || `table_${index}`
-                ),
-          }));
-        }
-      }
-
-      // If no valid JSON structure found, return fallback metadata for all tables
-      return tables.map(({ tableName, tableSchema }) =>
-        this.generateFallbackMetadata(tableName, tableSchema)
-      );
+      return JSON.parse(responseText);
     } catch (error) {
-      this.logger.warn('Failed to parse multiple tables metadata response, using fallback:', error);
-      return tables.map(({ tableName, tableSchema }) =>
+      this.logger.error('❌ Failed to parse multiple tables response:', error);
+      // Fallback to basic metadata generation if parsing fails
+      return table.map(({ tableName, tableSchema }) =>
         this.generateFallbackMetadata(tableName, tableSchema)
       );
     }
-  }
-
-  /**
-   * Parse the agent response to extract structured metadata
-   */
-  private parseMetadataResponse(
-    responseText: string,
-    tableName: string,
-    tableSchema: ITableSchemaInput
-  ): MCPTableMetadataAgentRes {
-    try {
-      // Try to extract JSON from the response
-      const jsonRegex = /\{[\s\S]*\}/;
-      const jsonMatch = jsonRegex.exec(responseText);
-
-      if (jsonMatch) {
-        const parsedData = JSON.parse(jsonMatch[0]);
-
-        // Validate and structure the response
-        return {
-          tableName: parsedData.tableName || tableName,
-          friendlyLabel: parsedData.friendlyLabel || generateFriendlyLabel(tableName),
-          purpose: parsedData.purpose || `Data storage for ${tableName}`,
-          updateFrequency:
-            this.validateUpdateFrequency(parsedData.updateFrequency) ||
-            this.inferUpdateFrequency(tableSchema),
-          sampleQuestions: Array.isArray(parsedData.sampleQuestions)
-            ? parsedData.sampleQuestions.slice(0, 5)
-            : this.generateBasicSampleQuestions(tableName),
-        };
-      }
-
-      // If no JSON found, try to parse text response
-      return this.parseTextResponse(responseText, tableName, tableSchema);
-    } catch (error) {
-      this.logger.warn('Failed to parse metadata response, using fallback:', error);
-      return this.generateFallbackMetadata(tableName, tableSchema);
-    }
-  }
-
-  /**
-   * Parse text response when JSON parsing fails
-   */
-  private parseTextResponse(
-    responseText: string,
-    tableName: string,
-    tableSchema: ITableSchemaInput
-  ): MCPTableMetadataAgentRes {
-    const friendlyLabel =
-      this.extractFromText(responseText, 'friendly.?label') || generateFriendlyLabel(tableName);
-
-    const purpose =
-      this.extractFromText(responseText, 'purpose') || this.inferPurpose(tableName, tableSchema);
-
-    const updateFrequency =
-      this.extractUpdateFrequency(responseText) || this.inferUpdateFrequency(tableSchema);
-
-    const sampleQuestions =
-      this.extractSampleQuestions(responseText) || this.generateBasicSampleQuestions(tableName);
-
-    return {
-      tableName,
-      friendlyLabel,
-      purpose,
-      updateFrequency,
-      sampleQuestions,
-    };
   }
 
   /**

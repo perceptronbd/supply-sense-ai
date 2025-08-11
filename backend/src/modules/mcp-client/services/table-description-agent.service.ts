@@ -92,14 +92,6 @@ export class TableDescriptionAgentService {
   }
 
   /**
-   * Generate a description for a table relationship
-   */
-  async generateTableDescription(input: GenerateDescriptionInput): Promise<string> {
-    const results = await this.generateDescriptions([input]);
-    return results[0];
-  }
-
-  /**
    * Core method to generate descriptions for single or multiple table relationships
    */
   private async generateDescriptions(inputs: GenerateDescriptionInput[]): Promise<string[]> {
@@ -140,7 +132,7 @@ export class TableDescriptionAgentService {
         })
         .join('\n\n');
 
-      const prompt = `Database Relationship Analysis for Multiple Relationships:
+      const systemPrompt = `Database Relationship Analysis for Multiple Relationships:
 
 ${relationshipsData}
 
@@ -158,14 +150,16 @@ Guidelines for each description:
 
       this.logger.debug('Sending batch prompt to agent for multiple relationships');
 
-      const response = (await this.descriptionAgent.generate([
+      const response = await this.descriptionAgent.generate([
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
         {
           role: 'user',
-          content: prompt,
+          content: JSON.stringify(inputs, null, 2),
         },
-      ])) as {
-        text: string;
-      };
+      ]);
 
       this.logger.debug('Received batch response from agent:', {
         hasText: !!response?.text,
@@ -221,7 +215,9 @@ Guidelines for each description:
           .trim()
       );
 
-      this.logger.log(`✅ Generated ${descriptions.length} descriptions successfully`);
+      this.logger.log(`✅ Generated ${descriptions.length} descriptions successfully`, {
+        usage: response.usage,
+      });
       return descriptions;
     } catch (error) {
       this.logger.error('❌ Error generating batch descriptions:', error);

@@ -25,41 +25,59 @@ export interface DetermineUpdateFrequencyInput {
   businessContext?: string;
 }
 
+const UPDATE_FREQUENCIES = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'] as const;
+
+type UpdateFrequency = (typeof UPDATE_FREQUENCIES)[number];
+
 export async function determineUpdateFrequency({
   tableName,
   tableSchema,
   purpose,
   businessContext,
-}: DetermineUpdateFrequencyInput): Promise<
-  'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely'
-> {
+}: DetermineUpdateFrequencyInput): Promise<UpdateFrequency> {
   if (!tableName || !tableSchema) {
     throw new Error('Missing required tableName or tableSchema');
   }
+  const userPrompt = JSON.stringify(
+    {
+      tableName,
+      tableSchema,
+      purpose,
+      businessContext,
+    },
+    null,
+    2
+  );
 
   try {
     const prompt = `Table: ${tableName}
-Schema: ${JSON.stringify(tableSchema, null, 2)}
-${purpose ? `Purpose: ${purpose}` : ''}
-${businessContext ? `Business Context: ${businessContext}` : ''}
-
-Determine the optimal update frequency for this table.`;
+    Schema: ${JSON.stringify(tableSchema, null, 2)}
+    ${purpose ? `Purpose: ${purpose}` : ''}
+    ${businessContext ? `Business Context: ${businessContext}` : ''}
+    Determine the optimal update frequency for this table.`;
 
     const response = await updateFrequencyAgent.generate([
       {
-        role: 'user',
+        role: 'system',
         content: prompt,
+      },
+      {
+        role: 'user',
+        content: userPrompt,
       },
     ]);
 
-    const frequency = response.text.trim().toLowerCase();
+    const frequency = response.text as UpdateFrequency;
 
+    console.debug(`Received frequency response: ${frequency}`, {
+      usage: response.usage,
+    });
+
+    console.info(`Determined update frequency for ${tableName}: ${frequency}`);
     // Validate the response
-    const validFrequencies = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'];
-    if (validFrequencies.includes(frequency)) {
-      return frequency as 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely';
+    if (UPDATE_FREQUENCIES.includes(frequency)) {
+      return frequency;
     }
-
     // Fallback to daily if response is invalid
     console.warn(`Invalid frequency response: ${frequency}. Defaulting to 'daily'`);
     return 'daily';

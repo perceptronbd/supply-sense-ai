@@ -96,8 +96,6 @@ export class OnboardingService {
         columnName: relationship.columnName,
         refTable: relationship.refTable,
         refColumn: relationship.refColumn,
-        // Optional: Add business context if available
-        businessContext: `Database relationship analysis for company ${companyId}`,
       }));
 
       try {

@@ -23,7 +23,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@supplysense/types": ["../libs/shared/src/index.ts"],
-      "@supplysense/utils": ["../libs/shared/utils/src/index.ts"]
+      "@supplysense/utils": ["../libs/shared/utils/src/index.ts"],
+      "@supplysense/constant": ["../libs/shared/constant/src/index.ts"]
     },
     "forceConsistentCasingInFileNames": true,
     "types": ["jest", "node"],
