@@ -28,7 +28,7 @@ const OnboardingContainer = () => {
         </div>
       )}
       {/* progress step */}
-      {currentStep === 4 && <ProgressStep currentStep={currentStep} />}
+      {currentStep <= 4 && <ProgressStep currentStep={currentStep} />}
       {/* Final step - onboarding complete */}
       {currentStep === 5 && <OnboardingFinishing />}
     </section>

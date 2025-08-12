@@ -52,25 +52,6 @@ export class UserResponseDto {
   permissions: string[];
 
   @ApiProperty({
-    description: 'Branch IDs the user has access to',
-    example: ['7beb5368-e1ae-4677-82f6-cb529c14cb51'],
-    type: [String],
-  })
-  branchIds: string[];
-
-  @ApiProperty({
-    description: 'Branch information the user has access to',
-    example: [{ id: '7beb5368-e1ae-4677-82f6-cb529c14cb51', name: 'Headquarters', code: 'HQ001' }],
-    type: 'array',
-  })
-  branches: Array<{
-    id: string;
-    name: string;
-    code: string;
-    isHQ: boolean;
-  }>;
-
-  @ApiProperty({
     description: 'Whether the user is a super admin',
     example: false,
   })

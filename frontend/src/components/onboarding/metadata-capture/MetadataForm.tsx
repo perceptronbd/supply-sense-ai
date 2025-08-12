@@ -3,16 +3,18 @@ import { Icons } from '@/lib/icons/Icons';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { Input, Radio, RadioGroup, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { TMetadataUpdateFrequency } from '@supplysense/constant';
 import { type ComponentPropsWithRef, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { IGeneratedMetadata } from '../types';
 import { type TMetadataFormData, metadataFormSchema } from './schema';
 
-const UPDATE_FREQUENCY_OPTIONS = [
-  { value: 'realtime', label: 'Real-time' },
-  { value: 'hourly', label: 'Hourly' },
+const UPDATE_FREQUENCY_OPTIONS: Array<{ value: TMetadataUpdateFrequency; label: string }> = [
+  { value: 'real-time', label: 'Real-time' },
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'rarely', label: 'Rarely' },
 ] as const;
 
 interface IProps extends IGeneratedMetadata, ComponentPropsWithRef<'form'> {}
@@ -34,7 +36,7 @@ const MetadataForm = (props: IProps) => {
     defaultValues: {
       friendlyLabel,
       purpose,
-      updateFrequency: updateFrequency as 'realtime' | 'hourly' | 'daily' | 'weekly',
+      updateFrequency: updateFrequency as TMetadataUpdateFrequency,
       dataSensitivity: dataSensitivity || '',
       sampleQuestions,
     },

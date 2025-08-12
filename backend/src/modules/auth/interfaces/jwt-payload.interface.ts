@@ -29,11 +29,6 @@ export interface JwtPayload {
   permissions: string[];
 
   /**
-   * Branch IDs the user has access to
-   */
-  branchIds: string[];
-
-  /**
    * User's first name
    */
   firstName: string;

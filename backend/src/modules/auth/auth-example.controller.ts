@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { CurrentUser } from './decorators/current-user.decorator';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
 import { RequirePermissions } from './decorators/permissions.decorator';
-import { BranchAccessGuard } from './guards/branch-access.guard';
 import { CompanyIsolationGuard } from './guards/company-isolation.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
@@ -36,7 +35,6 @@ export class AuthExampleController {
         companyId: user.companyId,
         roles: user.roles,
         permissions: user.permissions,
-        branchIds: user.branchIds,
         isSuperAdmin: user.isSuperAdmin,
       },
       context: this.permissionService.getUserContext(user),
@@ -59,7 +57,6 @@ export class AuthExampleController {
         user,
         'INVENTORY_MANAGEMENT'
       ),
-      accessibleBranches: this.permissionService.getAccessibleBranchIds(user),
       roles: user.roles,
       isSuperAdmin: user.isSuperAdmin,
     };
@@ -81,22 +78,6 @@ export class AuthExampleController {
       performedBy: `${user.firstName} ${user.lastName}`,
       companyId: user.companyId,
       data,
-    };
-  }
-
-  @Get('branch/:branchId/data')
-  @UseGuards(BranchAccessGuard)
-  @ApiOperation({
-    summary: 'Get branch-specific data',
-    description: 'Demonstrates branch-level access control',
-  })
-  async getBranchData(@CurrentUser() user: AuthenticatedUser, @Param('branchId') branchId: string) {
-    // The BranchAccessGuard ensures user has access to this branch
-    return {
-      message: 'Branch data retrieved successfully',
-      branchId,
-      userBranches: user.branchIds,
-      hasAccess: this.permissionService.hasAccessToBranch(user, branchId),
     };
   }
 

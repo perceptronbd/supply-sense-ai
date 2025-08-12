@@ -42,15 +42,6 @@ interface UserWithRelations {
       }>;
     };
   }>;
-  userBranches?: Array<{
-    branch: {
-      id: string;
-      name: string;
-      code: string;
-      address?: string;
-      isHQ: boolean;
-    };
-  }>;
 }
 
 @Injectable()
@@ -141,7 +132,6 @@ export class UserService {
     const {
       search,
       roleId,
-      branchId,
       isActive,
       page,
       limit,
@@ -167,13 +157,6 @@ export class UserService {
         userRoles: {
           some: {
             roleId,
-          },
-        },
-      }),
-      ...(branchId && {
-        userBranches: {
-          some: {
-            branchId,
           },
         },
       }),
@@ -544,15 +527,6 @@ export class UserService {
           permissions: userRole.role.permissions.map(
             (rp) => `${rp.permission.module}:${rp.permission.action}`
           ),
-        })),
-      }),
-      ...(user.userBranches && {
-        branches: user.userBranches.map((userBranch) => ({
-          id: userBranch.branch.id,
-          name: userBranch.branch.name,
-          code: userBranch.branch.code,
-          address: userBranch.branch.address,
-          isHQ: userBranch.branch.isHQ,
         })),
       }),
     };

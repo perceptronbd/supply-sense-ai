@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import type {
+  IMcpTableMetadata,
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
@@ -149,7 +150,7 @@ export class TableMetadataAgentService {
   /**
    * Generate table metadata using the specialized agent for multiple tables
    */
-  async generateTableMetadata(input: TableMetadataInput): Promise<MCPTableMetadataAgentRes[]> {
+  async generateTableMetadata(input: TableMetadataInput): Promise<MCPTableMetadataAgentRes> {
     try {
       await this.initializeMetadataAgent();
 
@@ -160,7 +161,7 @@ export class TableMetadataAgentService {
       const { tables } = input;
 
       // Process all tables at once to avoid rate limiting
-      const results: MCPTableMetadataAgentRes[] = [];
+      const results: IMcpTableMetadata[] = [];
 
       // Create a focused prompt for multiple table metadata generation
       const { systemPrompt } = buildMultipleTablesMetadataPrompt();
@@ -203,14 +204,14 @@ export class TableMetadataAgentService {
       const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
       results.push(...parsedResults);
 
-      return results;
+      return { result: results, usage: response.usage, question: systemPrompt };
     } catch (error) {
       this.logger.error('❌ Failed to generate metadata for tables:', error);
-
-      // Fallback to basic metadata generation for all tables
-      return input.tables.map(({ tableName, tableSchema }) =>
+      const fallbackResults = input.tables.map(({ tableName, tableSchema }) =>
         this.generateFallbackMetadata(tableName, tableSchema)
       );
+      // Fallback to basic metadata generation for all tables
+      return { result: fallbackResults };
     }
   }
 
@@ -223,9 +224,14 @@ export class TableMetadataAgentService {
       tableName: string;
       tableSchema: ITableSchemaInput;
     }[]
-  ): MCPTableMetadataAgentRes[] {
+  ): IMcpTableMetadata[] {
     try {
-      return JSON.parse(responseText);
+      // Remove Markdown code block markers if present
+      const cleaned = responseText
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+      return JSON.parse(cleaned);
     } catch (error) {
       this.logger.error('❌ Failed to parse multiple tables response:', error);
       // Fallback to basic metadata generation if parsing fails
@@ -241,7 +247,7 @@ export class TableMetadataAgentService {
   private generateFallbackMetadata(
     tableName: string,
     tableSchema: ITableSchemaInput
-  ): MCPTableMetadataAgentRes {
+  ): IMcpTableMetadata {
     return {
       tableName,
       friendlyLabel: generateFriendlyLabel(tableName),

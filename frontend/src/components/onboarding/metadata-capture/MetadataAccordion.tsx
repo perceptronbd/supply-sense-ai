@@ -13,7 +13,6 @@ import MetadataForm from './MetadataForm';
 
 const MetadataAccordion = () => {
   const { generatedMetadata, dbConnectionId, setOnboardingStep } = useOnboardingStore();
-  console.log('🚀 ~ generatedMetadata:', generatedMetadata);
   const { companyId } = useGetCompanyId();
   const [batchSaveMetadata, { isLoading: isSaving }] = useSaveMetadataMutation();
 
@@ -69,7 +68,7 @@ const MetadataAccordion = () => {
           )}
         </Button>
       </div>
-      <div className="space-y-4 h-[calc(100vh-200px)] overflow-y-auto no-scrollbar bottom-fade">
+      <div className="space-y-4 h-[calc(100vh-200px)] overflow-y-auto no-scrollbar pb-20 bottom-fade">
         {generatedMetadata.map((metadata) => (
           <Accordion selectionMode="multiple" fullWidth key={metadata.tableName}>
             <AccordionItem

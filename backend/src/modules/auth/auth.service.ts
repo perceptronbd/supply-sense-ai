@@ -54,16 +54,6 @@ interface UserWithRelations {
       }>;
     };
   }>;
-  userBranches: Array<{
-    branchId: string;
-    isActive: boolean;
-    branch: {
-      id: string;
-      name: string;
-      code: string;
-      isHQ: boolean;
-    };
-  }>;
 }
 
 @Injectable()
@@ -90,7 +80,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: false, // Will be set based on user data
     };
 
@@ -227,7 +216,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: false, // Will be set based on user data
     };
     return this.jwtService.sign(payload);
@@ -318,14 +306,6 @@ export class AuthService {
       }
     }
 
-    const branchIds = userWithRelations.userBranches.map((ub) => ub.branchId);
-    const branches = userWithRelations.userBranches.map((ub) => ({
-      id: ub.branch.id,
-      name: ub.branch.name,
-      code: ub.branch.code,
-      isHQ: ub.branch.isHQ,
-    }));
-
     return {
       id: userWithRelations.id,
       email: userWithRelations.email,
@@ -335,8 +315,6 @@ export class AuthService {
       companyName: userWithRelations.company?.name || '',
       roles,
       permissions: Array.from(permissionSet),
-      branchIds,
-      branches,
       isSuperAdmin: userWithRelations.isSuperAdmin,
       isActive: userWithRelations.isActive,
     };
@@ -383,7 +361,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: user.isSuperAdmin,
     };
 

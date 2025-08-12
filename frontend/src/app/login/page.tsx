@@ -414,7 +414,7 @@ export default function LoginPage() {
                           Admin:
                         </Text>
                         <Text variant="bodyXSmall" color="muted" as="p">
-                          admin@company001.com / admin123
+                          admin@test.com / Admin@123
                         </Text>
                       </div>
                       <Button
@@ -422,7 +422,7 @@ export default function LoginPage() {
                         variant="light"
                         color="primary"
                         className="text-xs px-2 py-1 h-auto min-h-0"
-                        onPress={() => handleDemoLogin('admin@company001.com', 'admin123')}
+                        onPress={() => handleDemoLogin('admin@test.com', 'Admin@123')}
                       >
                         Use
                       </Button>

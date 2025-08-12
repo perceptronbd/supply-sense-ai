@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { METADATA_UPDATE_FREQUENCIES, type TMetadataUpdateFrequency } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
@@ -25,16 +26,12 @@ export interface DetermineUpdateFrequencyInput {
   businessContext?: string;
 }
 
-const UPDATE_FREQUENCIES = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'] as const;
-
-type UpdateFrequency = (typeof UPDATE_FREQUENCIES)[number];
-
 export async function determineUpdateFrequency({
   tableName,
   tableSchema,
   purpose,
   businessContext,
-}: DetermineUpdateFrequencyInput): Promise<UpdateFrequency> {
+}: DetermineUpdateFrequencyInput): Promise<TMetadataUpdateFrequency> {
   if (!tableName || !tableSchema) {
     throw new Error('Missing required tableName or tableSchema');
   }
@@ -67,7 +64,7 @@ export async function determineUpdateFrequency({
       },
     ]);
 
-    const frequency = response.text as UpdateFrequency;
+    const frequency = response.text as TMetadataUpdateFrequency;
 
     console.debug(`Received frequency response: ${frequency}`, {
       usage: response.usage,
@@ -75,11 +72,9 @@ export async function determineUpdateFrequency({
 
     console.info(`Determined update frequency for ${tableName}: ${frequency}`);
     // Validate the response
-    if (UPDATE_FREQUENCIES.includes(frequency)) {
+    if (METADATA_UPDATE_FREQUENCIES.includes(frequency)) {
       return frequency;
     }
-    // Fallback to daily if response is invalid
-    console.warn(`Invalid frequency response: ${frequency}. Defaulting to 'daily'`);
     return 'daily';
   } catch (error) {
     console.error(`❌ Error determining update frequency for table ${tableName}:`, error);

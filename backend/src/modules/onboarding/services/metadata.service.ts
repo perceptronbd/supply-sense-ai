@@ -1,4 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
+import { SharedService } from '@/modules/common/services/shared.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -22,7 +23,8 @@ export class MetadataService {
     private readonly tableMetadataAgent: TableMetadataAgentService,
     @Inject(ConnectionsService)
     private readonly connectionsService: ConnectionsService,
-
+    @Inject(SharedService)
+    private readonly sharedService: SharedService,
     private readonly logger = new Logger(MetadataService.name)
   ) {}
 
@@ -36,7 +38,11 @@ export class MetadataService {
       throw new Error('Specified database connection not found');
     }
 
-    const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
+    const generatedMetadata = await this.captureMetadataForConnection(
+      connection,
+      dto.tables,
+      dto.companyId
+    );
 
     return {
       success: true,
@@ -47,7 +53,8 @@ export class MetadataService {
 
   private async captureMetadataForConnection(
     connection: DbCredentials & { dbConnectionId: string; title?: string },
-    tables: Array<{ tableName: string }>
+    tables: Array<{ tableName: string }>,
+    companyId: string
   ) {
     return withDbConnection(connection, async (client) => {
       // Extract table names from the tables array
@@ -66,7 +73,7 @@ export class MetadataService {
         }
 
         // Send all tables at once to generateTableMetadata
-        const metadataResults = await this.generateTableMetadata(tablesWithSchemas);
+        const metadataResults = await this.generateTableMetadata(tablesWithSchemas, companyId);
 
         return {
           dbConnectionId: connection.dbConnectionId,
@@ -135,6 +142,7 @@ export class MetadataService {
    */
   async generateTableMetadata(
     tablesWithSchemas: Array<{ tableName: string; tableSchema: ITableSchemaInput }>,
+    companyId: string,
     businessContext?: string
   ) {
     try {
@@ -143,8 +151,22 @@ export class MetadataService {
         tables: tablesWithSchemas,
         businessContext,
       });
+      console.log('companyId:', companyId);
 
-      return agentResponse.map((response) => ({
+      if (agentResponse.usage) {
+        await this.sharedService.tokenPriceCalculate({
+          companyId,
+          inputTokens: agentResponse.usage.promptTokens,
+          outputTokens: agentResponse.usage.completionTokens,
+          isDeductCredit: true,
+          metadata: {
+            question: agentResponse.question,
+            answer: JSON.stringify(agentResponse.result),
+          },
+        });
+      }
+
+      return agentResponse.result.map((response) => ({
         tableName: response.tableName,
         friendlyLabel: response.friendlyLabel,
         purpose: response.purpose,

@@ -92,13 +92,6 @@ export class PermissionService {
   }
 
   /**
-   * Get user's accessible branch IDs
-   */
-  getAccessibleBranchIds(user: AuthenticatedUser): string[] {
-    return user.branchIds || [];
-  }
-
-  /**
    * Create a company-scoped filter for database queries
    */
   createCompanyFilter(user: AuthenticatedUser): { companyId: string } {

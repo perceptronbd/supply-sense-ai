@@ -1,5 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { UsageRecord } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
@@ -15,11 +15,11 @@ import {
 interface ITokenPriceCalculate {
   inputTokens: number;
   outputTokens: number;
-  isDeductCredit: boolean; // Whether to deduct credits from company subscription
+  isDeductCredit?: boolean; // Whether to deduct credits from company subscription
   toolUsed?: string; // Name of the AI tool/model used
   companyId: string; // ID of the company to charge
   metadata?: Record<string, string>; // Additional metadata for usage tracking
-  tx: PrismaService; // Transactional Prisma service instance
+  tx?: PrismaService; // Transactional Prisma service instance
 }
 
 /**
@@ -28,6 +28,7 @@ interface ITokenPriceCalculate {
  */
 @Injectable()
 export class SharedService {
+  private readonly logger = new Logger(SharedService.name);
   constructor(
     @Inject(PrismaService)
     private readonly prismaService: PrismaService
@@ -40,46 +41,59 @@ export class SharedService {
     companyId,
     toolUsed = AI_MODEL_NAME,
     metadata = {},
-    tx = this.prismaService,
+    tx,
   }: ITokenPriceCalculate) {
-    // Calculate input token cost (cost per 1M tokens converted to actual usage)
-    const calculatedInputPrice = (AI_MODEL_INPUT_TOKEN_COST / 1000000) * inputTokens;
+    const run = async (prisma: PrismaService) => {
+      // Calculate input token cost (cost per 1M tokens converted to actual usage)
+      const calculatedInputPrice = (AI_MODEL_INPUT_TOKEN_COST / 1000000) * inputTokens;
 
-    // Calculate output token cost (cost per 1M tokens converted to actual usage)
-    const calculatedOutputPrice = (AI_MODEL_OUTPUT_TOKEN_COST / 1000000) * outputTokens;
+      // Calculate output token cost (cost per 1M tokens converted to actual usage)
+      const calculatedOutputPrice = (AI_MODEL_OUTPUT_TOKEN_COST / 1000000) * outputTokens;
 
-    // Calculate total tokens used
-    const totalTokens = inputTokens + outputTokens;
+      // Calculate total tokens used
+      const totalTokens = inputTokens + outputTokens;
 
-    // Calculate total cost in USD
-    const totalTokenPrice = calculatedInputPrice + calculatedOutputPrice;
+      // Calculate total cost in USD
+      const totalTokenPrice = calculatedInputPrice + calculatedOutputPrice;
 
-    // Convert tokens to credits (rounded up to nearest whole credit)
-    const totalCredit = Math.ceil(totalTokens / AI_MODEL_TOKENS_PER_CREDIT);
+      // Convert tokens to credits (rounded up to nearest whole credit)
+      const totalCredit = Math.ceil(totalTokens / AI_MODEL_TOKENS_PER_CREDIT);
 
-    // Deduct credits from company subscription if requested
-    if (isDeductCredit) {
-      await tx.companySubscription.update({
-        where: { id: companyId },
-        data: { remainingCredits: { decrement: totalCredit } },
+      // Deduct credits from company subscription if requested
+      if (isDeductCredit) {
+        await prisma.companySubscription.update({
+          where: { companyId },
+          data: { remainingCredits: { decrement: totalCredit } },
+        });
+      }
+
+      // Prepare usage record data (excluding auto-generated fields)
+      const usageRecordInput: Omit<UsageRecord, 'id' | 'timestamp'> = {
+        companyId,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+        toolUsed,
+        costUSD: new Decimal(totalTokenPrice), // Using Decimal for precise currency handling
+        creditsCharged: totalCredit,
+        metadata,
+      };
+      this.logger.debug('Usage record Input:', usageRecordInput);
+
+      // Create usage record in database for tracking and analytics
+      await prisma.usageRecord.create({
+        data: usageRecordInput,
       });
-    }
-
-    // Prepare usage record data (excluding auto-generated fields)
-    const usageRecordInput: Omit<UsageRecord, 'id' | 'timestamp'> = {
-      companyId,
-      inputTokens,
-      outputTokens,
-      totalTokens,
-      toolUsed,
-      costUSD: new Decimal(totalTokenPrice), // Using Decimal for precise currency handling
-      creditsCharged: totalCredit,
-      metadata,
     };
 
-    // Create usage record in database for tracking and analytics
-    await tx.usageRecord.create({
-      data: usageRecordInput,
-    });
+    if (tx) {
+      // Use provided transaction
+      await run(tx);
+    } else {
+      // Start a new transaction
+      await this.prismaService.$transaction(async (prisma) => {
+        await run(prisma as PrismaService);
+      });
+    }
   }
 }

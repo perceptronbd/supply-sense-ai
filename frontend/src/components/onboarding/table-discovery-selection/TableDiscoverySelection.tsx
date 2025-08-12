@@ -85,7 +85,9 @@ const TableDiscoverySelection = () => {
     await handleAsyncOperation(async () => await captureMetadata(payload).unwrap(), {
       onSuccess(result) {
         saveGeneratedMetadata(result.data.metadata.generatedMetadata);
-        setOnboardingStep(3); // Move to the next step in onboarding
+        if (result.data.metadata.generatedMetadata.length > 0) {
+          setOnboardingStep(3); // Move to the next step in onboarding
+        }
       },
     });
   };
