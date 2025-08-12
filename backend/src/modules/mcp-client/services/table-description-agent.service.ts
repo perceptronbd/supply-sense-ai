@@ -1,3 +1,5 @@
+import { SharedService } from '@/modules/common/services/shared.service';
+import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { Agent } from '@mastra/core/agent';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -27,7 +29,9 @@ export class TableDescriptionAgentService {
 
   constructor(
     @Inject(forwardRef(() => McpClientService))
-    private readonly mcpClientService: McpClientService
+    private readonly mcpClientService: McpClientService,
+    @Inject(SharedService)
+    private readonly sharedService: SharedService
   ) {}
 
   /**
@@ -94,7 +98,10 @@ export class TableDescriptionAgentService {
   /**
    * Core method to generate descriptions for single or multiple table relationships
    */
-  private async generateDescriptions(inputs: GenerateDescriptionInput[]): Promise<string[]> {
+  private async generateDescriptions(
+    inputs: GenerateDescriptionInput[],
+    companyId: string
+  ): Promise<string[]> {
     try {
       // Validate all input parameters
       for (const input of inputs) {
@@ -120,33 +127,7 @@ export class TableDescriptionAgentService {
         throw new Error('Table description agent not initialized');
       }
 
-      // Build a comprehensive prompt for all relationships
-      const relationshipsData = inputs
-        .map((input, index) => {
-          const businessContextPart = input.businessContext
-            ? `\n   Business Context: ${input.businessContext}`
-            : '';
-          return `${index + 1}. Table: ${input.tableName}
-   Field: ${input.columnName}
-   Connected to: ${input.refTable}.${input.refColumn}${businessContextPart}`;
-        })
-        .join('\n\n');
-
-      const systemPrompt = `Database Relationship Analysis for Multiple Relationships:
-
-${relationshipsData}
-
-Please generate user-friendly descriptions for each relationship above. Return your response as a JSON array where each element corresponds to the relationship in the same order. Each description should explain what the relationship means for business users and how it helps with data analysis.
-
-Format your response as:
-["Description for relationship 1", "Description for relationship 2", ...]
-
-Guidelines for each description:
-- Use simple, everyday business language
-- Start with "This means..." or "This shows..."
-- Explain the business relationship and its practical value
-- Keep under 200 characters
-- Focus on how it helps with analysis or insights`;
+      const { systemPrompt } = buildTableDescriptionPrompt(inputs);
 
       this.logger.debug('Sending batch prompt to agent for multiple relationships');
 
@@ -218,6 +199,19 @@ Guidelines for each description:
       this.logger.log(`✅ Generated ${descriptions.length} descriptions successfully`, {
         usage: response.usage,
       });
+
+      if (response.usage) {
+        await this.sharedService.tokenPriceCalculate({
+          companyId,
+          inputTokens: response.usage.promptTokens,
+          outputTokens: response.usage.completionTokens,
+          isDeductCredit: true,
+          metadata: {
+            question: systemPrompt,
+            answer: JSON.stringify(descriptions),
+          },
+        });
+      }
       return descriptions;
     } catch (error) {
       this.logger.error('❌ Error generating batch descriptions:', error);
@@ -262,7 +256,10 @@ Guidelines for each description:
   /**
    * Generate descriptions for multiple table relationships
    */
-  async generateMultipleDescriptions(inputs: GenerateDescriptionInput[]): Promise<string[]> {
-    return this.generateDescriptions(inputs);
+  async generateMultipleDescriptions(
+    inputs: GenerateDescriptionInput[],
+    companyId: string
+  ): Promise<string[]> {
+    return this.generateDescriptions(inputs, companyId);
   }
 }

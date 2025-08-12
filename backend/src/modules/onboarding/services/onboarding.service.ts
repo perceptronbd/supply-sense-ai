@@ -99,8 +99,10 @@ export class OnboardingService {
       }));
 
       try {
-        const descriptions =
-          await this.tableDescriptionAgent.generateMultipleDescriptions(descriptionInputs);
+        const descriptions = await this.tableDescriptionAgent.generateMultipleDescriptions(
+          descriptionInputs,
+          companyId
+        );
 
         // Combine relationships with descriptions
         const relationshipsWithDescriptions = relationships.map((relationship, index) => ({
