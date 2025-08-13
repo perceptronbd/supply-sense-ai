@@ -17,7 +17,7 @@ const Summary = ({
   as = 'span',
 }: IProps) => {
   return (
-    <div className="mt-[13%]">
+    <div className="md:mt-[13%]">
       <LogoSupplySense />
       <Text variant="headerMedium" color="secondary" weight={'bold'} className="mt-[8%] xl:mt-12 ">
         {header}

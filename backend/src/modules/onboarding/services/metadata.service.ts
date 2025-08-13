@@ -151,7 +151,6 @@ export class MetadataService {
         tables: tablesWithSchemas,
         businessContext,
       });
-      console.log('companyId:', companyId);
 
       if (agentResponse.usage) {
         await this.sharedService.tokenPriceCalculate({

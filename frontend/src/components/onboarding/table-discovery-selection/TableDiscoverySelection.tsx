@@ -126,7 +126,7 @@ const TableDiscoverySelection = () => {
             </>
           )}
         </Button>
-        <div className="w-[80%] ms-auto">
+        <div className="w-full md:w-[80%] ms-auto">
           <Select
             label="Label"
             variant="flat"

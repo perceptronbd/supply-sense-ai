@@ -137,16 +137,16 @@ const RelationshipConfirmation = () => {
       />
 
       {/* Right side: relationship confirmation form */}
-      <section className="flex flex-col gap-y-5 w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] overflow-y-auto no-scrollbar bottom-fade ">
-        <div className="flex items-center justify-between ">
-          <div className="inline-flex items-center gap-x-2 ">
-            <Icons.Exclamatory />{' '}
+      <section className="flex flex-col gap-y-5 w-full lg:w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] overflow-y-auto no-scrollbar bottom-fade ">
+        <div className="flex gap-4 items-center justify-between ">
+          <div className="inline-flex lg:items-center gap-x-2 ">
+            <Icons.Exclamatory className="flex-shrink-0 max-lg:mt-1" />
             <Text color="warning">You can confirm the table relations later.</Text>
           </div>
           <Button
             variant={'light'}
             color={'default'}
-            className={cn('text-default-500 mb-3 w-fit', {
+            className={cn('text-default-500 mb-3 lg:w-fit', {
               'opacity-50 cursor-not-allowed': isLoading,
               'text-primary': relationTables.length > 0,
             })}

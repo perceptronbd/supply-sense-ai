@@ -51,7 +51,7 @@ const RelationshipCard = ({
     <div className="place-items-end max-md:mt-5 w-full">
       <Card className="!p-5 w-full bg-default-300 space-y-5">
         {/* select input */}
-        <div className="flex items-center gap-2 ">
+        <div className="flex max-lg:flex-col items-center gap-2 ">
           {/* NOTE:  first select will be disabled */}
           <Select
             isDisabled
@@ -62,7 +62,7 @@ const RelationshipCard = ({
             <SelectItem key={leftSelectedKey}>{leftSelectedKey}</SelectItem>
           </Select>
 
-          <Icons.ChevronRight className="flex-shrink-0 size-6" />
+          <Icons.ChevronRight className="flex-shrink-0 size-6 max-lg:rotate-90" />
 
           <Select
             placeholder="Select Related Table"
