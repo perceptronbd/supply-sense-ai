@@ -10,7 +10,7 @@ const ProgressStep = ({ currentStep }: IProps) => {
   const isComplete = (step: number) => step < currentStep;
   const renderLine = (step: number) => isComplete(step) || isActive(step);
   return (
-    <div className="flex items-center gap-x-8 ">
+    <div className="flex items-center gap-x-8 max-lg:hidden">
       {/* step one */}
       <div className="flex items-center flex-col gap-y-2 relative">
         <Circle variant={isActive(1) ? 'active' : 'inactive'} isComplete={isComplete(1)} />

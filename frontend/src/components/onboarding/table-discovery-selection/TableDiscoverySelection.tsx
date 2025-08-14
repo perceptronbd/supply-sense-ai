@@ -102,7 +102,7 @@ const TableDiscoverySelection = () => {
       />
 
       {/* right side form */}
-      <div className="flex flex-col">
+      <div className="flex flex-col pb-12">
         <Button
           variant="light"
           color="default"

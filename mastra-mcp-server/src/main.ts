@@ -50,7 +50,8 @@ async function main() {
     console.log('🔧 Direct Tools:');
     console.log('   - supplyChainTool: Get supply chain status and metrics');
     console.log('   - analyzeTableMetadataTool: Analyze database schema and generate metadata'); // Start the MCP server using HTTP transport with SSE
-    const port = process.env.PORT || process.env.MCP_PORT || 3002;
+    const port = process.env.MCP_PORT || 3002;
+    console.log('🚀 ~ port:', port);
     const host = process.env.MCP_HOST || '0.0.0.0';
     console.log(`🔌 Starting MCP Server with HTTP/SSE transport on ${host}:${port}...`);
 

@@ -27,7 +27,7 @@
     "db:generate": "cd backend && npx prisma generate",
     "db:seed": "cd backend && npx tsx prisma/seeds/index.ts",
     "start:dev": "pnpm run db:start && pnpm run backend:serve",
-    "dev": "concurrently \"pnpm run db:start\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\" \"pnpm run mcp-server:serve\"",
+    "dev": "concurrently \"pnpm run db:start\" \"pnpm run mcp-server:serve\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\"",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",

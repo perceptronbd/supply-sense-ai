@@ -1,4 +1,5 @@
 import { Text } from '@/components/ui/Text';
+import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import LogoSupplySense from '../ui/LogoSupplySense';
 
 interface IProps {
@@ -16,10 +17,14 @@ const Summary = ({
   subDescription = 'We don’t train on your data.',
   as = 'span',
 }: IProps) => {
+  const { currentStep } = useOnboardingStore();
   return (
-    <div className="md:mt-[13%]">
-      <LogoSupplySense />
-      <Text variant="headerMedium" color="secondary" weight={'bold'} className="mt-[8%] xl:mt-12 ">
+    <div className="lg:mt-[13%] max-lg:mb-10">
+      <div className="flex items-center justify-between">
+        <LogoSupplySense />
+        <span className="font-semibold text-xl lg:hidden">{currentStep} of 4</span>
+      </div>
+      <Text variant="headerMedium" color="secondary" weight={'bold'} className="mt-5 xl:mt-12 ">
         {header}
         <Text as={as} variant={'headerMedium'} weight={'bold'} color="primary" className="ml-2">
           {headerHighlight}

@@ -175,7 +175,7 @@ export class TableMetadataAgentService {
         })),
       };
       // Use the specialized agent to generate metadata for all tables at once
-      const response = await this.generateWithRetry(
+      const response = await this.metadataAgent.generate(
         [
           {
             role: 'system',
@@ -191,9 +191,28 @@ export class TableMetadataAgentService {
             type: 'tool',
             toolName: 'supplySense_analyzeTableMetadataTool',
           },
-        },
-        `${tables.length} tables`
+        }
+        // `${tables.length} tables`
       );
+      // const response = await this.generateWithRetry(
+      //   [
+      //     {
+      //       role: 'system',
+      //       content: systemPrompt,
+      //     },
+      //     {
+      //       role: 'user',
+      //       content: JSON.stringify(inputData, null, 2),
+      //     },
+      //   ],
+      //   {
+      //     toolChoice: {
+      //       type: 'tool',
+      //       toolName: 'supplySense_analyzeTableMetadataTool',
+      //     },
+      //   },
+      //   `${tables.length} tables`
+      // );
 
       this.logger.log('✅ Table metadata generated successfully for all tables', {
         usage: response.usage,

@@ -22,7 +22,7 @@ export interface AppConfig {
 
 export const appConfig: AppConfig = {
   // Server settings
-  port: Number.parseInt(process.env.PORT || '3000', 10),
+  port: Number.parseInt(process.env.PORT || '3004', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPrefix: process.env.API_PREFIX || 'api',
 

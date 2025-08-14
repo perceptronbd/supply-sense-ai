@@ -279,6 +279,7 @@ enum BillingCycle {
 }
 
 enum SubscriptionPlans {
+  TRIAL
   STARTER
   BUSINESS
   ENTERPRISE
@@ -286,7 +287,7 @@ enum SubscriptionPlans {
 
 model SubscriptionPlan {
   id                           String                       @id @default(uuid())
-  name                         SubscriptionPlans            @default(STARTER) // STARTER, BUSINESS, ENTERPRISE
+  name                         SubscriptionPlans            @default(TRIAL) // TRIAL
   priceMonthly                 Decimal                      @default(0) // Monthly subscription price
   credits                      Decimal
   priceYearly                  Decimal                      @default(0) // Yearly subscription price

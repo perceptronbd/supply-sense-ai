@@ -1,7 +1,7 @@
-import { SharedService } from '@/modules/common/services/shared.service';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { Agent } from '@mastra/core/agent';
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { AI_MODEL_NAME } from '@supplysense/constant';
 import { McpClientService } from './mcp-client.service';
@@ -30,8 +30,8 @@ export class TableDescriptionAgentService {
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService,
-    @Inject(SharedService)
-    private readonly sharedService: SharedService
+    @Inject(TokenAndCredit)
+    private readonly tokenAndCredit: TokenAndCredit
   ) {}
 
   /**
@@ -131,6 +131,12 @@ export class TableDescriptionAgentService {
 
       this.logger.debug('Sending batch prompt to agent for multiple relationships');
 
+      const hasAvailableCredit = await this.tokenAndCredit.isAvailableCredit(companyId);
+      if (!hasAvailableCredit) {
+        this.logger.error('Insufficient credit for generating descriptions');
+        throw new BadRequestException('Insufficient credit');
+      }
+
       const response = await this.descriptionAgent.generate([
         {
           role: 'system',
@@ -201,11 +207,11 @@ export class TableDescriptionAgentService {
       });
 
       if (response.usage) {
-        await this.sharedService.tokenPriceCalculate({
+        await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
           inputTokens: response.usage.promptTokens,
           outputTokens: response.usage.completionTokens,
-          isDeductCredit: true,
+          isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
           metadata: {
             question: systemPrompt,
             answer: JSON.stringify(descriptions),

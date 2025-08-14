@@ -6,6 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { BillingCycle, type SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
+import { CREDIT } from '@supplysense/constant';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../app/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
@@ -99,6 +101,13 @@ export class AuthService {
     });
 
     if (existingCompany) {
+      // If company exists, check if it already has a subscription
+      const existingCompanySubscription = await this.prisma.companySubscription.findFirst({
+        where: { companyId: existingCompany.id },
+      });
+      if (existingCompanySubscription) {
+        throw new ConflictException('This company is already subscribed. Try another one.');
+      }
       throw new ConflictException('A company with this email is already registered');
     }
 
@@ -124,6 +133,31 @@ export class AuthService {
           taxId: registerDto.taxId,
           businessAddress: registerDto.businessAddress,
           contactPhone: registerDto.contactPhone,
+        },
+      });
+
+      // Find or create the default subscription plan (TRIAL)
+
+      const defaultPlan: SubscriptionPlan = await tx.subscriptionPlan.create({
+        data: {
+          ...CREDIT.TRIAL,
+          isActive: true,
+        },
+      });
+
+      // Create the company subscription
+      await tx.companySubscription.create({
+        data: {
+          status: SubscriptionStatus.ACTIVE,
+          billingCycle: BillingCycle.MONTHLY,
+          startPeriod: new Date(),
+          endPeriod: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+          totalCredits: defaultPlan.credits,
+          remainingCredits: defaultPlan.credits,
+          isCancelAtPeriodEnd: false,
+          stripeSubscriptionId: '', // To be set after Stripe integration
+          companyId: company.id,
+          subscriptionPlanId: defaultPlan.id,
         },
       });
 

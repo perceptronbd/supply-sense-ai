@@ -242,7 +242,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-content2 flex items-center justify-center p-4">
       <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 place-items-center">
           {/* Welcome Section - Left Side */}
           <section className="w-full flex items-center justify-center">
             <div className="text-center ml-6 lg:text-left space-y-6 max-w-3xl">

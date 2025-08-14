@@ -1,8 +1,8 @@
 import { PrismaService } from '@/app/prisma.service';
-import { SharedService } from '@/modules/common/services/shared.service';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import type {
   IDatabaseClient,
   IDatabaseRow,
@@ -17,15 +17,15 @@ import type { DbCredentials } from '../types/db-connection.type';
 
 @Injectable()
 export class MetadataService {
+  private readonly logger = new Logger(MetadataService.name);
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(TableMetadataAgentService)
     private readonly tableMetadataAgent: TableMetadataAgentService,
     @Inject(ConnectionsService)
     private readonly connectionsService: ConnectionsService,
-    @Inject(SharedService)
-    private readonly sharedService: SharedService,
-    private readonly logger = new Logger(MetadataService.name)
+    @Inject(TokenAndCredit)
+    private readonly tokenAndCredit: TokenAndCredit
   ) {}
 
   async captureMetadata(dto: CaptureMetadataDto) {
@@ -146,6 +146,11 @@ export class MetadataService {
     businessContext?: string
   ) {
     try {
+      const hasAvailableCredit = await this.tokenAndCredit.isAvailableCredit(companyId);
+      if (!hasAvailableCredit) {
+        this.logger.error('Insufficient credit for generating descriptions');
+        throw new BadRequestException('Insufficient credit');
+      }
       // Use the dedicated table metadata agent service to process all tables at once
       const agentResponse = await this.tableMetadataAgent.generateTableMetadata({
         tables: tablesWithSchemas,
@@ -153,11 +158,11 @@ export class MetadataService {
       });
 
       if (agentResponse.usage) {
-        await this.sharedService.tokenPriceCalculate({
+        await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
           inputTokens: agentResponse.usage.promptTokens,
           outputTokens: agentResponse.usage.completionTokens,
-          isDeductCredit: true,
+          isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
           metadata: {
             question: agentResponse.question,
             answer: JSON.stringify(agentResponse.result),

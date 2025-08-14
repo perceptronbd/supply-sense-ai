@@ -1,5 +1,4 @@
 'use client';
-
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import {
   DbConnection,
@@ -12,11 +11,10 @@ import OnboardingFinishing from './OnboardingFinishing';
 
 const OnboardingContainer = () => {
   const { currentStep = 1 } = useOnboardingStore();
-
   return (
-    <section className="h-screen flex flex-col py-12 w-full container gap-y-7">
+    <section className="lg:h-screen flex flex-col pt-12 w-full container gap-y-7">
       {currentStep < 5 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 flex-grow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 flex-grow">
           {/* step one - database connection */}
           {currentStep === 1 && <DbConnection />}
           {/* step two - table discovery selection */}

@@ -1,5 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import type { UsageRecord } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
@@ -27,8 +27,8 @@ interface ITokenPriceCalculate {
  * Handles AI token usage calculation, billing, and usage tracking
  */
 @Injectable()
-export class SharedService {
-  private readonly logger = new Logger(SharedService.name);
+export class TokenAndCredit {
+  private readonly logger = new Logger(TokenAndCredit.name);
   constructor(
     @Inject(PrismaService)
     private readonly prismaService: PrismaService
@@ -95,5 +95,26 @@ export class SharedService {
         await run(prisma as PrismaService);
       });
     }
+  }
+  /**
+   * this will be used for general purpose credit checks
+   **/
+  async isAvailableCredit(companyId: string) {
+    const companySubscription = await this.prismaService.companySubscription.findFirst({
+      where: { companyId },
+      select: { remainingCredits: true },
+    });
+    if (!companySubscription) {
+      throw new BadRequestException('Company subscription not found');
+    }
+    return companySubscription.remainingCredits.gt(0);
+  }
+
+  /**
+   * this will be used for only chat credit checks
+   **/
+  async isAvailableChatCredit(companyId: string) {
+    const available = await this.isAvailableCredit(companyId);
+    return available;
   }
 }

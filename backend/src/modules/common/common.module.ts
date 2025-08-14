@@ -1,10 +1,10 @@
 import { PrismaModule } from '@/app/prisma.module';
 import { Module } from '@nestjs/common';
-import { SharedService } from './services/shared.service';
+import { TokenAndCredit } from './services/tokenAndCredit.service';
 
 @Module({
   imports: [PrismaModule],
-  providers: [SharedService],
-  exports: [SharedService],
+  providers: [TokenAndCredit],
+  exports: [TokenAndCredit],
 })
 export class CommonModule {}

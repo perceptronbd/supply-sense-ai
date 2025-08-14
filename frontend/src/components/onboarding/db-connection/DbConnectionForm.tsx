@@ -86,7 +86,7 @@ const DbConnectionForm = () => {
   };
 
   return (
-    <div className="place-items-end max-md:mt-5">
+    <div className="place-items-end max-lg:mt-5 pb-12">
       <Card className="!p-5 w-full xl:w-4/5 bg-default-300">
         <Text variant={'titleLarge'} weight={'bold'}>
           Database Connection
