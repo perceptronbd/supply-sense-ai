@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { config } from '../../config/env';
 import type { RootState } from '../store';
-import { TAG_TYPES } from './tagTypes';
+import { TAG_TYPES_LIST } from './tagTypes';
 
 export const baseApi = createApi({
   reducerPath: 'baseApi',
@@ -16,6 +16,6 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  tagTypes: Object.values(TAG_TYPES),
+  tagTypes: TAG_TYPES_LIST,
   endpoints: () => ({}),
 });

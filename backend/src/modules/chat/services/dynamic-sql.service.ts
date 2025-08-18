@@ -27,99 +27,6 @@ export class DynamicSQLService {
   ) {}
 
   /**
-   * Convert natural language question to SQL query using AI
-   */
-  async generateSQLFromNaturalLanguage(
-    question: string,
-    userContext: {
-      userId: string;
-      branchId?: string;
-      userRole: string;
-    }
-  ): Promise<{
-    result: unknown[];
-    explanation: string;
-    sql?: string;
-  }> {
-    try {
-      // Step 1: Get comprehensive database schema context for AI
-      const schemaForAI = this.databaseSchemaService.formatSchemaForAI(userContext.userRole);
-
-      // Log the initial request
-      // console.log('\n🔍 ===== AI SQL GENERATION STARTED =====');
-      // console.log('📝 User Question:', question);
-      // console.log('👤 User Context:', JSON.stringify(userContext, null, 2));
-      // console.log('🏗️ Schema Context Length:', schemaForAI.length, 'characters'); // Step 2: Generate SQL using AI with comprehensive schema context
-      const sqlResult = await this.generateSecureSQL(question, schemaForAI, userContext); // Check if AI could not generate SQL
-      if (sqlResult.sql === null) {
-        // console.log('\n⚠️ ===== AI CANNOT GENERATE SQL FOR THIS QUERY =====');
-        // console.log('💭 Returning AI explanation to user:', sqlResult.explanation);
-
-        return {
-          result: [],
-          explanation: sqlResult.explanation, // Return the AI's explanation directly without prefix
-          sql: undefined,
-        };
-      } // Enhanced logging for generated SQL
-      // console.log('\n🎯 ===== AI GENERATED SQL RESULT =====');
-      // console.log('📊 Generated SQL Query:');
-      // console.log(sqlResult.sql);
-      // console.log('\n🔧 SQL Parameters:', sqlResult.values);
-      // console.log('💬 AI Explanation:', sqlResult.explanation);
-
-      this.logger.log('🔧 Generated SQL Query from AI:');
-      this.logger.log(sqlResult.sql);
-      this.logger.log('📋 SQL Parameters:', sqlResult.values);
-
-      // Step 3: Validate and execute the SQL (we know sql is not null here)
-      if (typeof sqlResult.sql !== 'string') {
-        throw new Error('Expected SQL to be a string at this point');
-      }
-
-      const validationResult = this.validateSQL(sqlResult.sql);
-      if (!validationResult.isValid) {
-        // console.log('\n❌ ===== SQL VALIDATION FAILED =====');
-        // console.log('🚫 Validation Errors:', validationResult.errors);
-        throw new Error(`Invalid SQL query: ${validationResult.errors.join(', ')}`);
-      }
-
-      // console.log('\n✅ SQL Validation: PASSED');
-
-      // Step 4: Execute the query
-      const startTime = Date.now();
-      const rows = await this.executeSQL(sqlResult.sql, sqlResult.values);
-      const _executionTime = Date.now() - startTime;
-
-      // Log execution results
-      // console.log('\n📊 ===== SQL EXECUTION RESULTS =====');
-      // console.log('⏱️ Execution Time:', executionTime, 'ms');
-      // console.log('📈 Row Count:', rows.length);
-      // console.log('🔍 Sample Data (first 2 rows):');
-      // console.log(JSON.stringify(rows.slice(0, 2), null, 2));
-
-      // Step 5: Generate human-readable response
-      const explanation = await this.generateExplanation(question, rows, sqlResult.explanation);
-
-      // console.log('\n💬 ===== FINAL AI EXPLANATION =====');
-      // console.log(explanation);
-      // console.log('\n🏁 ===== AI SQL GENERATION COMPLETED =====\n');
-      return {
-        result: rows,
-        explanation,
-        sql: sqlResult.sql, // We know this is not null here due to the type check above
-      };
-    } catch (error) {
-      // console.log('\n💥 ===== DYNAMIC SQL SERVICE ERROR =====');
-      // console.log('🚫 Error Type:', error.constructor.name);
-      // console.log('🚫 Error Message:', error.message);
-      // console.log('🚫 Error Stack:', error.stack);
-      this.logger.error('Failed to process natural language query:', error);
-
-      throw new Error(`Failed to process query: ${error.message}`);
-    }
-  }
-
-  /**
    * Generate secure SQL using AI with context and constraints
    */
   private async generateSecureSQL(
@@ -127,8 +34,6 @@ export class DynamicSQLService {
     schemaContext: string,
     userContext: {
       userId: string;
-      branchId?: string;
-      userRole: string;
     }
   ): Promise<SQLQueryResult> {
     const prompt = `
@@ -235,8 +140,6 @@ SECURITY CONSTRAINTS:
 
 USER CONTEXT:
 - User ID: ${userContext.userId}
-- Branch ID: ${userContext.branchId || 'N/A'}
-- User Role: ${userContext.userRole}
 
 QUESTION: "${question}"
 

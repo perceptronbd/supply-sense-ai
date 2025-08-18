@@ -46,6 +46,7 @@ export class MessageService {
       throw new Error('Failed to create message');
     }
   }
+
   async getSessionMessages(sessionId: string, limit = 50, offset = 0): Promise<ChatMessage[]> {
     try {
       this.logger.log(

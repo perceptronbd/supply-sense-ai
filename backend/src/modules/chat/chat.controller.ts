@@ -147,16 +147,16 @@ export class ChatController {
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response
   ) {
-    const result = await this.chatService.processUserMessage(
-      queryDto.sessionId,
-      queryDto.query,
-      user.id,
-      {
-        userRole: user.roles[0] || 'USER', // Use first role or default
-        branchId: user.branchIds[0] || '', // Use first branch or empty
+    const result = await this.chatService.processUserMessage({
+      sessionId: queryDto.sessionId,
+      message: queryDto.query,
+      userId: user.id,
+      userContext: {
         userPermissions: user.permissions, // Use actual permissions
-      }
-    );
+        ...queryDto.context, // Include the context from the payload
+      },
+      dbConnectionId: queryDto.dbConnectionId,
+    });
     return res.status(HttpStatus.OK).json(result);
   }
 
@@ -170,31 +170,14 @@ export class ChatController {
     @Body() sendMessageDto: SendMessageDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.chatService.processUserMessage(
-      sendMessageDto.sessionId,
-      sendMessageDto.content,
-      user.id,
-      {
-        userRole: user.roles[0] || 'USER', // Use first role or default
-        branchId: user.branchIds[0] || '', // Use first branch or empty
+    return this.chatService.processUserMessage({
+      sessionId: sendMessageDto.sessionId,
+      message: sendMessageDto.content,
+      userId: user.id,
+      userContext: {
         userPermissions: user.permissions, // Use actual permissions
-      }
-    );
-  }
-
-  @Post('mcp/test')
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
-  @ApiOperation({ summary: 'Test MCP integration without authentication' })
-  @ApiResponse({ status: 200, description: 'MCP test completed' })
-  async testMcp(@Body() testDto: { query: string }) {
-    return this.chatService.testMcpIntegration(testDto.query);
-  }
-
-  @Post('mcp/test-workflow')
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
-  @ApiOperation({ summary: 'Test MCP workflow integration without authentication' })
-  @ApiResponse({ status: 200, description: 'MCP workflow test completed' })
-  async testMcpWorkflow(@Body() testDto: { workflowInput: Record<string, unknown> }) {
-    return this.chatService.testMcpWorkflow(testDto.workflowInput);
+      },
+      dbConnectionId: '',
+    });
   }
 }

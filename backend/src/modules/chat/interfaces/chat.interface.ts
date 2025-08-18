@@ -23,8 +23,6 @@ export interface ChatMessage {
 
 export interface QueryContext {
   userId: string;
-  userRole: string;
-  branchId?: string;
   sessionHistory: ChatMessage[];
   availableTables: string[];
   userPermissions: string[];

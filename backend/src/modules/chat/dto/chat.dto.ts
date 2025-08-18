@@ -128,7 +128,13 @@ export class ChatQueryDto {
   @ApiProperty({ description: 'Include database query capability', default: true })
   @IsOptional()
   includeDatabaseQuery?: boolean = true;
+
   @ApiProperty({ description: 'Query context or filters', required: false })
   @IsOptional()
   context?: Record<string, unknown>;
+
+  @ApiProperty({ description: 'Database connection ID', required: true })
+  @IsString({ message: 'Database connection ID must be a string' })
+  @IsNotEmpty({ message: 'Database connection ID is required' })
+  dbConnectionId: string;
 }
