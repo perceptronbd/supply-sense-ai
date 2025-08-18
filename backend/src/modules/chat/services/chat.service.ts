@@ -46,13 +46,12 @@ export class ChatService {
 
       this.chatAgent = new Agent({
         name: 'ChatAgent',
-        description: 'Chat agent for data analysis and SQL assistance powered by MCP tools',
+        description: 'AI assistant specialized in supply chain management and logistics',
         instructions:
-          'You are an expert database analyst. Understand business context, analyze database schemas, write safe and efficient SQL, and explain results clearly. Prefer using available MCP tools when appropriate.',
+          'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
         model: this.openrouter.getModel(),
         tools,
       });
-
       this.logger.log('✅ Table metadata agent initialized successfully');
     } catch (error) {
       this.logger.error('❌ Failed to initialize table metadata agent:', error);
@@ -115,11 +114,13 @@ export class ChatService {
         this.logger.error(`Database connection not found: ${dbConnectionId}`);
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
+      const mcpClient = this.mcpClientService.getMcpClient();
       // Use the chat agent to process the message
-      const agentResponse = await this.chatAgent.generate([
-        {
-          role: 'system',
-          content: `You are a database analyst helping with supply chain management queries. 
+      const agentResponse = await this.chatAgent.generate(
+        [
+          {
+            role: 'system',
+            content: `You are a database analyst helping with supply chain management queries. 
           
         Available context:
         - Database Connection ID: ${dbConnectionId}
@@ -131,12 +132,16 @@ export class ChatService {
 
         Use the database-query-tool when the user asks questions about data, analytics, or wants to query the database.
         Always provide helpful, accurate responses and explain your reasoning.`,
-        },
+          },
+          {
+            role: 'user',
+            content: message,
+          },
+        ],
         {
-          role: 'user',
-          content: message,
-        },
-      ]);
+          toolsets: await mcpClient.getToolsets(),
+        }
+      );
 
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);

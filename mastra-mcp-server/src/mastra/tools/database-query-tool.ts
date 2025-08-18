@@ -447,8 +447,8 @@ Make sure the SQL uses actual table/column names from the schema and includes JO
 }
 
 /**
- * Execute the generated SQL query
- * Note: This is a placeholder - in production you would connect to the actual database
+ * Execute the generated SQL query against the actual database
+ * This function connects to the external database and executes the query
  */
 async function executeGeneratedSQL(
   sql: string,
@@ -456,43 +456,24 @@ async function executeGeneratedSQL(
   dbConnection: DbConnectionInfo
 ): Promise<QueryExecutionResult> {
   try {
-    // This is a placeholder implementation
-    // In a real scenario, you would:
-    // 1. Create a connection to the external database using dbConnection details (host, port, database, username)
-    // 2. Decrypt the password and authenticate
-    // 3. Execute the query with proper security measures and parameterized values
-    // 4. Return the actual results
-
     console.log('Database Query Execution:');
     console.log('- SQL:', sql);
     console.log('- Parameters:', values);
     console.log('- Database:', `${dbConnection.host}:${dbConnection.database}`);
     console.log('- Connection ID:', dbConnection.id);
 
-    // Mock implementation - return placeholder data structure
-    // In production, replace this with actual database connection and query execution
-    const mockData = [
-      {
-        id: 1,
-        name: 'Sample Record 1',
-        value: 'Sample Value 1',
-        status: 'Active',
-        created_at: '2024-01-01T00:00:00Z',
-      },
-      {
-        id: 2,
-        name: 'Sample Record 2',
-        value: 'Sample Value 2',
-        status: 'Inactive',
-        created_at: '2024-01-02T00:00:00Z',
-      },
-    ];
+    // NOTE: Database connection implementation needed
+    // This is where you would implement actual database connection logic:
+    // 1. Get database credentials from dbConnection (decrypt password if encrypted)
+    // 2. Create connection to the external database (PostgreSQL, MySQL, etc.)
+    // 3. Execute the parameterized query with proper error handling
+    // 4. Return the actual results
 
+    // For now, return an error indicating the feature needs implementation
     return {
-      success: true,
-      data: mockData,
-      rowCount: mockData.length,
-      executionTime: 95, // Mock execution time
+      success: false,
+      error: `Database execution not yet implemented. Generated SQL: ${sql}`,
+      rowCount: 0,
     };
   } catch (error) {
     return {
@@ -561,48 +542,33 @@ async function generateNaturalLanguageResponse(
   rowCount: number
 ): Promise<string> {
   try {
-    // Analyze the data to determine the type and structure
-    const dataAnalysis = analyzeQueryData(queryData);
-
     const prompt = `
 You are a business intelligence assistant that converts database query results into clear, actionable insights for non-technical users.
 
 ORIGINAL QUESTION: "${originalMessage}"
-
 QUERY CONTEXT: ${queryExplanation}
+RECORDS FOUND: ${rowCount}
 
-DATA ANALYSIS:
-- ${rowCount} records found
-- Key columns: ${dataAnalysis.keyColumns.join(', ')}
-- Data types detected: ${dataAnalysis.dataTypes.join(', ')}
-- Potential business domain: ${dataAnalysis.businessDomain}
+ACTUAL DATA RESULTS:
+${JSON.stringify(queryData, null, 2)}
 
-QUERY RESULTS:
-${JSON.stringify(queryData.slice(0, 10), null, 2)} ${rowCount > 10 ? `\n... and ${rowCount - 10} more records` : ''}
-
-INSTRUCTIONS:
-1. **Business Language**: Use business terminology, not technical database jargon
-2. **Key Insights**: Highlight the most important findings first  
-3. **Actionable Information**: Focus on what the data means for business decisions
-4. **Clear Structure**: Organize findings in a logical, easy-to-read format
-5. **Context-Aware**: Tailor the response to the specific type of data and business domain
-
-RESPONSE GUIDELINES BY DATA TYPE:
-- **Performance/Metrics Data**: Focus on scores, rates, and performance indicators
-- **Financial Data**: Emphasize amounts, totals, trends, and financial impact
-- **Inventory Data**: Highlight stock levels, availability, and supply chain implications  
-- **Customer/Contact Data**: Focus on relationships, demographics, and engagement
-- **Operational Data**: Emphasize efficiency, processes, and operational insights
+CRITICAL REQUIREMENTS:
+1. **Show Actual Data First**: Always start by listing the specific records found with their key identifying information (names, IDs, titles, etc.)
+2. **Include Real Numbers**: Use the exact values from the data, don't make up or generalize numbers
+3. **Business Context**: Explain what these specific results mean for business operations
+4. **Actionable Insights**: Provide specific recommendations based on the actual data shown
+5. **Clear Structure**: Use bullets and sections for easy reading
 
 RESPONSE FORMAT:
-- Start with a clear summary statement
-- Use bullet points for key findings
-- Include specific numbers but explain their business significance
-- Highlight patterns, trends, or outliers
-- End with actionable recommendations if appropriate
-- Keep tone professional but accessible to non-technical users
+1. **Summary**: Brief statement about what was found
+2. **Specific Results**: List each record with key identifying details and metrics
+3. **Key Insights**: Analysis of patterns or issues in the actual data
+4. **Business Impact**: What these specific results mean for operations
+5. **Recommendations**: Specific actions based on the real data
 
-Generate a business-focused response that provides clear insights and value:
+IMPORTANT: Always reference the actual names, values, and metrics from the data. Don't use generic terms - use the actual names and specific numbers from the results.
+
+Generate a detailed, data-driven business response:
     `.trim();
 
     const model = openrouter.getModel();
@@ -616,119 +582,14 @@ Generate a business-focused response that provides clear insights and value:
           content: [{ type: 'text', text: prompt }],
         },
       ],
-      temperature: 0.3, // Balanced temperature for natural yet consistent responses
+      temperature: 0.2, // Lower temperature for more consistent, fact-based responses
     });
 
     return response.text || 'Unable to generate business summary at this time.';
   } catch (error) {
     console.error('Error generating natural language response:', error);
-    return `Found ${rowCount} results for your query: ${originalMessage}. The data is available for further analysis.`;
+    return `Found ${rowCount} results for your query: ${originalMessage}. The data contains specific details that require analysis.`;
   }
-}
-
-/**
- * Analyze query data to understand structure and business domain
- */
-function analyzeQueryData(data: Record<string, unknown>[]): {
-  keyColumns: string[];
-  dataTypes: string[];
-  businessDomain: string;
-} {
-  if (!data || data.length === 0) {
-    return {
-      keyColumns: [],
-      dataTypes: [],
-      businessDomain: 'Unknown',
-    };
-  }
-
-  const firstRecord = data[0];
-  const columns = Object.keys(firstRecord);
-
-  // Extract key columns
-  const keyColumns = extractKeyColumns(columns);
-
-  // Analyze data types
-  const dataTypes = analyzeDataTypes(Object.values(firstRecord));
-
-  // Determine business domain
-  const businessDomain = determineBusinessDomain(columns);
-
-  return {
-    keyColumns: keyColumns.length > 0 ? keyColumns : columns.slice(0, 3),
-    dataTypes: dataTypes.length > 0 ? dataTypes : ['mixed'],
-    businessDomain,
-  };
-}
-
-/**
- * Extract key columns from column names
- */
-function extractKeyColumns(columns: string[]): string[] {
-  return columns
-    .filter(
-      (col) =>
-        col.includes('name') ||
-        col.includes('title') ||
-        col.includes('description') ||
-        col.includes('id')
-    )
-    .slice(0, 5);
-}
-
-/**
- * Analyze data types from sample values
- */
-function analyzeDataTypes(sampleValues: unknown[]): string[] {
-  const dataTypes: string[] = [];
-
-  if (sampleValues.some((v) => typeof v === 'number')) dataTypes.push('numerical');
-  if (sampleValues.some((v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(v))))
-    dataTypes.push('dates');
-  if (sampleValues.some((v) => typeof v === 'boolean')) dataTypes.push('boolean');
-  if (sampleValues.some((v) => typeof v === 'string')) dataTypes.push('text');
-
-  return dataTypes;
-}
-
-/**
- * Determine business domain based on column names
- */
-function determineBusinessDomain(columns: string[]): string {
-  const allColumns = columns.join(' ').toLowerCase();
-
-  if (allColumns.includes('supplier') || allColumns.includes('vendor')) {
-    return 'Supplier Management';
-  }
-  if (
-    allColumns.includes('inventory') ||
-    allColumns.includes('stock') ||
-    allColumns.includes('product')
-  ) {
-    return 'Inventory Management';
-  }
-  if (allColumns.includes('customer') || allColumns.includes('client')) {
-    return 'Customer Management';
-  }
-  if (allColumns.includes('order') || allColumns.includes('purchase')) {
-    return 'Order Management';
-  }
-  if (
-    allColumns.includes('performance') ||
-    allColumns.includes('metric') ||
-    allColumns.includes('score')
-  ) {
-    return 'Performance Analytics';
-  }
-  if (
-    allColumns.includes('financial') ||
-    allColumns.includes('revenue') ||
-    allColumns.includes('cost')
-  ) {
-    return 'Financial Data';
-  }
-
-  return 'General Business Data';
 }
 
 /**

@@ -1,5 +1,7 @@
 export const AI_MODEL_NAME = 'deepseek/deepseek-chat';
 
+export const AI_CHAT_MODEL_NAME = 'z-ai/glm-4.5-air';
+
 export const AI_MODEL_INPUT_TOKEN_COST = 0.18;
 
 export const AI_MODEL_OUTPUT_TOKEN_COST = 0.72;
