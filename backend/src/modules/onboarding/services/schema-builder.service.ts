@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { SchemaCache } from '@prisma/client';
-import { withDbConnection } from 'src/helpers/db-connection.helper';
+import { withDbConnection } from '@supplysense/utils';
 
 interface TableSchema {
   label: string;

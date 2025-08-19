@@ -1,8 +1,17 @@
 import * as crypto from 'node:crypto';
 import { Pool, PoolClient } from 'pg';
-import { ALGORITHM } from '../modules/onboarding/constant';
-import type { DbCredentials } from '../modules/onboarding/types/db-connection.type';
 
+const ALGORITHM = 'aes-256-gcm' as const;
+
+export interface DbCredentials {
+  title?: string;
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
+  sslEnabled?: boolean;
+}
 // Module-level connection pools storage
 const connectionPools = new Map<string, Pool>();
 
@@ -135,7 +144,7 @@ export function parseConnectionString(connectionString: string): DbCredentials {
       sslEnabled,
     };
   } catch (error) {
-    throw new Error(`Invalid connection string: ${error.message}`);
+    throw new Error(`Invalid connection string: ${(error as Error).message}`);
   }
 }
 
@@ -143,8 +152,8 @@ export function parseConnectionString(connectionString: string): DbCredentials {
  * Test database connection
  */
 export async function testConnection(credentials: DbCredentials): Promise<boolean> {
-  let pool: Pool;
-  let client: PoolClient;
+  let pool: Pool | null = null;
+  let client: PoolClient | null = null;
 
   try {
     pool = createPool(credentials);

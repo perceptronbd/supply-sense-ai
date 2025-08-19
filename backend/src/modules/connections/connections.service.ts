@@ -8,7 +8,7 @@ import {
   parseConnectionString,
   testConnection,
   withDbConnection,
-} from 'src/helpers/db-connection.helper';
+} from '@supplysense/utils';
 import type { SaveDbConnectionDto } from '../onboarding/dto/db-connect.dto';
 import type { DbCredentials, SaveConnectionResult } from '../onboarding/types/db-connection.type';
 

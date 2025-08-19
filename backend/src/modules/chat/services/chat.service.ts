@@ -43,7 +43,6 @@ export class ChatService {
 
       // Get all available tools from MCP server
       const tools = await mcpClient.getTools();
-
       this.chatAgent = new Agent({
         name: 'ChatAgent',
         description: 'AI assistant specialized in supply chain management and logistics',

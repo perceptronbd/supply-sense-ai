@@ -1,6 +1,12 @@
 import { createTool } from '@mastra/core/tools';
 import { PrismaClient } from '@prisma/client';
-import { GetOpenRouter } from '@supplysense/utils';
+import {
+  type DbCredentials,
+  GetOpenRouter,
+  decryptPassword,
+  withDbConnection,
+} from '@supplysense/utils';
+import type { PoolClient } from 'pg';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
@@ -67,6 +73,42 @@ interface QueryResult {
   executionTime?: number;
   error?: string;
   naturalLanguageResponse?: string; // Added for business-friendly responses
+}
+
+/**
+ * Format the final response based on return format preference
+ */
+function formatFinalResponse(
+  result: QueryResult,
+  message: string,
+  returnFormat: string
+): QueryResult | Partial<QueryResult> {
+  // For natural language format, prioritize the natural language response
+  // and minimize technical details
+  if (returnFormat === 'natural-language') {
+    if (result.naturalLanguageResponse) {
+      // Return a simplified response focused on the natural language answer
+      return {
+        success: result.success,
+        naturalLanguageResponse: result.naturalLanguageResponse,
+        rowCount: result.rowCount,
+        executionTime: result.executionTime,
+        // Only include error if query failed
+        ...(result.error && { error: result.error }),
+      };
+    }
+    if (result.success && result.rowCount === 0) {
+      // Handle case where query succeeded but no data found
+      return {
+        success: true,
+        naturalLanguageResponse: `I didn't find any results for "${message}". This could mean there's no data matching your criteria, or the information might be stored under different terms. Would you like to try rephrasing your question?`,
+        rowCount: 0,
+        executionTime: result.executionTime,
+      };
+    }
+  }
+
+  return result;
 }
 
 export const databaseQueryTool = createTool({
@@ -140,6 +182,7 @@ export const databaseQueryTool = createTool({
 
       // 4. Build initial result
       const result = buildInitialResult(sqlResult, dbConnection.data);
+      console.log('🚀 ~ result:', result);
 
       // 5. Execute query if requested
       if (executeQuery) {
@@ -153,7 +196,7 @@ export const databaseQueryTool = createTool({
         );
       }
 
-      return result;
+      return formatFinalResponse(result, message, returnFormat);
     } catch (error) {
       console.error('Database query tool error:', error);
       return {
@@ -288,7 +331,6 @@ async function processQueryExecution(
     ) {
       result.naturalLanguageResponse = await generateNaturalLanguageResponse(
         message,
-        sqlResult.explanation,
         executionResult.data,
         executionResult.rowCount || 0
       );
@@ -379,7 +421,6 @@ Make sure the SQL uses actual table/column names from the schema and includes JO
     });
 
     const aiResponseText = response.text || '';
-    console.log('🚀 ~ aiResponseText:', aiResponseText);
 
     // Clean and parse the JSON response
     const cleanResponse = aiResponseText.replace(/```json|```/g, '').trim();
@@ -462,20 +503,58 @@ async function executeGeneratedSQL(
     console.log('- Database:', `${dbConnection.host}:${dbConnection.database}`);
     console.log('- Connection ID:', dbConnection.id);
 
-    // NOTE: Database connection implementation needed
-    // This is where you would implement actual database connection logic:
-    // 1. Get database credentials from dbConnection (decrypt password if encrypted)
-    // 2. Create connection to the external database (PostgreSQL, MySQL, etc.)
-    // 3. Execute the parameterized query with proper error handling
-    // 4. Return the actual results
+    // Step 1: Get database credentials with decrypted password
+    const fullDbConnection = await prisma.dbConnection.findUnique({
+      where: { id: dbConnection.id },
+      select: {
+        host: true,
+        port: true,
+        database: true,
+        username: true,
+        encryptedPassword: true,
+        sslEnabled: true,
+      },
+    });
+    console.log('🚀 ~ fullDbConnection:', fullDbConnection);
 
-    // For now, return an error indicating the feature needs implementation
+    if (!fullDbConnection) {
+      throw new Error('Database connection not found');
+    }
+
+    // Step 2: Get encryption key from environment
+    const encryptionKey = process.env.DB_ENCRYPTION_KEY;
+    if (!encryptionKey) {
+      throw new Error('Database encryption key not configured');
+    }
+
+    // Step 3: Build credentials with decrypted password
+    const credentials: DbCredentials = {
+      host: fullDbConnection.host,
+      port: fullDbConnection.port,
+      database: fullDbConnection.database,
+      username: fullDbConnection.username,
+      password: decryptPassword(fullDbConnection.encryptedPassword, encryptionKey),
+      sslEnabled: fullDbConnection.sslEnabled,
+    };
+
+    // Step 4: Execute query using connection helper
+    const queryResult = await withDbConnection(credentials, async (client: PoolClient) => {
+      const result = await client.query(sql, values);
+      console.log('🚀 ~ result:', result);
+      return {
+        rows: result.rows,
+        rowCount: result.rowCount || 0,
+      };
+    });
+    console.log('🚀 ~ queryResult:', queryResult);
+
     return {
-      success: false,
-      error: `Database execution not yet implemented. Generated SQL: ${sql}`,
-      rowCount: 0,
+      success: true,
+      data: queryResult.rows as Record<string, unknown>[],
+      rowCount: queryResult.rowCount,
     };
   } catch (error) {
+    console.error('Database execution error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Query execution failed',
@@ -537,38 +616,38 @@ function buildColumnsContext(columns: SchemaTable['columns']): string {
  */
 async function generateNaturalLanguageResponse(
   originalMessage: string,
-  queryExplanation: string,
   queryData: Record<string, unknown>[],
   rowCount: number
 ): Promise<string> {
   try {
     const prompt = `
-You are a business intelligence assistant that converts database query results into clear, actionable insights for non-technical users.
+You are a helpful business assistant that provides clear, conversational answers about company data. You should respond as if you're talking to a business user who asked a question.
 
-ORIGINAL QUESTION: "${originalMessage}"
-QUERY CONTEXT: ${queryExplanation}
+USER'S QUESTION: "${originalMessage}"
 RECORDS FOUND: ${rowCount}
 
 ACTUAL DATA RESULTS:
 ${JSON.stringify(queryData, null, 2)}
 
-CRITICAL REQUIREMENTS:
-1. **Show Actual Data First**: Always start by listing the specific records found with their key identifying information (names, IDs, titles, etc.)
-2. **Include Real Numbers**: Use the exact values from the data, don't make up or generalize numbers
-3. **Business Context**: Explain what these specific results mean for business operations
-4. **Actionable Insights**: Provide specific recommendations based on the actual data shown
-5. **Clear Structure**: Use bullets and sections for easy reading
+IMPORTANT INSTRUCTIONS:
+1. **Be Conversational**: Write like you're having a friendly business conversation
+2. **Focus on Data**: Lead with the actual findings, not technical explanations
+3. **Be Specific**: Use the exact names, numbers, and details from the data
+4. **No Technical Jargon**: Don't mention SQL, queries, or database terms
+5. **Business Context**: Explain what the findings mean for the business
+6. **Actionable**: Suggest what they might want to do with this information
 
-RESPONSE FORMAT:
-1. **Summary**: Brief statement about what was found
-2. **Specific Results**: List each record with key identifying details and metrics
-3. **Key Insights**: Analysis of patterns or issues in the actual data
-4. **Business Impact**: What these specific results mean for operations
-5. **Recommendations**: Specific actions based on the real data
+RESPONSE STRUCTURE:
+- Start with a direct answer to their question
+- Show the specific data/results with key details
+- Explain what this means for the business
+- End with helpful suggestions or insights
 
-IMPORTANT: Always reference the actual names, values, and metrics from the data. Don't use generic terms - use the actual names and specific numbers from the results.
+TONE: Professional but friendly, like a knowledgeable colleague helping out
 
-Generate a detailed, data-driven business response:
+Remember: You're not a database assistant, you're a business intelligence helper who happens to have access to company data.
+
+Generate a conversational business response:
     `.trim();
 
     const model = openrouter.getModel();
@@ -582,13 +661,16 @@ Generate a detailed, data-driven business response:
           content: [{ type: 'text', text: prompt }],
         },
       ],
-      temperature: 0.2, // Lower temperature for more consistent, fact-based responses
+      temperature: 0.3, // Slightly higher for more natural conversation
     });
 
-    return response.text || 'Unable to generate business summary at this time.';
+    return (
+      response.text ||
+      'I found some results for your question, but I need to format them better. Let me try again.'
+    );
   } catch (error) {
     console.error('Error generating natural language response:', error);
-    return `Found ${rowCount} results for your query: ${originalMessage}. The data contains specific details that require analysis.`;
+    return `I found ${rowCount} results for your question about ${originalMessage}. The data shows relevant information that I can help you analyze if you'd like more details.`;
   }
 }
 

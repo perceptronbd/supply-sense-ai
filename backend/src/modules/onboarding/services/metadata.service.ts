@@ -10,7 +10,7 @@ import type {
   ITableRelationship,
   ITableSchemaInput,
 } from '@supplysense/types';
-import { withDbConnection } from 'src/helpers/db-connection.helper';
+import { withDbConnection } from '@supplysense/utils';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
 import type { BatchSaveMetadataDto, CaptureMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';
