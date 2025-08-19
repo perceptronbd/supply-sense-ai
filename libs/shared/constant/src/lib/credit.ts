@@ -5,7 +5,7 @@ export const CREDIT = {
     name: SubscriptionPlans.TRIAL,
     priceMonthly: 0,
     priceYearly: 0,
-    credits: 500, // Set a sensible default
+    credits: 200, // Set a sensible default
   },
   [SubscriptionPlans.STARTER]: {
     name: SubscriptionPlans.STARTER,

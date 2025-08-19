@@ -198,10 +198,9 @@ model SchemaCache {
   id             String       @id @default(uuid())
   schema         Json
   cachedAt       DateTime     @default(now())
-  dbConnectionId String       @unique // One-to-one relationship with Company
+  dbConnectionId String       @unique // One-to-one relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
-  @@index([dbConnectionId], name: "idx_schema_cache_db_connection")
   @@map("schema_cache")
 }
 
@@ -316,7 +315,7 @@ model UsageRecord {
   id             String   @id @default(uuid())
   companyId      String
   company        Company  @relation(fields: [companyId], references: [id])
-  timestamp      DateTime? @default(now())// e.g. "OpenAI-GPT-4"
+  timestamp      DateTime @default(now()) // the timestamp of the usage record
   inputTokens    Int      @default(0)
   outputTokens   Int      @default(0)
   toolUsed       String?  @default("") 
@@ -324,8 +323,6 @@ model UsageRecord {
   costUSD        Decimal  @default(0) // Internal cost
   creditsCharged Int      @default(1) // Credits deducted from plan
   metadata       Json? // Optional: store query text, model name, etc.
-
-  @@index([companyId])
   @@map("usage_record")
 }
 
@@ -348,8 +345,6 @@ model CompanySubscription {
   subscriptionPlan     SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
   purchaseHistory      PurchaseHistory[]
 
-  @@index([companyId])
-
   @@map("company_subscriptions")
 }
 
@@ -369,7 +364,6 @@ model CompanySubscriptionHistory {
   subscriptionPlanId   String
   subscriptionPlan     SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
   purchaseHistories    PurchaseHistory[]
-  @@index([companyId])
   @@map("company_subscription_history")
 }
 
@@ -394,7 +388,6 @@ model PurchaseHistory {
 
   companySubscriptionHistoryId String
   companySubscriptionHistory   CompanySubscriptionHistory @relation(fields: [companySubscriptionHistoryId], references: [id], onDelete: Cascade)
-  @@index([companyId])
   @@index([paymentStatus], name: "idx_purchase_history_payment_status")
   @@map("purchase_history")
 }
