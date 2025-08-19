@@ -49,26 +49,23 @@ const Banner = () => {
       <div>
         <Card
           classNames={{
-            base: 'bg-background backdrop-blur-[10px]',
+            base: 'bg-default-200',
           }}
-          className="border border-focus rounded-xl relative overflow-hidden"
+          className=""
+          style={{
+            boxShadow: `
+      -20px 0 20px -10px rgba(226, 204, 156, 0.15),  /* Left side - secondary */
+      0 -20px 20px -10px rgba(226, 204, 156, 0.15),  /* Top side - secondary */
+      20px 0 20px -10px rgba(232, 74, 46, 0.15),     /* Right side - primary */
+      0 20px 20px -10px rgba(232, 74, 46, 0.15)      /* Bottom side - primary */
+    `,
+          }}
         >
           <CardHeader className="flex justify-between items-center px-6 py-4 relative">
-            <FullLogo className="w-24 text-primary" />
-
+            <FullLogo className="w-40 text-default" />
             {/* Glow effect - positioned inside the card header */}
-            <div className="absolute z-30 -bottom-[40%] left-1/2 -translate-x-1/2 w-[50vw] h-[45vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" />
-
-            <Button
-              onPress={() => setMessage('')}
-              variant="ghost"
-              size="sm"
-              className="text-sm border-none text-primary relative z-10"
-            >
-              Clear Chat
-            </Button>
+            {/* <div className="absolute z-30 -bottom-[40%] left-1/2 -translate-x-1/2 w-[50vw] h-[45vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" /> */}
           </CardHeader>
-
           <CardBody className="px-6 pb-6 relative z-10">
             <form onSubmit={handleSubmit} className="relative">
               <Input

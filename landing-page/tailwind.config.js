@@ -183,7 +183,7 @@ module.exports = {
               800: '#d9d9da',
               900: '#ffffff',
               foreground: '#fff',
-              DEFAULT: '#3f3f46',
+              DEFAULT: '#65656b',
             },
             primary: {
               50: '#46160e',
