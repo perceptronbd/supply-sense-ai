@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
-import { Send } from 'lucide-react';
+import { ArrowRight, Send } from 'lucide-react';
 import { useState } from 'react';
 import ChatBoxModal from '../ui/ChatBoxModal';
 import { FullLogo } from '../ui/Logo';
@@ -19,18 +19,31 @@ const Banner = () => {
 
   return (
     <SectionWrapper>
-      {/* logo */}
-      <div className="mx-auto text-center mb-16 mt-4 flex justify-center items-center">
-        <FullLogo className="w-96 text-primary" />
-      </div>
-
-      <h1 className="font-brand text-4xl md:text-5xl font-bold text-foreground text-center mx-auto bg-clip-text text-transparent bg-gradient-to-r from-content1-foreground to-focus ">
-        Know Your Operations. Ask Anything. Get Instant Answers
+      <h1 className="font-brand text-4xl md:text-6xl font-bold text-foreground text-center mx-auto">
+        <span className="text-primary">Know </span>Your Operations.
+        <br /> <span className="text-primary">Ask </span> Anything. <br />
+        <span className="text-primary">Get </span>
+        Instant Answers
       </h1>
-      <p className="mt-4 mx-auto text-center text-content2-foreground px-6 mb-20">
-        Ask questions like "What's low in stock at Branch A?" or "Who approved that PO last Friday?"
-        — and get real answers from your data instantly.
+      <p className="mt-4 mx-auto text-center text-content2-foreground px-6">
+        Stop searching. Start asking. Real-time answers from your integrated systems.
       </p>
+
+      <div className="flex flex-col justify-center items-center">
+        <Button
+          className="mt-10 mb-3 mx-auto"
+          variant="solid"
+          color="primary"
+          radius="md"
+          size="lg"
+          endContent={<ArrowRight />}
+        >
+          Try For Free
+        </Button>
+        <p className="italic text-sm bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-secondary-700 to-secondary-400 text-center mb-20">
+          Only limited time - No credit cards required
+        </p>
+      </div>
 
       {/* chat box */}
       <div>

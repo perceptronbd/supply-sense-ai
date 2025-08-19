@@ -5,10 +5,14 @@ import ExploreSection from '../components/sections/ExploreSection';
 import QuestionSection from '../components/sections/QuestionSection';
 import SupplySense from '../components/sections/SupplySense';
 import Footer from '../components/ui/Footer';
+import Navbar from '../components/ui/Navbar';
 
 const LandingPage = () => {
   return (
     <div className="relative overflow-x-hidden">
+      {/* Navbar */}
+      <Navbar />
+
       {/* Banner */}
       <Banner />
 

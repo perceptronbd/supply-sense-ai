@@ -1,81 +1,65 @@
 'use client';
 
+import { Button } from '@heroui/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-// import { useEffect, useRef } from "react";
-// import { gsap } from "gsap";
 import { FullLogo } from './Logo';
 
 const Navbar = () => {
-  const pathname = usePathname();
-  // const navRef = useRef<HTMLElement>(null);
-
   const navLinks = [
     {
       name: 'Features',
-      href: '/',
+      href: '#',
     },
     {
       name: 'Use Cases',
       href: '#',
     },
     {
-      name: 'How It Works',
+      name: 'Pricing',
+      href: '#',
+    },
+    {
+      name: 'Q&A',
       href: '#',
     },
     {
       name: 'Contact',
-      href: '/contact',
+      href: '#',
     },
   ];
 
-  // useEffect(() => {
-  //   if (!navRef.current) return;
-
-  //   // Simple scale animation to test GSAP
-  //   gsap.to(navRef.current, {
-  //     scale: 1.02,
-  //     duration: 2,
-  //     repeat: -1,
-  //     yoyo: true,
-  //     ease: "power2.inOut",
-  //   });
-
-  //   // Background color animation
-  //   gsap.to(navRef.current, {
-  //     backgroundColor: "bg-background",
-  //     duration: 3,
-  //     repeat: -1,
-  //     yoyo: true,
-  //     ease: "power2.inOut",
-  //   });
-
-  //   return () => {
-  //     gsap.killTweensOf(navRef.current);
-  //   };
-  // }, []);
-
   return (
-    <nav
-      // ref={navRef}
-      className="relative container mx-auto flex justify-center flex-col lg:flex-row md:justify-between items-center py-10 md:px-20 2xl:px-40 overflow-hidden"
-    >
-      <FullLogo className="text-secondary" />
+    <nav className="relative container mx-auto flex justify-center lg:justify-between flex-col lg:flex-row items-center bg-primary/20 mt-5 border-1 border-primary/20 lg:rounded-full py-5 lg:py-1 px-1">
+      <FullLogo className="text-primary h-5 w-40" />
 
-      <div className="flex flex-wrap gap-6 mt-10 lg:mt-0 md:gap-16 justify-center md:justify-between items-center">
+      <div className="flex flex-wrap gap-4 my-5 lg:my-0 lg:gap-6 justify-center items-center">
         {navLinks.map((link) => (
-          <Link
+          <Button
             key={link.name}
-            href={link.href}
-            className={`text-secondary font-data ${
-              pathname === link.href
-                ? 'text-secondary-foreground bg-secondary px-4 py-2 rounded-xl'
-                : ''
-            }`}
+            size="sm"
+            radius="md"
+            variant="light"
+            color="secondary"
+            className="text-base font-normal"
           >
             {link.name}
-          </Link>
+          </Button>
         ))}
+      </div>
+
+      <div className="flex gap-4 items-center">
+        <Button
+          size="sm"
+          radius="full"
+          variant="light"
+          color="primary"
+          className="text-base font-normal"
+        >
+          <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
+        </Button>
+        <Button size="sm" color="primary" radius="full">
+          Try for free
+        </Button>
       </div>
     </nav>
   );
