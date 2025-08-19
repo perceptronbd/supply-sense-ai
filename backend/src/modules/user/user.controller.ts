@@ -30,7 +30,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { USER_PERMISSIONS } from '@supplysense/types';
-import { AssignBranchesDto } from './dto/assign-branches.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -265,12 +264,7 @@ export class UserController {
     description: 'User UUID',
     example: 'user-uuid',
   })
-  @ApiBody({ type: AssignBranchesDto })
-  @ApiResponse({
-    status: 200,
-    description: 'User branches updated successfully',
-    type: UserEntity,
-  })
+
   @ApiResponse({
     status: 400,
     description: 'Bad request - invalid branches or user must have at least one branch',
@@ -279,13 +273,6 @@ export class UserController {
     status: 404,
     description: 'User not found',
   })
-  async assignBranches(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() assignBranchesDto: AssignBranchesDto,
-    @CurrentUser() user: AuthenticatedUser
-  ): Promise<UserEntity> {
-    return this.userService.assignBranches(id, assignBranchesDto, user.companyId);
-  }
 
   @Delete(':id')
   @RequirePermissions(USER_PERMISSIONS.DELETE)

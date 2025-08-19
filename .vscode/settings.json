@@ -1,4 +1,11 @@
 {
   "nxConsole.generateAiAgentRules": true,
-  "cSpell.words": ["mastra", "Millis", "supplysense", "Toolsets"]
+  "cSpell.words": ["heroui", "mastra", "Millis", "supplysense", "Toolsets"],
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "prettier.enable": false
 }

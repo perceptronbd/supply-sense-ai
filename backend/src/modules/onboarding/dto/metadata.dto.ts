@@ -27,10 +27,6 @@ export class CaptureMetadataDto {
 
 export class TableMetadataDto {
   @IsString()
-  @IsNotEmpty({ message: 'Company ID is required' })
-  companyId: string;
-
-  @IsString()
   @IsNotEmpty({ message: 'Database connection ID is required' })
   dbConnectionId: string;
 
@@ -57,4 +53,14 @@ export class TableMetadataDto {
   @IsString({ each: true })
   @IsNotEmpty({ message: 'Sample questions are required' })
   sampleQuestions: string[];
+}
+
+export class BatchSaveMetadataDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Database connection ID is required' })
+  dbConnectionId: string;
+
+  @ValidateNested({ each: true })
+  @Type(() => TableMetadataDto)
+  tableMetadata: Omit<TableMetadataDto, 'dbConnectionId'>[];
 }

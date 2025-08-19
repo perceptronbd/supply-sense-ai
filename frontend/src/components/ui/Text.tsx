@@ -6,24 +6,24 @@ const textVariants = cva('', {
   variants: {
     variant: {
       // Professional heading variants for supply chain context
-      display: 'text-5xl lg:text-7xl font-display font-bold tracking-tight',
-      headerLarge: 'text-4xl lg:text-6xl font-display font-bold tracking-tight',
-      headerMedium: 'text-3xl lg:text-5xl font-display font-semibold tracking-tight',
-      headerSmall: 'text-2xl lg:text-4xl font-display font-semibold tracking-tight',
-      titleLarge: 'text-xl lg:text-3xl font-display font-semibold',
-      titleMedium: 'text-lg lg:text-2xl font-display font-medium',
-      titleSmall: 'text-base lg:text-xl font-display font-medium',
+      display: 'text-5xl lg:text-7xl font-clash-display font-bold tracking-tight',
+      headerLarge: 'text-4xl lg:text-6xl font-clash-display font-bold tracking-tight',
+      headerMedium: 'text-3xl lg:text-5xl font-clash-display font-semibold tracking-tight',
+      headerSmall: 'text-2xl lg:text-4xl font-clash-display font-semibold tracking-tight',
+      titleLarge: 'text-xl lg:text-3xl font-clash-display font-semibold',
+      titleMedium: 'text-lg lg:text-2xl font-clash-display font-medium',
+      titleSmall: 'text-base lg:text-xl font-clash-display font-medium',
       // Body variants optimized for data-heavy interfaces
-      bodyLarge: 'text-large font-sans leading-large',
-      bodyMedium: 'text-medium font-sans leading-medium',
-      bodyBase: 'text-medium font-sans leading-medium',
-      bodySmall: 'text-small font-sans leading-small',
-      bodyXSmall: 'text-tiny font-sans leading-tiny',
-      caption: 'text-tiny font-sans leading-tiny',
-      label: 'text-small font-sans leading-small font-medium',
+      bodyLarge: 'text-large font-montserrat  leading-large',
+      bodyMedium: 'text-lg  font-montserrat leading-medium',
+      bodyBase: 'text-base  font-montserrat leading-medium',
+      bodySmall: 'text-sm font-montserrat  leading-small',
+      bodyXSmall: 'text-tiny  font-montserrat leading-tiny',
+      caption: 'text-tiny font-montserrat  leading-tiny',
+      label: 'text-sm  font-montserrat leading-small font-medium',
       // Special variants for supply chain data
-      data: 'text-small font-data tabular-nums leading-small',
-      code: 'text-small font-mono leading-small',
+      data: 'text-sm font-data tabular-nums leading-small',
+      code: 'text-sm font-mono leading-small',
     },
     weight: {
       bold: 'font-bold',
@@ -55,6 +55,7 @@ interface TextProps extends VariantProps<typeof textVariants> {
   className?: string;
   style?: React.CSSProperties;
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label' | 'time';
+  fontFace?: 'primary' | 'secondary';
 }
 
 export const Text = ({
@@ -65,9 +66,16 @@ export const Text = ({
   className,
   style,
   as,
+  fontFace = 'primary',
   ...otherProps
 }: TextProps & React.HTMLAttributes<HTMLElement>) => {
-  const classes = cn(textVariants({ variant, weight, color }), className);
+  // Determine font class for display variant and fontFace
+  let fontClass = '';
+  if (variant === 'display') {
+    fontClass = fontFace === 'primary' ? 'font-clash-display' : 'font-manrope';
+  }
+
+  const classes = cn(textVariants({ variant, weight, color }), fontClass, className);
 
   // Determine the element based on `as` prop or variant
   const getElementType = ():

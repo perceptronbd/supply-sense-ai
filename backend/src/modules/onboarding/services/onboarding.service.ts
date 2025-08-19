@@ -1,19 +1,23 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from 'src/helpers/db-connection.helper';
 import { ConnectionsService } from '../../connections/connections.service';
+import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
 import { SchemaBuilderService } from './schema-builder.service';
 
 @Injectable()
 export class OnboardingService {
+  private readonly logger = new Logger(OnboardingService.name);
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(forwardRef(() => SchemaBuilderService))
     private readonly schemaBuilderService: SchemaBuilderService,
     @Inject(ConnectionsService)
-    private readonly connectionsService: ConnectionsService
+    private readonly connectionsService: ConnectionsService,
+    @Inject(TableDescriptionAgentService)
+    private readonly tableDescriptionAgent: TableDescriptionAgentService
   ) {}
 
   /*
@@ -55,9 +59,9 @@ export class OnboardingService {
       // Prepare DbCredentials object with decrypted password
 
       // Query foreign key relationships from the database
-      return await withDbConnection(connection, async (client: IDatabaseClient) => {
+      const relationships = await withDbConnection(connection, async (client: IDatabaseClient) => {
         const { rows } = await client.query({
-          qry: `
+          text: `
             SELECT
               tc.table_name AS foreign_table,
               kcu.column_name AS foreign_column,
@@ -82,8 +86,41 @@ export class OnboardingService {
           refColumn: row.primary_column as string,
           isConfirmed: false, // Default to false for new relationships
           dbConnectionId: connection.dbConnectionId,
+          description: '', // Will be populated by the agent
         }));
       });
+
+      // Generate descriptions for all relationships at once using the AI agent
+      const descriptionInputs = relationships.map((relationship) => ({
+        tableName: relationship.tableName,
+        columnName: relationship.columnName,
+        refTable: relationship.refTable,
+        refColumn: relationship.refColumn,
+      }));
+
+      try {
+        const descriptions = await this.tableDescriptionAgent.generateMultipleDescriptions(
+          descriptionInputs,
+          companyId
+        );
+
+        // Combine relationships with descriptions
+        const relationshipsWithDescriptions = relationships.map((relationship, index) => ({
+          ...relationship,
+          description:
+            descriptions[index] ||
+            `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
+        }));
+
+        return relationshipsWithDescriptions;
+      } catch (error) {
+        this.logger.error('Failed to generate descriptions for relationships:', error);
+        // Use fallback descriptions if agent fails
+        return relationships.map((relationship) => ({
+          ...relationship,
+          description: `${relationship.tableName} references ${relationship.refTable} through ${relationship.columnName}`,
+        }));
+      }
     } catch (error) {
       console.error('Failed to retrieve table relationships:', error);
       throw new Error(`Failed to retrieve table relationships: ${error.message}`);
@@ -109,9 +146,9 @@ export class OnboardingService {
       }
 
       // For each relationship, create or update in the database
-      const results = await Promise.all(
-        data.relationships.map(async (relationship) => {
-          return this.prisma.tableRelations.upsert({
+      const results = await this.prisma.$transaction(
+        data.relationships.map((relationship) =>
+          this.prisma.tableRelations.upsert({
             where: {
               unique_table_relation: {
                 dbConnectionId: data.dbConnectionId,
@@ -132,8 +169,8 @@ export class OnboardingService {
               refColumn: relationship.refColumn,
               isConfirmed: relationship.isConfirmed || false,
             },
-          });
-        })
+          })
+        )
       );
 
       // After relationships are saved successfully, build and cache the schema

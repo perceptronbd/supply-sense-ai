@@ -37,27 +37,14 @@ model Company {
   updatedAt DateTime @updatedAt
 
   // Relationships - All company-owned entities
-  users                User[]
-  branches             Branch[]
-  roles                Role[]
-  items                Item[]
-  suppliers            Supplier[]
-  purchaseRequests     PurchaseRequest[]
-  purchaseOrders       PurchaseOrder[]
-  requestForms         RequestForm[]
-  materialRequisitions MaterialRequisition[]
-  goodsReceipts        GoodsReceipt[]
-  formulas             Formula[]
-  manufacturingLists   ManufacturingList[]
-  prTemplates          PRTemplate[]
-  rfTemplates          RFTemplate[]
-  aiSuggestions        AISuggestion[]
-  notifications        Notification[]
-  auditLogs            AuditLog[]
-  DbConnection         DbConnection[]
-  companySubscription  CompanySubscription?
-  UsageTracking        UsageTracking[]
-  purchaseHistory      PurchaseHistory[]
+  users                        User[]
+  roles                        Role[]
+  DbConnection                 DbConnection[]
+  companySubscription          CompanySubscription?
+  companySubscriptionHistories CompanySubscriptionHistory[]
+  UsageTracking                UsageTracking[]
+  purchaseHistory              PurchaseHistory[]
+  UsageRecord                  UsageRecord[]
 
   @@index([name], name: "idx_company_name")
   @@map("companies")
@@ -185,17 +172,6 @@ model User {
 
   // Relationships - Multi-tenant with role-based access
   userRoles            UserRole[] // Multiple roles per user
-  userBranches         UserBranch[] // Multiple branch assignments
-  purchaseRequests     PurchaseRequest[]     @relation("PRCreator")
-  purchaseOrders       PurchaseOrder[]       @relation("POCreator")
-  requestForms         RequestForm[]         @relation("RFCreator")
-  materialRequisitions MaterialRequisition[] @relation("MRCreator")
-  goodsReceipts        GoodsReceipt[]        @relation("GRReceiver")
-  manufacturingLists   ManufacturingList[]   @relation("MLCreator")
-  formulas             Formula[]             @relation("FormulaCreator")
-  aiSuggestions        AISuggestion[]        @relation("SuggestionReceiver")
-  notifications        Notification[]
-  auditLogs            AuditLog[]
 
   @@map("users")
 }
@@ -216,1009 +192,15 @@ model UserRole {
   @@map("user_roles")
 }
 
-// User-Branch junction table for multiple branch assignments
-model UserBranch {
-  id       String @id @default(uuid())
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  // Assignment details
-  isActive   Boolean  @default(true)
-  assignedAt DateTime @default(now())
-  assignedBy String? // User ID of who assigned this branch
 
-  @@unique([userId, branchId])
-  @@map("user_branches")
-}
-
-// Branch Management - Company-scoped branches
-model Branch {
-  id       String  @id @default(uuid())
-  name     String
-  code     String
-  address  String?
-  phone    String?
-  email    String?
-  isActive Boolean @default(true)
-  isHQ     Boolean @default(false) // Mark if this is the HQ branch
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships - Multi-tenant aware
-  userBranches             UserBranch[]
-  stock                    Stock[]
-  purchaseRequests         PurchaseRequest[]
-  purchaseOrders           PurchaseOrder[]
-  requestFormsFrom         RequestForm[]         @relation("FromBranch")
-  requestFormsTo           RequestForm[]         @relation("ToBranch")
-  materialRequisitionsFrom MaterialRequisition[] @relation("FromBranch")
-  materialRequisitionsTo   MaterialRequisition[] @relation("ToBranch")
-  goodsReceipts            GoodsReceipt[]
-  manufacturingLists       ManufacturingList[]
-
-  @@unique([companyId, code])
-  @@map("branches")
-}
-
-// Item Master - Company-scoped with unit management (FR-1, FR-2, FR-3)
-model Item {
-  id          String  @id @default(uuid())
-  name        String
-  sku         String
-  description String?
-
-  // Unit Management - MVP Core Feature
-  mainUnit     String // Base unit for storage (e.g., kg, pieces)
-  buyingUnit   String // Unit used for purchasing
-  transferUnit String // Unit used for transfers
-  usingUnit    String // Unit used for production
-
-  // Conversion Rates (all relative to main unit)
-  buyingToMainRate   Decimal @default(1) // 1 buying unit = X main units
-  transferToMainRate Decimal @default(1) // 1 transfer unit = X main units  
-  usingToMainRate    Decimal @default(1) // 1 using unit = X main units
-
-  // Stock Control
-  safetyStockLevel Decimal @default(0) // In main units
-  reorderLevel     Decimal @default(0) // In main units
-
-  // Status
-  isActive Boolean @default(true)
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  stock           Stock[]
-  suppliers       ItemSupplier[]
-  prItems         PRItem[]
-  poItems         POItem[]
-  rfItems         RFItem[]
-  mrItems         MRItem[]
-  grItems         GRItem[]
-  formulaItems    FormulaItem[]
-  prTemplateItems PRTemplateItem[]
-  rfTemplateItems RFTemplateItem[]
-
-  @@unique([companyId, sku])
-  @@map("items")
-}
-
-// Stock Management - Stores quantities in main units only (FR-3)
-model Stock {
-  id       String @id @default(uuid())
-  itemId   String
-  item     Item   @relation(fields: [itemId], references: [id])
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  // All quantities stored in main unit
-  quantity     Decimal @default(0)
-  reservedQty  Decimal @default(0)
-  availableQty Decimal @default(0) // quantity - reservedQty
-
-  // Cost tracking for moving average
-  averageCost Decimal @default(0)
-  lastCost    Decimal @default(0)
-
-  // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastStockDate DateTime?
-
-  @@unique([itemId, branchId])
-  @@map("stock")
-}
-
-// Supplier Management - Company-scoped supplier info (FR-5)
-model Supplier {
-  id            String  @id @default(uuid())
-  name          String
-  code          String
-  contactPerson String?
-  email         String?
-  phone         String?
-  address       String?
-  isActive      Boolean @default(true)
-
-  // Performance tracking
-  averageLeadTime Int? // Days
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items          ItemSupplier[]
-  purchaseOrders PurchaseOrder[]
-
-  @@unique([companyId, code])
-  @@map("suppliers")
-}
-
-// Item-Supplier relationship with pricing
-model ItemSupplier {
-  id         String   @id @default(uuid())
-  itemId     String
-  item       Item     @relation(fields: [itemId], references: [id])
-  supplierId String
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
-
-  // Pricing in buying unit
-  unitPrice    Decimal
-  minOrderQty  Decimal @default(1)
-  leadTimeDays Int     @default(7)
-
-  isPreferred Boolean @default(false)
-  isActive    Boolean @default(true)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([itemId, supplierId])
-  @@map("item_suppliers")
-}
-
-// ============================================================================
-// PURCHASE REQUEST (PR) MODULE - FR-6 to FR-9
-// ============================================================================
-
-// Purchase Request - Company-scoped (FR-6, FR-8)
-model PurchaseRequest {
-  id          String  @id @default(uuid())
-  prNumber    String
-  title       String?
-  description String?
-
-  // Status workflow: Draft → Submitted → Approved → Converted to PO
-  status PRStatus @default(DRAFT)
-
-  // Dates
-  requestDate  DateTime  @default(now())
-  requiredDate DateTime
-  approvedDate DateTime?
-
-  // Financial
-  totalAmount Decimal @default(0)
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Branch and Creator
-  branchId    String
-  branch      Branch @relation(fields: [branchId], references: [id])
-  createdById String
-  createdBy   User   @relation("PRCreator", fields: [createdById], references: [id])
-
-  // Template reference - FR-7
-  prTemplateId String?
-  prTemplate   PRTemplate? @relation(fields: [prTemplateId], references: [id])
-  // Workflow timestamps
-  submittedAt  DateTime?
-  approvedAt   DateTime?
-  rejectedAt   DateTime?
-
-  // Notes
-  justification String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items          PRItem[]
-  purchaseOrders PurchaseOrder[]
-
-  @@unique([companyId, prNumber])
-  @@map("purchase_requests")
-}
-
-enum PRStatus {
-  DRAFT
-  SUBMITTED
-  APPROVED
-  REJECTED
-  CONVERTED_TO_PO
-}
-
-// Purchase Request Items
-model PRItem {
-  id              String          @id @default(uuid())
-  prId            String
-  purchaseRequest PurchaseRequest @relation(fields: [prId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Quantity in buying unit
-  requestedQty   Decimal
-  estimatedPrice Decimal @default(0)
-  totalAmount    Decimal @default(0)
-
-  requiredDate DateTime
-  remarks      String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("pr_items")
-}
-
-// PR Templates - Company-scoped (FR-7)
-model PRTemplate {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-
-  // For which branch this template is designed
-  branchId String?
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Status
-  isActive   Boolean @default(true)
-  usageCount Int     @default(0)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items            PRTemplateItem[]
-  purchaseRequests PurchaseRequest[]
-
-  @@unique([companyId, name])
-  @@map("pr_templates")
-}
-
-// PR Template Items
-model PRTemplateItem {
-  id         String     @id @default(uuid())
-  templateId String
-  template   PRTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Default quantities in buying unit
-  defaultQty Decimal
-  remarks    String?
-
-  @@unique([templateId, itemId])
-  @@map("pr_template_items")
-}
-
-// ============================================================================
-// PURCHASE ORDER (PO) MODULE - FR-10 to FR-12
-// ============================================================================
-
-// Purchase Order - Company-scoped (FR-10, FR-11)
-model PurchaseOrder {
-  id       String  @id @default(uuid())
-  poNumber String
-  title    String?
-
-  // Source PR
-  prId            String?
-  purchaseRequest PurchaseRequest? @relation(fields: [prId], references: [id])
-
-  // Supplier
-  supplierId String
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
-
-  // Status: Draft → Sent to Supplier → Confirmed → Closed
-  status               POStatus  @default(DRAFT)
-  // Dates
-  orderDate            DateTime  @default(now())
-  expectedDeliveryDate DateTime
-  confirmedDate        DateTime?
-  sentToSupplierAt     DateTime?
-  confirmedAt          DateTime?
-  closedAt             DateTime?
-
-  // Financial
-  subtotal    Decimal @default(0)
-  taxAmount   Decimal @default(0)
-  totalAmount Decimal @default(0)
-
-  // Terms
-  paymentTerms  String?
-  deliveryTerms String?
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Branch and Creator
-  branchId    String
-  branch      Branch @relation(fields: [branchId], references: [id])
-  createdById String
-  createdBy   User   @relation("POCreator", fields: [createdById], references: [id])
-
-  // Notes
-  notes String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items         POItem[]
-  goodsReceipts GoodsReceipt[]
-
-  @@unique([companyId, poNumber])
-  @@map("purchase_orders")
-}
-
-enum POStatus {
-  DRAFT
-  SENT_TO_SUPPLIER
-  CONFIRMED
-  CLOSED
-  CANCELLED
-}
-
-// Purchase Order Items
-model POItem {
-  id            String        @id @default(uuid())
-  poId          String
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Quantities in buying unit
-  orderedQty  Decimal
-  receivedQty Decimal @default(0)
-
-  // Pricing in buying unit
-  unitPrice   Decimal
-  totalAmount Decimal
-
-  deliveryDate DateTime
-  remarks      String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("po_items")
-}
-
-// ============================================================================
-// REQUEST FORM (RF) MODULE - FR-13 to FR-15
-// ============================================================================
-
-// Request Form - Company-scoped inter-branch transfer requests (FR-13, FR-15)
-model RequestForm {
-  id          String  @id @default(uuid())
-  rfNumber    String
-  title       String?
-  description String?
-
-  // Status: Draft → Submitted → Approved → Ready for MR
-  status RFStatus @default(DRAFT)
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Transfer details
-  fromBranchId String
-  fromBranch   Branch @relation("FromBranch", fields: [fromBranchId], references: [id])
-  toBranchId   String
-  toBranch     Branch @relation("ToBranch", fields: [toBranchId], references: [id])
-
-  // Dates
-  requestDate  DateTime  @default(now())
-  requiredDate DateTime
-  approvedDate DateTime?
-
-  // Creator
-  createdById String
-  createdBy   User   @relation("RFCreator", fields: [createdById], references: [id])
-
-  // Template reference - FR-14
-  rfTemplateId String?
-  rfTemplate   RFTemplate? @relation(fields: [rfTemplateId], references: [id])
-  // Workflow timestamps
-  submittedAt  DateTime?
-  approvedAt   DateTime?
-  rejectedAt   DateTime?
-
-  // Notes
-  reason String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items                RFItem[]
-  materialRequisitions MaterialRequisition[]
-
-  @@unique([companyId, rfNumber])
-  @@map("request_forms")
-}
-
-enum RFStatus {
-  DRAFT
-  SUBMITTED
-  APPROVED
-  REJECTED
-  READY_FOR_MR
-}
-
-// Request Form Items
-model RFItem {
-  id          String      @id @default(uuid())
-  rfId        String
-  requestForm RequestForm @relation(fields: [rfId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Quantity in transfer unit
-  requestedQty Decimal
-  remarks      String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("rf_items")
-}
-
-// RF Templates - Company-scoped (FR-14)
-model RFTemplate {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-
-  // Common transfer patterns
-  fromBranchId String?
-  toBranchId   String?
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Status
-  isActive   Boolean @default(true)
-  usageCount Int     @default(0)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items        RFTemplateItem[]
-  requestForms RequestForm[]
-
-  @@unique([companyId, name])
-  @@map("rf_templates")
-}
-
-// RF Template Items
-model RFTemplateItem {
-  id         String     @id @default(uuid())
-  templateId String
-  template   RFTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Default quantities in transfer unit
-  defaultQty Decimal
-  remarks    String?
-
-  @@unique([templateId, itemId])
-  @@map("rf_template_items")
-}
-
-// ============================================================================
-// MATERIAL REQUISITION (MR) MODULE - FR-16 to FR-19
-// ============================================================================
-
-// Material Requisition - Company-scoped (FR-16, FR-17, FR-18, FR-19)
-model MaterialRequisition {
-  id       String  @id @default(uuid())
-  mrNumber String
-  title    String?
-
-  // Source RF
-  rfId        String?
-  requestForm RequestForm? @relation(fields: [rfId], references: [id])
-
-  // Type of MR
-  type MRType @default(TRANSFER)
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Transfer details (for TRANSFER type)
-  fromBranchId String?
-  fromBranch   Branch? @relation("FromBranch", fields: [fromBranchId], references: [id])
-  toBranchId   String?
-  toBranch     Branch? @relation("ToBranch", fields: [toBranchId], references: [id])
-
-  // Single branch (for TRIM_WASTE type)
-  branchId String?
-
-  // Status
-  status MRStatus @default(DRAFT)
-
-  // Dates
-  mrDate       DateTime  @default(now())
-  transferDate DateTime?
-  // Creator
-  createdById  String
-  createdBy    User      @relation("MRCreator", fields: [createdById], references: [id])
-
-  // Workflow timestamps
-  approvedAt  DateTime?
-  completedAt DateTime?
-  cancelledAt DateTime?
-
-  // Notes
-  notes String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items         MRItem[]
-  goodsReceipts GoodsReceipt[]
-
-  @@unique([companyId, mrNumber])
-  @@map("material_requisitions")
-}
-
-enum MRType {
-  TRANSFER // Transfer between branches
-  TRIM_WASTE // Mark items as trimmed or wasted
-}
-
-enum MRStatus {
-  DRAFT
-  APPROVED
-  COMPLETED
-  CANCELLED
-}
-
-// Material Requisition Items
-model MRItem {
-  id                  String              @id @default(uuid())
-  mrId                String
-  materialRequisition MaterialRequisition @relation(fields: [mrId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Quantity in transfer unit (for transfer) or main unit (for trim/waste)
-  quantity Decimal
-
-  // For trim/waste operations
-  wasteType String? // "TRIM", "WASTE", "DAMAGE"
-
-  remarks String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("mr_items")
-}
-
-// ============================================================================
-// GOODS RECEIPT (GR) MODULE - FR-20 to FR-22
-// ============================================================================
-
-// Goods Receipt - FR-20, FR-21, FR-22
-// Goods Receipt - Company-scoped (FR-20, FR-21)
-model GoodsReceipt {
-  id       String @id @default(uuid())
-  grNumber String
-
-  // Source (either PO or MR)
-  poId                String?
-  purchaseOrder       PurchaseOrder?       @relation(fields: [poId], references: [id])
-  mrId                String?
-  materialRequisition MaterialRequisition? @relation(fields: [mrId], references: [id])
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Receipt details
-  receiptDate    DateTime @default(now())
-  documentNumber String? // Invoice/delivery note number
-
-  // Receiving branch
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  // Receiver
-  receivedById String
-  receivedBy   User     @relation("GRReceiver", fields: [receivedById], references: [id])
-  // Status
-  status       GRStatus @default(DRAFT)
-
-  // Workflow timestamps
-  postedAt    DateTime?
-  cancelledAt DateTime?
-
-  // Notes
-  remarks String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items GRItem[]
-
-  @@unique([companyId, grNumber])
-  @@map("goods_receipts")
-}
-
-enum GRStatus {
-  DRAFT
-  POSTED
-  CANCELLED
-}
-
-// Goods Receipt Items - implements moving average cost calculation (FR-22)
-model GRItem {
-  id           String       @id @default(uuid())
-  grId         String
-  goodsReceipt GoodsReceipt @relation(fields: [grId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Quantities (in main unit after conversion)
-  orderedQty  Decimal // Expected quantity in main unit
-  receivedQty Decimal // Actually received in main unit
-
-  // Pricing (for PO receipts only, in buying unit)
-  unitPrice Decimal? // Price per buying unit
-  totalCost Decimal? // Total cost for this line
-
-  // Quality notes
-  qualityNotes String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("gr_items")
-}
-
-// ============================================================================
-// FORMULA MANAGEMENT - FR-23, FR-24
-// ============================================================================
-
-// Formula - Production recipes - FR-23, FR-24
-// Formula Management - Company-scoped (FR-22, FR-23)
-model Formula {
-  id          String  @id @default(uuid())
-  name        String
-  code        String
-  description String?
-  version     String  @default("1.0")
-
-  // Output specification
-  outputItem     String? // If this formula produces a specific item
-  outputQuantity Decimal @default(1) // Standard batch size in using unit
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Status
-  isActive Boolean @default(true)
-
-  // Creator
-  createdById String
-  createdBy   User   @relation("FormulaCreator", fields: [createdById], references: [id])
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  items              FormulaItem[]
-  manufacturingLists ManufacturingList[]
-
-  @@unique([companyId, code])
-  @@map("formulas")
-}
-
-// Formula Items - Raw materials needed for production
-model FormulaItem {
-  id        String  @id @default(uuid())
-  formulaId String
-  formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  // Consumption rate per batch (in using unit)
-  quantity Decimal
-
-  // Optional fields
-  remarks String?
-
-  @@unique([formulaId, itemId])
-  @@map("formula_items")
-}
-
-// ============================================================================
-// MANUFACTURING LIST (ML) MODULE - FR-25 to FR-28
-// ============================================================================
-
-// Manufacturing List - Production execution - FR-25, FR-26, FR-27, FR-28
-// Manufacturing List - Company-scoped (FR-24, FR-25, FR-26)
-model ManufacturingList {
-  id       String  @id @default(uuid())
-  mlNumber String
-  title    String?
-
-  // Formula and output
-  formulaId      String
-  formula        Formula @relation(fields: [formulaId], references: [id])
-  outputQuantity Decimal // Desired output quantity
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Status workflow
-  status        MLStatus  @default(DRAFT)
-  // Dates
-  plannedDate   DateTime  @default(now())
-  startedDate   DateTime?
-  completedDate DateTime?
-  cancelledAt   DateTime?
-
-  // Branch and Creator
-  branchId    String
-  branch      Branch @relation(fields: [branchId], references: [id])
-  createdById String
-  createdBy   User   @relation("MLCreator", fields: [createdById], references: [id])
-
-  // Notes
-  remarks String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([companyId, mlNumber])
-  @@map("manufacturing_lists")
-}
-
-enum MLStatus {
-  DRAFT // Created but not started
-  IN_PROGRESS // Raw materials deducted, production started
-  COMPLETED // Finished goods added to stock
-  CANCELLED // Cancelled before completion
-}
-
-// ============================================================================
-// AI AGENT & MCP INTEGRATION - FR-29 to FR-33
-// ============================================================================
-
-// AI Suggestions - AI-generated recommendations
-// AI Suggestions - Company-scoped (FR-27, FR-28, FR-29)
-model AISuggestion {
-  id          String           @id @default(uuid())
-  type        AISuggestionType
-  title       String
-  description String
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Target user
-  userId String
-  user   User   @relation("SuggestionReceiver", fields: [userId], references: [id])
-
-  // Suggestion data (JSON format for flexibility)
-  suggestionData Json // Contains specific recommendation details
-
-  // AI reasoning
-  reasoning  String? // Why AI made this suggestion
-  confidence Decimal? // AI confidence level (0-1)
-
-  // Status
-  status       SuggestionStatus @default(PENDING)
-  reviewedDate DateTime?
-  actionTaken  String? // What action user took
-
-  // Context
-  entityType String? // Item, Branch, etc.
-  entityId   String? // Related entity ID
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("ai_suggestions")
-}
-
-enum AISuggestionType {
-  STOCK_REORDER // Suggest creating PR for low stock
-  TRANSFER_REQUEST // Suggest RF between branches
-  COST_VARIANCE // Alert on price discrepancies
-  DEMAND_FORECAST // Predict future requirements
-  OVERDUE_DELIVERY // Alert on delayed POs
-}
-
-enum SuggestionStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  IMPLEMENTED
-}
-
-// ============================================================================
-// NOTIFICATION SYSTEM
-// ============================================================================
-
-// Notifications - System and user notifications
-// Notifications - Company-scoped
-model Notification {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  type    NotificationType
-  title   String
-  message String
-
-  // Reference to related entity
-  entityType String?
-  entityId   String?
-
-  // Status
-  isRead Boolean   @default(false)
-  readAt DateTime?
-
-  // Priority
-  priority Priority @default(NORMAL)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("notifications")
-}
-
-enum NotificationType {
-  STOCK_LOW
-  PR_APPROVAL_NEEDED
-  PO_CONFIRMED
-  GR_PENDING
-  ML_COMPLETED
-  AI_SUGGESTION
-  SYSTEM_ALERT
-}
-
-enum Priority {
-  LOW
-  NORMAL
-  HIGH
-  URGENT
-}
-
-// ============================================================================
-// AUDIT TRAIL
-// ============================================================================
-
-// Audit Log - Company-scoped audit trail with timestamps
-model AuditLog {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Company isolation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  action   String // CREATE, UPDATE, DELETE, APPROVE, etc.
-  entity   String // Table/Model name
-  entityId String // ID of the affected record
-
-  // Simple change tracking
-  oldValue String?
-  newValue String?
-  field    String?
-
-  // Context
-  ipAddress String?
-  userAgent String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  @@map("audit_logs")
-}
-
-// ============================================================================
-// SEED DATA - Default Permissions for SaaS System
-// ============================================================================
-
-// These permissions should be seeded into the database when creating the system
-// They represent module-level permissions that can be assigned to custom roles
-
-// PERMISSION MODULES AND ACTIONS:
-// - user_management: create, view, edit, delete, assign_roles, assign_branches
-// - branch_management: create, view, edit, delete, manage_stock
-// - item_management: create, view, edit, delete, manage_units
-// - supplier_management: create, view, edit, delete
-// - purchase_requests: create, view, edit, delete, approve, submit
-// - purchase_orders: create, view, edit, delete, send_to_supplier, confirm
-// - request_forms: create, view, edit, delete, approve, submit
-// - material_requisitions: create, view, edit, delete, approve, execute
-// - goods_receipts: create, view, edit, delete, post
-// - formulas: create, view, edit, delete
-// - manufacturing_lists: create, view, edit, delete, start, complete
-// - inventory_reports: view, generate, export
-// - ai_suggestions: view, accept, reject
-// - system_settings: view, edit
 model SchemaCache {
   id             String       @id @default(uuid())
   schema         Json
   cachedAt       DateTime     @default(now())
-  dbConnectionId String       @unique // One-to-one relationship with Company
+  dbConnectionId String       @unique // One-to-one relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
-  @@index([dbConnectionId], name: "idx_schema_cache_db_connection")
   @@map("schema_cache")
 }
 
@@ -1240,12 +222,11 @@ model DbConnection {
   companyId      String
   company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   TableRelations TableRelations[]
-  TableMetadata  TableMetadata?
+  TableMetadata  TableMetadata[]
   SchemaCache    SchemaCache?
 
-  @@unique(companyId)
   @@unique([companyId, username], name: "unique_db_connection")
-  @@index([companyId,id], name: "idx_db_connections_company_id")
+  @@index([companyId, id], name: "idx_db_connections_company_id")
   @@index([username], name: "idx_db_connections_username")
   @@map("db_connections")
 }
@@ -1276,7 +257,7 @@ model TableMetadata {
   dataSensitivity String
   sampleQuestions String[]
 
-  dbConnectionId String       @unique // One-to-one relationship with DbConnection
+  dbConnectionId String // One-to-many relationship with DbConnection
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([dbConnectionId, tableName], name: "unique_table_metadata")
@@ -1297,32 +278,62 @@ enum BillingCycle {
 }
 
 enum SubscriptionPlans {
-  FREE
+  TRIAL
+  STARTER
   BUSINESS
   ENTERPRISE
 }
 
 model SubscriptionPlan {
-  id                  String                @id @default(uuid())
-  name                SubscriptionPlans     @default(FREE) // free, business, enterprise
-  priceMonthly        Decimal               @default(0)
-  priceYearly         Decimal               @default(0)
-  features            Json // Store feature flags as JSON
-  apiRequestsLimit    Int                   @default(0) // Limit on API requests per month
-  createdAt           DateTime              @default(now())
-  isActive            Boolean               @default(true)
-  companySubscription CompanySubscription[]
+  id                           String                       @id @default(uuid())
+  name                         SubscriptionPlans            @default(TRIAL) // TRIAL
+  priceMonthly                 Decimal                      @default(0) // Monthly subscription price
+  credits                      Decimal
+  priceYearly                  Decimal                      @default(0) // Yearly subscription price
+  apiRequestsLimit             Int                          @default(0) // API request limit per month
+  roleBasedAccess              Boolean                      @default(false) // Role-based permissions
+  advancedFiltering            Boolean                      @default(false) // Tagging, categorization, in-database filtering
+  bulkImportExport             Boolean                      @default(false) // CSV/Excel upload & download
+  apiAccess                    Boolean                      @default(false) // External API integration
+  prioritySupport              Boolean                      @default(false) // Support priority flag
+  customIntegrations           Boolean                      @default(false) // CRM/ERP/BI integrations (Enterprise only)
+  dedicatedManager             Boolean                      @default(false) // Assigned account manager (Enterprise only)
+  privateModelTuning           Boolean                      @default(false) // Industry-specific AI model tuning (Enterprise only)
+  slaUptimeGuarantee           Boolean                      @default(false) // SLA-backed uptime (Enterprise only)
+  earlyBetaAccess              Boolean                      @default(false) // Early access to beta features
+  quarterlyReview              Boolean                      @default(false) // Quarterly strategy & usage review
+  createdAt                    DateTime                     @default(now())
+  isActive                     Boolean                      @default(true)
+  companySubscription          CompanySubscription[]
+  companySubscriptionHistories CompanySubscriptionHistory[]
 
   @@index([name], name: "idx_subscription_plan_name")
   @@map("subscription_plans")
+}
+
+model UsageRecord {
+  id             String   @id @default(uuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id])
+  timestamp      DateTime @default(now()) // the timestamp of the usage record
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  toolUsed       String?  @default("") 
+  totalTokens    Int      @default(0)
+  costUSD        Decimal  @default(0) // Internal cost
+  creditsCharged Int      @default(1) // Credits deducted from plan
+  metadata       Json? // Optional: store query text, model name, etc.
+  @@map("usage_record")
 }
 
 model CompanySubscription {
   id                   String             @id @default(uuid())
   status               SubscriptionStatus // active, cancelled, expired, past_due
   billingCycle         BillingCycle       @default(MONTHLY) // monthly, yearly
-  currentPeriodStart   DateTime           @default(now())
-  currentPeriodEnd     DateTime           @default(now())
+  startPeriod          DateTime           @default(now())
+  endPeriod            DateTime           @default(now())
+  totalCredits         Decimal            @default(0) // Total credits available
+  remainingCredits     Decimal            @default(0) // Remaining credits
   isCancelAtPeriodEnd  Boolean            @default(false)
   stripeSubscriptionId String             @unique
   createdAt            DateTime           @default(now())
@@ -1335,6 +346,25 @@ model CompanySubscription {
   purchaseHistory      PurchaseHistory[]
 
   @@map("company_subscriptions")
+}
+
+model CompanySubscriptionHistory {
+  id                   String             @id @default(uuid())
+  status               SubscriptionStatus // active, cancelled, expired, past_due
+  billingCycle         BillingCycle       @default(MONTHLY) // monthly, yearly
+  startPeriod          DateTime           @default(now())
+  endPeriod            DateTime           @default(now())
+  isCancelAtPeriodEnd  Boolean            @default(false)
+  stripeSubscriptionId String             @unique
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  // Relationships
+  companyId            String
+  company              Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptionPlanId   String
+  subscriptionPlan     SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  purchaseHistories    PurchaseHistory[]
+  @@map("company_subscription_history")
 }
 
 enum PaymentStatus {
@@ -1356,6 +386,8 @@ model PurchaseHistory {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  companySubscriptionHistoryId String
+  companySubscriptionHistory   CompanySubscriptionHistory @relation(fields: [companySubscriptionHistoryId], references: [id], onDelete: Cascade)
   @@index([paymentStatus], name: "idx_purchase_history_payment_status")
   @@map("purchase_history")
 }

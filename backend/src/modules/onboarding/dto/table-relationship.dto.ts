@@ -33,6 +33,10 @@ export class TableRelationshipDto {
   @IsBoolean()
   @IsOptional()
   isConfirmed?: boolean;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }
 
 // DTO for POST /onboarding/:companyId/relationships

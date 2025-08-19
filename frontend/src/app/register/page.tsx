@@ -104,7 +104,7 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-content2 flex items-center justify-center p-4">
       <div className="w-full h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 place-items-center h-full">
           {/* Registration Form - Right Side */}
           <section>
             <Card className="shadow-2xl border-0 h-full">

@@ -4,20 +4,53 @@ import './global.css';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import WithoutSidebar from '@/components/WithoutSidebar';
 import ClarityProvider from '@/components/analytics/Clarity';
 import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
+import { cn } from '@/lib/utils';
 import { persistor, store } from '@/store/store';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
+import { Manrope, Montserrat } from 'next/font/google';
+import localFont from 'next/font/local';
+import { usePathname } from 'next/navigation';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+});
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
+const clashDisplay = localFont({
+  src: [
+    {
+      path: './fonts/ClashDisplay-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: './fonts/ClashDisplay-Bold.ttf',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-clash-display',
+});
 export default function RootLayout({
   children,
 }: {
   readonly children: React.ReactNode;
 }) {
+  const pathName = usePathname();
+  const componentsWithoutSidebars = ['/onboarding'];
+  const isWithoutSidebar = componentsWithoutSidebars.includes(pathName);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(montserrat.variable, manrope.variable, clashDisplay.variable)}
+    >
       <head>
         <title>SupplySense AI - Supply Chain Management</title>
         <meta
@@ -34,7 +67,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0A2538" />
       </head>
-      <body suppressHydrationWarning={true} className="min-h-screen">
+      <body suppressHydrationWarning={true} className={'min-h-screen'}>
         {/* Microsoft Clarity Analytics */}
         <ClarityProvider projectId={process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID} />
 
@@ -50,7 +83,11 @@ export default function RootLayout({
             <AuthProvider>
               <ThemeProvider>
                 <HeroUIProvider>
-                  <MainLayout>{children}</MainLayout>
+                  {isWithoutSidebar ? (
+                    <WithoutSidebar>{children}</WithoutSidebar>
+                  ) : (
+                    <MainLayout>{children}</MainLayout>
+                  )}
                   <ToastProvider placement="bottom-right" />
                 </HeroUIProvider>
               </ThemeProvider>

@@ -1,7 +1,8 @@
 import { PrismaService } from '@/app/prisma.service';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import type {
   IDatabaseClient,
   IDatabaseRow,
@@ -11,19 +12,20 @@ import type {
 } from '@supplysense/types';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
-import type { CaptureMetadataDto, TableMetadataDto } from '../dto/metadata.dto';
+import type { BatchSaveMetadataDto, CaptureMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';
 
 @Injectable()
 export class MetadataService {
+  private readonly logger = new Logger(MetadataService.name);
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(TableMetadataAgentService)
     private readonly tableMetadataAgent: TableMetadataAgentService,
     @Inject(ConnectionsService)
     private readonly connectionsService: ConnectionsService,
-
-    private readonly logger = new Logger(MetadataService.name)
+    @Inject(TokenAndCredit)
+    private readonly tokenAndCredit: TokenAndCredit
   ) {}
 
   async captureMetadata(dto: CaptureMetadataDto) {
@@ -36,7 +38,11 @@ export class MetadataService {
       throw new Error('Specified database connection not found');
     }
 
-    const generatedMetadata = await this.captureMetadataForConnection(connection, dto.tables);
+    const generatedMetadata = await this.captureMetadataForConnection(
+      connection,
+      dto.tables,
+      dto.companyId
+    );
 
     return {
       success: true,
@@ -47,32 +53,42 @@ export class MetadataService {
 
   private async captureMetadataForConnection(
     connection: DbCredentials & { dbConnectionId: string; title?: string },
-    tables: Array<{ tableName: string }>
+    tables: Array<{ tableName: string }>,
+    companyId: string
   ) {
     return withDbConnection(connection, async (client) => {
       // Extract table names from the tables array
       const tableNames = tables.map((table) => table.tableName);
 
-      const metadataResults = [];
-
-      for (const tableName of tableNames) {
-        try {
-          // Get detailed table schema
-          const tableSchema = await this.getTableSchema(client, tableName);
-          //Call MCP agent to generate metadata
-          const metadata = await this.generateTableMetadata(tableName, tableSchema);
-          metadataResults.push(metadata);
-        } catch (error) {
-          console.error(`Error processing table ${tableName}:`, error);
-          // Continue with other tables even if one fails
+      try {
+        // Get schemas for all tables
+        const tablesWithSchemas = [];
+        for (const tableName of tableNames) {
+          try {
+            const tableSchema = await this.getTableSchema(client, tableName);
+            tablesWithSchemas.push({ tableName, tableSchema });
+          } catch (error) {
+            this.logger.error(`Error getting schema for table ${tableName}:`, error);
+          }
         }
-      }
 
-      return {
-        dbConnectionId: connection.dbConnectionId,
-        connectionTitle: connection.title || 'Default Connection',
-        generatedMetadata: metadataResults,
-      };
+        // Send all tables at once to generateTableMetadata
+        const metadataResults = await this.generateTableMetadata(tablesWithSchemas, companyId);
+
+        return {
+          dbConnectionId: connection.dbConnectionId,
+          connectionTitle: connection.title || 'Default Connection',
+          generatedMetadata: metadataResults,
+        };
+      } catch (error) {
+        this.logger.error('Error processing tables:', error);
+        return {
+          dbConnectionId: connection.dbConnectionId,
+          connectionTitle: connection.title || 'Default Connection',
+          generatedMetadata: [] as ITableMetadataRecord[],
+          failedTables: tableNames.map((tableName) => ({ tableName, error: error.message })),
+        };
+      }
     });
   }
 
@@ -82,7 +98,7 @@ export class MetadataService {
   ): Promise<ITableSchemaInput> {
     // Get column information
     const columnQuery = {
-      qry: GET_TABLES_QUERY,
+      text: GET_TABLES_QUERY,
       values: [tableName],
     };
 
@@ -122,39 +138,58 @@ export class MetadataService {
   }
 
   /**
-   * Generate metadata for a table using the specialized table metadata agent
+   * Generate metadata for multiple tables using the specialized table metadata agent
    */
   async generateTableMetadata(
-    tableName: string,
-    tableSchema: ITableSchemaInput,
+    tablesWithSchemas: Array<{ tableName: string; tableSchema: ITableSchemaInput }>,
+    companyId: string,
     businessContext?: string
   ) {
     try {
-      // Use the dedicated table metadata agent service
+      const hasAvailableCredit = await this.tokenAndCredit.isAvailableCredit(companyId);
+      if (!hasAvailableCredit) {
+        this.logger.error('Insufficient credit for generating descriptions');
+        throw new BadRequestException('Insufficient credit');
+      }
+      // Use the dedicated table metadata agent service to process all tables at once
       const agentResponse = await this.tableMetadataAgent.generateTableMetadata({
-        tableName,
-        tableSchema,
+        tables: tablesWithSchemas,
         businessContext,
       });
 
-      return {
-        tableName,
-        friendlyLabel: agentResponse.friendlyLabel,
-        purpose: agentResponse.purpose,
-        updateFrequency: agentResponse.updateFrequency,
-        sampleQuestions: agentResponse.sampleQuestions,
-      };
+      if (agentResponse.usage) {
+        await this.tokenAndCredit.tokenPriceCalculate({
+          companyId,
+          inputTokens: agentResponse.usage.promptTokens,
+          outputTokens: agentResponse.usage.completionTokens,
+          isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
+          metadata: {
+            question: agentResponse.question,
+            answer: JSON.stringify(agentResponse.result),
+          },
+        });
+      }
+
+      return agentResponse.result.map((response) => ({
+        tableName: response.tableName,
+        friendlyLabel: response.friendlyLabel,
+        purpose: response.purpose,
+        updateFrequency: response.updateFrequency,
+        sampleQuestions: response.sampleQuestions,
+      }));
     } catch (error) {
-      this.logger.error(`Error generating metadata for table ${tableName}:`, error);
-      throw new Error(`Failed to generate metadata for table ${tableName}`);
+      this.logger.error('Error generating metadata for tables:', error);
+      throw new Error('Failed to generate metadata for tables');
     }
   }
 
   /**
    * Save generated metadata to the database
    */
-  async saveTableMetadata(input: TableMetadataDto): Promise<ITableMetadataRecord> {
-    const { companyId, ...data } = input;
+  async saveTableMetadata(
+    companyId: string,
+    data: BatchSaveMetadataDto
+  ): Promise<ITableMetadataRecord[]> {
     try {
       const isValidConnectionId = await this.prisma.dbConnection.findUnique({
         where: { id: data.dbConnectionId, companyId },
@@ -163,14 +198,51 @@ export class MetadataService {
       if (!isValidConnectionId) {
         throw new Error('Invalid database connection');
       }
-      // Save the metadata record
-      const metadataRecord = await this.prisma.tableMetadata.create({
-        data,
+
+      // Validate metadata before saving
+      const validatedMetadata = data.tableMetadata.filter((metadata) => {
+        return (
+          metadata.tableName &&
+          metadata.friendlyLabel &&
+          metadata.purpose &&
+          metadata.updateFrequency &&
+          Array.isArray(metadata.sampleQuestions)
+        );
       });
-      return metadataRecord;
+
+      if (validatedMetadata.length !== data.tableMetadata.length) {
+        this.logger.warn(
+          `Filtered out ${
+            data.tableMetadata.length - validatedMetadata.length
+          } invalid metadata entries`
+        );
+      }
+
+      // Process in batches to avoid transaction size limits
+      const BATCH_SIZE = 50;
+      const savedRecords = [];
+
+      for (let i = 0; i < validatedMetadata.length; i += BATCH_SIZE) {
+        const batch = validatedMetadata.slice(i, i + BATCH_SIZE);
+        const batchResults = await this.prisma.$transaction(
+          batch.map((metadata) =>
+            this.prisma.tableMetadata.create({
+              data: {
+                ...metadata,
+                dbConnection: {
+                  connect: { id: data.dbConnectionId },
+                },
+              },
+            })
+          )
+        );
+        savedRecords.push(...batchResults);
+      }
+
+      return savedRecords;
     } catch (error) {
-      console.error('Error saving metadata for table ', error);
-      throw new Error('Failed to save metadata for table');
+      this.logger.error('Error saving table metadata:', error);
+      throw new Error(`Failed to save metadata: ${error.message || 'Unknown error'}`);
     }
   }
 }

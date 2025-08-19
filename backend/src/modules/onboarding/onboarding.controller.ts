@@ -1,4 +1,3 @@
-// src/database/db-connection.controller.ts
 import {
   Body,
   Controller,
@@ -8,14 +7,16 @@ import {
   Inject,
   Param,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ConnectionsService } from '../connections/connections.service';
-import { GetTablesDto, SaveDbConnectionDto } from './dto/db-connect.dto';
-import type { CaptureMetadataDto, TableMetadataDto } from './dto/metadata.dto';
+import { TestAgentService } from '../mcp-client/services/test-agent.service';
+import { SaveDbConnectionDto } from './dto/db-connect.dto';
+import type { BatchSaveMetadataDto, CaptureMetadataDto } from './dto/metadata.dto';
 import { GetSchemaDto } from './dto/schema.dto';
-import type { GetRelationshipsDto, UpsertRelationshipsDto } from './dto/table-relationship.dto';
+import type { UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';
 import { SchemaBuilderService } from './services/schema-builder.service';
@@ -30,7 +31,9 @@ export class OnboardingController {
     @Inject(SchemaBuilderService)
     private readonly schemaBuilderService: SchemaBuilderService,
     @Inject(ConnectionsService)
-    private readonly connectionsService: ConnectionsService
+    private readonly connectionsService: ConnectionsService,
+    @Inject(TestAgentService)
+    private readonly testAgentService: TestAgentService
   ) {}
 
   /**
@@ -47,8 +50,11 @@ export class OnboardingController {
    */
   @Get('/:companyId/tables')
   @HttpCode(HttpStatus.OK)
-  async getTables(@Param() dto: GetTablesDto) {
-    return await this.onboardingService.getTables(dto.companyId, dto.dbConnectionId);
+  async getTables(
+    @Param('companyId') companyId: string,
+    @Query('dbConnectionId') dbConnectionId: string
+  ) {
+    return await this.onboardingService.getTables(companyId, dbConnectionId);
   }
 
   @Post('/:companyId/capture-metadata')
@@ -59,20 +65,21 @@ export class OnboardingController {
 
   @Post('/:companyId/save-metadata')
   @HttpCode(HttpStatus.CREATED)
-  async saveMetadata(@Body() dto: TableMetadataDto) {
-    return await this.metadataService.saveTableMetadata(dto);
+  async saveMetadata(@Param('companyId') companyId: string, @Body() dto: BatchSaveMetadataDto) {
+    return await this.metadataService.saveTableMetadata(companyId, dto);
   }
+
   /**
    * Get foreign key relationships for selected tables
    */
-  @Get('/:companyId/:dbConnectionId/relationships')
+  @Get('/:companyId/relationships')
   @HttpCode(HttpStatus.OK)
-  async getRelationships(@Param() params: GetRelationshipsDto) {
+  async getRelationships(
+    @Param('companyId') companyId: string,
+    @Query('dbConnectionId') dbConnectionId: string
+  ) {
     // Should return array of TableRelationshipDto (unconfirmed)
-    return await this.onboardingService.getTableRelationships(
-      params.companyId,
-      params.dbConnectionId
-    );
+    return await this.onboardingService.getTableRelationships(companyId, dbConnectionId);
   }
 
   /**
@@ -92,5 +99,11 @@ export class OnboardingController {
   @HttpCode(HttpStatus.OK)
   async getSchema(@Param() params: GetSchemaDto) {
     return await this.schemaBuilderService.getSchema(params.companyId, params.dbConnectionId);
+  }
+
+  @Get('/test-agent')
+  @HttpCode(HttpStatus.OK)
+  async testAgent() {
+    return await this.testAgentService.test();
   }
 }

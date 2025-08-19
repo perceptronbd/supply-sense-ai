@@ -1,7 +1,12 @@
-import { google } from '@ai-sdk/google';
-import { Agent } from '@mastra/core/agent';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
+
+import { Agent } from '@mastra/core/agent';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
   PURPOSE_GENERATION_AGENT_NAME,
@@ -12,7 +17,7 @@ export const generatePurposeAgent = new Agent({
   name: PURPOSE_GENERATION_AGENT_NAME,
   description: PURPOSE_GENERATION_AGENT_DESCRIPTION,
   instructions: PURPOSE_GENERATION_INSTRUCTION,
-  model: google(AI_MODEL_NAME),
+  model: openrouter(AI_MODEL_NAME),
 });
 
 // Custom function to use the agent for generating table purpose
@@ -31,22 +36,37 @@ export async function generatePurpose({
   if (!tableName || !tableSchema) {
     throw new Error('Missing required tableName or tableSchema');
   }
+
   try {
     const prompt = `Table: ${tableName}\nSchema: ${JSON.stringify(tableSchema, null, 2)}\n${
       businessContext ? `Business Context: ${businessContext}` : ''
     }\nGenerate a business purpose for this table.`;
+
     const response = await generatePurposeAgent.generate([
       {
         role: 'user',
         content: prompt,
       },
     ]);
+
     let purpose = response.text.trim();
     // Remove leading and trailing '**' if present
     purpose = purpose.replace(/^\*\*\s*/, '').replace(/\s*\*\*$/, '');
     return purpose;
   } catch (error) {
     console.error(`❌ Error generating purpose for table ${tableName}:`, error);
-    throw new Error('Failed to generate table purpose');
+
+    // Check for specific OpenRouter payment error
+    if (
+      error.message?.includes('Payment Required') ||
+      error.message?.includes('Insufficient credits')
+    ) {
+      console.warn(`💳 OpenRouter payment required. Using fallback purpose for table ${tableName}`);
+    }
+
+    // Return a fallback purpose instead of throwing
+    const fallbackPurpose = `This table stores ${tableName.toLowerCase()} related data for business operations and analysis.`;
+    console.warn(`Using fallback purpose: ${fallbackPurpose}`);
+    return fallbackPurpose;
   }
 }

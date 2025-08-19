@@ -1,5 +1,5 @@
-import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import {
@@ -7,6 +7,10 @@ import {
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
 } from '../constants/system-instructions/sample-questions';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -19,7 +23,7 @@ export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   instructions: SAMPLE_QUESTIONS_INSTRUCTION,
-  model: google(AI_MODEL_NAME),
+  model: openrouter(AI_MODEL_NAME),
 });
 
 // Custom function to use the agent
@@ -29,14 +33,20 @@ export async function generateSampleQuestions({
   purpose,
   businessContext,
 }: GenerateQuestionsInput) {
-  if (!tableName || !tableSchema) {
-    throw new Error('Missing required tableName or tableSchema');
+  if (!tableName) {
+    throw new Error('Missing required parameter: tableName');
+  }
+  if (!tableSchema) {
+    throw new Error('Missing required parameter: tableSchema');
+  }
+  if (!tableSchema.columns || !Array.isArray(tableSchema.columns)) {
+    throw new Error('Invalid tableSchema: columns array is required');
   }
   try {
     // Add timestamp to ensure unique prompt each time
     const timestamp = new Date().toISOString();
 
-    // Enhanced prompting with variability directive
+    // Enhanced prompting with variability directive and specific column analysis
     const prompt = `Table: ${tableName}
 Purpose: ${purpose}
 Columns: ${tableSchema.columns
@@ -49,8 +59,17 @@ Columns: ${tableSchema.columns
       .join('\n  - ')}
 ${businessContext ? `Business Context: ${businessContext}` : ''}
 
-Generate 6-8 diverse and creative random sample questions that users might ask about this data.
-Important: Make sure to generate different questions than previously, focusing on various aspects of the data.
+CRITICAL INSTRUCTIONS: 
+1. Analyze the SPECIFIC column names and data types in this table
+2. Generate questions that are UNIQUE to this table's structure and purpose
+3. DO NOT use generic questions that could apply to any table
+4. Focus on the actual column names (${tableSchema.columns.map((c) => c.columnName).join(', ')}) 
+5. Consider the relationships between columns and their business meaning
+6. Each question should be tailored to THIS specific table's data and cannot be used for other tables
+7. Avoid generic patterns like "What are the trends in [table]" - instead ask about specific columns and their relationships
+
+Generate 6-8 highly specific, contextually relevant questions that users might ask about THIS PARTICULAR table's data.
+Questions should reference actual column names and be based on the table's unique structure and purpose.
 Current timestamp for uniqueness: ${timestamp}`;
 
     const response = await sampleQuestionsAgent.generate([
@@ -82,37 +101,82 @@ Current timestamp for uniqueness: ${timestamp}`;
 
 /**
  * Generates diverse fallback questions when the AI response is insufficient
- * Uses table metadata to create relevant and varied questions
+ * Uses table metadata to create relevant and varied questions specific to the table structure
  */
 function generateFallbackQuestions(tableName: string, tableSchema: ITableSchemaInput): string[] {
-  // Base question templates that can be customized
-  const questionTemplates = [
-    'What are the main insights we can get from the {table} table?',
-    'How is the data in {table} related to our business goals?',
-    'What trends can we identify in the {table} data?',
-    'How frequently is the {table} data updated?',
-    'Which {column} values are most common in the {table} table?',
-    'What is the relationship between {table} and other tables in our database?',
-    'How has the {table} data changed over time?',
-    'What are the key performance indicators we can derive from {table}?',
-    'How complete is our {table} data?',
-    'Which users interact most with the {table} data?',
-    'What business decisions are influenced by the {table} data?',
-    'Are there any anomalies in the {table} data we should investigate?',
-  ];
+  const columns = tableSchema.columns;
+  const questions: string[] = [];
 
-  // Shuffle the question templates to add randomness
-  const shuffled = [...questionTemplates].sort(() => 0.5 - Math.random());
+  // Get specific column types for targeted questions
+  const dateColumns = columns.filter(
+    (c) => c.dataType.toLowerCase().includes('date') || c.dataType.toLowerCase().includes('time')
+  );
+  const numericColumns = columns.filter(
+    (c) =>
+      c.dataType.toLowerCase().includes('int') ||
+      c.dataType.toLowerCase().includes('decimal') ||
+      c.dataType.toLowerCase().includes('float') ||
+      c.dataType.toLowerCase().includes('numeric')
+  );
+  const textColumns = columns.filter(
+    (c) =>
+      c.dataType.toLowerCase().includes('varchar') ||
+      c.dataType.toLowerCase().includes('text') ||
+      c.dataType.toLowerCase().includes('char')
+  );
+  const primaryKeyColumns = columns.filter((c) => c.isPrimaryKey);
+  const foreignKeyColumns = columns.filter((c) => c.isForeignKey);
 
-  // Get some column names to use in the questions
-  const columns = tableSchema.columns.map((c) => c.columnName);
-  const randomColumn = columns[Math.floor(Math.random() * columns.length)];
+  // Generate specific questions based on actual column structure
+  if (dateColumns.length > 0) {
+    const dateCol = dateColumns[0].columnName;
+    questions.push(`What is the distribution of records by ${dateCol} over time?`);
+    questions.push(`How many records were created in the last month based on ${dateCol}?`);
+  }
 
-  // Generate 6-8 questions with randomized content
-  const numQuestions = Math.floor(Math.random() * 3) + 6; // 6-8 questions
-  const result = shuffled.slice(0, numQuestions).map((template) => {
-    return template.replace(/{table}/g, tableName).replace(/{column}/g, randomColumn || 'data');
-  });
+  if (numericColumns.length > 0) {
+    const numCol = numericColumns[0].columnName;
+    questions.push(`What is the average ${numCol} in the ${tableName} table?`);
+    questions.push(`What are the highest and lowest values for ${numCol}?`);
+  }
 
-  return result;
+  if (textColumns.length > 0) {
+    const textCol = textColumns[0].columnName;
+    questions.push(`What are the most common values for ${textCol}?`);
+    questions.push(`How many unique ${textCol} values exist in ${tableName}?`);
+  }
+
+  if (foreignKeyColumns.length > 0) {
+    const fkCol = foreignKeyColumns[0].columnName;
+    const refTable = foreignKeyColumns[0].referencedTable || 'related table';
+    questions.push(`How is ${tableName} connected to ${refTable} through ${fkCol}?`);
+    questions.push(`What is the relationship pattern between ${tableName} and ${refTable}?`);
+  }
+
+  if (primaryKeyColumns.length > 0) {
+    const pkCol = primaryKeyColumns[0].columnName;
+    questions.push(`How are records identified in ${tableName} using ${pkCol}?`);
+  }
+
+  // Add some general but table-specific questions
+  questions.push(`What business processes are supported by the ${tableName} table?`);
+  questions.push(`How does the structure of ${tableName} reflect our business requirements?`);
+
+  // If we have fewer than 6 questions, add some column-specific ones
+  while (questions.length < 6 && columns.length > 0) {
+    const randomColumn = columns[Math.floor(Math.random() * columns.length)];
+    const question = `What insights can we derive from the ${randomColumn.columnName} field in ${tableName}?`;
+    if (!questions.includes(question)) {
+      questions.push(question);
+    }
+  }
+
+  // Shuffle the questions to add variety
+  const shuffled = [...questions];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.slice(0, 8);
 }

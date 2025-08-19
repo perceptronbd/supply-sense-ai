@@ -44,7 +44,7 @@ export function LoadingScreen({
           <Text
             variant="headerMedium"
             weight="bold"
-            className={`font-display ${colorClass}`}
+            className={`font-manrope ${colorClass}`}
             as="h1"
           >
             Supply Chain AI

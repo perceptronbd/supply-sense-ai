@@ -108,7 +108,15 @@ export function parseConnectionString(connectionString: string): DbCredentials {
     const port = url.port ? Number.parseInt(url.port, 10) : 5432;
     const database = url.pathname.slice(1); // Remove leading slash
     const username = url.username;
-    const password = decodeURIComponent(url.password);
+    let password = url.password;
+
+    // Try to decode password, but if it fails, use the raw string
+    try {
+      password = decodeURIComponent(password);
+    } catch {
+      // If decodeURIComponent fails, just use the raw password string
+      // This allows connection attempts even with malformed percent-encoding
+    }
 
     // Check for SSL parameter
     const sslEnabled =

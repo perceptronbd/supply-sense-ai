@@ -242,7 +242,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-content2 flex items-center justify-center p-4">
       <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 place-items-center">
           {/* Welcome Section - Left Side */}
           <section className="w-full flex items-center justify-center">
             <div className="text-center ml-6 lg:text-left space-y-6 max-w-3xl">
@@ -414,7 +414,7 @@ export default function LoginPage() {
                           Admin:
                         </Text>
                         <Text variant="bodyXSmall" color="muted" as="p">
-                          admin@company001.com / admin123
+                          admin@test.com / Admin@123
                         </Text>
                       </div>
                       <Button
@@ -422,7 +422,7 @@ export default function LoginPage() {
                         variant="light"
                         color="primary"
                         className="text-xs px-2 py-1 h-auto min-h-0"
-                        onPress={() => handleDemoLogin('admin@company001.com', 'admin123')}
+                        onPress={() => handleDemoLogin('admin@test.com', 'Admin@123')}
                       >
                         Use
                       </Button>

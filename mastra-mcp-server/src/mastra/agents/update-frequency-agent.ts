@@ -1,18 +1,20 @@
-import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
-import { AI_MODEL_NAME } from '@supplysense/constant';
+import { METADATA_UPDATE_FREQUENCIES, type TMetadataUpdateFrequency } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
+import { GetOpenRouter } from '@supplysense/utils';
 import {
   UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   UPDATE_FREQUENCY_AGENT_NAME,
   UPDATE_FREQUENCY_INSTRUCTION,
 } from '../constants/system-instructions/update-frequency';
 
+const openrouter = new GetOpenRouter();
+
 export const updateFrequencyAgent = new Agent({
   name: UPDATE_FREQUENCY_AGENT_NAME,
   description: UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   instructions: UPDATE_FREQUENCY_INSTRUCTION,
-  model: google(AI_MODEL_NAME),
+  model: openrouter.getModel(),
 });
 
 // Custom function to use the agent for determining update frequency
@@ -29,38 +31,50 @@ export async function determineUpdateFrequency({
   tableSchema,
   purpose,
   businessContext,
-}: DetermineUpdateFrequencyInput): Promise<
-  'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely'
-> {
+}: DetermineUpdateFrequencyInput): Promise<TMetadataUpdateFrequency> {
   if (!tableName || !tableSchema) {
     throw new Error('Missing required tableName or tableSchema');
   }
+  const userPrompt = JSON.stringify(
+    {
+      tableName,
+      tableSchema,
+      purpose,
+      businessContext,
+    },
+    null,
+    2
+  );
 
   try {
     const prompt = `Table: ${tableName}
-Schema: ${JSON.stringify(tableSchema, null, 2)}
-${purpose ? `Purpose: ${purpose}` : ''}
-${businessContext ? `Business Context: ${businessContext}` : ''}
-
-Determine the optimal update frequency for this table.`;
+    Schema: ${JSON.stringify(tableSchema, null, 2)}
+    ${purpose ? `Purpose: ${purpose}` : ''}
+    ${businessContext ? `Business Context: ${businessContext}` : ''}
+    Determine the optimal update frequency for this table.`;
 
     const response = await updateFrequencyAgent.generate([
       {
-        role: 'user',
+        role: 'system',
         content: prompt,
+      },
+      {
+        role: 'user',
+        content: userPrompt,
       },
     ]);
 
-    const frequency = response.text.trim().toLowerCase();
+    const frequency = response.text as TMetadataUpdateFrequency;
 
+    console.debug(`Received frequency response: ${frequency}`, {
+      usage: response.usage,
+    });
+
+    console.info(`Determined update frequency for ${tableName}: ${frequency}`);
     // Validate the response
-    const validFrequencies = ['real-time', 'daily', 'weekly', 'monthly', 'rarely'];
-    if (validFrequencies.includes(frequency)) {
-      return frequency as 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely';
+    if (METADATA_UPDATE_FREQUENCIES.includes(frequency)) {
+      return frequency;
     }
-
-    // Fallback to daily if response is invalid
-    console.warn(`Invalid frequency response: ${frequency}. Defaulting to 'daily'`);
     return 'daily';
   } catch (error) {
     console.error(`❌ Error determining update frequency for table ${tableName}:`, error);

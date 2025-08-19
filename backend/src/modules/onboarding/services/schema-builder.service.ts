@@ -1,9 +1,9 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/app/prisma.service';
+import { ConnectionsService } from '@/modules/connections/connections.service';
 import { SchemaCache } from '@prisma/client';
 import { withDbConnection } from 'src/helpers/db-connection.helper';
-import { OnboardingService } from './onboarding.service';
 
 interface TableSchema {
   label: string;
@@ -27,8 +27,8 @@ export class SchemaBuilderService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => OnboardingService))
-    private readonly onboardingService: OnboardingService
+    @Inject(ConnectionsService)
+    private readonly connectionsService: ConnectionsService
   ) {}
 
   /**
@@ -54,7 +54,7 @@ export class SchemaBuilderService {
       }
 
       // Get full connection details with decrypted password
-      const connectionDetails = await this.onboardingService.getCompanyConnection(
+      const connectionDetails = await this.connectionsService.getCompanyConnection(
         companyId,
         dbConnectionId
       );
@@ -66,43 +66,46 @@ export class SchemaBuilderService {
       };
 
       // Process each table that has metadata
-      if (dbConnection.TableMetadata) {
-        const tableMetadata = dbConnection.TableMetadata;
-
+      if (dbConnection.TableMetadata && Array.isArray(dbConnection.TableMetadata)) {
         // 3. Connect to Customer DB and query columns for each table
         await withDbConnection(connectionDetails, async (client) => {
-          // For each table, get its columns
-          const result = await client.query(
-            `
-            SELECT column_name, data_type
-            FROM information_schema.columns
-            WHERE table_name=$1
-          `,
-            [tableMetadata.tableName]
-          );
+          for (const tableMetadata of dbConnection.TableMetadata) {
+            // For each table, get its columns
+            const result = await client.query(
+              `
+              SELECT column_name, data_type
+              FROM information_schema.columns
+              WHERE table_name=$1
+            `,
+              [tableMetadata.tableName]
+            );
 
-          // Build columns object
-          const columns: Record<string, string> = {};
-          for (const row of result.rows) {
-            columns[row.column_name] = row.data_type;
+            // Build columns object
+            const columns: Record<string, string> = {};
+            for (const row of result.rows) {
+              columns[row.column_name] = row.data_type;
+            }
+
+            // Get relationships for this table
+            const relationships = dbConnection.TableRelations
+              ? dbConnection.TableRelations.filter(
+                  (relation) =>
+                    relation.tableName === tableMetadata.tableName && relation.isConfirmed
+                ).map((relation) => ({
+                  column: relation.columnName,
+                  refTable: relation.refTable,
+                  refColumn: relation.refColumn,
+                }))
+              : [];
+
+            // Add table to schema
+            schema.tables[tableMetadata.tableName] = {
+              label: tableMetadata.friendlyLabel,
+              purpose: tableMetadata.purpose,
+              columns,
+              relationships,
+            };
           }
-
-          // Get relationships for this table
-          const relationships = dbConnection.TableRelations.filter(
-            (relation) => relation.tableName === tableMetadata.tableName && relation.isConfirmed
-          ).map((relation) => ({
-            column: relation.columnName,
-            refTable: relation.refTable,
-            refColumn: relation.refColumn,
-          }));
-
-          // Add table to schema
-          schema.tables[tableMetadata.tableName] = {
-            label: tableMetadata.friendlyLabel,
-            purpose: tableMetadata.purpose,
-            columns,
-            relationships,
-          };
         });
       }
 

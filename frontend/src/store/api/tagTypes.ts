@@ -55,6 +55,9 @@ export const TAG_TYPES = {
   // Chat Module
   CHAT_SESSION: 'ChatSession',
   CHAT_MESSAGE: 'ChatMessage',
+
+  // Onboarding
+  ONBOARDING: 'Onboarding',
 } as const;
 
 export const TAG_TYPES_LIST = Object.values(TAG_TYPES);

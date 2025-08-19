@@ -79,8 +79,10 @@ export function getUserFromToken(token: string): {
   permissions: string[];
   branchId: string;
   isActive: boolean;
+  companyId: string;
 } | null {
   const payload = decodeJWT(token);
+  console.log('🚀 ~ payload:', payload);
   if (!payload) return null;
 
   return {
@@ -92,5 +94,6 @@ export function getUserFromToken(token: string): {
     permissions: payload.permissions || [],
     branchId: payload.branchIds?.[0] || '', // Use first branch ID as primary branch
     isActive: true, // Assume active if token is valid
+    companyId: payload.companyId,
   };
 }

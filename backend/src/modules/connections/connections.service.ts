@@ -1,5 +1,5 @@
 import { PrismaService } from '@/app/prisma.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   decryptPassword,
   encryptPassword,
@@ -34,29 +34,20 @@ export class ConnectionsService {
       });
 
       if (!company) {
-        return {
-          success: false,
-          message: 'Company not found',
-        };
+        throw new BadRequestException('Company not found');
       }
 
       if (!company.isActive) {
-        return {
-          success: false,
-          message: 'Cannot create connection for inactive company',
-        };
+        throw new BadRequestException('Cannot create connection for inactive company');
       }
 
-      // Check if connection already exists for this company
-      const existingConnection = await this.prisma.dbConnection.findUnique({
-        where: { companyId: dto.companyId },
-      });
+      // Check if a connection with the same credentials already exists for this company
+      const existingConnection = await this.checkExistingConnection(dto);
 
       if (existingConnection) {
-        return {
-          success: false,
-          message: 'Database connection already exists for this company',
-        };
+        throw new BadRequestException(
+          'A database connection with these credentials already exists for this company'
+        );
       }
 
       // Parse credentials from either connection string or credentials object
@@ -69,19 +60,15 @@ export class ConnectionsService {
         // Use provided credentials
         credentials = dto.credentials;
       } else {
-        return {
-          success: false,
-          message: 'Either connectionString or credentials must be provided',
-        };
+        throw new BadRequestException('Either connectionString or credentials must be provided');
       }
 
       // Test connection first
       const isConnected = await testConnection(credentials);
       if (!isConnected) {
-        return {
-          success: false,
-          message: 'Cannot save connection - connection test failed',
-        };
+        throw new BadRequestException(
+          'Failed to connect to the database with provided credentials'
+        );
       }
 
       // Encrypt password
@@ -99,15 +86,14 @@ export class ConnectionsService {
           database: credentials.database,
           username: credentials.username,
           encryptedPassword,
-          title: credentials.title || credentials.database, // Use database name as default title
+          title: dto.title || credentials.database, // Use database name as default title
           sslEnabled: credentials.sslEnabled || false,
           connectionHash,
+          businessContext: dto.businessContext || '',
         },
       });
 
       return {
-        success: true,
-        message: 'Connection saved successfully',
         dbConnectionId: savedConnection.id,
       };
     } catch (error) {
@@ -115,24 +101,32 @@ export class ConnectionsService {
 
       // Handle specific Prisma errors
       if (error.code === 'P2002') {
-        return {
-          success: false,
-          message: 'A database connection with these details already exists',
-        };
+        throw new BadRequestException('A database connection with these details already exists');
       }
 
       if (error.code === 'P2003') {
-        return {
-          success: false,
-          message: 'Invalid company ID - company not found',
-        };
+        throw new BadRequestException('Invalid company ID - company not found');
       }
 
-      return {
-        success: false,
-        message: `Failed to save connection: ${error.message}`,
-      };
+      throw new BadRequestException(`Failed to save connection: ${error.message}`);
     }
+  }
+
+  private async checkExistingConnection(dto: SaveDbConnectionDto) {
+    // If connection string is provided, parse it to extract credentials
+    const parsedConnection = dto.connectionString
+      ? parseConnectionString(dto.connectionString)
+      : null;
+
+    return await this.prisma.dbConnection.findFirst({
+      where: {
+        companyId: dto.companyId,
+        host: dto.credentials?.host ?? parsedConnection?.host,
+        port: dto.credentials?.port ?? parsedConnection?.port,
+        database: dto.credentials?.database ?? parsedConnection?.database,
+        username: dto.credentials?.username ?? parsedConnection?.username,
+      },
+    });
   }
 
   /**

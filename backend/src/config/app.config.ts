@@ -22,7 +22,7 @@ export interface AppConfig {
 
 export const appConfig: AppConfig = {
   // Server settings
-  port: Number.parseInt(process.env.PORT || '3000', 10),
+  port: Number.parseInt(process.env.PORT || '3004', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPrefix: process.env.API_PREFIX || 'api',
 
@@ -52,7 +52,7 @@ export function validateConfig(): void {
   }
 
   // Warn about missing optional but important variables
-  const important = ['GEMINI_API_KEY', 'JWT_SECRET'];
+  const important = ['OPENROUTER_API_KEY', 'JWT_SECRET'];
   const missingImportant = important.filter((key) => !process.env[key]);
 
   if (missingImportant.length > 0) {

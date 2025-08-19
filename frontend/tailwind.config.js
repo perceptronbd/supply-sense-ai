@@ -10,85 +10,14 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: [
-          'var(--font-display)',
-          'Manrope',
-          'ui-sans-serif',
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'Noto Sans',
-          'sans-serif',
-        ],
-        sans: [
-          'var(--font-sans)',
-          'Inter',
-          'ui-sans-serif',
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'Noto Sans',
-          'sans-serif',
-        ],
-        mono: [
-          'var(--font-mono)',
-          'JetBrains Mono',
-          'SF Mono',
-          'Monaco',
-          'Inconsolata',
-          'Roboto Mono',
-          'Source Code Pro',
-          'monospace',
-        ],
-        data: ['var(--font-sans)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        montserrat: ['var(--font-montserrat)'],
+        manrope: ['var(--font-manrope)'],
+        'clash-display': ['var(--font-clash-display)'],
       },
-      colors: {
-        bigStone: {
-          50: '#75AFD7',
-          100: '#699FC6',
-          200: '#5181A2',
-          300: '#3A627F',
-          400: '#22445B',
-          500: '#0A2538',
-          600: '#081E2D',
-          700: '#061622',
-          800: '#040F16',
-          900: '#02070B',
-          950: '#010406',
-        },
-        pomegranate: {
-          50: '#FDEDEA',
-          100: '#FADBD5',
-          200: '#F6B7AB',
-          300: '#F19282',
-          400: '#ED6E58',
-          500: '#E84A2E',
-          600: '#BA3B25',
-          700: '#8B2C1C',
-          800: '#5D1E12',
-          900: '#2E0F09',
-          950: '#170705',
-        },
-        pavlova: {
-          50: '#FCFAF5',
-          100: '#F9F5EB',
-          200: '#F3EBD7',
-          300: '#EEE0C4',
-          400: '#E8D6B0',
-          500: '#E2CC9C',
-          600: '#C2AE81',
-          700: '#A28F66',
-          800: '#83714A',
-          900: '#63522F',
-          950: '#534322',
+      container: {
+        center: true,
+        screens: {
+          xl: '90vw',
         },
       },
     },
@@ -96,192 +25,226 @@ module.exports = {
   darkMode: 'class',
   plugins: [
     heroui({
-      addCommonColors: true,
       themes: {
         light: {
-          layout: {
-            fontSize: {
-              tiny: '0.75rem',
-              small: '0.875rem',
-              medium: '1rem',
-              large: '1.125rem',
-            },
-            lineHeight: {
-              tiny: '1rem',
-              small: '1.25rem',
-              medium: '1.5rem',
-              large: '1.75rem',
-            },
-            radius: {
-              small: '8px',
-              medium: '12px',
-              large: '14px',
-            },
-            borderWidth: {
-              small: '1px',
-              medium: '2px',
-              large: '3px',
-            },
-            disabledOpacity: '0.5',
-          },
           colors: {
             default: {
-              50: '#f1f1f1',
-              100: '#dddddd',
-              200: '#cacaca',
-              300: '#b6b6b6',
-              400: '#a3a3a3',
-              500: '#8f8f8f',
-              600: '#767676',
-              700: '#5d5d5d',
-              800: '#444444',
-              900: '#2b2b2b',
+              50: '#fafafa',
+              100: '#f2f2f3',
+              200: '#ebebec',
+              300: '#e3e3e6',
+              400: '#dcdcdf',
+              500: '#d4d4d8',
+              600: '#afafb2',
+              700: '#8a8a8c',
+              800: '#656567',
+              900: '#404041',
               foreground: '#000',
-              DEFAULT: '#8f8f8f',
+              DEFAULT: '#d4d4d8',
             },
             primary: {
-              50: '#dfdfdf',
-              100: '#b3b3b3',
-              200: '#868686',
-              300: '#595959',
-              400: '#2d2d2d',
-              500: '#000000',
-              600: '#000000',
-              700: '#000000',
-              800: '#000000',
-              900: '#000000',
+              50: '#fce8e5',
+              100: '#f8c9c0',
+              200: '#f4a99c',
+              300: '#f08977',
+              400: '#ec6a53',
+              500: '#e84a2e',
+              600: '#bf3d26',
+              700: '#97301e',
+              800: '#6e2316',
+              900: '#46160e',
               foreground: '#fff',
-              DEFAULT: '#000000',
+              DEFAULT: '#e84a2e',
             },
             secondary: {
-              50: '#FDEDEA', // pomegranate.50
-              100: '#FADBD5', // pomegranate.100
-              200: '#F6B7AB', // pomegranate.200
-              300: '#F19282', // pomegranate.300
-              400: '#ED6E58', // pomegranate.400
-              500: '#E84A2E', // pomegranate.500
-              600: '#BA3B25', // pomegranate.600
-              700: '#8B2C1C', // pomegranate.700
-              800: '#5D1E12', // pomegranate.800
-              900: '#2E0F09', // pomegranate.900
-              foreground: '#FCFAF5', // pavlova.50
-              DEFAULT: '#E84A2E', // pomegranate.500
+              50: '#fbf9f3',
+              100: '#f6f0e1',
+              200: '#f1e7d0',
+              300: '#ecdebf',
+              400: '#e7d5ad',
+              500: '#e2cc9c',
+              600: '#baa881',
+              700: '#938565',
+              800: '#6b614a',
+              900: '#443d2f',
+              foreground: '#000',
+              DEFAULT: '#e2cc9c',
             },
-
+            success: {
+              50: '#e2f8ec',
+              100: '#b9efd1',
+              200: '#91e5b5',
+              300: '#68dc9a',
+              400: '#40d27f',
+              500: '#17c964',
+              600: '#13a653',
+              700: '#0f8341',
+              800: '#0b5f30',
+              900: '#073c1e',
+              foreground: '#000',
+              DEFAULT: '#17c964',
+            },
+            warning: {
+              50: '#fef4e4',
+              100: '#fce4bd',
+              200: '#fad497',
+              300: '#f9c571',
+              400: '#f7b54a',
+              500: '#f5a524',
+              600: '#ca881e',
+              700: '#9f6b17',
+              800: '#744e11',
+              900: '#4a320b',
+              foreground: '#000',
+              DEFAULT: '#f5a524',
+            },
+            danger: {
+              50: '#fee1eb',
+              100: '#fbb8cf',
+              200: '#f98eb3',
+              300: '#f76598',
+              400: '#f53b7c',
+              500: '#f31260',
+              600: '#c80f4f',
+              700: '#9e0c3e',
+              800: '#73092e',
+              900: '#49051d',
+              foreground: '#000',
+              DEFAULT: '#f31260',
+            },
             background: '#ffffff',
-            foreground: '#4a4a4a',
+            foreground: '#000000',
             content1: {
-              DEFAULT: '#f0f0f0',
+              DEFAULT: '#ffffff',
               foreground: '#000',
             },
             content2: {
-              DEFAULT: '#e6e6e6',
+              DEFAULT: '#f4f4f5',
               foreground: '#000',
             },
             content3: {
-              DEFAULT: '#dcdcdc',
+              DEFAULT: '#e4e4e7',
               foreground: '#000',
             },
             content4: {
-              DEFAULT: '#d2d2d2',
+              DEFAULT: '#d4d4d8',
               foreground: '#000',
             },
-            focus: '#ED6E58',
+            focus: '#E84A2E',
             overlay: '#000000',
           },
         },
         dark: {
-          layout: {
-            fontSize: {
-              tiny: '0.75rem',
-              small: '0.875rem',
-              medium: '1rem',
-              large: '1.125rem',
-            },
-            lineHeight: {
-              tiny: '1rem',
-              small: '1.25rem',
-              medium: '1.5rem',
-              large: '1.75rem',
-            },
-            radius: {
-              small: '8px',
-              medium: '12px',
-              large: '14px',
-            },
-            borderWidth: {
-              small: '1px',
-              medium: '2px',
-              large: '3px',
-            },
-            disabledOpacity: '0.5',
-          },
           colors: {
             default: {
-              50: '#02070B', // bigStone.900 (inverted)
-              100: '#040F16', // bigStone.800
-              200: '#061622', // bigStone.700
-              300: '#081E2D', // bigStone.600
-              400: '#0A2538', // bigStone.500
-              500: '#22445B', // bigStone.400
-              600: '#3A627F', // bigStone.300
-              700: '#5181A2', // bigStone.200
-              800: '#699FC6', // bigStone.100
-              900: '#75AFD7', // bigStone.50
-              foreground: '#F9F5EB', // pavlova.100
-              DEFAULT: '#22445B', // bigStone.400
+              50: '#0d0d0e',
+              100: '#19191c',
+              200: '#26262a',
+              300: '#323238',
+              400: '#3f3f46',
+              500: '#65656b',
+              600: '#8c8c90',
+              700: '#b2b2b5',
+              800: '#d9d9da',
+              900: '#ffffff',
+              foreground: '#fff',
+              DEFAULT: '#3f3f46',
             },
             primary: {
-              50: '#63522F', // pavlova.900 (inverted for dark)
-              100: '#83714A', // pavlova.800
-              200: '#A28F66', // pavlova.700
-              300: '#C2AE81', // pavlova.600
-              400: '#E2CC9C', // pavlova.500
-              500: '#E8D6B0', // pavlova.400
-              600: '#EEE0C4', // pavlova.300
-              700: '#F3EBD7', // pavlova.200
-              800: '#F9F5EB', // pavlova.100
-              900: '#FCFAF5', // pavlova.50
-              foreground: '#63522F', // pavlova.900
-              DEFAULT: '#C2AE81', // pavlova.600
+              50: '#46160e',
+              100: '#6e2316',
+              200: '#97301e',
+              300: '#bf3d26',
+              400: '#e84a2e',
+              500: '#ec6a53',
+              600: '#f08977',
+              700: '#f4a99c',
+              800: '#f8c9c0',
+              900: '#fce8e5',
+              foreground: '#fff',
+              DEFAULT: '#e84a2e',
             },
             secondary: {
-              50: '#2E0F09', // pomegranate.900 (inverted for dark)
-              100: '#5D1E12', // pomegranate.800
-              200: '#8B2C1C', // pomegranate.700
-              300: '#BA3B25', // pomegranate.600
-              400: '#E84A2E', // pomegranate.500
-              500: '#ED6E58', // pomegranate.400
-              600: '#F19282', // pomegranate.300
-              700: '#F6B7AB', // pomegranate.200
-              800: '#FADBD5', // pomegranate.100
-              900: '#FDEDEA', // pomegranate.50
-              foreground: '#FDEDEA', // pomegranate.50
-              DEFAULT: '#BA3B25', // pomegranate.600
+              50: '#443d2f',
+              100: '#6b614a',
+              200: '#938565',
+              300: '#baa881',
+              400: '#e2cc9c',
+              500: '#e7d5ad',
+              600: '#ecdebf',
+              700: '#f1e7d0',
+              800: '#f6f0e1',
+              900: '#fbf9f3',
+              foreground: '#000',
+              DEFAULT: '#e2cc9c',
             },
-
-            background: '#02070B', // bigStone.900 for dark background
-            foreground: '#F9F5EB', // pavlova.100 for readable text
+            success: {
+              50: '#073c1e',
+              100: '#0b5f30',
+              200: '#0f8341',
+              300: '#13a653',
+              400: '#17c964',
+              500: '#40d27f',
+              600: '#68dc9a',
+              700: '#91e5b5',
+              800: '#b9efd1',
+              900: '#e2f8ec',
+              foreground: '#000',
+              DEFAULT: '#17c964',
+            },
+            warning: {
+              50: '#4a320b',
+              100: '#744e11',
+              200: '#9f6b17',
+              300: '#ca881e',
+              400: '#f5a524',
+              500: '#f7b54a',
+              600: '#f9c571',
+              700: '#fad497',
+              800: '#fce4bd',
+              900: '#fef4e4',
+              foreground: '#000',
+              DEFAULT: '#f5a524',
+            },
+            danger: {
+              50: '#49051d',
+              100: '#73092e',
+              200: '#9e0c3e',
+              300: '#c80f4f',
+              400: '#f31260',
+              500: '#f53b7c',
+              600: '#f76598',
+              700: '#f98eb3',
+              800: '#fbb8cf',
+              900: '#fee1eb',
+              foreground: '#000',
+              DEFAULT: '#f31260',
+            },
+            background: '#000000',
+            foreground: '#ffffff',
             content1: {
-              DEFAULT: '#040F16', // bigStone.800
-              foreground: '#F9F5EB',
+              DEFAULT: '#18181b',
+              foreground: '#fff',
             },
             content2: {
-              DEFAULT: '#061622', // bigStone.700
-              foreground: '#F9F5EB',
+              DEFAULT: '#27272a',
+              foreground: '#fff',
             },
             content3: {
-              DEFAULT: '#081E2D', // bigStone.600
-              foreground: '#F9F5EB',
+              DEFAULT: '#3f3f46',
+              foreground: '#fff',
             },
             content4: {
-              DEFAULT: '#0A2538', // bigStone.500
-              foreground: '#F9F5EB',
+              DEFAULT: '#52525b',
+              foreground: '#fff',
             },
-            focus: '#ED6E58',
+            focus: '#E84A2E',
             overlay: '#ffffff',
           },
         },
+      },
+      layout: {
+        disabledOpacity: '0.5',
       },
     }),
   ],

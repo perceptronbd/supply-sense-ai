@@ -8,7 +8,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { AssignBranchesDto } from './dto/assign-branches.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -41,15 +40,6 @@ interface UserWithRelations {
           action: string;
         };
       }>;
-    };
-  }>;
-  userBranches?: Array<{
-    branch: {
-      id: string;
-      name: string;
-      code: string;
-      address?: string;
-      isHQ: boolean;
     };
   }>;
 }
@@ -95,21 +85,6 @@ export class UserService {
       throw new BadRequestException('One or more roles not found or belong to different company');
     }
 
-    // Validate that all branches belong to the same company
-    const branches = await this.prisma.branch.findMany({
-      where: {
-        id: { in: createUserDto.branchIds },
-        companyId,
-        isActive: true,
-      },
-    });
-
-    if (branches.length !== createUserDto.branchIds.length) {
-      throw new BadRequestException(
-        'One or more branches not found or belong to different company'
-      );
-    }
-
     // Hash password
     const hashedPassword = await argon2.hash(createUserDto.password);
 
@@ -129,11 +104,6 @@ export class UserService {
             roleId,
           })),
         },
-        userBranches: {
-          create: createUserDto.branchIds.map((branchId) => ({
-            branchId,
-          })),
-        },
       },
       include: {
         userRoles: {
@@ -149,11 +119,6 @@ export class UserService {
             },
           },
         },
-        userBranches: {
-          include: {
-            branch: true,
-          },
-        },
       },
     });
 
@@ -167,7 +132,6 @@ export class UserService {
     const {
       search,
       roleId,
-      branchId,
       isActive,
       page,
       limit,
@@ -196,13 +160,6 @@ export class UserService {
           },
         },
       }),
-      ...(branchId && {
-        userBranches: {
-          some: {
-            branchId,
-          },
-        },
-      }),
     };
 
     // Build include clause
@@ -222,13 +179,7 @@ export class UserService {
           },
         },
       }),
-      ...(includeBranches && {
-        userBranches: {
-          include: {
-            branch: true,
-          },
-        },
-      }),
+      ...(includeBranches && {}),
     };
 
     // If pagination is requested
@@ -293,11 +244,6 @@ export class UserService {
                 },
               },
             },
-          },
-        },
-        userBranches: {
-          include: {
-            branch: true,
           },
         },
       },
@@ -374,11 +320,6 @@ export class UserService {
                 },
               },
             },
-          },
-        },
-        userBranches: {
-          include: {
-            branch: true,
           },
         },
       },
@@ -486,107 +427,6 @@ export class UserService {
     return this.findOne(id, companyId);
   }
 
-  async assignBranches(
-    id: string,
-    assignBranchesDto: AssignBranchesDto,
-    companyId: string
-  ): Promise<UserEntity> {
-    // Check if user exists and belongs to company
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        id,
-        companyId,
-      },
-    });
-
-    if (!existingUser) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Validate that all branches belong to the same company
-    const branches = await this.prisma.branch.findMany({
-      where: {
-        id: { in: assignBranchesDto.branchIds },
-        companyId,
-        isActive: true,
-      },
-    });
-
-    if (branches.length !== assignBranchesDto.branchIds.length) {
-      throw new BadRequestException(
-        'One or more branches not found or belong to different company'
-      );
-    }
-
-    // Perform the action based on the request
-    switch (assignBranchesDto.action) {
-      case 'assign': {
-        // Add new branches (avoid duplicates)
-        const existingBranchIds = await this.prisma.userBranch
-          .findMany({
-            where: { userId: id },
-            select: { branchId: true },
-          })
-          .then((userBranches) => userBranches.map((ub) => ub.branchId));
-
-        const newBranchIds = assignBranchesDto.branchIds.filter(
-          (branchId) => !existingBranchIds.includes(branchId)
-        );
-
-        if (newBranchIds.length > 0) {
-          await this.prisma.userBranch.createMany({
-            data: newBranchIds.map((branchId) => ({
-              userId: id,
-              branchId,
-            })),
-          });
-        }
-        break;
-      }
-
-      case 'remove': {
-        // Check that user will still have at least one branch after removal
-        const currentBranches = await this.prisma.userBranch.findMany({
-          where: { userId: id },
-        });
-
-        const remainingBranches = currentBranches.filter(
-          (userBranch) => !assignBranchesDto.branchIds.includes(userBranch.branchId)
-        );
-
-        if (remainingBranches.length === 0) {
-          throw new BadRequestException('User must have at least one branch');
-        }
-
-        await this.prisma.userBranch.deleteMany({
-          where: {
-            userId: id,
-            branchId: { in: assignBranchesDto.branchIds },
-          },
-        });
-        break;
-      }
-
-      case 'replace': {
-        // Replace all branches with new ones
-        await this.prisma.userBranch.deleteMany({
-          where: { userId: id },
-        });
-
-        await this.prisma.userBranch.createMany({
-          data: assignBranchesDto.branchIds.map((branchId) => ({
-            userId: id,
-            branchId,
-          })),
-        });
-        break;
-      }
-    }
-
-    // Return updated user
-    return this.findOne(id, companyId);
-  }
-
   async remove(id: string, companyId: string): Promise<UserEntity> {
     // Check if user exists and belongs to company
     const existingUser = await this.prisma.user.findFirst({
@@ -620,11 +460,6 @@ export class UserService {
                 },
               },
             },
-          },
-        },
-        userBranches: {
-          include: {
-            branch: true,
           },
         },
       },
@@ -663,11 +498,6 @@ export class UserService {
             },
           },
         },
-        userBranches: {
-          include: {
-            branch: true,
-          },
-        },
       },
     });
 
@@ -697,15 +527,6 @@ export class UserService {
           permissions: userRole.role.permissions.map(
             (rp) => `${rp.permission.module}:${rp.permission.action}`
           ),
-        })),
-      }),
-      ...(user.userBranches && {
-        branches: user.userBranches.map((userBranch) => ({
-          id: userBranch.branch.id,
-          name: userBranch.branch.name,
-          code: userBranch.branch.code,
-          address: userBranch.branch.address,
-          isHQ: userBranch.branch.isHQ,
         })),
       }),
     };

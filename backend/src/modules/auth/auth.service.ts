@@ -6,6 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { BillingCycle, type SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
+import { CREDIT } from '@supplysense/constant';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../app/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
@@ -54,16 +56,6 @@ interface UserWithRelations {
       }>;
     };
   }>;
-  userBranches: Array<{
-    branchId: string;
-    isActive: boolean;
-    branch: {
-      id: string;
-      name: string;
-      code: string;
-      isHQ: boolean;
-    };
-  }>;
 }
 
 @Injectable()
@@ -90,7 +82,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: false, // Will be set based on user data
     };
 
@@ -110,6 +101,13 @@ export class AuthService {
     });
 
     if (existingCompany) {
+      // If company exists, check if it already has a subscription
+      const existingCompanySubscription = await this.prisma.companySubscription.findFirst({
+        where: { companyId: existingCompany.id },
+      });
+      if (existingCompanySubscription) {
+        throw new ConflictException('This company is already subscribed. Try another one.');
+      }
       throw new ConflictException('A company with this email is already registered');
     }
 
@@ -138,6 +136,31 @@ export class AuthService {
         },
       });
 
+      // Find or create the default subscription plan (TRIAL)
+
+      const defaultPlan: SubscriptionPlan = await tx.subscriptionPlan.create({
+        data: {
+          ...CREDIT.TRIAL,
+          isActive: true,
+        },
+      });
+
+      // Create the company subscription
+      await tx.companySubscription.create({
+        data: {
+          status: SubscriptionStatus.ACTIVE,
+          billingCycle: BillingCycle.MONTHLY,
+          startPeriod: new Date(),
+          endPeriod: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+          totalCredits: defaultPlan.credits,
+          remainingCredits: defaultPlan.credits,
+          isCancelAtPeriodEnd: false,
+          stripeSubscriptionId: '', // To be set after Stripe integration
+          companyId: company.id,
+          subscriptionPlanId: defaultPlan.id,
+        },
+      });
+
       // Create default "Super Admin" role for the company
       const superAdminRole = await tx.role.create({
         data: {
@@ -160,17 +183,6 @@ export class AuthService {
         data: rolePermissions,
       });
 
-      // Create default headquarters branch
-      const hqBranch = await tx.branch.create({
-        data: {
-          name: 'Headquarters',
-          code: 'HQ',
-          address: registerDto.businessAddress || '',
-          isHQ: true,
-          companyId: company.id,
-        },
-      });
-
       // Create the super admin user
       const user = await tx.user.create({
         data: {
@@ -189,15 +201,6 @@ export class AuthService {
         data: {
           userId: user.id,
           roleId: superAdminRole.id,
-        },
-      });
-
-      // Assign user to headquarters branch
-      await tx.userBranch.create({
-        data: {
-          userId: user.id,
-          branchId: hqBranch.id,
-          isActive: true,
         },
       });
 
@@ -247,7 +250,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: false, // Will be set based on user data
     };
     return this.jwtService.sign(payload);
@@ -271,16 +273,10 @@ export class AuthService {
             },
           },
         },
-        userBranches: {
-          where: { isActive: true },
-          include: {
-            branch: true,
-          },
-        },
       },
-    })) as UserWithRelations | null;
+    })) as unknown as UserWithRelations | null;
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       return null;
     }
 
@@ -322,16 +318,10 @@ export class AuthService {
             },
           },
         },
-        userBranches: {
-          where: { isActive: true },
-          include: {
-            branch: true,
-          },
-        },
       },
-    })) as UserWithRelations | null;
+    })) as unknown as UserWithRelations | null;
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       return null;
     }
 
@@ -350,14 +340,6 @@ export class AuthService {
       }
     }
 
-    const branchIds = userWithRelations.userBranches.map((ub) => ub.branchId);
-    const branches = userWithRelations.userBranches.map((ub) => ({
-      id: ub.branch.id,
-      name: ub.branch.name,
-      code: ub.branch.code,
-      isHQ: ub.branch.isHQ,
-    }));
-
     return {
       id: userWithRelations.id,
       email: userWithRelations.email,
@@ -367,8 +349,6 @@ export class AuthService {
       companyName: userWithRelations.company?.name || '',
       roles,
       permissions: Array.from(permissionSet),
-      branchIds,
-      branches,
       isSuperAdmin: userWithRelations.isSuperAdmin,
       isActive: userWithRelations.isActive,
     };
@@ -415,7 +395,6 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      branchIds: user.branchIds,
       isSuperAdmin: user.isSuperAdmin,
     };
 

@@ -24,12 +24,18 @@ export interface ITableSchemaInput {
   relationships?: ITableRelationship[];
 }
 
-export interface MCPTableMetadataAgentRes {
+export interface IMcpTableMetadata {
   tableName: string;
   friendlyLabel: string;
   purpose: string;
   updateFrequency: TUpdateFrequency;
   sampleQuestions: string[];
+}
+
+export interface MCPTableMetadataAgentRes {
+  result: IMcpTableMetadata[];
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  question?: string;
 }
 
 export interface ITableMetadataRecord {
