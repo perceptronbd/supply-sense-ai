@@ -65,7 +65,7 @@ const Banner = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask anything about your business"
-                className="rounded-xl"
+                radius="md"
                 variant="flat"
                 size="lg"
                 classNames={{

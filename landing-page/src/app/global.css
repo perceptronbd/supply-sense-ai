@@ -34,3 +34,45 @@ body {
     15px 0 10px -10px rgba(232, 74, 46, 0.15),
     0 15px 10px -10px rgba(232, 74, 46, 0.15);
 }
+
+.tilted-cylinder-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.tilted-cylinder-glow::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  left: 60px;
+  width: 150px;
+  height: 500px;
+  background: linear-gradient(
+    135deg,
+    rgba(101, 101, 107, 0.2) 0%,
+    rgba(101, 101, 107, 0.1) 50%,
+    transparent 100%
+  );
+  filter: blur(25px);
+  transform: rotate(135deg);
+  z-index: -1;
+}
+
+/* Add a subtle core to the cylinder */
+.tilted-cylinder-glow::after {
+  content: "";
+  position: absolute;
+  top: -100px;
+  left: 50px;
+  width: 100px;
+  height: 400px;
+  background: linear-gradient(
+    135deg,
+    rgba(101, 101, 107, 0.3) 0%,
+    rgba(101, 101, 107, 0.2) 50%,
+    transparent 100%
+  );
+  filter: blur(20px);
+  transform: rotate(135deg);
+  z-index: -1;
+}

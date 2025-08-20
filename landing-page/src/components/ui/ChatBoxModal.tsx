@@ -89,7 +89,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       closeButton={false}
       scrollBehavior="inside"
       classNames={{
-        base: 'max-h-[90vh] bg-default-200 relative card-blur-effect',
+        base: 'max-h-[90vh] bg-default-200 relative card-blur-effect tilted-cylinder-glow',
         body: 'p-0',
       }}
     >
@@ -203,13 +203,11 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ask anything about your business"
-                  className="rounded-xl"
+                  radius="md"
                   variant="flat"
                   size="lg"
                   classNames={{
-                    base: '',
-                    mainWrapper: '',
-                    input: 'border-none placeholder:text-content3 placeholder:text-sm w-[90%]',
+                    input: 'border-none placeholder:text-content4 placeholder:text-sm w-[90%]',
                     inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
                   }}
                 />
