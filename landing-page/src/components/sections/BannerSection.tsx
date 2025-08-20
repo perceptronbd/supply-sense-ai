@@ -51,15 +51,7 @@ const Banner = () => {
           classNames={{
             base: 'bg-default-200',
           }}
-          className=""
-          style={{
-            boxShadow: `
-      -20px 0 20px -10px rgba(226, 204, 156, 0.15),  /* Left side - secondary */
-      0 -20px 20px -10px rgba(226, 204, 156, 0.15),  /* Top side - secondary */
-      20px 0 20px -10px rgba(232, 74, 46, 0.15),     /* Right side - primary */
-      0 20px 20px -10px rgba(232, 74, 46, 0.15)      /* Bottom side - primary */
-    `,
-          }}
+          className="card-blur-effect"
         >
           <CardHeader className="flex justify-between items-center px-6 py-4 relative">
             <FullLogo className="w-40 text-default" />
@@ -78,16 +70,17 @@ const Banner = () => {
                 size="lg"
                 classNames={{
                   input: 'placeholder:text-content3 placeholder:text-sm',
-                  inputWrapper: 'bg-content1 border-1 border-primary py-8',
+                  inputWrapper: 'bg-content1 py-8 card-blur-effect-alt',
                 }}
               />
               <Button
                 type="submit"
-                radius="lg"
+                radius="md"
                 isIconOnly
-                variant="ghost"
+                color="primary"
+                variant="light"
                 size="sm"
-                className="w-10 h-10 border-none absolute right-2 top-1/2 -translate-y-1/2 bg-primary mr-2"
+                className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
               >
                 <Send size={20} className="" />
               </Button>

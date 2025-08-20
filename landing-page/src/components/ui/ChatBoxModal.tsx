@@ -89,7 +89,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       closeButton={false}
       scrollBehavior="inside"
       classNames={{
-        base: 'max-h-[90vh] bg-background/95 backdrop-blur-sm border-focus/80 border-1 relative shadow-inner shadow-focus/90 overflow-hidden',
+        base: 'max-h-[90vh] bg-default-200 relative card-blur-effect',
         body: 'p-0',
       }}
     >
@@ -97,16 +97,18 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
         {() => (
           <>
             {/* Glow effect - positioned inside the card header */}
-            <div className="absolute z-30 bottom-[40%] left-1/2 -translate-x-1/2 w-[25vw] h-[25vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" />
+            {/* <div className="absolute z-30 bottom-[40%] left-1/2 -translate-x-1/2 w-[25vw] h-[25vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" /> */}
 
             {/* Header */}
             <ModalHeader className="flex items-center justify-between p-4">
-              <FullLogo className="w-28 text-primary" />
+              <FullLogo className="w-40 text-default" />
               <Button
                 onPress={() => handleClearChat()}
-                variant="ghost"
+                variant="light"
+                color="default"
+                radius="md"
                 size="sm"
-                className="text-sm border-none text-primary mr-5"
+                className="text-sm text-default mr-5"
               >
                 Clear Chat
               </Button>
@@ -135,8 +137,10 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                         />
                       )}
                       <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          msg.sender === 'user' ? 'bg-primary/20' : 'bg-inherit'
+                        className={`max-w-[80%] rounded-2xl px-4 ${
+                          msg.sender === 'user'
+                            ? 'bg-gradient-to-l from-default-300 to-default-400 py-3'
+                            : 'bg-inherit'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.content}</p>
@@ -205,17 +209,18 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   classNames={{
                     base: '',
                     mainWrapper: '',
-                    input: 'border-none placeholder:text-content3 placeholder:text-sm',
-                    inputWrapper: 'bg-content1 border-2 border-primary rounded-xl py-8',
+                    input: 'border-none placeholder:text-content3 placeholder:text-sm w-[90%]',
+                    inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
                   }}
                 />
                 <Button
                   type="submit"
-                  radius="lg"
+                  radius="md"
                   isIconOnly
-                  variant="ghost"
+                  variant="light"
+                  color="primary"
                   size="sm"
-                  className="w-10 h-10 border-none absolute right-2 top-1/2 -translate-y-1/2 bg-primary mr-2"
+                  className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
                 >
                   <Send size={20} className="" />
                 </Button>
