@@ -176,8 +176,8 @@ export class ChatService {
     }
   }
 
-  async createSession(title: string, userId: string, description?: string) {
-    return this.sessionService.createSession(title, userId, description);
+  async createSession(title: string, userId: string, dbConnectionId: string, description?: string) {
+    return this.sessionService.createSession(title, userId, dbConnectionId, description);
   }
 
   async getSession(sessionId: string, userId: string) {

@@ -27,6 +27,11 @@ export class CreateChatSessionDto {
   @IsOptional()
   @MaxLength(1000)
   description?: string;
+
+  @ApiProperty({ description: 'Database connection ID', required: true })
+  @IsString({ message: 'Database connection ID must be a string' })
+  @IsNotEmpty({ message: 'Database connection ID is required' })
+  dbConnectionId: string;
 }
 
 export class SendMessageDto {
@@ -99,6 +104,9 @@ export class ChatSessionDto {
 
   @ApiProperty({ description: 'User ID' })
   userId: string;
+
+  @ApiProperty({ description: 'Database connection ID' })
+  dbConnectionId: string;
 
   @ApiProperty({ description: 'Last activity timestamp' })
   lastActivityAt: Date;

@@ -19,7 +19,6 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
-import { McpClientService } from '../mcp-client';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
 
@@ -28,39 +27,8 @@ import { ChatService } from './services/chat.service';
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(
-    @Inject(ChatService) private readonly chatService: ChatService,
-    @Inject(McpClientService) private readonly mcpClientService: McpClientService
-  ) {
+  constructor(@Inject(ChatService) private readonly chatService: ChatService) {
     this.logger.log('ChatController constructor - explicit injection');
-  }
-
-  @Get('health')
-  @ApiOperation({ summary: 'Check chat service health' })
-  @ApiResponse({ status: 200, description: 'Service is healthy' })
-  async health() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      services: {
-        chat: 'active',
-        ai: 'connected',
-        database: 'operational',
-        websocket: 'ready',
-      },
-    };
-  }
-
-  @Get('mcp/health')
-  @ApiOperation({ summary: 'Check MCP client health and connection status' })
-  @ApiResponse({
-    status: 200,
-    description: 'MCP health check completed',
-    example: { status: 'ok' },
-  })
-  async mcpHealth(@Res() res: Response) {
-    // Bypass the ResponseInterceptor by using @Res() directly
-    return res.status(200).json({ status: 'ok' });
   }
 
   @Post('sessions')
@@ -76,6 +44,7 @@ export class ChatController {
     return this.chatService.createSession(
       createSessionDto.title,
       user.id,
+      createSessionDto.dbConnectionId,
       createSessionDto.description
     );
   }

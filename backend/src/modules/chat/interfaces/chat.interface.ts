@@ -1,13 +1,3 @@
-export interface ChatSession {
-  id: string;
-  title: string;
-  description?: string;
-  userId: string;
-  lastActivityAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface ChatMessage {
   id: string;
   sessionId: string;
