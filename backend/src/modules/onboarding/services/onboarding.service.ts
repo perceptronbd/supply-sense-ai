@@ -1,7 +1,7 @@
 import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import type { IDatabaseClient } from '@supplysense/types';
-import { closeAllConnections, withDbConnection } from '@supplysense/utils';
+import { closeAllConnections, withDbConnection } from '@supplysense/utils/server';
 import { ConnectionsService } from '../../connections/connections.service';
 import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';

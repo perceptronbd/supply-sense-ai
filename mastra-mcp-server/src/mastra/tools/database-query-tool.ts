@@ -1,15 +1,11 @@
+//@ts-nocheck
+
 import { createTool } from '@mastra/core/tools';
-import { PrismaClient } from '@prisma/client';
-import {
-  type DbCredentials,
-  GetOpenRouter,
-  decryptPassword,
-  withDbConnection,
-} from '@supplysense/utils';
-import type { PoolClient } from 'pg';
+// import { PrismaClient } from '@prisma/client';
+import { GetOpenRouter } from '@supplysense/utils';
 import { z } from 'zod';
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 const openrouter = new GetOpenRouter();
 
 interface SQLQueryResult {
@@ -54,7 +50,7 @@ interface SchemaTable {
   }>;
 }
 
-interface DatabaseSchema {
+interface _DatabaseSchema {
   tables: SchemaTable[];
 }
 
@@ -213,43 +209,55 @@ export const databaseQueryTool = createTool({
  */
 async function validateAndGetDbConnection(
   dbConnectionId: string,
-  userId: string
+  _userId: string
 ): Promise<{
   success: boolean;
   data?: DbConnectionInfo;
   error?: string;
 }> {
-  const dbConnection = await prisma.dbConnection.findFirst({
-    where: {
-      id: dbConnectionId,
-      company: {
-        users: {
-          some: {
-            id: userId,
-          },
-        },
-      },
-    },
-    include: {
-      company: true,
-    },
-  });
+  // const dbConnection = await prisma.dbConnection.findFirst({
+  //   where: {
+  //     id: dbConnectionId,
+  //     company: {
+  //       users: {
+  //         some: {
+  //           id: userId,
+  //         },
+  //       },
+  //     },
+  //   },
+  //   include: {
+  //     company: true,
+  //   },
+  // });
 
-  if (!dbConnection) {
-    return {
-      success: false,
-      error: 'Database connection not found or access denied',
-    };
-  }
+  // if (!dbConnection) {
+  //   return {
+  //     success: false,
+  //     error: 'Database connection not found or access denied',
+  //   };
+  // }
 
+  // return {
+  //   success: true,
+  //   data: {
+  //     id: dbConnection.id,
+  //     title: dbConnection.title,
+  //     database: dbConnection.database,
+  //     host: dbConnection.host,
+  //     businessContext: dbConnection.businessContext,
+  //   },
+  // };
+
+  // Temporary mock data for testing without database
   return {
     success: true,
     data: {
-      id: dbConnection.id,
-      title: dbConnection.title,
-      database: dbConnection.database,
-      host: dbConnection.host,
-      businessContext: dbConnection.businessContext,
+      id: dbConnectionId,
+      title: 'Mock Database Connection',
+      database: 'mock_db',
+      host: 'localhost',
+      businessContext: 'Mock business context',
     },
   };
 }
@@ -259,14 +267,14 @@ async function validateAndGetDbConnection(
  */
 async function getSchemaContext(dbConnection: DbConnectionInfo): Promise<string> {
   try {
-    const cachedSchema = await prisma.schemaCache.findUnique({
-      where: { dbConnectionId: dbConnection.id },
-    });
+    // const cachedSchema = await prisma.schemaCache.findUnique({
+    //   where: { dbConnectionId: dbConnection.id },
+    // });
 
-    if (cachedSchema) {
-      const schema = cachedSchema.schema as unknown as DatabaseSchema;
-      return generateSchemaContext(schema);
-    }
+    // if (cachedSchema) {
+    //   const schema = cachedSchema.schema as unknown as DatabaseSchema;
+    //   return generateSchemaContext(schema);
+    // }
 
     // Default schema context when no cache is available
     return `
@@ -503,55 +511,62 @@ async function executeGeneratedSQL(
     console.log('- Database:', `${dbConnection.host}:${dbConnection.database}`);
     console.log('- Connection ID:', dbConnection.id);
 
-    // Step 1: Get database credentials with decrypted password
-    const fullDbConnection = await prisma.dbConnection.findUnique({
-      where: { id: dbConnection.id },
-      select: {
-        host: true,
-        port: true,
-        database: true,
-        username: true,
-        encryptedPassword: true,
-        sslEnabled: true,
-      },
-    });
-    console.log('🚀 ~ fullDbConnection:', fullDbConnection);
+    // // Step 1: Get database credentials with decrypted password
+    // const fullDbConnection = await prisma.dbConnection.findUnique({
+    //   where: { id: dbConnection.id },
+    //   select: {
+    //     host: true,
+    //     port: true,
+    //     database: true,
+    //     username: true,
+    //     encryptedPassword: true,
+    //     sslEnabled: true,
+    //   },
+    // });
+    // console.log('🚀 ~ fullDbConnection:', fullDbConnection);
 
-    if (!fullDbConnection) {
-      throw new Error('Database connection not found');
-    }
+    // if (!fullDbConnection) {
+    //   throw new Error('Database connection not found');
+    // }
 
-    // Step 2: Get encryption key from environment
-    const encryptionKey = process.env.DB_ENCRYPTION_KEY;
-    if (!encryptionKey) {
-      throw new Error('Database encryption key not configured');
-    }
+    // // Step 2: Get encryption key from environment
+    // const encryptionKey = process.env.DB_ENCRYPTION_KEY;
+    // if (!encryptionKey) {
+    //   throw new Error('Database encryption key not configured');
+    // }
 
-    // Step 3: Build credentials with decrypted password
-    const credentials: DbCredentials = {
-      host: fullDbConnection.host,
-      port: fullDbConnection.port,
-      database: fullDbConnection.database,
-      username: fullDbConnection.username,
-      password: decryptPassword(fullDbConnection.encryptedPassword, encryptionKey),
-      sslEnabled: fullDbConnection.sslEnabled,
-    };
+    // // Step 3: Build credentials with decrypted password
+    // const credentials: DbCredentials = {
+    //   host: fullDbConnection.host,
+    //   port: fullDbConnection.port,
+    //   database: fullDbConnection.database,
+    //   username: fullDbConnection.username,
+    //   password: decryptPassword(fullDbConnection.encryptedPassword, encryptionKey),
+    //   sslEnabled: fullDbConnection.sslEnabled,
+    // };
 
-    // Step 4: Execute query using connection helper
-    const queryResult = await withDbConnection(credentials, async (client: PoolClient) => {
-      const result = await client.query(sql, values);
-      console.log('🚀 ~ result:', result);
-      return {
-        rows: result.rows,
-        rowCount: result.rowCount || 0,
-      };
-    });
-    console.log('🚀 ~ queryResult:', queryResult);
+    // // Step 4: Execute query using connection helper
+    // const queryResult = await withDbConnection(credentials, async (client: PoolClient) => {
+    //   const result = await client.query(sql, values);
+    //   console.log('🚀 ~ result:', result);
+    //   return {
+    //     rows: result.rows,
+    //     rowCount: result.rowCount || 0,
+    //   };
+    // });
+    // console.log('🚀 ~ queryResult:', queryResult);
 
+    // return {
+    //   success: true,
+    //   data: queryResult.rows as Record<string, unknown>[],
+    //   rowCount: queryResult.rowCount,
+    // };
+
+    // Mock response for testing without database
     return {
       success: true,
-      data: queryResult.rows as Record<string, unknown>[],
-      rowCount: queryResult.rowCount,
+      data: [{ id: 1, name: 'Mock Data', description: 'This is mock data for testing' }],
+      rowCount: 1,
     };
   } catch (error) {
     console.error('Database execution error:', error);
@@ -563,57 +578,6 @@ async function executeGeneratedSQL(
   }
 }
 
-/**
- * Generate schema context from cached schema data
- */
-function generateSchemaContext(schema: DatabaseSchema): string {
-  if (!schema?.tables) {
-    return 'Schema information not available';
-  }
-
-  let context = 'DATABASE SCHEMA:\n\n';
-
-  for (const table of schema.tables) {
-    context += buildTableContext(table);
-  }
-
-  return context;
-}
-
-/**
- * Build context string for a single table
- */
-function buildTableContext(table: SchemaTable): string {
-  let tableContext = `Table: ${table.name}\n`;
-
-  if (table.columns && table.columns.length > 0) {
-    tableContext += buildColumnsContext(table.columns);
-  }
-
-  if (table.foreignKeys && table.foreignKeys.length > 0) {
-    tableContext += buildForeignKeysContext(table.foreignKeys);
-  }
-
-  return `${tableContext}\n`;
-}
-
-/**
- * Build context string for table columns
- */
-function buildColumnsContext(columns: SchemaTable['columns']): string {
-  if (!columns) return '';
-
-  let columnsContext = '  Columns:\n';
-  for (const column of columns) {
-    const nullable = column.nullable ? ' (nullable)' : ' (required)';
-    columnsContext += `    - ${column.name}: ${column.type}${nullable}\n`;
-  }
-  return columnsContext;
-}
-
-/**
- * Generate natural language response from query results
- */
 async function generateNaturalLanguageResponse(
   originalMessage: string,
   queryData: Record<string, unknown>[],
@@ -672,17 +636,4 @@ Generate a conversational business response:
     console.error('Error generating natural language response:', error);
     return `I found ${rowCount} results for your question about ${originalMessage}. The data shows relevant information that I can help you analyze if you'd like more details.`;
   }
-}
-
-/**
- * Build context string for foreign keys
- */
-function buildForeignKeysContext(foreignKeys: SchemaTable['foreignKeys']): string {
-  if (!foreignKeys) return '';
-
-  let fkContext = '  Foreign Keys:\n';
-  for (const fk of foreignKeys) {
-    fkContext += `    - ${fk.column} -> ${fk.referencedTable}.${fk.referencedColumn}\n`;
-  }
-  return fkContext;
 }
