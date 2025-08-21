@@ -2,29 +2,49 @@
 
 import { Button } from '@heroui/react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { FullLogo } from './Logo';
 
 const Navbar = () => {
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+
+    // Handle initial load
+    handleHashChange();
+
+    // Handle hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const navLinks = [
     {
       name: 'Features',
-      href: '#',
+      href: '#features',
     },
     {
       name: 'Use Cases',
-      href: '#',
+      href: '#use-cases',
     },
     {
       name: 'Pricing',
-      href: '#',
+      href: '#pricing',
     },
     {
       name: 'Q&A',
-      href: '#',
+      href: '#qna',
     },
     {
       name: 'Contact',
-      href: '#',
+      href: '#contact',
     },
   ];
 
@@ -42,7 +62,7 @@ const Navbar = () => {
             color="secondary"
             className="text-base font-normal"
           >
-            {link.name}
+            <Link href={link.href}>{link.name}</Link>
           </Button>
         ))}
       </div>

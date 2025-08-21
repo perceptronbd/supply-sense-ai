@@ -3,7 +3,7 @@ import SectionWrapper from '../ui/SectionWrapper';
 
 const QuestionSection = () => {
   return (
-    <SectionWrapper>
+    <SectionWrapper id="use-cases">
       {/* Header */}
       <h1 className="max-w-2xl pt-12 font-brand leading-snug text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto">
         What You Can Ask

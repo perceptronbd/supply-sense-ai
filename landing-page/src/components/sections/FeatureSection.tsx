@@ -2,7 +2,7 @@ import { Card, CardBody } from '@heroui/react';
 import { AlertCircle, Clock, Settings } from 'lucide-react';
 import SectionWrapper from '../ui/SectionWrapper';
 
-const Data = () => {
+const Features = () => {
   const challenges = [
     {
       icon: Settings,
@@ -25,7 +25,7 @@ const Data = () => {
   ];
 
   return (
-    <SectionWrapper size="large">
+    <SectionWrapper id="features" size="large">
       <div className="flex flex-col justify-center items-center xl:flex-row xl:justify-around gap-5">
         {/* text part - first column */}
         <div className="flex-1">
@@ -53,7 +53,7 @@ const Data = () => {
                     base: 'rounded-xl',
                   }}
                 >
-                  <CardBody className="flex flex-col items-center xl:items-start justify-start p-6 gap-4 bg-primary/20">
+                  <CardBody className="flex flex-col items-center xl:items-start justify-start p-6 gap-4 bg-default-50">
                     <div className="flex gap-3 items-center justify-start">
                       <challenge.icon className="w-7 h-7 text-content1-foreground" />
                       <h3 className="text-xl font-medium leading-tight font-brand bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800">
@@ -75,4 +75,4 @@ const Data = () => {
   );
 };
 
-export default Data;
+export default Features;

@@ -1,9 +1,8 @@
 import Banner from '../components/sections/BannerSection';
 import BuiltSection from '../components/sections/BuiltSection';
-import Data from '../components/sections/DataSection';
 import ExploreSection from '../components/sections/ExploreSection';
+import Features from '../components/sections/FeatureSection';
 import QuestionSection from '../components/sections/QuestionSection';
-import SupplySense from '../components/sections/SupplySense';
 import Footer from '../components/ui/Footer';
 import Navbar from '../components/ui/Navbar';
 
@@ -23,18 +22,13 @@ const LandingPage = () => {
       <div className="absolute -top-5 -right-96 w-24 h-[45%] bg-gradient-to-b from-primary-900/30 via-primary-900/10 to-transparent blur-2xl transform rotate-[37deg] origin-top-right z-1" />
 
       {/* Data section */}
-      <Data />
-
-      {/* Supply sense */}
-      <SupplySense />
-
-      {/* background radial effect */}
-
-      {/* Questions and answers */}
-      <QuestionSection />
+      <Features />
 
       {/* Built Section */}
       <BuiltSection />
+
+      {/* Questions and answers */}
+      <QuestionSection />
 
       {/* explore section */}
       <ExploreSection />
