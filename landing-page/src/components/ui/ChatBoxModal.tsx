@@ -12,8 +12,8 @@ import {
   ModalHeader,
   ScrollShadow,
 } from '@heroui/react';
-import { Send, User } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { Icons } from '../icons';
 import { FullLogo, Logo } from './Logo';
 
 interface ChatMessage {
@@ -161,7 +161,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                       {/* user message */}
                       {msg.sender === 'user' && (
                         <Avatar
-                          icon={<User className="w-4 h-4" />}
+                          icon={<Icons.User className="w-4 h-4" />}
                           size="sm"
                           classNames={{
                             base: 'bg-primary-100 flex-shrink-0',
@@ -220,7 +220,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   size="sm"
                   className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
                 >
-                  <Send size={20} className="" />
+                  <Icons.SendIcon className="w-7 h-7" />
                 </Button>
               </Form>
             </ModalFooter>

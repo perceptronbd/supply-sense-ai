@@ -1,8 +1,12 @@
+'use client';
+
 import { Card, CardBody } from '@heroui/react';
-import { AlertCircle, Clock, Settings } from 'lucide-react';
+import useGradientIcons from 'landing-page/src/hooks/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Features = () => {
+  const { Settings, DangerCircle, Clock } = useGradientIcons();
+
   const challenges = [
     {
       icon: Settings,
@@ -11,7 +15,7 @@ const Features = () => {
         'New team members need extensive training just to navigate your operational systems.',
     },
     {
-      icon: AlertCircle,
+      icon: DangerCircle,
       title: 'Decision Delays',
       description:
         'Critical decisions postponed because getting the right information takes too long.',
@@ -55,7 +59,7 @@ const Features = () => {
                 >
                   <CardBody className="flex flex-col items-center xl:items-start justify-start p-6 gap-4 bg-default-50">
                     <div className="flex gap-3 items-center justify-start">
-                      <challenge.icon className="w-7 h-7 text-content1-foreground" />
+                      <challenge.icon className="w-7 h-7" />
                       <h3 className="text-xl font-medium leading-tight font-brand bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800">
                         {challenge.title}
                       </h3>

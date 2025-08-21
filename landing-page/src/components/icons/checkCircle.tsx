@@ -13,14 +13,14 @@ const checkCircle = ({ className = '' }: { className?: string }) => {
         cy="20.4518"
         r="16.6667"
         stroke="url(#paint0_linear_8463_1894)"
-        stroke-width="1.5"
+        strokeWidth="1.5"
       />
       <path
         d="M14.1665 21.2852L17.4998 24.6185L25.8332 16.2852"
         stroke="white"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <defs>
         <linearGradient
@@ -31,8 +31,8 @@ const checkCircle = ({ className = '' }: { className?: string }) => {
           y2="37.1185"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F08977" />
-          <stop offset="1" stop-color="#F8C9C0" />
+          <stop stopColor="#F08977" />
+          <stop offset="1" stopColor="#F8C9C0" />
         </linearGradient>
       </defs>
     </svg>

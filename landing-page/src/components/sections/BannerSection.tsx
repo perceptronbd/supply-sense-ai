@@ -1,8 +1,8 @@
 'use client';
 
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
-import { ArrowRight, Send } from 'lucide-react';
 import { useState } from 'react';
+import { Icons } from '../icons';
 import ChatBoxModal from '../ui/ChatBoxModal';
 import { FullLogo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
@@ -36,7 +36,7 @@ const Banner = () => {
           color="primary"
           radius="md"
           size="lg"
-          endContent={<ArrowRight />}
+          endContent={<Icons.ArrowRight />}
         >
           Try For Free
         </Button>
@@ -82,7 +82,7 @@ const Banner = () => {
                 size="sm"
                 className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
               >
-                <Send size={20} className="" />
+                <Icons.SendIcon className="w-7 h-7" />
               </Button>
             </form>
           </CardBody>
