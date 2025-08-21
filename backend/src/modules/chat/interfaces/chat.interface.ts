@@ -1,19 +1,8 @@
-export interface ChatMessage {
-  id: string;
-  sessionId: string;
-  content: string;
-  type: 'user' | 'assistant' | 'system' | 'error';
-  contentType: 'text' | 'data' | 'chart' | 'table';
-  metadata?: Record<string, unknown>;
-  parentMessageId?: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Message } from '@prisma/client';
 
 export interface QueryContext {
   userId: string;
-  sessionHistory: ChatMessage[];
+  sessionHistory: Message[];
   availableTables: string[];
   userPermissions: string[];
 }

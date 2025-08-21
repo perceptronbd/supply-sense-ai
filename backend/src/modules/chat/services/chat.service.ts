@@ -4,8 +4,6 @@ import { McpClientService } from '@modules/mcp-client/services/mcp-client.servic
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { GetOpenRouter } from '@supplysense/utils';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
-import { DatabaseSchemaService } from './database-schema.service';
-import { DynamicSQLService } from './dynamic-sql.service';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
 
@@ -18,10 +16,6 @@ export class ChatService {
   constructor(
     @Inject(SessionService) private readonly sessionService: SessionService,
     @Inject(MessageService) private readonly messageService: MessageService,
-    @Inject(DynamicSQLService)
-    private readonly dynamicSQLService: DynamicSQLService,
-    @Inject(DatabaseSchemaService)
-    private readonly databaseSchemaService: DatabaseSchemaService,
     @Inject(McpClientService)
     private readonly mcpClientService: McpClientService,
     @Inject(PrismaService)
@@ -80,10 +74,6 @@ export class ChatService {
       this.logger.log(
         `Processing user message: "${message}" for user ${userId} in session ${sessionId}`
       );
-
-      // Create user message
-      // await this.messageService.createMessage(sessionId, message, 'user', userId);
-      // this.logger.log('User message created successfully');
 
       // Update session activity
       await this.sessionService.updateLastActivity(sessionId);
@@ -145,7 +135,7 @@ export class ChatService {
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);
       // Create assistant message
-      await this.messageService.createMessage(sessionId, aiResponse, 'assistant', 'assistant');
+      await this.messageService.createMessage(sessionId, aiResponse, 'assistant');
       this.logger.log('Assistant message created successfully');
 
       return {
@@ -162,8 +152,7 @@ export class ChatService {
       await this.messageService.createMessage(
         sessionId,
         'I apologize, but I encountered an error processing your request. Please try again.',
-        'error',
-        'assistant'
+        'error'
       );
 
       return {
