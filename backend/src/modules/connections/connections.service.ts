@@ -1,5 +1,5 @@
-import { PrismaService } from '@/app/prisma.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import {
   decryptPassword,
   encryptPassword,

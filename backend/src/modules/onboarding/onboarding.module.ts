@@ -1,5 +1,5 @@
-import { PrismaModule } from '@/app/prisma.module';
 import { Module } from '@nestjs/common';
+import { PrismaModule } from '@supplysense/prisma';
 import { ConnectionsModule } from '../connections/connections.module';
 import { McpClientModule } from '../mcp-client/mcp-client.module';
 

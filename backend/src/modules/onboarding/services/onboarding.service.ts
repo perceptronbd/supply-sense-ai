@@ -1,5 +1,5 @@
-import { PrismaService } from '@/app/prisma.service';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from '@supplysense/utils/server';
 import { ConnectionsService } from '../../connections/connections.service';

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import type { Message } from '@prisma/client';
 import type { JsonValue } from '@prisma/client/runtime/library';
+import { PrismaService } from '@supplysense/prisma';
 
 type MessageType = 'user' | 'assistant' | 'system' | 'error';
 

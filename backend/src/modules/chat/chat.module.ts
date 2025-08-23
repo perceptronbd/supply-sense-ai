@@ -1,9 +1,9 @@
-﻿import { PrismaModule } from '@app/prisma.module';
-import { AuthModule } from '@modules/auth/auth.module';
+﻿import { AuthModule } from '@modules/auth/auth.module';
 import { McpClientModule } from '@modules/mcp-client/mcp-client.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { PrismaModule } from '@supplysense/prisma';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';

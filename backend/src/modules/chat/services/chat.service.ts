@@ -1,7 +1,7 @@
-import { PrismaService } from '@/app/prisma.service';
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import { GetOpenRouter } from '@supplysense/utils';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';

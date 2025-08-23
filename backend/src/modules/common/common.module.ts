@@ -1,5 +1,5 @@
-import { PrismaModule } from '@/app/prisma.module';
 import { Module } from '@nestjs/common';
+import { PrismaModule } from '@supplysense/prisma';
 import { TokenAndCredit } from './services/tokenAndCredit.service';
 
 @Module({

@@ -1,6 +1,6 @@
-import { PrismaService } from '@app/prisma.service';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import { DatabaseSchemaService } from './database-schema.service';
 
 interface SQLQueryResult {
