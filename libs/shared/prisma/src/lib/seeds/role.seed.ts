@@ -1,4 +1,4 @@
-import { PrismaClient, type Role } from '@prisma/client';
+import { PrismaClient, type Role } from '@supplysense/prisma-client'
 
 export async function seedRoles(prisma: PrismaClient, companies: any[], permissions: any[]) {
   console.log('Seeding roles...');

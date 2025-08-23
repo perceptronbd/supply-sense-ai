@@ -24,7 +24,7 @@
     "db:dev": "cd backend && npx prisma migrate dev",
     "db:start": "docker-compose up -d postgres",
     "db:stop": "docker-compose stop postgres",
-    "db:generate": "cd libs/shared/prisma && npx prisma generate",
+    "db:generate": "npx prisma generate --schema=libs/shared/prisma/schema.prisma",
     "db:seed": "cd libs/shared/prisma && npx tsx src/lib/seeds/index.ts",
     "start:dev": "pnpm run db:start && pnpm run backend:serve",
     "dev": "concurrently \"pnpm run db:start\" \"pnpm run mcp-server:serve\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\"",

@@ -1,4 +1,4 @@
-import { PrismaClient, SubscriptionPlans } from '@prisma/client';
+import { PrismaClient, SubscriptionPlans } from '@supplysense/prisma-client';
 
 export async function seedSubscriptionPlans(prisma: PrismaClient) {
   console.log('Seeding subscription plans...');

@@ -1,4 +1,4 @@
-import { type Permission, PermissionAction, PrismaClient } from '@prisma/client';
+import { type Permission, PermissionAction, PrismaClient } from '@supplysense/prisma-client'
 
 export async function seedPermissions(prisma: PrismaClient) {
   console.log('Seeding permissions...');
