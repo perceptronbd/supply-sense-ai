@@ -1,6 +1,6 @@
-import { PrismaService } from '@app/prisma.service';
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import type { Session } from '@prisma/client';
+import { PrismaService } from '@supplysense/prisma';
 
 @Injectable()
 export class SessionService implements OnModuleDestroy {

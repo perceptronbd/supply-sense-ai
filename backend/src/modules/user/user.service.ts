@@ -1,4 +1,3 @@
-import { PrismaService } from '@app/prisma.service';
 import {
   BadRequestException,
   ConflictException,
@@ -7,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import * as argon2 from 'argon2';
 import { AssignRolesDto } from './dto/assign-roles.dto';
 import { CreateUserDto } from './dto/create-user.dto';

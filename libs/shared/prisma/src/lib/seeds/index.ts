@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
+import { config } from "dotenv";
 import { seedCompanies } from './company.seed';
 import { seedCompanySubscriptions } from './companySubscription.seed';
 import { seedPermissions } from './permission.seed';
 import { seedRoles } from './role.seed';
 import { seedSubscriptionPlans } from './subscriptionPlan.seed';
 import { seedUsers } from './user.seed';
-
+config();
 const prisma = new PrismaClient();
 
 async function main() {

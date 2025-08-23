@@ -1,8 +1,8 @@
-import { PrismaService } from '@/app/prisma.service';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import type {
   IDatabaseClient,
   IDatabaseRow,

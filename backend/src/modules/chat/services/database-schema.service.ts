@@ -1,5 +1,5 @@
-import { PrismaService } from '@app/prisma.service';
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 
 export interface SchemaColumn {
   name: string;
