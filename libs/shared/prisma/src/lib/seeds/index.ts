@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@supplysense/prisma-client';
 import { config } from "dotenv";
 import { seedCompanies } from './company.seed';
 import { seedCompanySubscriptions } from './companySubscription.seed';

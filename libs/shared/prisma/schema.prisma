@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  // output   = "../../generated/prisma"
+  output   = "./generated"
 }
 
 datasource db {
@@ -171,8 +171,8 @@ model User {
   lastLogin DateTime?
 
   // Relationships - Multi-tenant with role-based access
-  userRoles            UserRole[] // Multiple roles per user
-  sessions            Session[] // Conversation sessions
+  userRoles UserRole[] // Multiple roles per user
+  sessions  Session[] // Conversation sessions
 
   @@map("users")
 }
@@ -192,8 +192,6 @@ model UserRole {
   @@unique([userId, roleId])
   @@map("user_roles")
 }
-
-
 
 model SchemaCache {
   id             String       @id @default(uuid())
@@ -320,11 +318,12 @@ model UsageRecord {
   timestamp      DateTime @default(now()) // the timestamp of the usage record
   inputTokens    Int      @default(0)
   outputTokens   Int      @default(0)
-  toolUsed       String?  @default("") 
+  toolUsed       String?  @default("")
   totalTokens    Int      @default(0)
   costUSD        Decimal  @default(0) // Internal cost
   creditsCharged Int      @default(1) // Credits deducted from plan
   metadata       Json? // Optional: store query text, model name, etc.
+
   @@map("usage_record")
 }
 
@@ -366,6 +365,7 @@ model CompanySubscriptionHistory {
   subscriptionPlanId   String
   subscriptionPlan     SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
   purchaseHistories    PurchaseHistory[]
+
   @@map("company_subscription_history")
 }
 
@@ -390,6 +390,7 @@ model PurchaseHistory {
 
   companySubscriptionHistoryId String
   companySubscriptionHistory   CompanySubscriptionHistory @relation(fields: [companySubscriptionHistoryId], references: [id], onDelete: Cascade)
+
   @@index([paymentStatus], name: "idx_purchase_history_payment_status")
   @@map("purchase_history")
 }
@@ -410,26 +411,25 @@ model UsageTracking {
   @@map("usage_tracking")
 }
 
-
 // Conversation sessions
 model Session {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   lastActivity DateTime @default(now())
 
   // Relationships
-  userId           String
-  user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dbConnectionId   String
-  dbConnection     DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
-  
-  messages         Message[]
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dbConnectionId String
+  dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
+
+  messages          Message[]
   conversationState ConversationState?
-  
+
   @@map("sessions")
 }
 
@@ -437,29 +437,29 @@ model Session {
 model Message {
   id        String   @id @default(cuid())
   content   String
-  type      String   // 'user', 'assistant', 'system', 'error'
-  metadata  Json?    // Additional data like tool usage, timestamps, etc.
+  type      String // 'user', 'assistant', 'system', 'error'
+  metadata  Json? // Additional data like tool usage, timestamps, etc.
   createdAt DateTime @default(now())
 
   // Relationships
   sessionId String
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
+
   @@map("messages")
 }
 
 // Conversation state for context management
 model ConversationState {
-  id           String   @id @default(cuid())
-  summary      String   // AI-generated conversation summary
-  entities     Json     // Key entities mentioned in conversation
-  state        Json?    // Conversation state variables
-  topics       Json     // Recent topics discussed
-  lastUpdated  DateTime @default(now())
+  id          String   @id @default(cuid())
+  summary     String // AI-generated conversation summary
+  entities    Json // Key entities mentioned in conversation
+  state       Json? // Conversation state variables
+  topics      Json // Recent topics discussed
+  lastUpdated DateTime @default(now())
 
   // Relationships
   sessionId String  @unique
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
+
   @@map("conversation_states")
 }

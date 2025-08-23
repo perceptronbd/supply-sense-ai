@@ -1,4 +1,4 @@
-import { PrismaClient, type User } from '@prisma/client';
+import { PrismaClient, type User } from '@supplysense/prisma-client';
 import * as argon2 from 'argon2';
 
 export async function seedUsers(prisma: PrismaClient, companies: any[], roles: any[]) {
