@@ -19,7 +19,7 @@ const Banner = () => {
 
   return (
     <SectionWrapper>
-      <h1 className="font-brand text-4xl md:text-6xl font-bold text-foreground text-center mx-auto">
+      <h1 className="font-brand text-4xl lg:text-6xl font-medium lg:font-bold lg:text-foreground text-secondary text-center mx-auto">
         <span className="text-primary">Know </span>Your Operations.
         <br /> <span className="text-primary">Ask </span> Anything. <br />
         <span className="text-primary">Get </span>
@@ -51,14 +51,14 @@ const Banner = () => {
           classNames={{
             base: 'bg-default-200',
           }}
-          className="card-blur-effect"
+          className="card-blur-effect tilted-cylinder-glow"
         >
           <CardHeader className="flex justify-between items-center px-6 py-4 relative">
             <FullLogo className="w-40 text-default" />
-            {/* Glow effect - positioned inside the card header */}
-            {/* <div className="absolute z-30 -bottom-[40%] left-1/2 -translate-x-1/2 w-[50vw] h-[45vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" /> */}
           </CardHeader>
           <CardBody className="px-6 pb-6 relative z-10">
+            {/* Glow effect - positioned inside the card header */}
+
             <form onSubmit={handleSubmit} className="relative">
               <Input
                 onClick={() => setIsModalOpen(true)}

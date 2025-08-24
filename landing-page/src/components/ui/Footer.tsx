@@ -1,6 +1,6 @@
 import { Mailbox, MapPin, Phone } from 'lucide-react';
 import Link from 'next/link';
-import { FiFacebook, FiInstagram, FiLinkedin, FiYoutube } from 'react-icons/fi';
+import { Icons } from '../icons';
 import { FullLogo } from './Logo';
 
 const Footer = () => {
@@ -16,10 +16,10 @@ const Footer = () => {
             Making operational data accessible through natural language.
           </p>
           <div className="flex gap-6 justify-center xl:justify-start items-center">
-            <FiFacebook size={24} />
-            <FiYoutube size={24} />
-            <FiLinkedin size={24} />
-            <FiInstagram size={24} />
+            <Icons.Facebook className="h-6 w-6" />
+            <Icons.Youtube className="h-6 w-6" />
+            <Icons.Linkedin className="h-6 w-6" />
+            <Icons.Instagram className="h-6 w-6" />
           </div>
         </div>
 

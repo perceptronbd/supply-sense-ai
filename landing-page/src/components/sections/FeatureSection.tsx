@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardBody } from '@heroui/react';
-import useGradientIcons from 'landing-page/src/hooks/useGradientIcons';
+import useGradientIcons from 'landing-page/src/components/icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Features = () => {
@@ -30,10 +30,10 @@ const Features = () => {
 
   return (
     <SectionWrapper id="features" size="large">
-      <div className="flex flex-col justify-center items-center xl:flex-row xl:justify-around gap-5">
+      <div className="flex flex-col justify-center items-center lg:flex-row lg:justify-around gap-5">
         {/* text part - first column */}
         <div className="flex-1">
-          <h1 className="font-brand text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto xl:mx-0 xl:text-start max-w-md">
+          <h1 className="font-brand text-3xl lg:text-4xl font-medium lg:font-bold text-content1-foreground text-center mx-auto xl:mx-0 xl:text-start max-w-md">
             You've Got Data. But Getting Answers Is Still a Pain.
           </h1>
 

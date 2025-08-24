@@ -96,9 +96,6 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       <ModalContent>
         {() => (
           <>
-            {/* Glow effect - positioned inside the card header */}
-            {/* <div className="absolute z-30 bottom-[40%] left-1/2 -translate-x-1/2 w-[25vw] h-[25vw] rounded-full opacity-40 pointer-events-none bg-secondary/20 blur-xl" /> */}
-
             {/* Header */}
             <ModalHeader className="flex items-center justify-between p-4">
               <FullLogo className="w-40 text-default" />

@@ -1,4 +1,12 @@
-import { ArrowRight, User } from 'lucide-react';
+import {
+  ArrowRight,
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  User,
+  X,
+  YoutubeIcon,
+} from 'lucide-react';
 import { SVGProps } from 'react';
 
 export type IconType = SVGProps<SVGSVGElement>;
@@ -14,4 +22,28 @@ export const Icons = {
   ),
   ArrowRight: (props: IconType) => <ArrowRight {...props} />,
   User: (props: IconType) => <User {...props} />,
+  Facebook: (props: IconType) => <FacebookIcon {...props} />,
+  Instagram: (props: IconType) => <InstagramIcon {...props} />,
+  Linkedin: (props: IconType) => <LinkedinIcon {...props} />,
+  Youtube: (props: IconType) => <YoutubeIcon {...props} />,
+  List: (props: IconType) => (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M26.6665 9.33398L5.33317 9.33398"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+      <path d="M20 16H5.33333" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      <path d="M12 22.666H5.33333" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+  ),
+  X: (props: IconType) => <X {...props} />,
 };
