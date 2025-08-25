@@ -28,6 +28,8 @@ export const ROUTE_PATHS = {
   REQUEST_FORMS: '/request-forms',
   USERS: '/users',
   ROLES: '/roles',
+
+  ONBOARDING: '/onboarding'  ,
 } as const;
 
 // Create union types from the route paths

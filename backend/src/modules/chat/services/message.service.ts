@@ -1,34 +1,23 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import type { Message } from '@prisma/client';
 import type { JsonValue } from '@prisma/client/runtime/library';
 import { PrismaService } from '@supplysense/prisma';
 
 type MessageType = 'user' | 'assistant' | 'system' | 'error';
 
-interface CachedMessages {
-  messages: Message[];
-  lastFetch: Date;
-  lastModified: Date;
-}
-
 @Injectable()
-export class MessageService implements OnModuleDestroy {
+export class MessageService {
   private readonly logger = new Logger(MessageService.name);
-  private readonly messages = new Map<string, CachedMessages>();
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
-  private readonly MAX_CACHE_SIZE = 5000; // Maximum number of cached sessions
-  private readonly MAX_MESSAGES_PER_SESSION = 1000; // Maximum messages per session in cache
-  private readonly cleanupInterval: NodeJS.Timeout;
 
-  constructor(private readonly prisma: PrismaService) {
-    // Set up periodic cache cleanup (every 10 minutes)
-    this.cleanupInterval = setInterval(
-      () => {
-        this.cleanupExpiredCache();
-      },
-      10 * 60 * 1000
-    );
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService
+  ) {
+    // Validate Prisma service is properly injected during construction
+    if (!this.prisma) {
+      this.logger.error('PrismaService was not properly injected in constructor');
+      throw new Error('PrismaService dependency injection failed');
+    }
   }
   async createMessage(
     sessionId: string,
@@ -37,7 +26,38 @@ export class MessageService implements OnModuleDestroy {
     metadata?: Record<string, unknown>
   ): Promise<Message> {
     try {
-      // Create message in database first
+      // Validate input parameters
+      if (!sessionId || typeof sessionId !== 'string') {
+        throw new Error('Invalid sessionId provided');
+      }
+      if (!content || typeof content !== 'string') {
+        throw new Error('Invalid content provided');
+      }
+      if (!type || !['user', 'assistant', 'system', 'error'].includes(type)) {
+        throw new Error('Invalid message type provided');
+      }
+
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Validate session exists first
+      const sessionExists = await this.prisma.session.findFirst({
+        where: {
+          id: sessionId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (!sessionExists) {
+        this.logger.error(`Session validation failed: Session ${sessionId} not found or inactive`);
+        throw new Error(`Session ${sessionId} not found or inactive`);
+      }
+
+      // Create message in database
       const dbMessage = await this.prisma.message.create({
         data: {
           content,
@@ -45,37 +65,41 @@ export class MessageService implements OnModuleDestroy {
           metadata: metadata ? (metadata as Record<string, never>) : null,
           sessionId,
         },
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
       });
 
-      // Update cache - create session cache if it doesn't exist
-      const now = new Date();
-      if (!this.messages.has(sessionId)) {
-        this.messages.set(sessionId, {
-          messages: [],
-          lastFetch: now,
-          lastModified: now,
-        });
+      // Validate the created message
+      if (!dbMessage || !dbMessage.id || !dbMessage.content) {
+        throw new Error('Failed to create valid message in database');
       }
 
-      const sessionCache = this.messages.get(sessionId);
-      if (sessionCache) {
-        sessionCache.messages.push(dbMessage);
-        sessionCache.lastModified = now;
+      // Convert to proper Message type
+      const messageResult: Message = {
+        id: dbMessage.id,
+        content: dbMessage.content,
+        type: dbMessage.type as MessageType,
+        metadata: dbMessage.metadata as JsonValue,
+        createdAt: dbMessage.createdAt,
+        sessionId: dbMessage.sessionId,
+      };
 
-        // Enforce message limit per session to prevent memory issues
-        if (sessionCache.messages.length > this.MAX_MESSAGES_PER_SESSION) {
-          sessionCache.messages = sessionCache.messages.slice(-this.MAX_MESSAGES_PER_SESSION);
-        }
-      }
+      this.logger.log(`Message created: ${messageResult.id} in session ${sessionId}`);
 
-      // Check cache size and cleanup if necessary
-      this.enforceMaxCacheSize();
-
-      this.logger.log(`Message created: ${dbMessage.id} in session ${sessionId}`);
-
-      return dbMessage;
+      return messageResult;
     } catch (error) {
       this.logger.error('Failed to create message:', error);
+      this.logger.error('Session ID:', sessionId);
+      this.logger.error('Message content length:', content?.length || 0);
+      this.logger.error('Prisma service available:', !!this.prisma);
+      this.logger.error('Error stack:', error.stack);
       throw new Error('Failed to create message');
     }
   }
@@ -86,42 +110,64 @@ export class MessageService implements OnModuleDestroy {
         `Fetching messages for session ${sessionId}, limit: ${limit}, offset: ${offset}`
       );
 
-      const now = Date.now();
-      const sessionCache = this.messages.get(sessionId);
-
-      // Check if cache is valid and recent
-      const shouldUseCache =
-        sessionCache && now - sessionCache.lastFetch.getTime() < this.CACHE_TTL_MS && offset === 0; // Only use cache for first page
-
-      if (shouldUseCache && sessionCache) {
-        this.logger.log(`Using cached messages for session ${sessionId}`);
-        const sortedMessages = [...sessionCache.messages].sort(
-          (a: Message, b: Message) => a.createdAt.getTime() - b.createdAt.getTime()
-        );
-        return sortedMessages.slice(offset, offset + limit);
+      // Validate input parameters
+      if (!sessionId || typeof sessionId !== 'string') {
+        throw new Error('Invalid sessionId provided');
+      }
+      
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
       }
 
-      // If not in cache or cache is stale, fetch from database
+      // Validate session exists first
+      const sessionExists = await this.prisma.session.findFirst({
+        where: {
+          id: sessionId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (!sessionExists) {
+        this.logger.error(`Session validation failed in getSessionMessages: Session ${sessionId} not found or inactive`);
+        return [];
+      }
+
+      // Fetch messages from database
       const dbMessages = await this.prisma.message.findMany({
         where: { sessionId },
         orderBy: { createdAt: 'asc' },
         skip: offset,
         take: limit,
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
       });
 
-      // Update cache only for first page to avoid cache complexity
-      if (offset === 0) {
-        const cacheData: CachedMessages = {
-          messages: dbMessages,
-          lastFetch: new Date(),
-          lastModified: new Date(),
-        };
-        this.messages.set(sessionId, cacheData);
-      }
+      // Convert all database results to proper Message types before returning
+      const convertedMessages = dbMessages.map((msg): Message => ({
+        id: msg.id,
+        content: msg.content,
+        type: msg.type as MessageType,
+        metadata: msg.metadata as JsonValue,
+        createdAt: msg.createdAt,
+        sessionId: msg.sessionId,
+      }));
 
-      return dbMessages;
+      return convertedMessages;
     } catch (error) {
       this.logger.error('Failed to fetch session messages:', error);
+      this.logger.error('Session ID:', sessionId);
+      this.logger.error('Prisma service available:', !!this.prisma);
+      this.logger.error('Error stack:', error.stack);
       throw new Error('Failed to fetch messages');
     }
   }
@@ -132,33 +178,31 @@ export class MessageService implements OnModuleDestroy {
     try {
       this.logger.log(`Updating message ${messageId}`);
 
-      // Update in database first
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Update in database
       const dbMessage = await this.prisma.message.update({
         where: { id: messageId },
         data: {
           content: updates.content,
           metadata: updates.metadata ? (updates.metadata as Record<string, never>) : undefined,
         },
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
       });
 
-      // Update cache - find and update the message in all sessions
-      for (const [sessionId, sessionCache] of this.messages.entries()) {
-        const messageIndex = sessionCache.messages.findIndex((msg) => msg.id === messageId);
-        if (messageIndex !== -1) {
-          const updatedMessage: Message = {
-            ...sessionCache.messages[messageIndex],
-            content: dbMessage.content,
-            metadata: dbMessage.metadata as unknown as JsonValue,
-          };
-          sessionCache.messages[messageIndex] = updatedMessage;
-          sessionCache.lastModified = new Date();
-
-          this.logger.log(`Message ${messageId} updated in session ${sessionId}`);
-          return updatedMessage;
-        }
-      }
-
-      // If not in cache, create from database result
+      // Convert to proper Message type
       const message: Message = {
         id: dbMessage.id,
         sessionId: dbMessage.sessionId,
@@ -168,9 +212,11 @@ export class MessageService implements OnModuleDestroy {
         createdAt: dbMessage.createdAt,
       };
 
+      this.logger.log(`Message ${messageId} updated successfully`);
       return message;
     } catch (error) {
       this.logger.error('Failed to update message:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw error;
     }
   }
@@ -179,23 +225,21 @@ export class MessageService implements OnModuleDestroy {
     try {
       this.logger.log(`Deleting message ${messageId}`);
 
-      // Delete from database first
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Delete from database
       await this.prisma.message.delete({
         where: { id: messageId },
       });
 
-      // Remove from cache - find and remove the message from all sessions
-      for (const [sessionId, sessionCache] of this.messages.entries()) {
-        const messageIndex = sessionCache.messages.findIndex((msg) => msg.id === messageId);
-        if (messageIndex !== -1) {
-          sessionCache.messages.splice(messageIndex, 1);
-          sessionCache.lastModified = new Date();
-          this.logger.log(`Message ${messageId} deleted from session ${sessionId}`);
-          break;
-        }
-      }
+      this.logger.log(`Message ${messageId} deleted successfully`);
     } catch (error) {
       this.logger.error('Failed to delete message:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw new Error('Failed to delete message');
     }
   }
@@ -203,7 +247,13 @@ export class MessageService implements OnModuleDestroy {
     try {
       this.logger.log(`Searching messages in session ${sessionId} with query: ${query}`);
 
-      // Search in database for more comprehensive results
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Search in database
       const searchResults = await this.prisma.message.findMany({
         where: {
           sessionId,
@@ -214,94 +264,40 @@ export class MessageService implements OnModuleDestroy {
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
       });
 
-      return searchResults;
+      // Convert search results to proper Message types
+      const convertedResults = searchResults.map((msg): Message => ({
+        id: msg.id,
+        content: msg.content,
+        type: msg.type as MessageType,
+        metadata: msg.metadata as JsonValue,
+        createdAt: msg.createdAt,
+        sessionId: msg.sessionId,
+      }));
+
+      return convertedResults;
     } catch (error) {
       this.logger.error('Failed to search messages:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw new Error('Failed to search messages');
     }
   }
 
-  /**
-   * Clear cache for a specific session or all sessions
-   */
-  clearCache(sessionId?: string): void {
-    if (sessionId) {
-      this.messages.delete(sessionId);
-      this.logger.log(`Cache cleared for session ${sessionId}`);
-    } else {
-      this.messages.clear();
-      this.logger.log('All message cache cleared');
-    }
-  }
 
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): { totalSessions: number; totalMessages: number } {
-    const totalSessions = this.messages.size;
-    let totalMessages = 0;
-
-    for (const sessionCache of this.messages.values()) {
-      totalMessages += sessionCache.messages.length;
-    }
-
-    return { totalSessions, totalMessages };
-  }
-
-  /**
-   * Clean up expired cache entries to prevent memory leaks
-   */
-  private cleanupExpiredCache(): void {
-    const now = Date.now();
-
-    // Clean up expired cache entries
-    for (const [sessionId, sessionCache] of this.messages.entries()) {
-      const cacheAge = now - sessionCache.lastFetch.getTime();
-      if (cacheAge > this.CACHE_TTL_MS) {
-        this.messages.delete(sessionId);
-        this.logger.debug(`Expired cache removed for session ${sessionId}`);
-      }
-    }
-
-    this.logger.debug(`Cache cleanup completed. Active sessions: ${this.messages.size}`);
-  }
-
-  /**
-   * Enforce maximum cache size to prevent memory leaks
-   */
-  private enforceMaxCacheSize(): void {
-    if (this.messages.size > this.MAX_CACHE_SIZE) {
-      // Remove oldest 20% of entries based on last fetch time
-      const entriesToRemove = Math.floor(this.MAX_CACHE_SIZE * 0.2);
-      const entries = Array.from(this.messages.entries());
-
-      // Sort by lastFetch (oldest first)
-      entries.sort((a, b) => a[1].lastFetch.getTime() - b[1].lastFetch.getTime());
-
-      for (let i = 0; i < entriesToRemove; i++) {
-        this.messages.delete(entries[i][0]);
-      }
-
-      this.logger.warn(
-        `Cache size exceeded limit. Removed ${entriesToRemove} oldest session caches.`
-      );
-    }
-  }
-
-  /**
-   * Cleanup method to be called on service destruction
-   */
-  onModuleDestroy() {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
-    this.logger.log('MessageService cleanup completed');
-  }
   private generateId(): string {
     return randomUUID();
   }
+  
   private determineContentType(
     content: string,
     metadata?: Record<string, unknown>

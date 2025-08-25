@@ -39,7 +39,7 @@ export class ChatService {
       const tools = await mcpClient.getTools();
       this.chatAgent = new Agent({
         name: 'ChatAgent',
-        description: 'AI assistant specialized in supply chain management and logistics',
+        description: 'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
         instructions:
           'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
         model: this.openrouter.getModel(),
@@ -80,7 +80,7 @@ export class ChatService {
       this.logger.log('Session activity updated');
 
       // Get session history for context
-      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
+      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10)
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
       // Prepare context for the AI agent

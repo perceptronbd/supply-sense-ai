@@ -13,35 +13,35 @@ export default function ChatPage() {
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
 
   // Automatically create a session when the page loads
-  useEffect(() => {
-    const initializeSession = async () => {
-      try {
-        const newSession = await createSession({
-          title: `Chat ${new Date().toLocaleString()}`,
-        }).unwrap();
+  // useEffect(() => {
+  //   const initializeSession = async () => {
+  //     try {
+  //       const newSession = await createSession({
+  //         title: `Chat ${new Date().toLocaleString()}`,
+  //       }).unwrap();
 
-        setActiveSessionId(newSession.id);
-        console.log('Chat session initialized:', newSession.id);
-      } catch (error) {
-        console.error('Failed to initialize chat session:', error);
+  //       setActiveSessionId(newSession.id);
+  //       console.log('Chat session initialized:', newSession.id);
+  //     } catch (error) {
+  //       console.error('Failed to initialize chat session:', error);
 
-        // Get enhanced error information for toast
-        const toastError = getToastErrorMessage(error);
+  //       // Get enhanced error information for toast
+  //       const toastError = getToastErrorMessage(error);
 
-        // Show error toast
-        addToast({
-          title: toastError.title,
-          description: toastError.description,
-          color: 'danger',
-          variant: 'flat',
-        });
-      }
-    };
+  //       // Show error toast
+  //       addToast({
+  //         title: toastError.title,
+  //         description: toastError.description,
+  //         color: 'danger',
+  //         variant: 'flat',
+  //       });
+  //     }
+  //   };
 
-    if (!activeSessionId) {
-      initializeSession();
-    }
-  }, [activeSessionId, createSession]);
+  //   if (!activeSessionId) {
+  //     initializeSession();
+  //   }
+  // }, [activeSessionId, createSession]);
 
   return (
     <main className="w-full h-[calc(100vh-40px)] bg-background">
@@ -54,7 +54,7 @@ export default function ChatPage() {
 
         {/* Full-width chat interface */}
         <section className="flex flex-col flex-1 bg-background">
-          {activeSessionId ? (
+          {!activeSessionId ? (
             <ChatInterface sessionId={activeSessionId} />
           ) : (
             <article
