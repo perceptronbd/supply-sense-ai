@@ -123,3 +123,7 @@ body {
   transform: rotate(135deg);
   z-index: -1;
 }
+
+.gradient-card {
+  @apply bg-gradient-to-r from-primary-50 to-primary-100 p-6 rounded-xl border border-primary-200;
+}

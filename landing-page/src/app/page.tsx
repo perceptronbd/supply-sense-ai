@@ -1,8 +1,8 @@
 import Banner from '../components/sections/BannerSection';
 import BuiltSection from '../components/sections/BuiltSection';
-import ExploreSection from '../components/sections/ExploreSection';
+import ContactSection from '../components/sections/ContactSection';
 import Features from '../components/sections/FeatureSection';
-import QuestionSection from '../components/sections/QuestionSection';
+import UseCaseSection from '../components/sections/UseCaseSection';
 import Footer from '../components/ui/Footer';
 import GlowEffects from '../components/ui/GlowEffects';
 import Navbar from '../components/ui/Navbar';
@@ -26,11 +26,14 @@ const LandingPage = () => {
       <BuiltSection />
 
       {/* Questions and answers */}
-      <QuestionSection />
+      <UseCaseSection />
 
       {/* explore section */}
-      <ExploreSection />
-      <div className="bg-content1-foreground h-0.5 w-full px-0 opacity-30" />
+      <ContactSection />
+
+      <div className="px-4 md:px-0">
+        <div className="bg-content1-foreground h-0.5 w-full opacity-30" />
+      </div>
 
       {/* footer */}
       <Footer />

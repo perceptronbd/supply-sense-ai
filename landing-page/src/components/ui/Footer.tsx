@@ -7,10 +7,10 @@ const Footer = () => {
   return (
     <footer className="container px-4 mx-auto py-12 md:px-20 2xl:px-40">
       {/* first row */}
-      <div className="flex justify-center flex-col lg:flex-row gap-y-12 lg:justify-between items-start mb-12 ">
+      <div className="flex justify-center flex-col lg:flex-row gap-y-12 lg:justify-between items-start mb-12">
         {/* first column */}
         <div className="mx-auto lg:mx-0 flex-1">
-          <FullLogo className="text-primary w-56 mb-5" />
+          <FullLogo className="text-primary w-56 mb-5 mx-auto xl:mx-0" />
 
           <p className="text-content1-foreground mb-6 lg:mb-10 text-center xl:text-start w-72">
             Making operational data accessible through natural language.
