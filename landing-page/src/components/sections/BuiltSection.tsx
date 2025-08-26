@@ -1,26 +1,87 @@
+'use client';
+
+import useGradientIcons from '../icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 import TableBox from '../ui/TableBox';
 
 const BuiltSection = () => {
+  const { CheckCircle, Message, Search, Document } = useGradientIcons();
+
   return (
     <SectionWrapper size="large">
-      <div className="flex flex-col xl:flex-row items-start justify-center gap-6 md:gap-16 bg-background">
+      <div className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background">
         {/* first column - chat box  */}
-        <div className="w-full max-w-lg mx-auto">
+        <div className="w-full max-w-lg">
           <TableBox />
         </div>
 
         {/* second column */}
-        <div className="max-w-lg mx-auto xl:mx-0">
-          <h1 className="font-brand text-4xl md:text-5xl font-bold text-content1-foreground text-center xl:text-start mb-6">
-            Built for Clarity — Not Complexity
-          </h1>
+        <div className="max-w-lg">
+          {/* first row */}
+          <div className="flex gap-4 items-center h-full mb-3">
+            <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
+            <div>
+              <div className="flex gap-2 items-center mb-1">
+                <CheckCircle className="h-10 w-10" />
+                <h3 className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-2xl font-medium font-brand">
+                  Built for Clarity — Not Complexity
+                </h3>
+              </div>
+              <p className="text-content4-foreground text-start mb-3 text-sm pl-3">
+                Finally, your PostgreSQL database makes sense to everyone
+              </p>
+              <p className="text-content4-foreground text-start mb-3 pl-3 max-w-md">
+                "We turn cryptic tables and columns into natural conversations. No SQL, no
+                dashboards, no technical barriers. Just ask questions like you're talking to a
+                colleague, and get answers that actually make sense."
+              </p>
+            </div>
+          </div>
 
-          <p className="text-content1-foreground text-center md:pr-10 xl:text-start">
-            No dashboards to learn. No training required. Just ask questions in plain language and
-            get clear, grounded answers from your system — whether it’s about stock, people,
-            documents, or vendors.
-          </p>
+          {/* second row */}
+          <div className="flex gap-4 items-center h-full mb-3 relative">
+            <div className="absolute top-0 left-0 h-full w-full z-1 opacity-50 bg-black" />
+            <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
+            <div>
+              <div className="flex gap-2 items-center mb-1">
+                <Message className="h-10 w-10" />
+                <h3 className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-2xl font-medium font-brand max-w-sm">
+                  Ask Like You Think, Not Like a Machine
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          {/* third row */}
+          <div className="flex gap-4 items-center h-full mb-3 relative">
+            <div className="absolute top-0 left-0 h-full w-full z-1 opacity-50 bg-black" />
+            <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
+            <div>
+              <div className="flex gap-2 items-center mb-1">
+                <Search className="h-10 w-10" />
+                <h3 className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-2xl font-medium font-brand max-w-sm">
+                  Answers You Can Trust, Immediately
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          {/* fourth row */}
+          <div className="flex gap-4 items-center h-full mb-3 relative">
+            <div className="absolute top-0 left-0 h-full w-full z-1 opacity-50 bg-black" />
+            <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
+            <div>
+              <div className="flex gap-2 items-center mb-1">
+                <Document className="h-10 w-10" />
+                <h3 className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-2xl font-medium font-brand max-w-sm">
+                  Your Data, Your Rules, Always
+                </h3>
+              </div>
+              <p className="text-content4-foreground text-start mb-3 text-sm pl-3">
+                No storage, no training, no leaks
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </SectionWrapper>

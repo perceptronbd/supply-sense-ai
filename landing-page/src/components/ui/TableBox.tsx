@@ -1,8 +1,10 @@
 'use client';
 
 import {
+  Button,
   Card,
   CardBody,
+  Input,
   Table,
   TableBody,
   TableCell,
@@ -10,23 +12,24 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
+import { Icons } from '../icons';
 
 const TableBox = () => {
   return (
-    <div className="rounded-xl bg-layout-divider/4 border-1 border-layout-divider/15 p-8 card-blur-effect-3">
+    <div className="rounded-xl bg-layout-divider/4 border-1 border-layout-divider/15 p-7 card-blur-effect-3">
       <Card
         classNames={{
-          base: 'p-5 card-blur-effect-move bg-default-200',
+          base: 'p-4 card-blur-effect-move bg-default-200',
         }}
       >
         <CardBody className="">
           <div className="flex justify-end">
-            <p className="px-4 py-3 bg-gradient-to-r from-default-300 to-default-400 rounded-lg rounded-br-none mb-5 text-sm text-default-foreground w-fit">
+            <p className="px-4 py-3 bg-gradient-to-r from-default-300 to-default-400 rounded-lg rounded-br-none mb-5 text-xs text-default-foreground w-fit">
               Show suppliers with low performance
             </p>
           </div>
 
-          <p className="text-sm text-default-foreground mb-5">
+          <p className="text-xs text-default-foreground mb-5">
             Here's a summary of suppliers with potentially low performance based on order history
             and lead times. Supplier Performance Overview
           </p>
@@ -44,7 +47,7 @@ const TableBox = () => {
               classNames={{
                 base: 'w-full',
                 th: 'bg-default-100 text-default-foreground text-sm border-default-300 border-2 rounded-none',
-                td: 'border-default-300 py-4 px-2 border-2 text-xs md:text-sm text-default-foreground',
+                td: 'border-default-300 py-2 px-2 border-2 text-xs text-default-foreground',
                 thead: "[&>tr]:first:rounded-none [&>tr[aria-hidden='true']]:hidden",
               }}
               aria-label="Supply performance table"
@@ -73,6 +76,30 @@ const TableBox = () => {
               </TableBody>
             </Table>
           </div>
+
+          <form className="relative pt-5">
+            <Input
+              placeholder="Ask anything about your business"
+              radius="md"
+              variant="flat"
+              size="lg"
+              classNames={{
+                input: 'placeholder:text-content3 placeholder:text-sm',
+                inputWrapper: 'bg-content1 py-5 card-blur-effect-alt',
+              }}
+            />
+            <Button
+              type="submit"
+              radius="md"
+              isIconOnly
+              color="primary"
+              variant="light"
+              size="sm"
+              className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/4 mr-2"
+            >
+              <Icons.SendIcon className="w-7 h-7" />
+            </Button>
+          </form>
         </CardBody>
       </Card>
     </div>

@@ -60,6 +60,7 @@ body {
 .card-blur-effect-move {
   animation: rotateShadow 4s linear infinite;
 }
+
 .card-blur-effect {
   box-shadow:
     -20px 0 20px -10px rgba(226, 204, 156, 0.15),
