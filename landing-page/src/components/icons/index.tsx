@@ -1,8 +1,12 @@
 import {
   ArrowRight,
+  Building,
   FacebookIcon,
   InstagramIcon,
   LinkedinIcon,
+  Mail,
+  MessageSquare,
+  Phone,
   User,
   X,
   YoutubeIcon,
@@ -39,4 +43,8 @@ export const Icons = {
     </svg>
   ),
   X: (props: IconType) => <X {...props} />,
+  Phone: (props: IconType) => <Phone {...props} />,
+  Building: (props: IconType) => <Building {...props} />,
+  Mail: (props: IconType) => <Mail {...props} />,
+  MessageSquare: (props: IconType) => <MessageSquare {...props} />,
 };

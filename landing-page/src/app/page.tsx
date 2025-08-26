@@ -2,6 +2,8 @@ import Banner from '../components/sections/BannerSection';
 import BuiltSection from '../components/sections/BuiltSection';
 import ContactSection from '../components/sections/ContactSection';
 import Features from '../components/sections/FeatureSection';
+import PricingSection from '../components/sections/PricingSection';
+import QnASection from '../components/sections/QnASection';
 import UseCaseSection from '../components/sections/UseCaseSection';
 import Footer from '../components/ui/Footer';
 import GlowEffects from '../components/ui/GlowEffects';
@@ -25,8 +27,14 @@ const LandingPage = () => {
       {/* Built Section */}
       <BuiltSection />
 
-      {/* Questions and answers */}
+      {/* Use Case Section */}
       <UseCaseSection />
+
+      {/* pricing section */}
+      <PricingSection />
+
+      {/* QnA Section */}
+      <QnASection />
 
       {/* explore section */}
       <ContactSection />
