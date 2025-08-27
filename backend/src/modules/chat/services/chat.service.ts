@@ -39,7 +39,8 @@ export class ChatService {
       const tools = await mcpClient.getTools();
       this.chatAgent = new Agent({
         name: 'ChatAgent',
-        description: 'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
+        description:
+          'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
         instructions:
           'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
         model: this.openrouter.getModel(),
@@ -80,7 +81,7 @@ export class ChatService {
       this.logger.log('Session activity updated');
 
       // Get session history for context
-      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10)
+      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
       // Prepare context for the AI agent
@@ -103,7 +104,10 @@ export class ChatService {
         this.logger.error(`Database connection not found: ${dbConnectionId}`);
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
+
       const mcpClient = this.mcpClientService.getMcpClient();
+      const toolsets = await mcpClient.getToolsets();
+
       // Use the chat agent to process the message
       const agentResponse = await this.chatAgent.generate(
         [
@@ -119,8 +123,18 @@ export class ChatService {
         - Conversation History:
         ${conversationHistory}
 
-        Use the database-query-tool when the user asks questions about data, analytics, or wants to query the database.
-        Always provide helpful, accurate responses and explain your reasoning.`,
+        You MUST follow this workflow:
+        1. First, use the query-analysis-tool with these parameters:
+           - dbConnectionId: "${dbConnectionId}"
+           - userQuery: The user's message/question "${message}"
+        
+        2. After getting the analysis, use the execute-query-tool with these parameters:
+           - dbConnectionId: "${dbConnectionId}"
+           - queryAnalysis: The analysis result from step 1
+        
+        The query-analysis-tool will analyze the user's query and provide insights about their intent and requirements.
+        The execute-query-tool will then generate and execute the appropriate SQL query to get the actual data.
+        Always provide helpful, accurate responses based on the query results and explain your reasoning.`,
           },
           {
             role: 'user',
@@ -128,9 +142,11 @@ export class ChatService {
           },
         ],
         {
-          toolsets: await mcpClient.getToolsets(),
+          toolsets,
         }
       );
+
+      // this.logger.log(toolsets)
 
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);

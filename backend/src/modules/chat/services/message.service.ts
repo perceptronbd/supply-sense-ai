@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Message } from '@prisma/client';
 import type { JsonValue } from '@prisma/client/runtime/library';
 import { PrismaService } from '@supplysense/prisma';
@@ -10,9 +10,7 @@ type MessageType = 'user' | 'assistant' | 'system' | 'error';
 export class MessageService {
   private readonly logger = new Logger(MessageService.name);
 
-  constructor(
-    @Inject(PrismaService) private readonly prisma: PrismaService
-  ) {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     // Validate Prisma service is properly injected during construction
     if (!this.prisma) {
       this.logger.error('PrismaService was not properly injected in constructor');
@@ -114,7 +112,7 @@ export class MessageService {
       if (!sessionId || typeof sessionId !== 'string') {
         throw new Error('Invalid sessionId provided');
       }
-      
+
       // Check if Prisma service is available
       if (!this.prisma) {
         this.logger.error('Prisma service is not available');
@@ -131,7 +129,9 @@ export class MessageService {
       });
 
       if (!sessionExists) {
-        this.logger.error(`Session validation failed in getSessionMessages: Session ${sessionId} not found or inactive`);
+        this.logger.error(
+          `Session validation failed in getSessionMessages: Session ${sessionId} not found or inactive`
+        );
         return [];
       }
 
@@ -153,14 +153,16 @@ export class MessageService {
       });
 
       // Convert all database results to proper Message types before returning
-      const convertedMessages = dbMessages.map((msg): Message => ({
-        id: msg.id,
-        content: msg.content,
-        type: msg.type as MessageType,
-        metadata: msg.metadata as JsonValue,
-        createdAt: msg.createdAt,
-        sessionId: msg.sessionId,
-      }));
+      const convertedMessages = dbMessages.map(
+        (msg): Message => ({
+          id: msg.id,
+          content: msg.content,
+          type: msg.type as MessageType,
+          metadata: msg.metadata as JsonValue,
+          createdAt: msg.createdAt,
+          sessionId: msg.sessionId,
+        })
+      );
 
       return convertedMessages;
     } catch (error) {
@@ -276,14 +278,16 @@ export class MessageService {
       });
 
       // Convert search results to proper Message types
-      const convertedResults = searchResults.map((msg): Message => ({
-        id: msg.id,
-        content: msg.content,
-        type: msg.type as MessageType,
-        metadata: msg.metadata as JsonValue,
-        createdAt: msg.createdAt,
-        sessionId: msg.sessionId,
-      }));
+      const convertedResults = searchResults.map(
+        (msg): Message => ({
+          id: msg.id,
+          content: msg.content,
+          type: msg.type as MessageType,
+          metadata: msg.metadata as JsonValue,
+          createdAt: msg.createdAt,
+          sessionId: msg.sessionId,
+        })
+      );
 
       return convertedResults;
     } catch (error) {
@@ -293,11 +297,10 @@ export class MessageService {
     }
   }
 
-
   private generateId(): string {
     return randomUUID();
   }
-  
+
   private determineContentType(
     content: string,
     metadata?: Record<string, unknown>

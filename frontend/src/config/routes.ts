@@ -29,7 +29,7 @@ export const ROUTE_PATHS = {
   USERS: '/users',
   ROLES: '/roles',
 
-  ONBOARDING: '/onboarding'  ,
+  ONBOARDING: '/onboarding',
 } as const;
 
 // Create union types from the route paths

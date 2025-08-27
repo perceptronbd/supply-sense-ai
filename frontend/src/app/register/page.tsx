@@ -13,6 +13,8 @@ import {
 } from '@/lib/schemas/registration.schema';
 import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useRegisterMutation } from '@/store/api/authApi';
+import { useAppDispatch } from '@/store/hooks';
+import { setRegistrationCredentials } from '@/store/slices/authSlice';
 import { Card, CardBody, addToast } from '@heroui/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,7 +37,7 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [register, { isLoading }] = useRegisterMutation();
   const router = useRouter();
-
+  const dispatch = useAppDispatch();
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -79,6 +81,8 @@ export default function RegisterPage() {
       const { confirmPassword, ...registrationData } = formData;
 
       const result = await register(registrationData).unwrap();
+      console.log('🚀 > handleSubmit > result:', result);
+      dispatch(setRegistrationCredentials({ company: result.company }));
 
       addToast({
         title: 'Registration Successful',
@@ -88,7 +92,7 @@ export default function RegisterPage() {
       });
 
       // Redirect to sign-in page
-      router.push(ROUTE_PATHS.LOGIN);
+      router.push(ROUTE_PATHS.ONBOARDING);
     } catch (error) {
       const toastError = getToastErrorMessage(error);
 

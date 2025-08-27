@@ -3,7 +3,9 @@ import { MCPServer } from '@mastra/mcp';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { mastra } from './mastra/index.js';
 
+import { executeQueryTool } from './mastra/tools/execute-query-tool.js';
 import { analyzeTableMetadataTool } from './mastra/tools/metadata-tool.js';
+import { queryAnalysisTool } from './mastra/tools/query-analysis-tools.js';
 import { supplyChainTool } from './mastra/tools/supply-chain-tool.js';
 import { testMetadataTool } from './mastra/tools/test-metadata-tool.js';
 
@@ -15,14 +17,16 @@ async function initializePrisma() {
   try {
     // Validate that DATABASE_URL is set
     if (!process.env.DATABASE_URL) {
-      console.warn('⚠️ DATABASE_URL environment variable is not set. Database operations will be limited.');
+      console.warn(
+        '⚠️ DATABASE_URL environment variable is not set. Database operations will be limited.'
+      );
       return false;
     }
-    
+
     await prisma.$connect();
     const maskedUrl = process.env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@');
     console.log('✅ Prisma client connected successfully to:', maskedUrl);
-    
+
     // Test database connection with a simple query
     try {
       await prisma.$queryRaw`SELECT 1 as test`;
@@ -30,7 +34,7 @@ async function initializePrisma() {
     } catch (error) {
       console.warn('⚠️ Database connection established but query test failed:', error.message);
     }
-    
+
     return true;
   } catch (error) {
     console.error('❌ Failed to connect Prisma client:', error);
@@ -44,7 +48,7 @@ async function shutdownPrisma() {
   try {
     // Clean up database connection pools first
     console.log('🔄 Cleaning up database connection pools...');
-    
+
     // Then disconnect Prisma
     await prisma.$disconnect();
     console.log('🔌 Prisma client disconnected gracefully');
@@ -60,7 +64,7 @@ async function main() {
     // Initialize Prisma database connection first
     console.log('🔗 Initializing database connection...');
     const databaseConnected = await initializePrisma();
-    
+
     if (databaseConnected) {
       console.log('✅ Database connection established');
     } else {
@@ -80,7 +84,13 @@ async function main() {
       // Expose agents, workflows, and tools
       agents,
       workflows,
-      tools: { supplyChainTool, analyzeTableMetadataTool,testMetadataTool }, // Include standalone tools
+      tools: {
+        supplyChainTool,
+        analyzeTableMetadataTool,
+        testMetadataTool,
+        queryAnalysisTool,
+        executeQueryTool,
+      }, // Include standalone tools
     });
 
     console.log('✅ MCP Server initialized successfully');
@@ -108,9 +118,7 @@ async function main() {
     console.log('🔧 Direct Tools:');
     console.log('   - supplyChainTool: Get supply chain status and metrics');
     console.log('   - analyzeTableMetadataTool: Analyze database schema and generate metadata');
-    console.log(
-      '   - databaseQueryTool: Generate and execute dynamic SQL queries from natural language'
-    );
+    console.log('   - queryAnalysisTool: Analyze user queries and extract insights');
     console.log('   - testMetadataTool: Test metadata analysis functionality'); // Start the MCP server using HTTP transport with SSE
     const port = process.env.MCP_PORT || 3002;
     console.log('🚀 ~ port:', port);

@@ -3,14 +3,12 @@
 import { ChatInterface } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
-import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useCreateSessionMutation } from '@/store/api/chatApi';
-import { addToast } from '@heroui/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function ChatPage() {
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
-  const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
+  const [activeSessionId] = useState<string | undefined>();
+  const [_createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
 
   // Automatically create a session when the page loads
   // useEffect(() => {
