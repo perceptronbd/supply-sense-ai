@@ -7,5 +7,8 @@
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "prettier.enable": false
+  "prettier.enable": false,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

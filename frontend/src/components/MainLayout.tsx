@@ -1,11 +1,12 @@
 'use client';
 
+import { Icons } from '@/lib/icons/Icons';
 import type { RootState } from '@/store/store';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Sidebar from './Sidebar';
-import { MenuIcon } from './icons';
+import LogoIcon from './icons/LogoIcon';
 import { Text } from './ui/Text';
 
 interface MainLayoutProps {
@@ -38,16 +39,36 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
       <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
         {/* Top bar for mobile */}
         <header className="flex justify-between items-center px-4 py-3 border-b lg:hidden bg-content1 shadow-small border-divider">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 transition-colors rounded-medium text-default-500 hover:text-foreground hover:bg-content2"
-          >
-            <MenuIcon className="w-6 h-6" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 transition-colors rounded-medium text-default-500 hover:text-foreground hover:bg-content2"
+            >
+              <Icons.HamburgerList className="size-10" />
+            </button>
+            <Text
+              variant="titleMedium"
+              weight="semiBold"
+              color="default"
+              as="h1"
+              className="flex items-center gap-2"
+            >
+              <LogoIcon size={30} />
+              <Text
+                variant="titleMedium"
+                weight="semiBold"
+                color="default"
+                as="span"
+                className="uppercase"
+              >
+                Supply Sense
+              </Text>
+            </Text>
+          </div>
+          <button type="button">
+            <Icons.EditV2 className="size-7" />
           </button>
-          <Text variant="titleMedium" weight="semiBold" color="default" as="h1">
-            SupplySense
-          </Text>
         </header>
         {/* Main content */}
         <main className="overflow-auto flex-1 bg-background">{children}</main>

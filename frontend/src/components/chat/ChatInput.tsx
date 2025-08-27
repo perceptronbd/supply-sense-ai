@@ -1,6 +1,5 @@
 'use client';
-
-import { SendIcon } from '@/components/icons';
+import { Icons } from '@/lib/icons/Icons';
 import { Button, Textarea } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
 import type { ChatInputProps } from './types';
@@ -70,16 +69,16 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
             {/* Send Button */}
             <Button
               type="submit"
-              color="primary"
+              color="secondary"
               isIconOnly
               isLoading={isLoading}
               disabled={!message.trim() || disabled}
               className="mb-1 rounded-full rotate-45"
               aria-label="Send message"
               size="sm"
-              variant="flat"
+              variant="solid"
             >
-              {!isLoading && <SendIcon className="w-4 h-4" />}
+              {!isLoading && <Icons.Send className="w-4 h-4" />}
             </Button>
           </div>
         </form>

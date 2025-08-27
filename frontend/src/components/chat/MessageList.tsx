@@ -56,7 +56,12 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
           <header className="mb-12">
             <Text variant="display" color="default" weight="bold" className="mb-4" as="h1">
               Hi,{' '}
-              {user?.firstName && user.lastName ? `${user?.firstName}  ${user?.lastName}` : 'there'}
+              <Text variant="display" color="secondary" weight="bold" className="mb-4" as="span">
+                {' '}
+                {user?.firstName && user.lastName
+                  ? `${user?.firstName}  ${user?.lastName}`
+                  : 'there'}
+              </Text>
             </Text>
             <Text variant="headerMedium" color="default" weight="bold" className="mb-6" as="h2">
               What can I help you with?
