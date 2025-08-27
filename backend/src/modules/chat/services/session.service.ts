@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import type { Session } from '@prisma/client';
 import { PrismaService } from '@supplysense/prisma';
+import type { Session } from '@supplysense/prisma-client';
 
 @Injectable()
 export class SessionService implements OnModuleDestroy {
@@ -32,17 +32,8 @@ export class SessionService implements OnModuleDestroy {
   ): Promise<Session> {
     try {
       // First validate that the database connection exists and belongs to the user's company
-      const dbConnection = await this.prisma.dbConnection.findFirst({
-        where: {
-          id: dbConnectionId,
-          company: {
-            users: {
-              some: {
-                id: userId,
-              },
-            },
-          },
-        },
+      const dbConnection = await this.prisma.dbConnection.findUnique({
+        where: { id: dbConnectionId },
       });
 
       if (!dbConnection) {
@@ -234,6 +225,22 @@ export class SessionService implements OnModuleDestroy {
   async updateLastActivity(sessionId: string): Promise<void> {
     try {
       this.logger.log(`Updating last activity for session ${sessionId}`);
+
+      // Validate session exists first
+      const sessionExists = await this.prisma.session.findFirst({
+        where: {
+          id: sessionId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (!sessionExists) {
+        this.logger.error(
+          `Session validation failed in updateLastActivity: Session ${sessionId} not found or inactive`
+        );
+        throw new Error(`Session ${sessionId} not found or inactive`);
+      }
 
       const now = new Date();
 

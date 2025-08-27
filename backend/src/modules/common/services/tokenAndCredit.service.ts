@@ -3,7 +3,7 @@ import type { UsageRecord } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
   AI_MODEL_INPUT_TOKEN_COST,
-  AI_MODEL_NAME,
+  AI_MODEL_NAMES,
   AI_MODEL_OUTPUT_TOKEN_COST,
   AI_MODEL_TOKENS_PER_CREDIT,
 } from '@supplysense/constant';
@@ -39,7 +39,7 @@ export class TokenAndCredit {
     outputTokens,
     isDeductCredit = false,
     companyId,
-    toolUsed = AI_MODEL_NAME,
+    toolUsed = AI_MODEL_NAMES.DEEPSEEK,
     metadata = {},
     tx,
   }: ITokenPriceCalculate) {

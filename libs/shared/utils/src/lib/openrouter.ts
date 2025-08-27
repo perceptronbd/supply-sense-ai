@@ -1,5 +1,5 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { AI_MODEL_NAME } from '@supplysense/constant';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 
 /**
  * Returns an initialized OpenRouter instance using the environment API key.
@@ -21,7 +21,7 @@ export class GetOpenRouter {
 
   public getModel(modelName?: string) {
     // Use provided model name or fallback to default
-    const selectedModel = modelName || AI_MODEL_NAME;
+    const selectedModel = modelName || AI_MODEL_NAMES.DEEPSEEK;
     return this.openrouter(selectedModel);
   }
 }

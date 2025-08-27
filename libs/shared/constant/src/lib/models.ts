@@ -1,4 +1,7 @@
-export const AI_MODEL_NAME = 'deepseek/deepseek-chat';
+export const AI_MODEL_NAMES = {
+  DEEPSEEK: 'deepseek/deepseek-chat',
+  Z_AI: 'z-ai/glm-4.5',
+} as const;
 
 export const AI_CHAT_MODEL_NAME = 'z-ai/glm-4.5-air';
 

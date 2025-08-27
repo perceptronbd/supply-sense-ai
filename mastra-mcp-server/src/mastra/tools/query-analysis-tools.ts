@@ -21,8 +21,6 @@ export const queryAnalysisTool = createTool({
   inputSchema,
   outputSchema,
   execute: async (input): Promise<z.infer<typeof outputSchema>> => {
-    console.log('🚀 > step one input:', input);
-
     //get db context form db connection table
     const dbConnection = await prisma.dbConnection.findUnique({
       where: {
@@ -60,7 +58,6 @@ export const queryAnalysisTool = createTool({
     const result = {
       queryAnalysis: agentResponse.text.trim(),
     };
-    console.log('🚀 > step one result:', result);
 
     // return agent response
     return result;
