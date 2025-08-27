@@ -149,12 +149,8 @@ module.exports = {
             },
             background: '#ffffff',
             foreground: '#000000',
-            layout: {
-              background: '#000000',
-              foreground: '#FFFFFF',
-              divider: '#f2f2f2',
-              focus: '#E84A2E',
-            },
+            divider: '#f2f2f2',
+            focus: '#E84A2E',
             content1: {
               DEFAULT: '#ffffff',
               foreground: '#000',
@@ -171,7 +167,6 @@ module.exports = {
               DEFAULT: '#d4d4d8',
               foreground: '#000',
             },
-            focus: '#E84A2E',
             overlay: '#000000',
           },
         },
@@ -263,12 +258,8 @@ module.exports = {
             },
             background: '#000000',
             foreground: '#ffffff',
-            layout: {
-              background: '#000000',
-              foreground: '#FFFFFF',
-              divider: '#f2f2f2',
-              focus: '#E84A2E',
-            },
+            divider: '#f2f2f2',
+            focus: '#E84A2E',
             content1: {
               DEFAULT: '#18181b',
               foreground: '#fff',
