@@ -46,7 +46,8 @@
         "noUnusedVariables": "error",
         "useExhaustiveDependencies": "warn",
         "noUnusedImports": "error",
-        "noUnusedPrivateClassMembers": "warn"
+        "noUnusedPrivateClassMembers": "warn",
+        "useJsxKeyInIterable": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn",
