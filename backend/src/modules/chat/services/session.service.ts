@@ -103,12 +103,28 @@ export class SessionService implements OnModuleDestroy {
       throw new Error('Failed to fetch session');
     }
   }
-  async getUserSessions(userId: string, limit = 20, offset = 0): Promise<Session[]> {
+
+  async getUserSessions(
+    userId: string,
+    limit: string | number = 20,
+    offset: string | number = 0
+  ): Promise<Session[]> {
     try {
-      this.logger.log(`Fetching sessions for user ${userId}, limit: ${limit}, offset: ${offset}`);
+      // Ensure limit and offset are integers
+      const limitInt = typeof limit === 'string' ? Number.parseInt(limit, 10) : limit;
+      const offsetInt = typeof offset === 'string' ? Number.parseInt(offset, 10) : offset;
+
+      // Validate converted values
+      if (Number.isNaN(limitInt) || Number.isNaN(offsetInt) || limitInt < 0 || offsetInt < 0) {
+        throw new Error('Invalid limit or offset parameters');
+      }
+
+      this.logger.log(
+        `Fetching sessions for user ${userId}, limit: ${limitInt}, offset: ${offsetInt}`
+      );
 
       // Check cache first (only for first page and recent data)
-      if (offset === 0) {
+      if (offsetInt === 0) {
         const cachedData = this.userSessionCache.get(userId);
         if (cachedData) {
           const cacheAge = Date.now() - cachedData.lastFetch.getTime();
@@ -117,7 +133,7 @@ export class SessionService implements OnModuleDestroy {
             // Filter active sessions and apply limit
             const activeSessions = cachedData.sessions
               .filter((session) => session.isActive)
-              .slice(0, limit);
+              .slice(0, limitInt);
             return activeSessions;
           }
         }
@@ -132,8 +148,8 @@ export class SessionService implements OnModuleDestroy {
         orderBy: {
           lastActivity: 'desc',
         },
-        skip: offset,
-        take: limit,
+        skip: offsetInt,
+        take: limitInt,
       });
 
       // Update both caches
@@ -142,7 +158,7 @@ export class SessionService implements OnModuleDestroy {
       }
 
       // Update user sessions cache (only for first page to avoid cache complexity)
-      if (offset === 0) {
+      if (offsetInt === 0) {
         this.userSessionCache.set(userId, {
           sessions: dbSessions,
           lastFetch: new Date(),
@@ -155,6 +171,7 @@ export class SessionService implements OnModuleDestroy {
       throw new Error('Failed to fetch sessions');
     }
   }
+
   async updateSession(
     sessionId: string,
     userId: string,

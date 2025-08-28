@@ -6,6 +6,7 @@ import { Reflector } from '@nestjs/core';
 import { PrismaModule } from '@supplysense/prisma';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
+import { ConnectionsModule } from '../modules/connections/connections.module';
 import { RoleModule } from '../modules/role/role.module';
 import { UserModule } from '../modules/user/user.module';
 import { AppController } from './app.controller';
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
     AiModule,
     AuthModule,
     ChatModule,
+    ConnectionsModule,
     RoleModule,
     UserModule,
     OnboardingModule,

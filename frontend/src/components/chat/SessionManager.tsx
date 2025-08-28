@@ -1,0 +1,67 @@
+'use client';
+
+import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
+import { SessionList } from './SessionList';
+
+interface SessionManagerProps {
+  selectedSessionId?: string;
+  dbConnectionId: string;
+  onSessionSelect: (sessionId: string) => void;
+  onSessionCreate: (sessionId: string) => void;
+}
+
+export function SessionManager({
+  selectedSessionId,
+  dbConnectionId,
+  onSessionSelect,
+  onSessionCreate,
+}: SessionManagerProps) {
+  // Fetch sessions
+  const {
+    data: sessions = [],
+    isLoading: isLoadingSessions,
+    error: sessionsError,
+  } = useGetSessionsQuery({});
+
+  // Create session mutation
+  const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
+
+  // Handle new session creation
+  const handleNewSession = async () => {
+    try {
+      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
+
+      const newSession = await createSession({
+        title: sessionTitle,
+        description: 'New chat session for supply chain analytics',
+        dbConnectionId,
+      }).unwrap();
+
+      // Notify parent component about the new session
+      onSessionCreate(newSession.id);
+    } catch (error) {
+      console.error('Failed to create new session:', error);
+    }
+  };
+
+  // Show error state if sessions failed to load
+  if (sessionsError) {
+    return (
+      <aside className="w-64 border-r border-divider bg-content1 flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <p className="text-danger text-sm">Failed to load sessions</p>
+        </div>
+      </aside>
+    );
+  }
+
+  return (
+    <SessionList
+      sessions={sessions}
+      activeSessionId={selectedSessionId}
+      onSessionSelect={onSessionSelect}
+      onNewSession={handleNewSession}
+      isLoading={isLoadingSessions || isCreatingSession}
+    />
+  );
+}

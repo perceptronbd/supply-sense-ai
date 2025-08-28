@@ -102,10 +102,23 @@ export class MessageService {
     }
   }
 
-  async getSessionMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
+  async getSessionMessages(
+    sessionId: string,
+    limit: string | number = 50,
+    offset: string | number = 0
+  ): Promise<Message[]> {
     try {
+      // Ensure limit and offset are integers
+      const limitInt = typeof limit === 'string' ? Number.parseInt(limit, 10) : limit;
+      const offsetInt = typeof offset === 'string' ? Number.parseInt(offset, 10) : offset;
+
+      // Validate converted values
+      if (Number.isNaN(limitInt) || Number.isNaN(offsetInt) || limitInt < 0 || offsetInt < 0) {
+        throw new Error('Invalid limit or offset parameters');
+      }
+
       this.logger.log(
-        `Fetching messages for session ${sessionId}, limit: ${limit}, offset: ${offset}`
+        `Fetching messages for session ${sessionId}, limit: ${limitInt}, offset: ${offsetInt}`
       );
 
       // Validate input parameters
@@ -139,8 +152,8 @@ export class MessageService {
       const dbMessages = await this.prisma.message.findMany({
         where: { sessionId },
         orderBy: { createdAt: 'asc' },
-        skip: offset,
-        take: limit,
+        skip: offsetInt,
+        take: limitInt,
         select: {
           id: true,
           content: true,
@@ -245,8 +258,20 @@ export class MessageService {
       throw new Error('Failed to delete message');
     }
   }
-  async searchMessages(sessionId: string, query: string, limit = 20): Promise<Message[]> {
+  async searchMessages(
+    sessionId: string,
+    query: string,
+    limit: string | number = 20
+  ): Promise<Message[]> {
     try {
+      // Ensure limit is an integer
+      const limitInt = typeof limit === 'string' ? Number.parseInt(limit, 10) : limit;
+
+      // Validate converted value
+      if (Number.isNaN(limitInt) || limitInt < 0) {
+        throw new Error('Invalid limit parameter');
+      }
+
       this.logger.log(`Searching messages in session ${sessionId} with query: ${query}`);
 
       // Check if Prisma service is available
@@ -265,7 +290,7 @@ export class MessageService {
           },
         },
         orderBy: { createdAt: 'desc' },
-        take: limit,
+        take: limitInt,
         select: {
           id: true,
           content: true,

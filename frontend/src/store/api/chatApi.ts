@@ -10,6 +10,7 @@ export interface ChatSession {
   title: string;
   description?: string;
   userId: string;
+  dbConnectionId: string;
   lastActivityAt: string;
   createdAt: string;
   updatedAt: string;
@@ -31,11 +32,13 @@ export interface ChatMessage {
 export interface CreateSessionRequest {
   title: string;
   description?: string;
+  dbConnectionId: string;
 }
 
 export interface ChatQueryRequest {
   sessionId: string;
   query: string;
+  dbConnectionId: string;
   includeDatabaseQuery?: boolean;
   context?: Record<string, unknown>;
 }
@@ -65,7 +68,7 @@ export const chatApi = createApi({
       return headers;
     },
   }),
-  tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE],
+  tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE, TAG_TYPES.DATABASE_CONNECTION],
   endpoints: (builder) => ({
     // Health check - temporarily disable transform to test
     getHealth: builder.query<
@@ -127,7 +130,7 @@ export const chatApi = createApi({
       ],
     }),
 
-    // Chat query
+    // Chat query with database connection support
     sendQuery: builder.mutation<ChatQueryResponse, ChatQueryRequest>({
       query: (queryData) => ({
         url: '/query',

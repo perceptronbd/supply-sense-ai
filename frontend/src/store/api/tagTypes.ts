@@ -58,6 +58,9 @@ export const TAG_TYPES = {
 
   // Onboarding
   ONBOARDING: 'Onboarding',
+
+  // Database Connection
+  DATABASE_CONNECTION: 'DatabaseConnection',
 } as const;
 
 export const TAG_TYPES_LIST = Object.values(TAG_TYPES);

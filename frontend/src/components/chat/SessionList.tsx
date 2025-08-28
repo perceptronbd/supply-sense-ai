@@ -20,7 +20,7 @@ export function SessionList({
   onSessionSelect,
   onNewSession,
   isLoading = false,
-}: SessionListProps) {
+}: Readonly<SessionListProps>) {
   return (
     <aside
       className="w-64 border-r border-divider bg-content1 flex flex-col"

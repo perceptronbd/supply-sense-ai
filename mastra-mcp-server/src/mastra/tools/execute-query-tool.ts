@@ -102,6 +102,21 @@ export const executeQueryTool = createTool({
                 CRITICAL: You MUST use the EXACT table and column names from the schema cache provided below.
                 Do NOT assume or guess table names. Only use tables and columns that exist in the schema.
                 
+                POSTGRESQL CASE SENSITIVITY RULES - CRITICAL:
+                1. For column names with mixed case (camelCase like "availableQty", "itemId"), you MUST quote them: "availableQty"
+                2. For column names that are all lowercase (like "quantity", "name"), do NOT quote them
+                3. Check each column name in the schema - if it contains uppercase letters, it MUST be quoted
+                4. Table names are typically lowercase and don't need quotes
+                5. When referencing columns with table prefix: stock."availableQty", items.name
+                
+                COLUMN QUOTING EXAMPLES FROM THE SCHEMA:
+                - availableQty → stock."availableQty" (MUST be quoted)
+                - itemId → stock."itemId" (MUST be quoted) 
+                - reservedQty → stock."reservedQty" (MUST be quoted)
+                - quantity → stock.quantity (no quotes needed)
+                - name → items.name (no quotes needed)
+                - id → items.id (no quotes needed)
+                
                 Available context:
                 - Business Context: ${businessContext}
                 - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
@@ -118,20 +133,21 @@ export const executeQueryTool = createTool({
                 IMPORTANT POSTGRESQL RULES:
                 1. Only reference tables and columns that exist in the Schema Cache
                 2. Table names: ${Object.keys(parsedSchema.tables).join(', ')}
-                3. For each table, available columns are listed in the "columns" object
-                4. Use the exact case-sensitive names from the schema - PostgreSQL is case-sensitive
-                5. For unquoted identifiers, PostgreSQL converts them to lowercase automatically
-                6. If using camelCase columns (like itemId), you MUST quote them: "itemId" 
-                7. Check the schema cache carefully for the actual column names and their exact casing
-                8. If the requested data cannot be found in the available schema, return an informative error message
-                9. Generate clean, executable PostgreSQL queries without any markdown formatting
-                10. Always include proper JOINs based on the relationships defined in the schema
-                11. When in doubt about column casing, examine the schema cache for the exact column names
+                3. CRITICAL QUOTING RULES FOR ALL COLUMNS:
+                   - ${generateColumnQuotingGuidance(parsedSchema)}
+                4. When using table prefixes, follow the patterns above
+                5. PostgreSQL converts unquoted identifiers to lowercase - if column has uppercase, MUST quote
+                6. If the requested data cannot be found in the available schema, return an informative error message
+                7. Generate clean, executable PostgreSQL queries without any markdown formatting
+                8. Always include proper JOINs based on the relationships defined in the schema
                 
-                CASE SENSITIVITY EXAMPLES:
-                - If schema shows "itemId" -> use "itemId" (quoted)
-                - If schema shows "itemid" -> use itemid (unquoted)
-                - If schema shows "item_id" -> use item_id (unquoted)
+                CASE SENSITIVITY EXAMPLES FROM ACTUAL SCHEMA:
+                - Schema: "availableQty" → SQL: stock."availableQty" (MUST quote)
+                - Schema: "itemId" → SQL: stock."itemId" (MUST quote)
+                - Schema: "reservedQty" → SQL: stock."reservedQty" (MUST quote)  
+                - Schema: "quantity" → SQL: stock.quantity (no quotes - all lowercase)
+                - Schema: "name" → SQL: items.name (no quotes - all lowercase)
+                - Schema: "id" → SQL: items.id (no quotes - all lowercase)
                 
                 Generate a clean, executable PostgreSQL query that addresses the analyzed user request.
                 Return ONLY the SQL query without any explanations or formatting.`,
@@ -172,6 +188,27 @@ export const executeQueryTool = createTool({
     };
   },
 });
+
+// Helper function to generate column quoting guidance from schema
+function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
+  const guidance: string[] = [];
+
+  for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {
+    if (typeof tableInfo === 'object' && tableInfo !== null && 'columns' in tableInfo) {
+      for (const columnName of Object.keys(tableInfo.columns)) {
+        // Check if column name contains uppercase letters or mixed case
+        const hasUppercase = /[A-Z]/.test(columnName);
+        if (hasUppercase) {
+          guidance.push(`${tableName}."${columnName}" (quote because of mixed case)`);
+        } else {
+          guidance.push(`${tableName}.${columnName} (no quotes - lowercase)`);
+        }
+      }
+    }
+  }
+
+  return guidance.join('\n                   - ');
+}
 
 // Helper function to parse and validate schema
 function parseAndValidateSchema(SchemaCache: SchemaCache): ParsedSchema {
@@ -241,6 +278,37 @@ function handleSqlExecutionError(
       errorMessage += `\n💡 PostgreSQL suggests using: ${columnSuggestion}`;
       errorMessage +=
         '\n🔍 This is likely a case sensitivity issue. PostgreSQL is case-sensitive for quoted identifiers.';
+
+      // Provide specific guidance for common camelCase columns
+      const camelCaseColumns = [
+        'availableQty',
+        'itemId',
+        'reservedQty',
+        'safetyStockLevel',
+        'reorderLevel',
+        'minOrderQty',
+        'leadTimeDays',
+        'isPreferred',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+        'lastStockDate',
+        'lastCost',
+        'averageCost',
+        'unitPrice',
+        'companyId',
+        'supplierId',
+        'branchId',
+      ];
+
+      const needsQuoting = camelCaseColumns.find((col) =>
+        columnSuggestion.toLowerCase().includes(col.toLowerCase())
+      );
+
+      if (needsQuoting) {
+        errorMessage += `\n🔧 FIX: Use "${columnSuggestion}" with quotes because it contains uppercase letters`;
+        errorMessage += `\n📝 Example: stock."${columnSuggestion}" instead of stock.${columnSuggestion.toLowerCase()}`;
+      }
     }
 
     errorMessage += `\n📝 Generated query: ${sqlQuery}`;
