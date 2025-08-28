@@ -1,9 +1,17 @@
 'use client';
 
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
-import { Icons } from '../icons';
+import { ReactNode } from 'react';
+import { tableData } from './TableData';
 
 export default function PricingTable() {
+  const ValueCell = ({ value }: { value: ReactNode | string }) => {
+    if (typeof value === 'string') {
+      return <span>{value}</span>;
+    }
+    return <div className="flex justify-center items-center">{value}</div>;
+  };
+
   return (
     <Table
       aria-label="Pricing Table"
@@ -43,143 +51,32 @@ export default function PricingTable() {
         </TableColumn>
       </TableHeader>
       <TableBody>
-        {/* first row */}
-        <TableRow key="1">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">Credits / Month</p>
-            <p className="text-content1-foreground">
-              The number of credits you can use monthly for AI tasks, searches, or analysis.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>500</TableCell>
-          <TableCell>5000</TableCell>
-          <TableCell>Unlimited</TableCell>
-        </TableRow>
+        {tableData.map((row) => (
+          <TableRow key={row.id}>
+            <TableCell>
+              <p className="font-bold text-lg text-content1-foreground mb-3">{row.featureName}</p>
+              <p className="text-content1-foreground">
+                {row.description}{' '}
+                <span className="text-primary underline hover:cursor-pointer">Know more</span>
+              </p>
+            </TableCell>
 
-        {/* second row */}
-        <TableRow key="2">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">Api Access</p>
-            <p className="text-content1-foreground">
-              Ability to connect your own systems to SupplySense via API for automated workflows.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Cross className="w-5 h-5 text-danger" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-        </TableRow>
+            {/* Starter Column */}
+            <TableCell>
+              <ValueCell value={row.values[0]} />
+            </TableCell>
 
-        {/* third row */}
-        <TableRow key="3">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">
-              API Requests Limit/Month
-            </p>
-            <p className="text-content1-foreground">
-              Maximum number of API calls you can make per month.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Cross className="w-5 h-5 text-danger" />
-            </div>
-          </TableCell>
-          <TableCell>50,000</TableCell>
-          <TableCell>Unlimited</TableCell>
-        </TableRow>
+            {/* Business Column */}
+            <TableCell>
+              <ValueCell value={row.values[1]} />
+            </TableCell>
 
-        {/* fourth row */}
-        <TableRow key="4">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">Bulk Import/Export</p>
-            <p className="text-content1-foreground">
-              Ability to connect your own systems to SupplySense via API for automated workflows.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Cross className="w-5 h-5 text-danger" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-        </TableRow>
-
-        {/* fifth row */}
-        <TableRow key="5">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">Priority Support</p>
-            <p className="text-content1-foreground">
-              Ability to connect your own systems to SupplySense via API for automated workflows.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Cross className="w-5 h-5 text-danger" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-        </TableRow>
-
-        {/* sixth row */}
-        <TableRow key="6">
-          <TableCell>
-            <p className="font-bold text-lg text-content1-foreground mb-3">Early Beta Access</p>
-            <p className="text-content1-foreground">
-              Ability to connect your own systems to SupplySense via API for automated workflows.{' '}
-              <span className="text-primary underline hover:cursor-pointer">Know more</span>
-            </p>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Cross className="w-5 h-5 text-danger" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="flex justify-center items-center">
-              <Icons.Verified className="w-5 h-5 text-success" />
-            </div>
-          </TableCell>
-        </TableRow>
+            {/* Enterprise Column */}
+            <TableCell>
+              <ValueCell value={row.values[2]} />
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );

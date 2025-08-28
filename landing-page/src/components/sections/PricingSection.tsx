@@ -1,3 +1,4 @@
+import PricingMobileTables from '../ui/PricingMobileTables';
 import PricingTable from '../ui/PricingTable';
 import ProgressBar from '../ui/ProgressBar';
 import SectionWrapper from '../ui/SectionWrapper';
@@ -32,8 +33,15 @@ const PricingSection = () => {
       </div>
 
       {/* table section  */}
-      <div>
+
+      {/* desktop table */}
+      <div className="hidden lg:flex">
         <PricingTable />
+      </div>
+
+      {/* mobile tables */}
+      <div className="flex flex-col gap-8 lg:hidden mx-auto">
+        <PricingMobileTables />
       </div>
     </SectionWrapper>
   );
