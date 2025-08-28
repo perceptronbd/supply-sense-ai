@@ -1,7 +1,7 @@
 import { useAppSelector } from '@/store/hooks';
 
 export const useGetCompanyId = () => {
-  const user = useAppSelector((state) => state.auth.user);
-  const companyId = user?.companyId ?? '';
+  const auth = useAppSelector((state) => state.auth);
+  const companyId = auth.company?.id ?? '';
   return { companyId };
 };

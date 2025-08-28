@@ -1,23 +1,20 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { AI_MODEL_NAME } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
 import { Agent } from '@mastra/core/agent';
+import { GetOpenRouter } from '@supplysense/utils';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
   PURPOSE_GENERATION_AGENT_NAME,
   PURPOSE_GENERATION_INSTRUCTION,
 } from '../constants/system-instructions/purpose-generation';
 
+const openrouter = new GetOpenRouter();
+
 export const generatePurposeAgent = new Agent({
   name: PURPOSE_GENERATION_AGENT_NAME,
   description: PURPOSE_GENERATION_AGENT_DESCRIPTION,
   instructions: PURPOSE_GENERATION_INSTRUCTION,
-  model: openrouter(AI_MODEL_NAME),
+  model: openrouter.getModel(),
 });
 
 // Custom function to use the agent for generating table purpose

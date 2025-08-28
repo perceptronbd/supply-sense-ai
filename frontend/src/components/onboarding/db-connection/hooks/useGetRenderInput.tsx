@@ -34,6 +34,7 @@ export const useGetRenderInput = ({ control, errors }: IUseGetRenderInputProps) 
       return (errors.credential?.[key] as { message?: string } | undefined)?.message;
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: dynamic property access for form errors
     // @ts-expect-error: dynamic access for top-level error
     return errors[name]?.message;
   };
@@ -44,6 +45,7 @@ export const useGetRenderInput = ({ control, errors }: IUseGetRenderInputProps) 
       return !!errors.credential?.[key];
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: dynamic property access for form errors
     // @ts-expect-error: dynamic access for top-level error
     return !!errors[name];
   };
@@ -52,6 +54,7 @@ export const useGetRenderInput = ({ control, errors }: IUseGetRenderInputProps) 
     const { name, label, placeholder, type = 'text' } = props;
     return (
       <Controller
+        // biome-ignore lint/suspicious/noExplicitAny: Controller requires flexible name typing for nested fields
         name={name as any}
         control={control}
         render={({ field }) => (

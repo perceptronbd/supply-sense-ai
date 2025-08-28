@@ -1,5 +1,5 @@
-import { PrismaService } from '@/app/prisma.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import {
   decryptPassword,
   encryptPassword,
@@ -8,7 +8,7 @@ import {
   parseConnectionString,
   testConnection,
   withDbConnection,
-} from 'src/helpers/db-connection.helper';
+} from '@supplysense/utils/server';
 import type { SaveDbConnectionDto } from '../onboarding/dto/db-connect.dto';
 import type { DbCredentials, SaveConnectionResult } from '../onboarding/types/db-connection.type';
 

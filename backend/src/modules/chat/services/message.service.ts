@@ -1,78 +1,224 @@
 import { randomUUID } from 'node:crypto';
-import { PrismaService } from '@app/prisma.service';
-import { Injectable, Logger } from '@nestjs/common';
-import { ChatMessage } from '../interfaces/chat.interface';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { Message } from '@prisma/client';
+import type { JsonValue } from '@prisma/client/runtime/library';
+import { PrismaService } from '@supplysense/prisma';
+
+type MessageType = 'user' | 'assistant' | 'system' | 'error';
 
 @Injectable()
 export class MessageService {
   private readonly logger = new Logger(MessageService.name);
-  private readonly messages = new Map<string, ChatMessage[]>();
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
+    // Validate Prisma service is properly injected during construction
+    if (!this.prisma) {
+      this.logger.error('PrismaService was not properly injected in constructor');
+      throw new Error('PrismaService dependency injection failed');
+    }
+  }
   async createMessage(
     sessionId: string,
     content: string,
-    type: 'user' | 'assistant' | 'system' | 'error',
-    userId: string,
-    metadata?: Record<string, unknown>,
-    parentMessageId?: string
-  ): Promise<ChatMessage> {
+    type: MessageType,
+    metadata?: Record<string, unknown>
+  ): Promise<Message> {
     try {
-      const message: ChatMessage = {
-        id: this.generateId(),
-        sessionId,
-        content,
-        type,
-        contentType: this.determineContentType(content, metadata),
-        metadata,
-        parentMessageId,
-        userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }; // Store in memory - create session array if it doesn't exist
-      if (!this.messages.has(sessionId)) {
-        this.messages.set(sessionId, []);
+      // Validate input parameters
+      if (!sessionId || typeof sessionId !== 'string') {
+        throw new Error('Invalid sessionId provided');
       }
-      const sessionMessages = this.messages.get(sessionId);
-      if (sessionMessages) {
-        sessionMessages.push(message);
+      if (!content || typeof content !== 'string') {
+        throw new Error('Invalid content provided');
+      }
+      if (!type || !['user', 'assistant', 'system', 'error'].includes(type)) {
+        throw new Error('Invalid message type provided');
       }
 
-      this.logger.log(`Message created: ${message.id} in session ${sessionId}`);
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
 
-      return message;
+      // Validate session exists first
+      const sessionExists = await this.prisma.session.findFirst({
+        where: {
+          id: sessionId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (!sessionExists) {
+        this.logger.error(`Session validation failed: Session ${sessionId} not found or inactive`);
+        throw new Error(`Session ${sessionId} not found or inactive`);
+      }
+
+      // Create message in database
+      const dbMessage = await this.prisma.message.create({
+        data: {
+          content,
+          type,
+          metadata: metadata ? (metadata as Record<string, never>) : null,
+          sessionId,
+        },
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
+      });
+
+      // Validate the created message
+      if (!dbMessage || !dbMessage.id || !dbMessage.content) {
+        throw new Error('Failed to create valid message in database');
+      }
+
+      // Convert to proper Message type
+      const messageResult: Message = {
+        id: dbMessage.id,
+        content: dbMessage.content,
+        type: dbMessage.type as MessageType,
+        metadata: dbMessage.metadata as JsonValue,
+        createdAt: dbMessage.createdAt,
+        sessionId: dbMessage.sessionId,
+      };
+
+      this.logger.log(`Message created: ${messageResult.id} in session ${sessionId}`);
+
+      return messageResult;
     } catch (error) {
       this.logger.error('Failed to create message:', error);
+      this.logger.error('Session ID:', sessionId);
+      this.logger.error('Message content length:', content?.length || 0);
+      this.logger.error('Prisma service available:', !!this.prisma);
+      this.logger.error('Error stack:', error.stack);
       throw new Error('Failed to create message');
     }
   }
-  async getSessionMessages(sessionId: string, limit = 50, offset = 0): Promise<ChatMessage[]> {
+
+  async getSessionMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
     try {
       this.logger.log(
         `Fetching messages for session ${sessionId}, limit: ${limit}, offset: ${offset}`
       );
 
-      const sessionMessages = this.messages.get(sessionId) || [];
+      // Validate input parameters
+      if (!sessionId || typeof sessionId !== 'string') {
+        throw new Error('Invalid sessionId provided');
+      }
 
-      // Apply pagination and sort by creation time
-      return sessionMessages
-        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        .slice(offset, offset + limit);
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Validate session exists first
+      const sessionExists = await this.prisma.session.findFirst({
+        where: {
+          id: sessionId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (!sessionExists) {
+        this.logger.error(
+          `Session validation failed in getSessionMessages: Session ${sessionId} not found or inactive`
+        );
+        return [];
+      }
+
+      // Fetch messages from database
+      const dbMessages = await this.prisma.message.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
+      });
+
+      // Convert all database results to proper Message types before returning
+      const convertedMessages = dbMessages.map(
+        (msg): Message => ({
+          id: msg.id,
+          content: msg.content,
+          type: msg.type as MessageType,
+          metadata: msg.metadata as JsonValue,
+          createdAt: msg.createdAt,
+          sessionId: msg.sessionId,
+        })
+      );
+
+      return convertedMessages;
     } catch (error) {
       this.logger.error('Failed to fetch session messages:', error);
+      this.logger.error('Session ID:', sessionId);
+      this.logger.error('Prisma service available:', !!this.prisma);
+      this.logger.error('Error stack:', error.stack);
       throw new Error('Failed to fetch messages');
     }
   }
   async updateMessage(
     messageId: string,
-    _updates: Partial<Pick<ChatMessage, 'content' | 'metadata'>>
-  ): Promise<ChatMessage> {
+    updates: Partial<Pick<Message, 'content' | 'metadata'>>
+  ): Promise<Message> {
     try {
       this.logger.log(`Updating message ${messageId}`);
-      // Implement message update logic
-      throw new Error('Message update not yet implemented');
+
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Update in database
+      const dbMessage = await this.prisma.message.update({
+        where: { id: messageId },
+        data: {
+          content: updates.content,
+          metadata: updates.metadata ? (updates.metadata as Record<string, never>) : undefined,
+        },
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
+      });
+
+      // Convert to proper Message type
+      const message: Message = {
+        id: dbMessage.id,
+        sessionId: dbMessage.sessionId,
+        content: dbMessage.content,
+        type: dbMessage.type as MessageType,
+        metadata: dbMessage.metadata as unknown as JsonValue,
+        createdAt: dbMessage.createdAt,
+      };
+
+      this.logger.log(`Message ${messageId} updated successfully`);
+      return message;
     } catch (error) {
       this.logger.error('Failed to update message:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw error;
     }
   }
@@ -80,25 +226,81 @@ export class MessageService {
   async deleteMessage(messageId: string): Promise<void> {
     try {
       this.logger.log(`Deleting message ${messageId}`);
-      // Implement message deletion logic
+
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Delete from database
+      await this.prisma.message.delete({
+        where: { id: messageId },
+      });
+
+      this.logger.log(`Message ${messageId} deleted successfully`);
     } catch (error) {
       this.logger.error('Failed to delete message:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw new Error('Failed to delete message');
     }
   }
-  async searchMessages(_sessionId: string, _query: string, _limit = 20): Promise<ChatMessage[]> {
+  async searchMessages(sessionId: string, query: string, limit = 20): Promise<Message[]> {
     try {
-      this.logger.log(`Searching messages in session ${_sessionId} with query: ${_query}`);
-      // Implement message search logic
-      return [];
+      this.logger.log(`Searching messages in session ${sessionId} with query: ${query}`);
+
+      // Check if Prisma service is available
+      if (!this.prisma) {
+        this.logger.error('Prisma service is not available');
+        throw new Error('Database service is not available');
+      }
+
+      // Search in database
+      const searchResults = await this.prisma.message.findMany({
+        where: {
+          sessionId,
+          content: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          sessionId: true,
+          // Do NOT include session relationship
+        },
+      });
+
+      // Convert search results to proper Message types
+      const convertedResults = searchResults.map(
+        (msg): Message => ({
+          id: msg.id,
+          content: msg.content,
+          type: msg.type as MessageType,
+          metadata: msg.metadata as JsonValue,
+          createdAt: msg.createdAt,
+          sessionId: msg.sessionId,
+        })
+      );
+
+      return convertedResults;
     } catch (error) {
       this.logger.error('Failed to search messages:', error);
+      this.logger.error('Prisma service available:', !!this.prisma);
       throw new Error('Failed to search messages');
     }
   }
+
   private generateId(): string {
     return randomUUID();
   }
+
   private determineContentType(
     content: string,
     metadata?: Record<string, unknown>

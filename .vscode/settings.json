@@ -1,6 +1,6 @@
 {
   "nxConsole.generateAiAgentRules": true,
-  "cSpell.words": ["heroui", "mastra", "Millis", "supplysense", "Toolsets"],
+  "cSpell.words": ["Anylisispromt", "heroui", "mastra", "Millis", "supplysense", "Toolsets"],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
@@ -8,7 +8,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "prettier.enable": false,
-  "[typescriptreact]": {
+  "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }

@@ -31,6 +31,7 @@ interface LoginResponse {
     permissions: string[];
     branchId: string;
     isActive: boolean;
+    companyId: string;
   };
   access_token: string;
 }

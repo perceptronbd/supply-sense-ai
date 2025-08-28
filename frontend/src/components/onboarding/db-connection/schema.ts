@@ -9,6 +9,32 @@ const credentialSchema = z.object({
   sslEnabled: z.boolean().optional(),
 });
 
+// Validation helper functions
+const validateCredentialField = (
+  value: string | undefined,
+  fieldName: string,
+  ctx: z.RefinementCtx,
+  path: string[]
+) => {
+  if (!value || value.trim() === '') {
+    ctx.addIssue({
+      path,
+      message: `${fieldName} is required if using credentials.`,
+      code: z.ZodIssueCode.custom,
+    });
+  }
+};
+
+const validatePortField = (port: string | undefined, ctx: z.RefinementCtx) => {
+  if (!port || !/^\d+$/.test(port)) {
+    ctx.addIssue({
+      path: ['credential', 'port'],
+      message: 'Port must be a number if using credentials.',
+      code: z.ZodIssueCode.custom,
+    });
+  }
+};
+
 export const dbConnectionSchema = z
   .object({
     title: z
@@ -26,43 +52,14 @@ export const dbConnectionSchema = z
     const cred = data.credential || {};
     const credFields = [cred.host, cred.port, cred.username, cred.password, cred.database];
     const anyCredFilled = credFields.some((v) => v && v.trim() !== '');
-    if (anyCredFilled) {
-      if (!cred.host || cred.host.trim() === '') {
-        ctx.addIssue({
-          path: ['credential', 'host'],
-          message: 'Host is required if using credentials.',
-          code: z.ZodIssueCode.custom,
-        });
-      }
-      if (!cred.port || !/^\d+$/.test(cred.port)) {
-        ctx.addIssue({
-          path: ['credential', 'port'],
-          message: 'Port must be a number if using credentials.',
-          code: z.ZodIssueCode.custom,
-        });
-      }
-      if (!cred.username || cred.username.trim() === '') {
-        ctx.addIssue({
-          path: ['credential', 'username'],
-          message: 'Username is required if using credentials.',
-          code: z.ZodIssueCode.custom,
-        });
-      }
-      if (!cred.password || cred.password.trim() === '') {
-        ctx.addIssue({
-          path: ['credential', 'password'],
-          message: 'Password is required if using credentials.',
-          code: z.ZodIssueCode.custom,
-        });
-      }
-      if (!cred.database || cred.database.trim() === '') {
-        ctx.addIssue({
-          path: ['credential', 'database'],
-          message: 'Database name is required if using credentials.',
-          code: z.ZodIssueCode.custom,
-        });
-      }
-    }
+
+    if (!anyCredFilled) return;
+
+    validateCredentialField(cred.host, 'Host', ctx, ['credential', 'host']);
+    validatePortField(cred.port, ctx);
+    validateCredentialField(cred.username, 'Username', ctx, ['credential', 'username']);
+    validateCredentialField(cred.password, 'Password', ctx, ['credential', 'password']);
+    validateCredentialField(cred.database, 'Database name', ctx, ['credential', 'database']);
   });
 
 export type DbConnectionFormData = z.infer<typeof dbConnectionSchema>;

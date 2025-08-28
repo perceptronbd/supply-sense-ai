@@ -54,3 +54,6 @@ Thumbs.db
 out
 
 /generated/prisma
+
+# Ignore Kiro project steering files
+.kiro/
