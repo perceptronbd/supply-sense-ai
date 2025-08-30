@@ -64,12 +64,13 @@ const QnASection = () => {
         Everything you need to know
       </h1>
 
-      <Accordion className="">
+      <Accordion variant="light" selectionMode="single" defaultExpandedKeys={['1']} className="">
         {accordionData.map((accordion) => (
           <AccordionItem
             classNames={{
               title: 'font-bold text-lg font-inter text-content1-foreground',
-              content: 'font-medium font-inter text-content1-foreground',
+              content: 'font-medium font-inter text-foreground',
+              base: 'border-none',
             }}
             key={accordion.key}
             title={accordion.title}

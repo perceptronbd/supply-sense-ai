@@ -149,7 +149,7 @@ module.exports = {
             },
             background: '#ffffff',
             foreground: '#000000',
-            divider: '#f2f2f2',
+            divider: '#ebebec',
             focus: '#E84A2E',
             content1: {
               DEFAULT: '#ffffff',
@@ -258,7 +258,7 @@ module.exports = {
             },
             background: '#000000',
             foreground: '#ffffff',
-            divider: '#f2f2f2',
+            divider: '#26262a',
             focus: '#E84A2E',
             content1: {
               DEFAULT: '#18181b',
