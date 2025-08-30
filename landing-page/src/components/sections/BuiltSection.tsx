@@ -12,6 +12,7 @@ const BuiltSection = () => {
       <div className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background">
         {/* first column - chat box  */}
         <div className="w-full max-w-lg mx-auto">
+          {/* First table  */}
           <TableBox />
         </div>
 
@@ -49,6 +50,14 @@ const BuiltSection = () => {
                   Ask Like You Think, Not Like a Machine
                 </h3>
               </div>
+              <p className="text-content4-foreground text-start mb-3 text-sm pl-3">
+                Natural language that understands your business logic
+              </p>
+              <p className="text-content4-foreground text-start mb-3 pl-3 max-w-md">
+                "Say 'Show me declining products' instead of juggling through dashboard. Our AI maps
+                your unique business rules (not generic algorithms) so answers reflect how you
+                actually operate. Follow-up questions work like real dialogue."
+              </p>
             </div>
           </div>
 
@@ -63,6 +72,14 @@ const BuiltSection = () => {
                   Answers You Can Trust, Immediately
                 </h3>
               </div>
+              <p className="text-content4-foreground text-start mb-3 text-sm pl-3">
+                No more guessing if the data is right
+              </p>
+              <p className="text-content4-foreground text-start mb-3 pl-3 max-w-md">
+                "Every answer shows its source tables and confidence score. See exactly how we
+                arrived at insights – no black boxes. Confirm schema relationships before going live
+                so your team never doubts the data again."
+              </p>
             </div>
           </div>
 
@@ -79,6 +96,12 @@ const BuiltSection = () => {
               </div>
               <p className="text-content4-foreground text-start mb-3 text-sm pl-3">
                 No storage, no training, no leaks
+              </p>
+
+              <p className="text-content4-foreground text-start mb-3 pl-3 max-w-md">
+                "We never store your data or queries. Every connection is ephemeral – your
+                PostgreSQL URL is encrypted, queries execute in real-time, then vanish. You see
+                exactly what's accessed and when."
               </p>
             </div>
           </div>
