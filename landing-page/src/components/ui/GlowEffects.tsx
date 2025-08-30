@@ -13,32 +13,32 @@ const GlowEffects = ({ className = '' }) => {
       {/* Glow 1 - Main right glow */}
       <div
         className={`absolute -top-3 right-16 w-12 h-[7%]
-        md:right-28 md:w-40 md:h-[20%] 
-        xl:right-72 xl:w-60 xl:h-[20%]
+        md:right-28 md:w-40 md:h-[14%] 
+        xl:right-72 xl:w-60 xl:h-[17%]
         bg-gradient-to-b ${intensity.light} transform rotate-[27deg] origin-top-right -z-10`}
       />
 
       {/* Glow 2 - Edge right glow */}
       <div
         className={`absolute -top-3 right-1 w-8 h-[10%]
-        md:right-0 md:w-12 md:h-[25%] 
-        xl:right-32 xl:w-28 xl:h-[25%]
+        md:right-0 md:w-12 md:h-[21%] 
+        xl:right-32 xl:w-28 xl:h-[20%]
         bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right -z-10`}
       />
 
       {/* Glow 3 - Far right glow (hidden on very small screens) */}
       <div
         className={`absolute -top-3 -right-16 w-8 h-[11%] 
-        md:-right-32 md:w-12 md:h-[25%] 
-        xl:-right-28 xl:w-40 xl:h-[28%]
+        md:-right-32 md:w-12 md:h-[23%] 
+        xl:-right-28 xl:w-40 xl:h-[22%]
         bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right -z-10`}
       />
 
       {/* Glow 4 - Extreme right glow (only visible on larger screens) */}
       <div
         className={`absolute -top-3 -right-32 w-8 h-[12%]
-        md:-right-64 md:w-12 md:h-[40%] 
-        xl:-right-72 xl:w-28 xl:h-[35%]
+        md:-right-64 md:w-12 md:h-[27%] 
+        xl:-right-72 xl:w-28 xl:h-[25%]
         bg-gradient-to-b ${intensity.normal} transform rotate-[27deg] origin-top-right -z-10`}
       />
     </div>

@@ -58,7 +58,7 @@ const Navbar = () => {
 
   return (
     <div className="mx-2">
-      <nav className="relative container flex justify-between flex-row items-center z-5 lg:bg-primary/20 border-1 border-primary/20 rounded-full mx-auto mt-5 py-1 lg:p-1">
+      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 lg:bg-primary/20 border-1 border-primary/20 rounded-full mx-auto mt-5 py-1 lg:p-1">
         <FullLogo className="text-primary h-5 w-40 ml-4 lg:ml-0" />
 
         {/* Desktop menu */}

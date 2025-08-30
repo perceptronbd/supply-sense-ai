@@ -11,12 +11,12 @@ const BuiltSection = () => {
     <SectionWrapper size="large">
       <div className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background">
         {/* first column - chat box  */}
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-lg mx-auto">
           <TableBox />
         </div>
 
         {/* second column */}
-        <div className="max-w-lg">
+        <div className="max-w-lg mx-auto">
           {/* first row */}
           <div className="flex gap-4 items-center h-full mb-3">
             <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
