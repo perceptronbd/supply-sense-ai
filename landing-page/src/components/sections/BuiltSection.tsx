@@ -1,11 +1,18 @@
 'use client';
 
+import { useScroll } from 'motion/react';
+import { useRef } from 'react';
 import useGradientIcons from '../icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 import TableBox from '../ui/TableBox';
 
 const BuiltSection = () => {
   const { CheckCircle, Message, Search, Document } = useGradientIcons();
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['end end', 'start start'],
+  });
 
   return (
     <SectionWrapper size="large">
@@ -14,10 +21,19 @@ const BuiltSection = () => {
         <div className="w-full max-w-lg mx-auto">
           {/* First table  */}
           <TableBox />
+
+          {/* Second table  */}
+          {/* <TableBox /> */}
+
+          {/* third table */}
+          {/* <TableBox /> */}
+
+          {/* fourth table */}
+          {/* <TableBox /> */}
         </div>
 
         {/* second column */}
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-lg mx-auto pt-5">
           {/* first row */}
           <div className="flex gap-4 items-center h-full mb-3">
             <div className="bg-gradient-to-b from-primary-200 via-primary to-primary-200 w-1 self-stretch" />
