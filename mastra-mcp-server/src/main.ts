@@ -3,11 +3,14 @@ import { MCPServer } from '@mastra/mcp';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { mastra } from './mastra/index.js';
 
-import { executeQueryTool } from './mastra/tools/execute-query-tool.js';
-import { analyzeTableMetadataTool } from './mastra/tools/metadata-tool.js';
-import { queryAnalysisTool } from './mastra/tools/query-analysis-tools.js';
-import { supplyChainTool } from './mastra/tools/supply-chain-tool.js';
-import { testMetadataTool } from './mastra/tools/test-metadata-tool.js';
+import {
+  analyzeTableMetadataTool,
+  executeQueryTool,
+  formatResultsTool,
+  queryAnalysisTool,
+  supplyChainTool,
+  testMetadataTool,
+} from './mastra/tools';
 
 // Global Prisma client instance for main server operations
 const prisma = new PrismaClient();
@@ -90,6 +93,7 @@ async function main() {
         testMetadataTool,
         queryAnalysisTool,
         executeQueryTool,
+        formatResultsTool,
       }, // Include standalone tools
     });
 

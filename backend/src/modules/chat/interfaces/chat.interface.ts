@@ -21,7 +21,7 @@ export interface DatabaseQueryResult {
 
 export interface AIChatResponse {
   message: string;
-  type: 'text' | 'data' | 'error';
+  type: 'table' | 'text' | 'data' | 'error' | 'bar' | 'pie' | 'line' | 'doughnut';
   sessionId?: string;
   timestamp?: string;
   data?: unknown;

@@ -58,7 +58,7 @@ export class SchemaContextService {
   private schemaCacheTime = 0;
   private readonly CACHE_TTL = 300000; // 5 minutes
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Get comprehensive schema context with business annotations

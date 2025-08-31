@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import { GetOpenRouter } from '@supplysense/utils';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
@@ -43,7 +44,7 @@ export class ChatService {
           'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
         instructions:
           'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
-        model: this.openrouter.getModel(),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.Z_AI),
         tools,
       });
       this.logger.log('✅ Table metadata agent initialized successfully');
@@ -131,10 +132,32 @@ export class ChatService {
         2. After getting the analysis, use the execute-query-tool with these parameters:
            - dbConnectionId: "${dbConnectionId}"
            - queryAnalysis: The analysis result from step 1
+           - userQuery: The user's original message "${message}" (for better formatting context)
         
-        The query-analysis-tool will analyze the user's query and provide insights about their intent and requirements.
-        The execute-query-tool will then generate and execute the appropriate SQL query to get the actual data.
-        Always provide helpful, accurate responses based on the query results and explain your reasoning.`,
+        The execute-query-tool will now handle formatting internally and return:
+        - sqlQuery: The generated SQL query
+        - queryResults: The raw database results
+        - visualizationType: The recommended display format
+        - formattedData: Chart.js compatible data structure or table data
+        - summary: Brief description of the data
+        
+        TOOLS AVAILABLE:
+        - query-analysis-tool: Analyzes user queries and extracts insights about intent and requirements
+        - execute-query-tool: Generates and executes SQL queries, then formats results for optimal visualization
+        
+        CRITICAL: You must ALWAYS return your final response in a structured JSON format containing:
+        {
+          "visualizationType": "table|bar|pie|line|doughnut|text",
+          "formattedData": [...], // Array of objects for table data (preserving original query structure), or Chart.js format for charts
+          "summary": "Brief description",
+          "message": "Your explanatory text here",
+          "sqlQuery": "The SQL query that was executed",
+          "queryResults": [...] // The raw database results
+        }
+        
+        For table visualizations, the formattedData should be an array of objects that preserves the original database query results without transformation. This allows the frontend to handle any data structure flexibly.
+        
+        Always provide helpful responses explaining the data insights and visualization recommendations.`,
           },
           {
             role: 'user',
@@ -150,13 +173,66 @@ export class ChatService {
 
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);
+
+      // Try to parse the structured JSON response from the agent
+      let parsedResponse: {
+        visualizationType?: 'text' | 'table' | 'bar' | 'pie' | 'line' | 'doughnut';
+        formattedData?: unknown;
+        summary?: string;
+        message?: string;
+        sqlQuery?: string;
+        queryResults?: unknown[];
+      } = {};
+
+      try {
+        // Look for JSON in the response
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0];
+          parsedResponse = JSON.parse(jsonStr);
+          this.logger.log('Successfully parsed structured response:', parsedResponse);
+        }
+      } catch (error) {
+        this.logger.warn('Could not parse structured response, using fallback:', error);
+      }
+
+      // Determine the response type and data
+      let responseType: 'table' | 'text' | 'data' | 'error' | 'bar' | 'pie' | 'line' | 'doughnut' =
+        'data';
+
+      if (parsedResponse.visualizationType) {
+        // Map visualization types to response types
+        switch (parsedResponse.visualizationType) {
+          case 'table':
+            responseType = 'table';
+            break;
+          case 'bar':
+          case 'pie':
+          case 'line':
+          case 'doughnut':
+            responseType = parsedResponse.visualizationType;
+            break;
+          case 'text':
+            responseType = 'text';
+            break;
+          default:
+            responseType = 'data';
+        }
+      }
+
+      this.logger.debug('Determined parsedResponse:', parsedResponse);
+
+      const responseMessage = parsedResponse.message || aiResponse;
+      const responseData = parsedResponse.formattedData;
+
       // Create assistant message
-      await this.messageService.createMessage(sessionId, aiResponse, 'assistant');
+      await this.messageService.createMessage(sessionId, responseMessage, 'assistant');
       this.logger.log('Assistant message created successfully');
 
       return {
-        message: aiResponse,
-        type: 'data',
+        message: responseMessage,
+        type: responseType,
+        data: responseData,
         sessionId,
         timestamp: new Date().toISOString(),
       };

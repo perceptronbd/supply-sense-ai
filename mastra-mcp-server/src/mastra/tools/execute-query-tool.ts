@@ -5,6 +5,7 @@ import { PoolClient } from 'pg';
 import { z } from 'zod';
 import { sqlGenerationAgent } from '../agents/sql-generation-agent';
 import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
+import { formatQueryResults } from './format-results-tool';
 
 // Type definitions
 interface SchemaCache {
@@ -33,11 +34,28 @@ interface SqlError {
 const inputSchema = z.object({
   dbConnectionId: z.string(),
   queryAnalysis: z.string(),
+  userQuery: z.string().optional(), // Add user query for better formatting context
 });
 
 const outputSchema = z.object({
   sqlQuery: z.string(),
   queryResults: z.array(z.record(z.any())),
+  // Include formatted response from format-results-tool
+  visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+  formattedData: z.union([
+    z.object({
+      labels: z.array(z.string()),
+      datasets: z.array(
+        z.object({
+          label: z.string(),
+          data: z.array(z.number()),
+        })
+      ),
+    }),
+    z.array(z.record(z.any())),
+    z.string(),
+  ]),
+  summary: z.string(),
 });
 
 const prisma = new PrismaClient();
@@ -168,8 +186,6 @@ export const executeQueryTool = createTool({
       // Ensure query ends with semicolon if it doesn't already
       .replace(/;?$/, ';');
 
-    console.log('🚀 > sqlQuery:', sqlQuery);
-
     // Execute the SQL query against the database
     let queryResults: unknown[] = [];
 
@@ -182,10 +198,28 @@ export const executeQueryTool = createTool({
       handleSqlExecutionError(error, sqlQuery, parsedSchema);
     }
 
-    return {
-      sqlQuery,
-      queryResults,
-    };
+    try {
+      const formattedResponse = await formatQueryResults(
+        queryResults as Record<string, unknown>[],
+        sqlQuery,
+        input.context.userQuery || ''
+      );
+
+      return {
+        sqlQuery,
+        queryResults: queryResults as Record<string, unknown>[],
+        visualizationType: formattedResponse.visualizationType,
+        formattedData: formattedResponse.formattedData,
+        summary: formattedResponse.summary,
+      };
+    } catch (error) {
+      console.error('🚀 > error:', error);
+      // Fallback to returning just the raw data
+      return {
+        sqlQuery,
+        queryResults: queryResults as Record<string, unknown>[],
+      };
+    }
   },
 });
 
@@ -259,62 +293,11 @@ function handleSqlExecutionError(
   sqlQuery: string,
   parsedSchema: ParsedSchema
 ): never {
-  console.error('SQL execution error:', error);
-
   if (error.code === '42P01') {
     const availableTables = parsedSchema?.tables ? Object.keys(parsedSchema.tables) : [];
     throw new Error(
       `Table does not exist. Available tables in schema: ${availableTables.join(', ')}. \nGenerated query: ${sqlQuery}\nOriginal error: ${error.message}`
     );
-  }
-
-  if (error.code === '42703') {
-    const hint = error.hint || '';
-    const columnSuggestion = hint.match(/Perhaps you meant to reference the column "([^"]+)"/)?.[1];
-
-    let errorMessage = `Column does not exist: ${error.message}`;
-
-    if (columnSuggestion) {
-      errorMessage += `\n💡 PostgreSQL suggests using: ${columnSuggestion}`;
-      errorMessage +=
-        '\n🔍 This is likely a case sensitivity issue. PostgreSQL is case-sensitive for quoted identifiers.';
-
-      // Provide specific guidance for common camelCase columns
-      const camelCaseColumns = [
-        'availableQty',
-        'itemId',
-        'reservedQty',
-        'safetyStockLevel',
-        'reorderLevel',
-        'minOrderQty',
-        'leadTimeDays',
-        'isPreferred',
-        'isActive',
-        'createdAt',
-        'updatedAt',
-        'lastStockDate',
-        'lastCost',
-        'averageCost',
-        'unitPrice',
-        'companyId',
-        'supplierId',
-        'branchId',
-      ];
-
-      const needsQuoting = camelCaseColumns.find((col) =>
-        columnSuggestion.toLowerCase().includes(col.toLowerCase())
-      );
-
-      if (needsQuoting) {
-        errorMessage += `\n🔧 FIX: Use "${columnSuggestion}" with quotes because it contains uppercase letters`;
-        errorMessage += `\n📝 Example: stock."${columnSuggestion}" instead of stock.${columnSuggestion.toLowerCase()}`;
-      }
-    }
-
-    errorMessage += `\n📝 Generated query: ${sqlQuery}`;
-    errorMessage += `\n🗂️  Available schema: ${JSON.stringify(parsedSchema, null, 2)}`;
-
-    throw new Error(errorMessage);
   }
 
   throw new Error(`Failed to execute SQL query: ${error.message}\nGenerated query: ${sqlQuery}`);
