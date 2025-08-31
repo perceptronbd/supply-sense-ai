@@ -16,10 +16,10 @@ import { Icons } from '../icons';
 
 const TableBox = () => {
   return (
-    <div className="rounded-xl bg-layout-divider/4 border-1 border-divider/15 p-7 card-blur-effect-3">
+    <div className="rounded-xl bg-default-100//30 border-1 border-default-100 p-10 card-blur-effect-3">
       <Card
         classNames={{
-          base: 'p-4 card-blur-effect-move bg-default-200',
+          base: 'p-4 card-blur-effect-move bg-default-200 tilted-cylinder-glow',
         }}
       >
         <CardBody className="">
