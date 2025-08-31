@@ -63,17 +63,17 @@ export default function PricingTable() {
 
             {/* Starter Column */}
             <TableCell>
-              <ValueCell value={row.values[0]} />
+              <ValueCell key={row.keys[0]} value={row.values[0]} />
             </TableCell>
 
             {/* Business Column */}
             <TableCell>
-              <ValueCell value={row.values[1]} />
+              <ValueCell key={row.keys[1]} value={row.values[1]} />
             </TableCell>
 
             {/* Enterprise Column */}
             <TableCell>
-              <ValueCell value={row.values[2]} />
+              <ValueCell key={row.keys[0]} value={row.values[2]} />
             </TableCell>
           </TableRow>
         ))}

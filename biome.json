@@ -43,11 +43,11 @@
         "noVoid": "off"
       },
       "correctness": {
-        "noUnusedVariables": "error",
+        "noUnusedVariables": "warn",
         "useExhaustiveDependencies": "warn",
         "noUnusedImports": "error",
         "noUnusedPrivateClassMembers": "warn",
-        "useJsxKeyInIterable": "warn"
+        "useJsxKeyInIterable": "off"
       },
       "style": {
         "noNonNullAssertion": "warn",

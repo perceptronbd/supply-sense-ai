@@ -65,7 +65,7 @@ const PricingMobileTables = () => {
                   <p className="font-bold text-content1-foreground flex-1 text-start">
                     {row.featureName}
                   </p>
-                  <ValueCell value={row.values[0]} />
+                  <ValueCell key={row.keys[0]} value={row.values[0]} />
                 </div>
               </TableCell>
             </TableRow>
@@ -108,7 +108,7 @@ const PricingMobileTables = () => {
                   <p className="font-bold text-content1-foreground flex-1 text-start">
                     {row.featureName}
                   </p>
-                  <ValueCell value={row.values[1]} />
+                  <ValueCell key={row.keys[1]} value={row.values[1]} />
                 </div>
               </TableCell>
             </TableRow>
@@ -150,7 +150,7 @@ const PricingMobileTables = () => {
                   <p className="font-bold text-content1-foreground flex-1 text-start">
                     {row.featureName}
                   </p>
-                  <ValueCell value={row.values[2]} />
+                  <ValueCell key={row.keys[2]} value={row.values[2]} />
                 </div>
               </TableCell>
             </TableRow>
