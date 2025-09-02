@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
+import { RenderChart } from './RenderChart';
+import { RenderTable } from './RenderTable';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -57,6 +59,109 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
   };
 
   const timestamp = getFormattedTime(message.createdAt);
+
+  const chartData = {
+    labels: [
+      'Finished Product Alpha',
+      'Finished Product Alpha',
+      'Finished Product Alpha',
+      'Finished Product Alpha',
+      'Finished Product Alpha',
+      'Finished Product Alpha',
+      'Raw Material B - Standard Grade',
+      'Raw Material A - Premium Grade',
+      'Chemical Component X',
+      'Chemical Component X',
+      'Raw Material A - Premium Grade',
+    ],
+    datasets: [
+      {
+        label: 'Stock Quantity',
+        data: [16, 20, 33, 45, 50, 52, 54, 62, 86, 92, 98],
+      },
+    ],
+  };
+
+  const tableData = [
+    {
+      id: '35cf4c05-ee4a-4ae9-9539-4ada8cbc2cd8',
+      name: 'Raw Material A - Premium Grade',
+      sku: 'RM001-62a7',
+      quantity: 62,
+      availableQty: 62,
+    },
+    {
+      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-62a7',
+      quantity: 45,
+      availableQty: 45,
+    },
+    {
+      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-62a7',
+      quantity: 50,
+      availableQty: 50,
+    },
+    {
+      id: 'b36b2106-5d11-4953-b255-3f11bf624024',
+      name: 'Chemical Component X',
+      sku: 'RM003-62A7',
+      quantity: 92,
+      availableQty: 92,
+    },
+    {
+      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-62a7',
+      quantity: 33,
+      availableQty: 33,
+    },
+    {
+      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-28fe',
+      quantity: 20,
+      availableQty: 20,
+    },
+    {
+      id: '116c5020-95b2-4511-b37f-bc1e23b43ac3',
+      name: 'Raw Material A - Premium Grade',
+      sku: 'RM001-28fe',
+      quantity: 98,
+      availableQty: 98,
+    },
+    {
+      id: '82806843-ccc9-4c20-b0da-b1c0513b5d07',
+      name: 'Raw Material B - Standard Grade',
+      sku: 'RM002-28fe',
+      quantity: 54,
+      availableQty: 54,
+    },
+    {
+      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-28fe',
+      quantity: 52,
+      availableQty: 52,
+    },
+    {
+      id: '6d6a68e0-c706-413c-8d98-f5c0121ca572',
+      name: 'Chemical Component X',
+      sku: 'RM003-28fe',
+      quantity: 86,
+      availableQty: 86,
+    },
+    {
+      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+      name: 'Finished Product Alpha',
+      sku: 'FG001-28fe',
+      quantity: 16,
+      availableQty: 16,
+    },
+  ];
+
   return (
     <article
       className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
@@ -107,6 +212,8 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                     />
                   );
                 })}
+                <RenderChart data={chartData} chartType="bar" />
+                <RenderTable data={tableData} />
               </article>
             )}
             {!isUser &&

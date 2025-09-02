@@ -94,9 +94,6 @@ export class MessageService {
       return messageResult;
     } catch (error) {
       this.logger.error('Failed to create message:', error);
-      this.logger.error('Session ID:', sessionId);
-      this.logger.error('Message content length:', content?.length || 0);
-      this.logger.error('Prisma service available:', !!this.prisma);
       this.logger.error('Error stack:', error.stack);
       throw new Error('Failed to create message');
     }

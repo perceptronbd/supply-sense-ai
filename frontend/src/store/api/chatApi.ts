@@ -29,6 +29,17 @@ export interface ChatMessage {
   updatedAt: string;
 }
 
+// Chart data interface
+export interface ChartDataset {
+  label: string;
+  data: number[];
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: ChartDataset[];
+}
+
 export interface CreateSessionRequest {
   title: string;
   description?: string;

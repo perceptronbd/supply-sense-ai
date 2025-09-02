@@ -4,4 +4,6 @@ export { MessageList } from './MessageList';
 export { MessageBubble, LoadingMessage } from './MessageBubble';
 export { SessionManager } from './SessionManager';
 export { SessionList } from './SessionList';
+export { RenderChart } from './RenderChart';
+export { RenderTable } from './RenderTable';
 export * from './types';

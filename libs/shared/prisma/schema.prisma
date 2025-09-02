@@ -440,7 +440,7 @@ model Message {
   type      String // 'user', 'assistant', 'system', 'error'
   metadata  Json? // Additional data like tool usage, timestamps, etc.
   createdAt DateTime @default(now())
-
+  structuredData      Json?
   // Relationships
   sessionId String
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)

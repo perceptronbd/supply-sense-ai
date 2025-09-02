@@ -174,15 +174,17 @@ export class ChatService {
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);
 
+      type TParsedResponse = {
+        visualizationType: 'table' | 'bar' | 'pie' | 'line' | 'doughnut' | 'text';
+        formattedData: unknown;
+        summary: string;
+        message: string;
+        sqlQuery: string;
+        queryResults: unknown;
+      };
+
       // Try to parse the structured JSON response from the agent
-      let parsedResponse: {
-        visualizationType?: 'text' | 'table' | 'bar' | 'pie' | 'line' | 'doughnut';
-        formattedData?: unknown;
-        summary?: string;
-        message?: string;
-        sqlQuery?: string;
-        queryResults?: unknown[];
-      } = {};
+      let parsedResponse = {} as TParsedResponse;
 
       try {
         // Look for JSON in the response
@@ -222,7 +224,7 @@ export class ChatService {
 
       this.logger.debug('Determined parsedResponse:', parsedResponse);
 
-      const responseMessage = parsedResponse.message || aiResponse;
+      const responseMessage = JSON.stringify(parsedResponse.formattedData, null, 2) || aiResponse;
       const responseData = parsedResponse.formattedData;
 
       // Create assistant message

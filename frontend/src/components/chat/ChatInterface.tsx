@@ -65,8 +65,12 @@ export function ChatInterface({
         sessionId: sessionId,
         query: content,
         dbConnectionId: dbConnectionId,
-        includeDatabaseQuery: true,
-        context: {},
+        // includeDatabaseQuery: true,
+        // context: {},
+
+        // query:"which item has the stock below 100. show me in bar",
+        // sessionId:"cmetigv8u0001166s2mylwbes",
+        // dbConnectionId: "4211de11-d909-44ee-ab1e-420e095f9cae"
       }).unwrap();
 
       // Remove temporary message and add both user message and AI response
