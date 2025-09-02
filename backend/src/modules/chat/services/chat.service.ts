@@ -4,6 +4,8 @@ import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import { GetOpenRouter } from '@supplysense/utils';
+import { VisualizationType } from '../constant';
+import { MessageType } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -80,6 +82,13 @@ export class ChatService {
       // Update session activity
       await this.sessionService.updateLastActivity(sessionId);
       this.logger.log('Session activity updated');
+
+      // Save user query
+      await this.messageService.createMessage({
+        sessionId,
+        content: message,
+        type: MessageType.USER,
+      });
 
       // Get session history for context
       const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
@@ -175,7 +184,7 @@ export class ChatService {
       this.logger.log('AI response generated successfully', aiResponse);
 
       type TParsedResponse = {
-        visualizationType: 'table' | 'bar' | 'pie' | 'line' | 'doughnut' | 'text';
+        visualizationType: VisualizationType;
         formattedData: unknown;
         summary: string;
         message: string;
@@ -198,42 +207,24 @@ export class ChatService {
         this.logger.warn('Could not parse structured response, using fallback:', error);
       }
 
-      // Determine the response type and data
-      let responseType: 'table' | 'text' | 'data' | 'error' | 'bar' | 'pie' | 'line' | 'doughnut' =
-        'data';
-
-      if (parsedResponse.visualizationType) {
-        // Map visualization types to response types
-        switch (parsedResponse.visualizationType) {
-          case 'table':
-            responseType = 'table';
-            break;
-          case 'bar':
-          case 'pie':
-          case 'line':
-          case 'doughnut':
-            responseType = parsedResponse.visualizationType;
-            break;
-          case 'text':
-            responseType = 'text';
-            break;
-          default:
-            responseType = 'data';
-        }
-      }
-
       this.logger.debug('Determined parsedResponse:', parsedResponse);
 
-      const responseMessage = JSON.stringify(parsedResponse.formattedData, null, 2) || aiResponse;
+      const responseMessage = parsedResponse.message || aiResponse;
       const responseData = parsedResponse.formattedData;
 
-      // Create assistant message
-      await this.messageService.createMessage(sessionId, responseMessage, 'assistant');
+      // Create assistant message save ai response to db
+      await this.messageService.createMessage({
+        sessionId,
+        content: responseMessage,
+        type: MessageType.ASSISTANT,
+        structuredData: parsedResponse,
+      });
+
       this.logger.log('Assistant message created successfully');
 
       return {
         message: responseMessage,
-        type: responseType,
+        type: 'data',
         data: responseData,
         sessionId,
         timestamp: new Date().toISOString(),
@@ -243,11 +234,12 @@ export class ChatService {
       this.logger.error('Error stack:', error.stack);
 
       // Create error message
-      await this.messageService.createMessage(
+      await this.messageService.createMessage({
         sessionId,
-        'I apologize, but I encountered an error processing your request. Please try again.',
-        'error'
-      );
+        content:
+          'I apologize, but I encountered an error processing your request. Please try again.',
+        type: MessageType.ERROR,
+      });
 
       return {
         message:

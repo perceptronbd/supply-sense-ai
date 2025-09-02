@@ -1,10 +1,15 @@
-import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { Message } from '@prisma/client';
-import type { JsonValue } from '@prisma/client/runtime/library';
 import { PrismaService } from '@supplysense/prisma';
+import { Message, Prisma } from '@supplysense/prisma-client';
+import { MessageType } from '../dto/chat.dto';
 
-type MessageType = 'user' | 'assistant' | 'system' | 'error';
+type MessageDto = {
+  sessionId: string;
+  content: string;
+  type: MessageType;
+  metadata?: Record<string, unknown>;
+  structuredData?: Record<string, unknown>;
+};
 
 @Injectable()
 export class MessageService {
@@ -17,12 +22,25 @@ export class MessageService {
       throw new Error('PrismaService dependency injection failed');
     }
   }
-  async createMessage(
-    sessionId: string,
-    content: string,
-    type: MessageType,
-    metadata?: Record<string, unknown>
-  ): Promise<Message> {
+
+  messageIncludeQuery: Prisma.MessageSelect = {
+    id: true,
+    content: true,
+    type: true,
+    metadata: true,
+    createdAt: true,
+    sessionId: true,
+    structuredData: true,
+    // Do NOT include session relationship
+  };
+
+  async createMessage({
+    sessionId,
+    content,
+    type,
+    metadata,
+    structuredData,
+  }: MessageDto): Promise<Message> {
     try {
       // Validate input parameters
       if (!sessionId || typeof sessionId !== 'string') {
@@ -62,20 +80,13 @@ export class MessageService {
           type,
           metadata: metadata ? (metadata as Record<string, never>) : null,
           sessionId,
+          structuredData: structuredData ? (structuredData as Record<string, never>) : null,
         },
-        select: {
-          id: true,
-          content: true,
-          type: true,
-          metadata: true,
-          createdAt: true,
-          sessionId: true,
-          // Do NOT include session relationship
-        },
+        select: this.messageIncludeQuery,
       });
 
       // Validate the created message
-      if (!dbMessage || !dbMessage.id || !dbMessage.content) {
+      if (!dbMessage?.id || !dbMessage.content) {
         throw new Error('Failed to create valid message in database');
       }
 
@@ -83,10 +94,11 @@ export class MessageService {
       const messageResult: Message = {
         id: dbMessage.id,
         content: dbMessage.content,
-        type: dbMessage.type as MessageType,
-        metadata: dbMessage.metadata as JsonValue,
+        type: dbMessage.type,
+        metadata: dbMessage.metadata,
         createdAt: dbMessage.createdAt,
         sessionId: dbMessage.sessionId,
+        structuredData: dbMessage.structuredData,
       };
 
       this.logger.log(`Message created: ${messageResult.id} in session ${sessionId}`);
@@ -151,15 +163,7 @@ export class MessageService {
         orderBy: { createdAt: 'asc' },
         skip: offsetInt,
         take: limitInt,
-        select: {
-          id: true,
-          content: true,
-          type: true,
-          metadata: true,
-          createdAt: true,
-          sessionId: true,
-          // Do NOT include session relationship
-        },
+        select: this.messageIncludeQuery,
       });
 
       // Convert all database results to proper Message types before returning
@@ -168,9 +172,10 @@ export class MessageService {
           id: msg.id,
           content: msg.content,
           type: msg.type as MessageType,
-          metadata: msg.metadata as JsonValue,
+          metadata: msg.metadata,
           createdAt: msg.createdAt,
           sessionId: msg.sessionId,
+          structuredData: msg.structuredData,
         })
       );
 
@@ -203,15 +208,7 @@ export class MessageService {
           content: updates.content,
           metadata: updates.metadata ? (updates.metadata as Record<string, never>) : undefined,
         },
-        select: {
-          id: true,
-          content: true,
-          type: true,
-          metadata: true,
-          createdAt: true,
-          sessionId: true,
-          // Do NOT include session relationship
-        },
+        select: this.messageIncludeQuery,
       });
 
       // Convert to proper Message type
@@ -220,8 +217,9 @@ export class MessageService {
         sessionId: dbMessage.sessionId,
         content: dbMessage.content,
         type: dbMessage.type as MessageType,
-        metadata: dbMessage.metadata as unknown as JsonValue,
+        metadata: dbMessage.metadata,
         createdAt: dbMessage.createdAt,
+        structuredData: dbMessage.structuredData,
       };
 
       this.logger.log(`Message ${messageId} updated successfully`);
@@ -288,15 +286,7 @@ export class MessageService {
         },
         orderBy: { createdAt: 'desc' },
         take: limitInt,
-        select: {
-          id: true,
-          content: true,
-          type: true,
-          metadata: true,
-          createdAt: true,
-          sessionId: true,
-          // Do NOT include session relationship
-        },
+        select: this.messageIncludeQuery,
       });
 
       // Convert search results to proper Message types
@@ -305,9 +295,10 @@ export class MessageService {
           id: msg.id,
           content: msg.content,
           type: msg.type as MessageType,
-          metadata: msg.metadata as JsonValue,
+          metadata: msg.metadata,
           createdAt: msg.createdAt,
           sessionId: msg.sessionId,
+          structuredData: msg.structuredData,
         })
       );
 
@@ -317,33 +308,5 @@ export class MessageService {
       this.logger.error('Prisma service available:', !!this.prisma);
       throw new Error('Failed to search messages');
     }
-  }
-
-  private generateId(): string {
-    return randomUUID();
-  }
-
-  private determineContentType(
-    content: string,
-    metadata?: Record<string, unknown>
-  ): 'text' | 'data' | 'chart' | 'table' {
-    if (metadata?.type) {
-      return metadata.type as 'text' | 'data' | 'chart' | 'table';
-    }
-
-    // Simple content type detection
-    if (content.includes('```json') || content.includes('```sql')) {
-      return 'data';
-    }
-
-    if (content.includes('chart') || content.includes('graph')) {
-      return 'chart';
-    }
-
-    if (content.includes('|') && content.includes('---')) {
-      return 'table';
-    }
-
-    return 'text';
   }
 }
