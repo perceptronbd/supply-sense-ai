@@ -14,6 +14,7 @@ import { SessionService } from './session.service';
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
   private chatAgent: Agent | null = null;
+  private summaryAgent: Agent | null = null;
   private readonly openrouter = new GetOpenRouter();
 
   constructor(
@@ -56,6 +57,78 @@ export class ChatService {
     }
   }
 
+  private async initializeSummaryAgent(): Promise<void> {
+    if (this.summaryAgent) {
+      return; // Already initialized
+    }
+
+    try {
+      const mcpClient = this.mcpClientService.getMcpClient();
+      if (!mcpClient || !this.mcpClientService.isClientConnected()) {
+        throw new Error('MCP client not available or not connected');
+      }
+
+      this.summaryAgent = new Agent({
+        name: 'SummaryAgent',
+        description:
+          'An intelligent AI assistant that specializes in summarizing conversation history for supply chain operations',
+        instructions:
+          'You are a conversation summary AI assistant. Your task is to analyze conversation history and provide concise, meaningful summaries. Focus on key points, decisions made, and important context.',
+        model: this.openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+      });
+      this.logger.log('✅ Summary agent initialized successfully');
+    } catch (error) {
+      this.logger.error('❌ Failed to initialize summary agent:', error);
+      throw error;
+    }
+  }
+
+  async generateConversationSummary(conversationHistory: string[]): Promise<string> {
+    try {
+      await this.initializeSummaryAgent();
+      if (!this.summaryAgent) {
+        throw new Error('Summary agent not initialized');
+      }
+
+      // Format the conversation history
+      const formattedHistory = conversationHistory
+        .map((msg, index) => `Message ${index + 1}: ${msg}`)
+        .join('\n');
+
+      // Generate summary using the summary agent
+      const agentResponse = await this.summaryAgent.generate([
+        {
+          role: 'system',
+          content: `You are a conversation summary AI assistant. 
+          
+          Your task is to analyze the conversation history and provide a concise, meaningful summary.
+          
+          Focus on:
+          1. Key topics discussed
+          2. Important decisions made
+          3. Action items identified
+          4. Critical context or information shared
+          
+          Keep the summary brief but comprehensive.
+          
+          Conversation History:
+          ${formattedHistory}`,
+        },
+        {
+          role: 'user',
+          content: formattedHistory,
+        },
+      ]);
+
+      const summary = agentResponse.text || 'No summary available.';
+      this.logger.log('Conversation summary generated successfully', summary);
+      return summary;
+    } catch (error) {
+      this.logger.error('Failed to generate conversation summary:', error);
+      return 'Failed to generate conversation summary.';
+    }
+  }
+
   async processUserMessage({
     sessionId,
     message,
@@ -94,11 +167,6 @@ export class ChatService {
       const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
-      // Prepare context for the AI agent
-      const conversationHistory = sessionHistory
-        .map((msg) => `${msg.type}: ${msg.content}`)
-        .join('\n');
-
       // Additional context from userContext if available
       const additionalContext = userContext
         ? Object.entries(userContext)
@@ -114,6 +182,12 @@ export class ChatService {
         this.logger.error(`Database connection not found: ${dbConnectionId}`);
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
+
+      const summarizeConversationHistory = await this.generateConversationSummary(
+        sessionHistory.map((msg) => msg.content)
+      );
+
+      this.logger.log('Summarized conversation history:', summarizeConversationHistory);
 
       const mcpClient = this.mcpClientService.getMcpClient();
       const toolsets = await mcpClient.getToolsets();
@@ -131,7 +205,7 @@ export class ChatService {
         - Additional Context:
         ${additionalContext}
         - Conversation History:
-        ${conversationHistory}
+        ${summarizeConversationHistory}
 
         You MUST follow this workflow:
         1. First, use the query-analysis-tool with these parameters:
