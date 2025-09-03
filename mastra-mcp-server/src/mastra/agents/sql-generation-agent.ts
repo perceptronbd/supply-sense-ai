@@ -1,6 +1,7 @@
 const openrouter = new GetOpenRouter();
 
 import { Agent } from '@mastra/core/agent';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
   SQL_GENERATION_AGENT_DESCRIPTION,
@@ -12,5 +13,5 @@ export const sqlGenerationAgent = new Agent({
   name: SQL_GENERATION_AGENT_NAME,
   description: SQL_GENERATION_AGENT_DESCRIPTION,
   instructions: SQL_GENERATION_INSTRUCTION,
-  model: openrouter.getModel('z-ai/glm-4.5'),
+  model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
 });

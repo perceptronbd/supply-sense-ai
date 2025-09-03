@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
   QUERY_ANALYSIS_AGENT_DESCRIPTION,
@@ -12,5 +13,5 @@ export const queryAnalysisAgent = new Agent({
   name: QUERY_ANALYSIS_AGENT_NAME,
   description: QUERY_ANALYSIS_AGENT_DESCRIPTION,
   instructions: QUERY_ANALYSIS_INSTRUCTION,
-  model: openrouter.getModel('z-ai/glm-4.5'),
+  model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
 });
