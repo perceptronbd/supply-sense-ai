@@ -198,7 +198,7 @@ export class CreateUserDto {
 - Avoid using `any` for Prisma query results
 
 ```ts
-import { User } from '@prisma/client';
+import { User } from'@supplysense/prisma-client';
 
 async function getUserById(id: string): Promise<User | null> {
   return prisma.user.findUnique({ where: { id } });
@@ -236,7 +236,7 @@ async getUser(@Param('id') id: string): Promise<ApiResponse<User>> {
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 // 2. External libraries
-import { User } from '@prisma/client';
+import { User } from'@supplysense/prisma-client';
 // 3. Internal modules/services
 import { CreateUserDto } from './dto/create-user.dto';
 // 4. Types and interfaces

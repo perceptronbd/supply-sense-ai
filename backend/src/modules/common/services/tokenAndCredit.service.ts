@@ -1,5 +1,4 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
-import type { UsageRecord } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
   AI_MODEL_INPUT_TOKEN_COST,
@@ -8,6 +7,7 @@ import {
   AI_MODEL_TOKENS_PER_CREDIT,
 } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
+import type { UsageRecord } from '@supplysense/prisma-client';
 
 /**
  * Interface defining parameters for token price calculation

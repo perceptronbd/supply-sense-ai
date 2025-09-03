@@ -1,4 +1,4 @@
-import type { Message } from '@prisma/client';
+import type { Message } from '@supplysense/prisma-client';
 
 export interface QueryContext {
   userId: string;

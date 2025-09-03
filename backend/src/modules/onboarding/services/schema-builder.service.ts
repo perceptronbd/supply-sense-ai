@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { ConnectionsService } from '@/modules/connections/connections.service';
-import { SchemaCache } from '@prisma/client';
 import { PrismaService } from '@supplysense/prisma';
+import { SchemaCache } from '@supplysense/prisma-client';
 import { withDbConnection } from '@supplysense/utils/server';
 
 interface TableSchema {

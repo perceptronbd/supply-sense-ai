@@ -6,8 +6,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { BillingCycle, type SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
 import { CREDIT } from '@supplysense/constant';
+import {
+  BillingCycle,
+  type SubscriptionPlan,
+  SubscriptionStatus,
+} from '@supplysense/prisma-client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../../../libs/shared/prisma/src/lib/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';

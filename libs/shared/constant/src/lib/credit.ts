@@ -1,4 +1,4 @@
-import { SubscriptionPlans } from '@prisma/client';
+import { SubscriptionPlans } from '@supplysense/prisma-client';
 
 export const CREDIT = {
   [SubscriptionPlans.TRIAL]: {
