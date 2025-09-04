@@ -1,4 +1,5 @@
 const { heroui } = require('@heroui/react');
+// const twAnimate = require('tw-animate-css');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -6,24 +7,53 @@ module.exports = {
     './{src,pages,components,app}/**/*.{ts,tsx,js,jsx,html}',
     '!./{src,pages,components,app}/**/*.{stories,spec}.{ts,tsx,js,jsx,html}',
     '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
+    '../libs/shared/shadcn-ui/src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
-      fontFamily: {
-        montserrat: ['var(--font-montserrat)'],
-        manrope: ['var(--font-manrope)'],
-        'clash-display': ['var(--font-clash-display)'],
-      },
       container: {
         center: true,
         screens: {
           xl: '90vw',
         },
       },
+      fontFamily: {
+        montserrat: ['var(--font-montserrat)'],
+        manrope: ['var(--font-manrope)'],
+        'clash-display': ['var(--font-clash-display)'],
+      },
+      colors: {
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        chart: {
+          DEFAULT: 'hsl(var(--chart))',
+          foreground: 'hsl(var(--chart-foreground))',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
     },
   },
   darkMode: 'class',
   plugins: [
+    // twAnimate,
     heroui({
       themes: {
         light: {

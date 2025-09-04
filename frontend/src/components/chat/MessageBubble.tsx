@@ -5,7 +5,7 @@ import { LogoIcon } from '@/components/icons/LogoIcon';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessage } from '@/store/api/chatApi';
-import { Avatar, Button, Card, CardBody } from '@heroui/react';
+import { Avatar, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
@@ -14,14 +14,13 @@ import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
 import { RenderChart } from './RenderChart';
-import { RenderTable } from './RenderTable';
-
 interface MessageBubbleProps {
   message: ChatMessage;
   onSuggestionClick?: (suggestion: string) => void;
 }
 
 export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps) {
+  console.log('🚀 onSuggestionClick:', onSuggestionClick);
   const isUser = message.type === 'user';
 
   // Use llm-ui for AI message rendering
@@ -60,107 +59,94 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
 
   const timestamp = getFormattedTime(message.createdAt);
 
-  const chartData = {
-    labels: [
-      'Finished Product Alpha',
-      'Finished Product Alpha',
-      'Finished Product Alpha',
-      'Finished Product Alpha',
-      'Finished Product Alpha',
-      'Finished Product Alpha',
-      'Raw Material B - Standard Grade',
-      'Raw Material A - Premium Grade',
-      'Chemical Component X',
-      'Chemical Component X',
-      'Raw Material A - Premium Grade',
-    ],
-    datasets: [
-      {
-        label: 'Stock Quantity',
-        data: [16, 20, 33, 45, 50, 52, 54, 62, 86, 92, 98],
-      },
-    ],
-  };
-
-  const tableData = [
-    {
-      id: '35cf4c05-ee4a-4ae9-9539-4ada8cbc2cd8',
-      name: 'Raw Material A - Premium Grade',
-      sku: 'RM001-62a7',
-      quantity: 62,
-      availableQty: 62,
-    },
-    {
-      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-62a7',
-      quantity: 45,
-      availableQty: 45,
-    },
-    {
-      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-62a7',
-      quantity: 50,
-      availableQty: 50,
-    },
-    {
-      id: 'b36b2106-5d11-4953-b255-3f11bf624024',
-      name: 'Chemical Component X',
-      sku: 'RM003-62A7',
-      quantity: 92,
-      availableQty: 92,
-    },
-    {
-      id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-62a7',
-      quantity: 33,
-      availableQty: 33,
-    },
-    {
-      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-28fe',
-      quantity: 20,
-      availableQty: 20,
-    },
-    {
-      id: '116c5020-95b2-4511-b37f-bc1e23b43ac3',
-      name: 'Raw Material A - Premium Grade',
-      sku: 'RM001-28fe',
-      quantity: 98,
-      availableQty: 98,
-    },
-    {
-      id: '82806843-ccc9-4c20-b0da-b1c0513b5d07',
-      name: 'Raw Material B - Standard Grade',
-      sku: 'RM002-28fe',
-      quantity: 54,
-      availableQty: 54,
-    },
-    {
-      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-28fe',
-      quantity: 52,
-      availableQty: 52,
-    },
-    {
-      id: '6d6a68e0-c706-413c-8d98-f5c0121ca572',
-      name: 'Chemical Component X',
-      sku: 'RM003-28fe',
-      quantity: 86,
-      availableQty: 86,
-    },
-    {
-      id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-      name: 'Finished Product Alpha',
-      sku: 'FG001-28fe',
-      quantity: 16,
-      availableQty: 16,
-    },
+  const chartData = [
+    { month: 'January', desktop: 186, mobile: 80 },
+    { month: 'February', desktop: 305, mobile: 200 },
+    { month: 'March', desktop: 237, mobile: 120 },
+    { month: 'April', desktop: 73, mobile: 190 },
+    { month: 'May', desktop: 209, mobile: 130 },
+    { month: 'June', desktop: 214, mobile: 140 },
   ];
+
+  // const tableData = [
+  //   {
+  //     id: '35cf4c05-ee4a-4ae9-9539-4ada8cbc2cd8',
+  //     name: 'Raw Material A - Premium Grade',
+  //     sku: 'RM001-62a7',
+  //     quantity: 62,
+  //     availableQty: 62,
+  //   },
+  //   {
+  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-62a7',
+  //     quantity: 45,
+  //     availableQty: 45,
+  //   },
+  //   {
+  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-62a7',
+  //     quantity: 50,
+  //     availableQty: 50,
+  //   },
+  //   {
+  //     id: 'b36b2106-5d11-4953-b255-3f11bf624024',
+  //     name: 'Chemical Component X',
+  //     sku: 'RM003-62A7',
+  //     quantity: 92,
+  //     availableQty: 92,
+  //   },
+  //   {
+  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-62a7',
+  //     quantity: 33,
+  //     availableQty: 33,
+  //   },
+  //   {
+  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-28fe',
+  //     quantity: 20,
+  //     availableQty: 20,
+  //   },
+  //   {
+  //     id: '116c5020-95b2-4511-b37f-bc1e23b43ac3',
+  //     name: 'Raw Material A - Premium Grade',
+  //     sku: 'RM001-28fe',
+  //     quantity: 98,
+  //     availableQty: 98,
+  //   },
+  //   {
+  //     id: '82806843-ccc9-4c20-b0da-b1c0513b5d07',
+  //     name: 'Raw Material B - Standard Grade',
+  //     sku: 'RM002-28fe',
+  //     quantity: 54,
+  //     availableQty: 54,
+  //   },
+  //   {
+  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-28fe',
+  //     quantity: 52,
+  //     availableQty: 52,
+  //   },
+  //   {
+  //     id: '6d6a68e0-c706-413c-8d98-f5c0121ca572',
+  //     name: 'Chemical Component X',
+  //     sku: 'RM003-28fe',
+  //     quantity: 86,
+  //     availableQty: 86,
+  //   },
+  //   {
+  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
+  //     name: 'Finished Product Alpha',
+  //     sku: 'FG001-28fe',
+  //     quantity: 16,
+  //     availableQty: 16,
+  //   },
+  // ];
 
   return (
     <article
@@ -189,34 +175,15 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
       <div
         className={`flex-1 max-w-[min(80%,800px)] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
       >
-        <Card
-          className={`${
-            isUser
-              ? 'bg-primary text-primary-foreground'
-              : 'border bg-content2 text-foreground border-divider'
-          } w-full`}
-        >
-          <CardBody className="overflow-x-auto p-3 min-w-0">
-            {isUser ? (
-              <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
-                {message.content}
-              </Text>
-            ) : (
-              <article className="overflow-x-auto min-w-0 chat-markdown text-foreground">
-                {blockMatches.map((blockMatch, index) => {
-                  const Component = blockMatch.block.component;
-                  return (
-                    <Component
-                      key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
-                      blockMatch={blockMatch}
-                    />
-                  );
-                })}
-                <RenderChart data={chartData} chartType="bar" />
-                <RenderTable data={tableData} />
-              </article>
-            )}
-            {!isUser &&
+        {isUser ? (
+          <Card className="bg-primary text-primary-foreground w-full">
+            <CardBody className="overflow-x-auto p-3 min-w-0">
+              {isUser && (
+                <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
+                  {message.content}
+                </Text>
+              )}
+              {/* {!isUser &&
             message.metadata &&
             message.metadata.suggestions &&
             Array.isArray(message.metadata.suggestions) ? (
@@ -234,7 +201,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                   {message.metadata.suggestions.map((suggestion: string, index: number) => (
                     <li key={`suggestion-${index}-${suggestion.slice(0, 20)}`}>
                       <Button
-                        variant="light"
+as ShadcnButton                        variant="light"
                         size="sm"
                         className="justify-start p-2 w-full h-auto text-left text-tiny text-primary/80 hover:text-primary hover:bg-primary/10"
                         onPress={() => {
@@ -242,14 +209,33 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                         }}
                       >
                         {suggestion}
-                      </Button>
+                      </Button>as ShadcnButton
                     </li>
                   ))}
                 </ul>
               </section>
-            ) : null}
-          </CardBody>
-        </Card>
+            ) : null} */}
+            </CardBody>
+          </Card>
+        ) : (
+          <article>
+            <article className="overflow-x-auto min-w-0 chat-markdown text-foreground">
+              {blockMatches.map((blockMatch, index) => {
+                const Component = blockMatch.block.component;
+                return (
+                  <Component
+                    key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
+                    blockMatch={blockMatch}
+                  />
+                );
+              })}
+              <RenderChart data={chartData} chartType="bar" />
+
+              {/* <RenderTable data={tableData} /> */}
+            </article>
+          </article>
+        )}
+
         <Text
           variant="bodyXSmall"
           className={`mt-1 text-default-400 ${isUser ? 'text-right' : 'text-left'}`}
