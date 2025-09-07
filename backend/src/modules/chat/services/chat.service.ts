@@ -96,10 +96,11 @@ export class ChatService {
         .join('\n');
 
       // Generate summary using the summary agent
-      const agentResponse = await this.summaryAgent.generate([
-        {
-          role: 'system',
-          content: `You are a conversation summary AI assistant. 
+      const agentResponse = await this.summaryAgent.generate(
+        [
+          {
+            role: 'system',
+            content: `You are a conversation summary AI assistant. 
           
           Your task is to analyze the conversation history and provide a concise, meaningful summary.
           
@@ -108,20 +109,23 @@ export class ChatService {
           2. Important decisions made
           3. Action items identified
           4. Critical context or information shared
+          5. Make it maximum 3 lines.
           
           Keep the summary brief but comprehensive.
           
           Conversation History:
           ${formattedHistory}`,
-        },
-        {
-          role: 'user',
-          content: formattedHistory,
-        },
-      ]);
+          },
+          {
+            role: 'user',
+            content: formattedHistory,
+          },
+        ],
+        {}
+      );
 
       const summary = agentResponse.text || 'No summary available.';
-      this.logger.log('Conversation summary generated successfully', summary);
+      this.logger.debug('Conversation summary generated successfully', summary);
       return summary;
     } catch (error) {
       this.logger.error('Failed to generate conversation summary:', error);
@@ -187,8 +191,6 @@ export class ChatService {
         sessionHistory.map((msg) => msg.content)
       );
 
-      this.logger.log('Summarized conversation history:', summarizeConversationHistory);
-
       const mcpClient = this.mcpClientService.getMcpClient();
       const toolsets = await mcpClient.getToolsets();
 
@@ -209,11 +211,11 @@ export class ChatService {
 
         You MUST follow this workflow:
         1. First, use the query-analysis-tool with these parameters:
-           - dbConnectionId: "${dbConnectionId}"
-           - userQuery: The user's message/question "${message}"
+           - dbConnectionId:Database Connection ID
+           - userQuery: The user's message/question
         
         2. After getting the analysis, use the execute-query-tool with these parameters:
-           - dbConnectionId: "${dbConnectionId}"
+           - dbConnectionId"
            - queryAnalysis: The analysis result from step 1
            - userQuery: The user's original message "${message}" (for better formatting context)
         
@@ -223,24 +225,7 @@ export class ChatService {
         - visualizationType: The recommended display format
         - formattedData: Chart.js compatible data structure or table data
         - summary: Brief description of the data
-        
-        TOOLS AVAILABLE:
-        - query-analysis-tool: Analyzes user queries and extracts insights about intent and requirements
-        - execute-query-tool: Generates and executes SQL queries, then formats results for optimal visualization
-        
-        CRITICAL: You must ALWAYS return your final response in a structured JSON format containing:
-        {
-          "visualizationType": "table|bar|pie|line|doughnut|text",
-          "formattedData": [...], // Array of objects for table data (preserving original query structure), or Chart.js format for charts
-          "summary": "Brief description",
-          "message": "Your explanatory text here",
-          "sqlQuery": "The SQL query that was executed",
-          "queryResults": [...] // The raw database results
-        }
-        
-        For table visualizations, the formattedData should be an array of objects that preserves the original database query results without transformation. This allows the frontend to handle any data structure flexibly.
-        
-        Always provide helpful responses explaining the data insights and visualization recommendations.`,
+        `,
           },
           {
             role: 'user',
@@ -249,6 +234,12 @@ export class ChatService {
         ],
         {
           toolsets,
+          onStepFinish: ({ usage }) => {
+            if (usage) {
+              this.logger.debug('usage', usage);
+              // Aggregate tokens from each step
+            }
+          },
         }
       );
 

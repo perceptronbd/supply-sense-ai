@@ -16,7 +16,7 @@ export const CREDIT = {
     name: SubscriptionPlans.STARTER,
     priceMonthly: 9.99,
     priceYearly: 99.99,
-    credits: 500,
+    credits: 1000,
   },
   [SubscriptionPlans.BUSINESS]: {
     name: SubscriptionPlans.BUSINESS,
