@@ -23,6 +23,11 @@ export class GetOpenRouter {
   public getModel(modelName?: string) {
     // Use provided model name or fallback to default
     const selectedModel = modelName || AI_MODEL_NAMES.DEEPSEEK;
-    return this.openrouter(selectedModel);
+    return this.openrouter(selectedModel, {
+      reasoning: {
+        enabled: false,
+        max_tokens: 10000,
+      },
+    });
   }
 }

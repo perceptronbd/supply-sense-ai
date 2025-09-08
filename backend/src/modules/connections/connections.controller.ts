@@ -44,7 +44,6 @@ export class ConnectionsController {
     @Param('companyId') companyId: string,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    console.log('🚀 > ConnectionsController > getCompanyConnections > user:', user);
     // Ensure user can only access their own company's connections
     if (user.companyId !== companyId) {
       throw new Error('Access denied: Cannot access other company connections');

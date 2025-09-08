@@ -60,12 +60,12 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
   const timestamp = getFormattedTime(message.createdAt);
 
   const chartData = [
-    { month: 'January', desktop: 186, mobile: 80 },
-    { month: 'February', desktop: 305, mobile: 200 },
-    { month: 'March', desktop: 237, mobile: 120 },
-    { month: 'April', desktop: 73, mobile: 190 },
-    { month: 'May', desktop: 209, mobile: 130 },
-    { month: 'June', desktop: 214, mobile: 140 },
+    { month: 'January', netSales: 186, profit: 80 },
+    { month: 'February', netSales: 305, profit: 200 },
+    { month: 'March', netSales: 237, profit: 120 },
+    { month: 'April', netSales: 73, profit: 190 },
+    { month: 'May', netSales: 209, profit: 130 },
+    { month: 'June', netSales: 214, profit: 140 },
   ];
 
   // const tableData = [
@@ -150,7 +150,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
 
   return (
     <article
-      className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
+      className={`flex gap-3 w-full ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
       aria-label={`${isUser ? 'User' : 'AI Assistant'} message at ${timestamp}`}
     >
       {/* Avatar */}
@@ -218,21 +218,19 @@ as ShadcnButton                        variant="light"
             </CardBody>
           </Card>
         ) : (
-          <article>
-            <article className="overflow-x-auto min-w-0 chat-markdown text-foreground">
-              {blockMatches.map((blockMatch, index) => {
-                const Component = blockMatch.block.component;
-                return (
-                  <Component
-                    key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
-                    blockMatch={blockMatch}
-                  />
-                );
-              })}
-              <RenderChart data={chartData} chartType="bar" />
+          <article className="overflow-x-auto chat-markdown text-foreground">
+            {blockMatches.map((blockMatch, index) => {
+              const Component = blockMatch.block.component;
+              return (
+                <Component
+                  key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
+                  blockMatch={blockMatch}
+                />
+              );
+            })}
+            <RenderChart data={chartData} chartType="area" />
 
-              {/* <RenderTable data={tableData} /> */}
-            </article>
+            {/* <RenderTable data={tableData} /> */}
           </article>
         )}
 

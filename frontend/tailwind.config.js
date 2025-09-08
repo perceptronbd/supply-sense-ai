@@ -53,7 +53,7 @@ module.exports = {
   },
   darkMode: 'class',
   plugins: [
-    // twAnimate,
+    require('tailwindcss-animate'),
     heroui({
       themes: {
         light: {

@@ -4,24 +4,35 @@ import { Bar, BarChart, XAxis } from 'recharts';
 
 import { Card, CardBody } from '@heroui/react';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
 
-const chartConfig = {
-  desktop: {
-    label: 'Desktop',
-    color: 'hsl(var(--chart-1))',
-  },
-  mobile: {
-    label: 'Mobile',
-    color: 'hsl(var(--chart-2))',
-  },
-} satisfies ChartConfig;
+export interface BarChartConfig
+  extends Record<
+    string,
+    {
+      label: string;
+      color: string;
+      isHatched?: boolean;
+    }
+  > {}
 
-export const HatchedBarMultipleChart = ({ data }: { data: ChartData }) => {
+interface HatchedBarMultipleChartProps {
+  data: ChartData;
+  config: BarChartConfig;
+  xAxisKey: string;
+  xAxisFormatter?: (value: string | number) => string;
+}
+
+export const HatchedBarMultipleChart = ({
+  data,
+  config,
+  xAxisKey,
+  xAxisFormatter = (value) => String(value).slice(0, 3),
+}: HatchedBarMultipleChartProps) => {
   return (
     <Card>
       <CardBody>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={config}>
           <BarChart accessibilityLayer data={data}>
             <rect
               x="0"
@@ -34,29 +45,25 @@ export const HatchedBarMultipleChart = ({ data }: { data: ChartData }) => {
               <DottedBackgroundPattern />
             </defs>
             <XAxis
-              dataKey="month"
+              dataKey={xAxisKey}
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={xAxisFormatter}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dashed" hideLabel />}
             />
-            <Bar
-              dataKey="desktop"
-              color="var(--chart-1)"
-              fill="var(--color-desktop)"
-              shape={<CustomHatchedBar isHatched={false} />}
-              radius={4}
-            />
-            <Bar
-              dataKey="mobile"
-              fill="var(--color-mobile)"
-              shape={<CustomHatchedBar />}
-              radius={4}
-            />
+            {Object.entries(config).map(([dataKey, { color, isHatched = true }]) => (
+              <Bar
+                key={dataKey}
+                dataKey={dataKey}
+                fill={color}
+                shape={<CustomHatchedBar isHatched={isHatched} dataKey={dataKey} />}
+                radius={4}
+              />
+            ))}
           </BarChart>
         </ChartContainer>
       </CardBody>
@@ -64,16 +71,20 @@ export const HatchedBarMultipleChart = ({ data }: { data: ChartData }) => {
   );
 };
 
-const CustomHatchedBar = (
-  props: React.SVGProps<SVGRectElement> & {
-    dataKey?: string;
-    isHatched?: boolean;
-  }
-) => {
-  const { fill, x, y, width, height, dataKey } = props;
+interface CustomHatchedBarProps extends React.SVGProps<SVGRectElement> {
+  dataKey: string;
+  isHatched?: boolean;
+}
 
-  const isHatched = props.isHatched ?? true;
-
+const CustomHatchedBar = ({
+  fill,
+  x,
+  y,
+  width,
+  height,
+  dataKey,
+  isHatched = true,
+}: CustomHatchedBarProps) => {
   return (
     <>
       <rect
