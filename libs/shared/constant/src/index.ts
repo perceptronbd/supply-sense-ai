@@ -1,3 +1,4 @@
-export * from './lib/models';
-export * from './lib/tools';
-export * from './lib/credit';
+export * from './models';
+export * from './tools';
+export * from './credit';
+export * from './chart';

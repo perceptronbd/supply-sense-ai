@@ -148,16 +148,18 @@ export default function ChatPage() {
         />
 
         {/* Main chat interface container with session manager */}
-        <section className="flex flex-1 bg-background">
+        <section className="flex flex-1 w-full bg-background">
           {/* Session Manager Sidebar */}
-          {selectedDbConnectionId && (
-            <SessionManager
-              selectedSessionId={activeSessionId}
-              dbConnectionId={selectedDbConnectionId}
-              onSessionSelect={handleSessionSelect}
-              onSessionCreate={handleSessionCreate}
-            />
-          )}
+          <div className="flex-shrink-0">
+            {selectedDbConnectionId && (
+              <SessionManager
+                selectedSessionId={activeSessionId}
+                dbConnectionId={selectedDbConnectionId}
+                onSessionSelect={handleSessionSelect}
+                onSessionCreate={handleSessionCreate}
+              />
+            )}
+          </div>
 
           {/* Chat Interface */}
           <div className="flex flex-col flex-1">

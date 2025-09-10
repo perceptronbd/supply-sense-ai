@@ -4,6 +4,7 @@ import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import { GetOpenRouter } from '@supplysense/utils';
+import { withRetry } from '@supplysense/utils/server';
 import { VisualizationType } from '../constant';
 import { MessageType } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
@@ -47,7 +48,7 @@ export class ChatService {
           'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
         instructions:
           'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
-        model: this.openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
         tools,
       });
       this.logger.log('✅ Table metadata agent initialized successfully');
@@ -195,11 +196,13 @@ export class ChatService {
       const toolsets = await mcpClient.getToolsets();
 
       // Use the chat agent to process the message
-      const agentResponse = await this.chatAgent.generate(
-        [
-          {
-            role: 'system',
-            content: `You are a database analyst helping with supply chain management queries. 
+      const agentResponse = await withRetry(
+        async () => {
+          return this.chatAgent.generate(
+            [
+              {
+                role: 'system',
+                content: `You are a database analyst helping with supply chain management queries. 
           
         Available context:
         - Database Connection ID: ${dbConnectionId}
@@ -226,21 +229,25 @@ export class ChatService {
         - formattedData: Chart.js compatible data structure or table data
         - summary: Brief description of the data
         `,
-          },
-          {
-            role: 'user',
-            content: message,
-          },
-        ],
-        {
-          toolsets,
-          onStepFinish: ({ usage }) => {
-            if (usage) {
-              this.logger.debug('usage', usage);
-              // Aggregate tokens from each step
+              },
+              {
+                role: 'user',
+                content: message,
+              },
+            ],
+            {
+              toolsets,
+              onStepFinish: ({ usage }) => {
+                if (usage) {
+                  this.logger.debug('usage', usage);
+                  // Aggregate tokens from each step
+                }
+              },
             }
-          },
-        }
+          );
+        },
+        3, // max retries
+        1000 // initial delay in ms
       );
 
       // this.logger.log(toolsets)

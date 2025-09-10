@@ -68,9 +68,10 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
           supplySense: {
             url: new URL(`${appConfig.mcpServerUrl}/mcp`), // MCP server HTTP endpoint
             timeout: appConfig.mcpServerTimeout, // Configurable timeout
+            logger: (message) => this.logger.debug('MCP Client log', message),
           },
         },
-        timeout: 60000, // Global 60 second timeout
+        timeout: appConfig.mcpServerTimeout, // Global 5 minute timeout
       });
 
       // Get tools from MCP server and initialize agent

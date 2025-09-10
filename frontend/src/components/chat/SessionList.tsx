@@ -23,7 +23,7 @@ export function SessionList({
 }: Readonly<SessionListProps>) {
   return (
     <aside
-      className="w-64 border-r border-divider bg-content1 flex flex-col"
+      className="w-64 border-r border-divider bg-content1 flex flex-col h-full"
       aria-label="Chat sessions"
     >
       {/* Header */}
@@ -45,7 +45,7 @@ export function SessionList({
         </div>
       </header>
       {/* Sessions list */}
-      <nav className="flex-1 overflow-y-auto p-2" aria-label="Session navigation">
+      <nav className="overflow-y-auto h-full p-2" aria-label="Session navigation">
         {sessions.length === 0 && !isLoading ? (
           <div className="text-center py-8">
             <Text variant="bodySmall" color="muted" as="p">

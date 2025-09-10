@@ -1,6 +1,11 @@
 import { createTool } from '@mastra/core';
 import { PrismaClient } from '@supplysense/prisma-client';
-import { DbCredentials, decryptPassword, withDbConnection } from '@supplysense/utils/server';
+import {
+  DbCredentials,
+  decryptPassword,
+  withDbConnection,
+  withRetry,
+} from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
 import { sqlGenerationAgent } from '../agents/sql-generation-agent';
@@ -111,11 +116,13 @@ export const executeQueryTool = createTool({
       sslEnabled: sslEnabled || false,
     };
 
-    // Generate SQL query using the SQL generation agent
-    const agentResponse = await sqlGenerationAgent.generate([
-      {
-        role: 'system',
-        content: `You are a SQL generation expert who creates accurate PostgreSQL queries based on analysis and database schema.
+    // Generate SQL query using the SQL generation agent with retry logic
+    const agentResponse = await withRetry(
+      () =>
+        sqlGenerationAgent.generate([
+          {
+            role: 'system',
+            content: `You are a SQL generation expert who creates accurate PostgreSQL queries based on analysis and database schema.
                 
                 CRITICAL: You MUST use the EXACT table and column names from the schema cache provided below.
                 Do NOT assume or guess table names. Only use tables and columns that exist in the schema.
@@ -169,12 +176,15 @@ export const executeQueryTool = createTool({
                 
                 Generate a clean, executable PostgreSQL query that addresses the analyzed user request.
                 Return ONLY the SQL query without any explanations or formatting.`,
-      },
-      {
-        role: 'user',
-        content: `Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
-      },
-    ]);
+          },
+          {
+            role: 'user',
+            content: `Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
+          },
+        ]),
+      3, // max retries
+      1000 // initial delay in ms
+    );
 
     const sqlQuery = agentResponse.text
       .trim()

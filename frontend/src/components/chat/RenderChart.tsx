@@ -1,6 +1,5 @@
 'use client';
-
-import type { ChartData as RechartsData } from 'recharts/types/state/chartDataSlice';
+import { CHART_TYPES, type TChartType } from '@supplysense/constant';
 import { AnimatedHighlightedAreaChart } from '../shadcn/components/area-chart';
 import { type BarChartConfig, HatchedBarMultipleChart } from '../shadcn/components/bar-chart';
 import { DottedMultiLineChart } from '../shadcn/components/line-chart';
@@ -43,8 +42,8 @@ const generateChartConfig = (
 };
 
 interface RenderChartProps {
-  data: RechartsData;
-  chartType: 'bar' | 'area' | 'line' | 'radar';
+  data: Record<string, string | number>[];
+  chartType: TChartType;
   dashedLines?: string[];
   showDots?: boolean;
   angleAxisKey?: string; // Optional override for radar chart angle axis key
@@ -58,9 +57,7 @@ export const RenderChart = ({
   angleAxisKey,
 }: RenderChartProps) => {
   // Generate chart configuration from data
-  const { config: chartConfig, xAxisKey } = generateChartConfig(
-    data as Record<string, string | number>[]
-  );
+  const { config: chartConfig, xAxisKey } = generateChartConfig(data);
 
   // Chart configuration based on type
   const renderChart = () => {
@@ -69,22 +66,20 @@ export const RenderChart = ({
     }
 
     switch (chartType) {
-      case 'radar':
+      case CHART_TYPES.RADAR:
         return (
           <RadarChart
-            data={data as Array<Record<string, string | number>>}
+            data={data}
             config={chartConfig as unknown as RadarChartConfig}
             angleAxisKey={angleAxisKey || xAxisKey}
             className="w-full h-full"
           />
         );
 
-      // case 'doughnut':
-      //   return <Doughnut data={chartData} options={options} />;
-      case 'line':
+      case CHART_TYPES.LINE:
         return (
           <DottedMultiLineChart
-            data={data as Array<Record<string, string | number>>}
+            data={data}
             config={chartConfig}
             xAxisKey={xAxisKey}
             height={300}
@@ -93,10 +88,10 @@ export const RenderChart = ({
             showDots={showDots}
           />
         );
-      case 'area':
+      case CHART_TYPES.AREA:
         return (
           <AnimatedHighlightedAreaChart
-            data={data as Array<Record<string, string | number>>}
+            data={data}
             config={chartConfig}
             xAxisKey={xAxisKey}
             height={300}
