@@ -1,3 +1,4 @@
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
@@ -10,6 +11,15 @@ import { MessageType } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
+
+interface IProcessUserMessage {
+  companyId: string;
+  sessionId: string;
+  message: string;
+  userId: string;
+  dbConnectionId: string;
+  userContext: Partial<QueryContext>;
+}
 
 @Injectable()
 export class ChatService {
@@ -24,7 +34,9 @@ export class ChatService {
     @Inject(McpClientService)
     private readonly mcpClientService: McpClientService,
     @Inject(PrismaService)
-    private readonly prismaService: PrismaService
+    private readonly prismaService: PrismaService,
+    @Inject(TokenAndCredit)
+    private readonly tokenAndCredit: TokenAndCredit
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
   }
@@ -140,14 +152,12 @@ export class ChatService {
     userId,
     dbConnectionId = '',
     userContext,
-  }: {
-    sessionId: string;
-    message: string;
-    userId: string;
-    dbConnectionId: string;
-    userContext: Partial<QueryContext>;
-  }): Promise<AIChatResponse> {
+    companyId,
+  }: IProcessUserMessage): Promise<AIChatResponse> {
     try {
+      // if there's no credit left, it will throw error
+      await this.tokenAndCredit.canContinueForChat(companyId);
+
       await this.initializeChatAgent();
       if (!this.chatAgent) {
         throw new Error('Chat agent not initialized');
@@ -196,6 +206,9 @@ export class ChatService {
       const toolsets = await mcpClient.getToolsets();
 
       // Use the chat agent to process the message
+      let totalPromptTokens = 0;
+      let totalCompletionTokens = 0;
+
       const agentResponse = await withRetry(
         async () => {
           return this.chatAgent.generate(
@@ -237,10 +250,12 @@ export class ChatService {
             ],
             {
               toolsets,
-              onStepFinish: ({ usage }) => {
+              onStepFinish: async ({ usage }) => {
                 if (usage) {
                   this.logger.debug('usage', usage);
                   // Aggregate tokens from each step
+                  totalPromptTokens += usage.promptTokens || 0;
+                  totalCompletionTokens += usage.completionTokens || 0;
                 }
               },
             }
@@ -249,8 +264,6 @@ export class ChatService {
         3, // max retries
         1000 // initial delay in ms
       );
-
-      // this.logger.log(toolsets)
 
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);
@@ -283,6 +296,22 @@ export class ChatService {
 
       const responseMessage = parsedResponse.message || aiResponse;
       const responseData = parsedResponse.formattedData;
+
+      // Calculate total tokens used for all steps at once
+      if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
+        this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
+        await this.tokenAndCredit.tokenPriceCalculate({
+          companyId,
+          inputTokens: totalPromptTokens,
+          outputTokens: totalCompletionTokens,
+          toolUsed: AI_MODEL_NAMES.Z_AI,
+          metadata: {
+            question: message,
+            answer: responseMessage,
+            structuredData: JSON.stringify(parsedResponse),
+          },
+        });
+      }
 
       // Create assistant message save ai response to db
       await this.messageService.createMessage({

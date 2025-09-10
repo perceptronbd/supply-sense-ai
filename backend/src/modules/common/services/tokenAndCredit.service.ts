@@ -117,4 +117,20 @@ export class TokenAndCredit {
     const available = await this.isAvailableCredit(companyId);
     return available;
   }
+
+  async canContinueFurther(companyId: string) {
+    const hasAvailableCredit = await this.isAvailableCredit(companyId);
+    if (!hasAvailableCredit) {
+      this.logger.error('Insufficient credit for generating descriptions');
+      throw new BadRequestException('Insufficient credit');
+    }
+  }
+
+  async canContinueForChat(companyId: string) {
+    const hasAvailableCredit = await this.isAvailableChatCredit(companyId);
+    if (!hasAvailableCredit) {
+      this.logger.error('Insufficient credit for generating descriptions');
+      throw new BadRequestException('Insufficient credit');
+    }
+  }
 }

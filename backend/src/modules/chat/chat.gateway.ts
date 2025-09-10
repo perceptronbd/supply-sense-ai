@@ -169,6 +169,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           // userPermissions: user.permissions, // Use actual permissions
         },
         dbConnectionId: '',
+        companyId: user.branchId,
       });
 
       // Stop thinking indicator

@@ -117,6 +117,7 @@ export class ChatController {
     @Res() res: Response
   ) {
     const result = await this.chatService.processUserMessage({
+      companyId: user.companyId,
       sessionId: queryDto.sessionId,
       message: queryDto.query,
       userId: user.id,
@@ -140,6 +141,7 @@ export class ChatController {
     @CurrentUser() user: AuthenticatedUser
   ) {
     return this.chatService.processUserMessage({
+      companyId: user.companyId,
       sessionId: sendMessageDto.sessionId,
       message: sendMessageDto.content,
       userId: user.id,
