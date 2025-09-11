@@ -8,6 +8,11 @@ import { GetOpenRouter } from '@supplysense/utils';
 import { withRetry } from '@supplysense/utils/server';
 import { VisualizationType } from '../constant';
 import { MessageType } from '../dto/chat.dto';
+import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
+import {
+  generateChatAgentSystemPrompt,
+  generateSummaryAgentSystemPrompt,
+} from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -41,93 +46,64 @@ export class ChatService {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
   }
 
+  /**
+   * Initialize the chat agent if it hasn't been initialized yet
+   * This agent is responsible for processing user queries and interacting with database tools
+   */
   private async initializeChatAgent(): Promise<void> {
+    // Check if agent is already initialized to avoid redundant initialization
     if (this.chatAgent) {
-      return; // Already initialized
+      return;
     }
 
     try {
-      const mcpClient = this.mcpClientService.getMcpClient();
-      if (!mcpClient || !this.mcpClientService.isClientConnected()) {
-        throw new Error('MCP client not available or not connected');
-      }
-
-      // Get all available tools from MCP server
-      const tools = await mcpClient.getTools();
-      this.chatAgent = new Agent({
-        name: 'ChatAgent',
-        description:
-          'An intelligent AI assistant powered by SupplySense that specializes in supply chain analytics, inventory optimization, logistics planning, procurement insights, and database-driven decision making for enterprise supply chain operations',
-        instructions:
-          'You are a supply chain AI assistant, called SupplySense. Use the available tools to help with supply chain queries, inventory management, and logistics operations.',
-        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
-        tools,
-      });
-      this.logger.log('✅ Table metadata agent initialized successfully');
+      // Use the helper function to initialize the chat agent
+      this.chatAgent = await initializeChatAgent(this.mcpClientService);
     } catch (error) {
-      this.logger.error('❌ Failed to initialize table metadata agent:', error);
+      this.logger.error('Failed to initialize chat agent:', error);
       throw error;
     }
   }
 
+  /**
+   * Initialize the summary agent if it hasn't been initialized yet
+   * This agent is responsible for summarizing conversation history
+   */
   private async initializeSummaryAgent(): Promise<void> {
+    // Check if agent is already initialized to avoid redundant initialization
     if (this.summaryAgent) {
-      return; // Already initialized
+      return;
     }
 
     try {
-      const mcpClient = this.mcpClientService.getMcpClient();
-      if (!mcpClient || !this.mcpClientService.isClientConnected()) {
-        throw new Error('MCP client not available or not connected');
-      }
-
-      this.summaryAgent = new Agent({
-        name: 'SummaryAgent',
-        description:
-          'An intelligent AI assistant that specializes in summarizing conversation history for supply chain operations',
-        instructions:
-          'You are a conversation summary AI assistant. Your task is to analyze conversation history and provide concise, meaningful summaries. Focus on key points, decisions made, and important context.',
-        model: this.openrouter.getModel(AI_MODEL_NAMES.Z_AI),
-      });
-      this.logger.log('✅ Summary agent initialized successfully');
+      // Use the helper function to initialize the summary agent
+      this.summaryAgent = await initializeSummaryAgent();
     } catch (error) {
-      this.logger.error('❌ Failed to initialize summary agent:', error);
+      this.logger.error('Failed to initialize summary agent:', error);
       throw error;
     }
   }
 
+  //   Generate a summary of the conversation history
   async generateConversationSummary(conversationHistory: string[]): Promise<string> {
     try {
+      // Ensure the summary agent is initialized
       await this.initializeSummaryAgent();
       if (!this.summaryAgent) {
         throw new Error('Summary agent not initialized');
       }
 
-      // Format the conversation history
+      // Format the conversation history for processing
       const formattedHistory = conversationHistory
         .map((msg, index) => `Message ${index + 1}: ${msg}`)
         .join('\n');
 
-      // Generate summary using the summary agent
+      // Generate summary using the summary agent with a system prompt
       const agentResponse = await this.summaryAgent.generate(
         [
           {
             role: 'system',
-            content: `You are a conversation summary AI assistant. 
-          
-          Your task is to analyze the conversation history and provide a concise, meaningful summary.
-          
-          Focus on:
-          1. Key topics discussed
-          2. Important decisions made
-          3. Action items identified
-          4. Critical context or information shared
-          5. Make it maximum 3 lines.
-          
-          Keep the summary brief but comprehensive.
-          
-          Conversation History:
-          ${formattedHistory}`,
+            content: generateSummaryAgentSystemPrompt(formattedHistory),
           },
           {
             role: 'user',
@@ -137,6 +113,7 @@ export class ChatService {
         {}
       );
 
+      // Extract the summary text or provide a fallback
       const summary = agentResponse.text || 'No summary available.';
       this.logger.debug('Conversation summary generated successfully', summary);
       return summary;
@@ -146,6 +123,10 @@ export class ChatService {
     }
   }
 
+  /**
+   * Process a user message and generate an AI response
+   * This is the main method that handles user queries and generates responses
+   */
   async processUserMessage({
     sessionId,
     message,
@@ -155,93 +136,84 @@ export class ChatService {
     companyId,
   }: IProcessUserMessage): Promise<AIChatResponse> {
     try {
-      // if there's no credit left, it will throw error
+      // Check if the user has sufficient credits to continue with the chat
+      // If not, this will throw an error
       await this.tokenAndCredit.canContinueForChat(companyId);
 
+      // Ensure the chat agent is initialized before processing
       await this.initializeChatAgent();
       if (!this.chatAgent) {
         throw new Error('Chat agent not initialized');
       }
 
+      // Log the incoming message for debugging purposes
       this.logger.log(
         `Processing user message: "${message}" for user ${userId} in session ${sessionId}`
       );
 
-      // Update session activity
+      // Update the last activity timestamp for the session
       await this.sessionService.updateLastActivity(sessionId);
       this.logger.log('Session activity updated');
 
-      // Save user query
+      // Save the user's message to the database
       await this.messageService.createMessage({
         sessionId,
         content: message,
         type: MessageType.USER,
       });
 
-      // Get session history for context
+      // Retrieve recent session history for context (last 10 messages)
       const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
-      // Additional context from userContext if available
+      // Extract additional context from userContext if available
+      // This might include permissions, preferences, or other relevant information
       const additionalContext = userContext
         ? Object.entries(userContext)
             .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
             .join('\n')
         : '';
 
+      // Verify that the database connection exists
       const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
         where: { id: dbConnectionId },
       });
 
+      // If the database connection doesn't exist, throw an error
       if (!dbConnectionExist) {
         this.logger.error(`Database connection not found: ${dbConnectionId}`);
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
 
+      // Generate a summary of the conversation history to provide context
       const summarizeConversationHistory = await this.generateConversationSummary(
         sessionHistory.map((msg) => msg.content)
       );
 
+      // Get the MCP client and available toolsets
       const mcpClient = this.mcpClientService.getMcpClient();
       const toolsets = await mcpClient.getToolsets();
 
-      // Use the chat agent to process the message
+      // Track token usage for billing purposes
       let totalPromptTokens = 0;
       let totalCompletionTokens = 0;
 
+      // Generate the AI response with retry logic in case of failures
       const agentResponse = await withRetry(
         async () => {
+          // Use the chat agent to process the message with a system prompt
           return this.chatAgent.generate(
             [
               {
                 role: 'system',
-                content: `You are a database analyst helping with supply chain management queries. 
-          
-        Available context:
-        - Database Connection ID: ${dbConnectionId}
-        - User ID: ${userId}
-        - Additional Context:
-        ${additionalContext}
-        - Conversation History:
-        ${summarizeConversationHistory}
-
-        You MUST follow this workflow:
-        1. First, use the query-analysis-tool with these parameters:
-           - dbConnectionId:Database Connection ID
-           - userQuery: The user's message/question
-        
-        2. After getting the analysis, use the execute-query-tool with these parameters:
-           - dbConnectionId"
-           - queryAnalysis: The analysis result from step 1
-           - userQuery: The user's original message "${message}" (for better formatting context)
-        
-        The execute-query-tool will now handle formatting internally and return:
-        - sqlQuery: The generated SQL query
-        - queryResults: The raw database results
-        - visualizationType: The recommended display format
-        - formattedData: Chart.js compatible data structure or table data
-        - summary: Brief description of the data
-        `,
+                // Generate a detailed system prompt with all necessary context
+                content: generateChatAgentSystemPrompt(
+                  dbConnectionId,
+                  userId,
+                  additionalContext,
+                  summarizeConversationHistory,
+                  message
+                ),
               },
               {
                 role: 'user',
@@ -250,6 +222,7 @@ export class ChatService {
             ],
             {
               toolsets,
+              // Track token usage for each step of the generation process
               onStepFinish: async ({ usage }) => {
                 if (usage) {
                   this.logger.debug('usage', usage);
@@ -261,13 +234,15 @@ export class ChatService {
             }
           );
         },
-        3, // max retries
-        1000 // initial delay in ms
+        3, // Maximum number of retries
+        1000 // Initial delay between retries in milliseconds
       );
 
+      // Extract the AI response text or provide a fallback
       const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
       this.logger.log('AI response generated successfully', aiResponse);
 
+      // Define the type for the parsed response
       type TParsedResponse = {
         visualizationType: VisualizationType;
         formattedData: unknown;
@@ -294,10 +269,11 @@ export class ChatService {
 
       this.logger.debug('Determined parsedResponse:', parsedResponse);
 
+      // Extract the response message and data from the parsed response
       const responseMessage = parsedResponse.message || aiResponse;
       const responseData = parsedResponse.formattedData;
 
-      // Calculate total tokens used for all steps at once
+      // Calculate and record token usage for billing
       if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
         this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
         await this.tokenAndCredit.tokenPriceCalculate({
@@ -313,7 +289,7 @@ export class ChatService {
         });
       }
 
-      // Create assistant message save ai response to db
+      // Save the AI's response to the database
       await this.messageService.createMessage({
         sessionId,
         content: responseMessage,
@@ -323,6 +299,7 @@ export class ChatService {
 
       this.logger.log('Assistant message created successfully');
 
+      // Return the final response to the caller
       return {
         message: responseMessage,
         type: 'data',
@@ -334,7 +311,7 @@ export class ChatService {
       this.logger.error('Failed to process user message:', error);
       this.logger.error('Error stack:', error.stack);
 
-      // Create error message
+      // Create error message in the database
       await this.messageService.createMessage({
         sessionId,
         content:
@@ -342,6 +319,7 @@ export class ChatService {
         type: MessageType.ERROR,
       });
 
+      // Return an error response to the caller
       return {
         message:
           'I apologize, but I encountered an error processing your request. Please try again.',
