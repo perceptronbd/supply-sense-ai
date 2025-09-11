@@ -13,5 +13,5 @@ export const sqlGenerationAgent = new Agent({
   name: SQL_GENERATION_AGENT_NAME,
   description: SQL_GENERATION_AGENT_DESCRIPTION,
   instructions: SQL_GENERATION_INSTRUCTION,
-  model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+  model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
 });

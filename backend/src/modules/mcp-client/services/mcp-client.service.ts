@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { MCPClient } from '@mastra/mcp';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import { appConfig } from '../../../config/app.config';
 
@@ -88,7 +89,7 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         description: 'AI assistant specialized in supply chain management and logistics',
         instructions:
           'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
-        model: this.openrouter.getModel(),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
         tools, // Pass MCP tools directly to the agent
       });
 

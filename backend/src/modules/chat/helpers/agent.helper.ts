@@ -42,7 +42,7 @@ export async function initializeSummaryAgent(): Promise<Agent> {
         'An intelligent AI assistant that specializes in summarizing conversation history for supply chain operations',
       instructions:
         'You are a conversation summary AI assistant. Your task is to analyze conversation history and provide concise, meaningful summaries. Focus on key points, decisions made, and important context.',
-      model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+      model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
     });
 
     logger.log('✅ Summary agent initialized successfully');

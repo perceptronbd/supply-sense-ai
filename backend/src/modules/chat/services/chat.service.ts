@@ -4,7 +4,6 @@ import { McpClientService } from '@modules/mcp-client/services/mcp-client.servic
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
-import { GetOpenRouter } from '@supplysense/utils';
 import { withRetry } from '@supplysense/utils/server';
 import { VisualizationType } from '../constant';
 import { MessageType } from '../dto/chat.dto';
@@ -31,7 +30,6 @@ export class ChatService {
   private readonly logger = new Logger(ChatService.name);
   private chatAgent: Agent | null = null;
   private summaryAgent: Agent | null = null;
-  private readonly openrouter = new GetOpenRouter();
 
   constructor(
     @Inject(SessionService) private readonly sessionService: SessionService,
@@ -276,11 +274,12 @@ export class ChatService {
       // Calculate and record token usage for billing
       if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
         this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
+
         await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
           inputTokens: totalPromptTokens,
           outputTokens: totalCompletionTokens,
-          toolUsed: AI_MODEL_NAMES.Z_AI,
+          modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
           metadata: {
             question: message,
             answer: responseMessage,

@@ -13,5 +13,5 @@ export const formattingAgent = new Agent({
   name: FORMATTING_AGENT_NAME,
   description: FORMATTING_AGENT_DESCRIPTION,
   instructions: FORMATTING_INSTRUCTION,
-  model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+  model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
 });

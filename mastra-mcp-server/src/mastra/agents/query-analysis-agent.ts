@@ -13,5 +13,5 @@ export const queryAnalysisAgent = new Agent({
   name: QUERY_ANALYSIS_AGENT_NAME,
   description: QUERY_ANALYSIS_AGENT_DESCRIPTION,
   instructions: QUERY_ANALYSIS_INSTRUCTION,
-  model: openrouter.getModel(AI_MODEL_NAMES.Z_AI),
+  model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
 });
