@@ -10,7 +10,7 @@ import { PoolClient } from 'pg';
 import { z } from 'zod';
 import { sqlGenerationAgent } from '../agents/sql-generation-agent';
 import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
-import { formatQueryResults } from './format-results-tool';
+// Removed formatQueryResults import
 
 // Type definitions
 interface SchemaCache {
@@ -42,25 +42,10 @@ const inputSchema = z.object({
   userQuery: z.string().optional(), // Add user query for better formatting context
 });
 
+// Updated output schema to only include raw query results
 const outputSchema = z.object({
   sqlQuery: z.string(),
   queryResults: z.array(z.record(z.any())),
-  // Include formatted response from format-results-tool
-  visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
-  formattedData: z.union([
-    z.object({
-      labels: z.array(z.string()),
-      datasets: z.array(
-        z.object({
-          label: z.string(),
-          data: z.array(z.number()),
-        })
-      ),
-    }),
-    z.array(z.record(z.any())),
-    z.string(),
-  ]),
-  summary: z.string(),
 });
 
 const prisma = new PrismaClient();
@@ -208,28 +193,11 @@ export const executeQueryTool = createTool({
       handleSqlExecutionError(error, sqlQuery, parsedSchema);
     }
 
-    try {
-      const formattedResponse = await formatQueryResults(
-        queryResults as Record<string, unknown>[],
-        sqlQuery,
-        input.context.userQuery || ''
-      );
-
-      return {
-        sqlQuery,
-        queryResults: queryResults as Record<string, unknown>[],
-        visualizationType: formattedResponse.visualizationType,
-        formattedData: formattedResponse.formattedData,
-        summary: formattedResponse.summary,
-      };
-    } catch (error) {
-      console.error('🚀 > error:', error);
-      // Fallback to returning just the raw data
-      return {
-        sqlQuery,
-        queryResults: queryResults as Record<string, unknown>[],
-      };
-    }
+    // Return raw query results without formatting
+    return {
+      sqlQuery,
+      queryResults: queryResults as Record<string, unknown>[],
+    };
   },
 });
 

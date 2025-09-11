@@ -10,6 +10,7 @@ import { MessageType } from '../dto/chat.dto';
 import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
 import {
   generateChatAgentSystemPrompt,
+  generateChatAgentUserPrompt,
   generateSummaryAgentSystemPrompt,
 } from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
@@ -204,18 +205,18 @@ export class ChatService {
             [
               {
                 role: 'system',
-                // Generate a detailed system prompt with all necessary context
-                content: generateChatAgentSystemPrompt(
+                // Generate a detailed system prompt
+                content: generateChatAgentSystemPrompt(),
+              },
+              {
+                role: 'user',
+                content: generateChatAgentUserPrompt(
                   dbConnectionId,
                   userId,
                   additionalContext,
                   summarizeConversationHistory,
                   message
                 ),
-              },
-              {
-                role: 'user',
-                content: message,
               },
             ],
             {
