@@ -2,7 +2,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { PrismaService } from '../../../../libs/shared/prisma/src/lib/prisma.service';
+import { PrismaService } from '@supplysense/prisma';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { BranchAccessGuard } from './guards/branch-access.guard';

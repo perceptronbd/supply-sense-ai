@@ -1,7 +1,10 @@
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
 import { formattingAgent } from '../agents/formatting-agent';
-import { FORMAT_RESULTS_TOOL } from '../constants/system-instructions/result-formatting';
+import {
+  FORMATTING_SYSTEM_PROMPT,
+  FORMAT_RESULTS_TOOL,
+} from '../constants/system-instructions/result-formatting';
 
 // Chart.js TypeScript interfaces for proper type safety
 interface ChartDataset {
@@ -57,57 +60,26 @@ export async function formatQueryResults(
   sqlQuery: string,
   userQuery?: string
 ) {
+  console.log('🚀 > formatQueryResults > userQuery:', userQuery);
+  console.log('🚀 > formatQueryResults > sqlQuery:', sqlQuery);
+  console.log('🚀 > formatQueryResults > queryResults:', queryResults);
   // Analyze the query results to determine visualization format
   const agentResponse = await formattingAgent.generate([
     {
       role: 'system',
-      content: `You are a data visualization expert who determines the best way to present query results.
-
-Analyze the provided data and determine the optimal visualization format.
-
-CRITICAL RESPONSE FORMAT:
-You MUST respond with a valid JSON object containing exactly these fields:
-{
-  "visualizationType": "table|bar|pie|line|doughnut|text",
-  "formattedData": <Chart.js compatible data or structured data>,
-  "summary": "Brief description of the data"
-}
-
-VISUALIZATION RULES:
-1. **Text**: Single values, counts, simple summaries (e.g., "Total count: 5")
-2. **Table**: Complex data with multiple columns, detailed records
-3. **Bar Chart**: Comparing categories, counts across groups
-4. **Pie Chart**: Parts of whole, percentages (max 7 categories)
-5. **Line Chart**: Time series, trends over dates/periods
-6. **Doughnut Chart**: Similar to pie but better for multiple series
-
-FOR TABLE DATA - FLEXIBLE FORMAT REQUIREMENT:
-When visualizationType is "table", the formattedData should be an array of objects that preserves the original data structure from the query results. The format should be flexible to accommodate any database schema:
-[
-  {
-    "field1": "value1",
-    "field2": "value2",
-    "field3": number,
-    "field4": "value4"
-    // ... any additional fields from the query
-  }
-]
-
-The tool should preserve all columns and data from the original query results without forcing a specific structure.
-
-
-
+      content: FORMATTING_SYSTEM_PROMPT,
+    },
+    {
+      role: 'user',
+      content: `
 Query Results: ${JSON.stringify(queryResults, null, 2)}
 SQL Query: ${sqlQuery}
 ${userQuery ? `User Query: ${userQuery}` : ''}
 
-Return ONLY the JSON response without any markdown formatting or explanations.`,
-    },
-    {
-      role: 'user',
-      content: `Analyze this data and determine the best visualization format: ${JSON.stringify(queryResults, null, 2)}`,
+Analyze this data and determine the best visualization format: ${JSON.stringify(queryResults, null, 2)}`,
     },
   ]);
+  console.log('🚀 > formatQueryResults > agentResponse:', agentResponse.text.trim());
 
   let result: FormattedResults;
   try {
@@ -120,6 +92,7 @@ Return ONLY the JSON response without any markdown formatting or explanations.`,
       .trim();
 
     result = JSON.parse(cleanedResponse);
+    console.log('🚀 > formatQueryResults > result:', result);
   } catch (error) {
     console.error('error:', error);
     // Fallback to table format if parsing fails

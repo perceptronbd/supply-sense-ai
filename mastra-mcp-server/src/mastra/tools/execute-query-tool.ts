@@ -9,7 +9,10 @@ import {
 import { PoolClient } from 'pg';
 import { z } from 'zod';
 import { sqlGenerationAgent } from '../agents/sql-generation-agent';
-import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
+import {
+  EXECUTE_QUERY_TOOL,
+  SQL_GENERATION_QUERY_SYSTEM_PROMPT,
+} from '../constants/system-instructions/sql-generation';
 // Removed formatQueryResults import
 
 // Type definitions
@@ -107,64 +110,20 @@ export const executeQueryTool = createTool({
         sqlGenerationAgent.generate([
           {
             role: 'system',
-            content: `You are a SQL generation expert who creates accurate PostgreSQL queries based on analysis and database schema.
-                
-                CRITICAL: You MUST use the EXACT table and column names from the schema cache provided below.
-                Do NOT assume or guess table names. Only use tables and columns that exist in the schema.
-                
-                POSTGRESQL CASE SENSITIVITY RULES - CRITICAL:
-                1. For column names with mixed case (camelCase like "availableQty", "itemId"), you MUST quote them: "availableQty"
-                2. For column names that are all lowercase (like "quantity", "name"), do NOT quote them
-                3. Check each column name in the schema - if it contains uppercase letters, it MUST be quoted
-                4. Table names are typically lowercase and don't need quotes
-                5. When referencing columns with table prefix: stock."availableQty", items.name
-                
-                COLUMN QUOTING EXAMPLES FROM THE SCHEMA:
-                - availableQty → stock."availableQty" (MUST be quoted)
-                - itemId → stock."itemId" (MUST be quoted) 
-                - reservedQty → stock."reservedQty" (MUST be quoted)
-                - quantity → stock.quantity (no quotes needed)
-                - name → items.name (no quotes needed)
-                - id → items.id (no quotes needed)
-                
-                Available context:
-                - Business Context: ${businessContext}
-                - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
-                - Query Analysis: ${input.context.queryAnalysis}
-                
-                SCHEMA STRUCTURE:
-                The schema contains a "tables" object where each key is a table name.
-                Each table has:
-                - "columns": object with column names as keys and their types as values
-                - "label": human-readable description
-                - "purpose": business purpose of the table
-                - "relationships": array of foreign key relationships
-                
-                IMPORTANT POSTGRESQL RULES:
-                1. Only reference tables and columns that exist in the Schema Cache
-                2. Table names: ${Object.keys(parsedSchema.tables).join(', ')}
-                3. CRITICAL QUOTING RULES FOR ALL COLUMNS:
-                   - ${generateColumnQuotingGuidance(parsedSchema)}
-                4. When using table prefixes, follow the patterns above
-                5. PostgreSQL converts unquoted identifiers to lowercase - if column has uppercase, MUST quote
-                6. If the requested data cannot be found in the available schema, return an informative error message
-                7. Generate clean, executable PostgreSQL queries without any markdown formatting
-                8. Always include proper JOINs based on the relationships defined in the schema
-                
-                CASE SENSITIVITY EXAMPLES FROM ACTUAL SCHEMA:
-                - Schema: "availableQty" → SQL: stock."availableQty" (MUST quote)
-                - Schema: "itemId" → SQL: stock."itemId" (MUST quote)
-                - Schema: "reservedQty" → SQL: stock."reservedQty" (MUST quote)  
-                - Schema: "quantity" → SQL: stock.quantity (no quotes - all lowercase)
-                - Schema: "name" → SQL: items.name (no quotes - all lowercase)
-                - Schema: "id" → SQL: items.id (no quotes - all lowercase)
-                
-                Generate a clean, executable PostgreSQL query that addresses the analyzed user request.
-                Return ONLY the SQL query without any explanations or formatting.`,
+            content: SQL_GENERATION_QUERY_SYSTEM_PROMPT,
           },
           {
             role: 'user',
-            content: `Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
+            content: ` Available context:
+                - Business Context: ${businessContext}
+                - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
+                - Query Analysis: ${input.context.queryAnalysis}
+
+                 Table names: ${Object.keys(parsedSchema.tables).join(', ')}
+                 CRITICAL QUOTING RULES FOR ALL COLUMNS:
+                   - ${generateColumnQuotingGuidance(parsedSchema)}
+                
+                Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
           },
         ]),
       3, // max retries

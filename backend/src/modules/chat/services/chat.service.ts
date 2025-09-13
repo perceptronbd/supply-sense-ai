@@ -185,9 +185,9 @@ export class ChatService {
       }
 
       // Generate a summary of the conversation history to provide context
-      const summarizeConversationHistory = await this.generateConversationSummary(
-        sessionHistory.map((msg) => msg.content)
-      );
+      // const summarizeConversationHistory = await this.generateConversationSummary(
+      //   sessionHistory.map((msg) => msg.content)
+      // );
 
       // Get the MCP client and available toolsets
       const mcpClient = this.mcpClientService.getMcpClient();
@@ -214,7 +214,7 @@ export class ChatService {
                   dbConnectionId,
                   userId,
                   additionalContext,
-                  summarizeConversationHistory,
+                  '',
                   message
                 ),
               },
