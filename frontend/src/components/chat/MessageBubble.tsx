@@ -13,7 +13,6 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
-import { RenderChart } from './RenderChart';
 interface MessageBubbleProps {
   message: ChatMessage;
   onSuggestionClick?: (suggestion: string) => void;
@@ -67,6 +66,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
     { month: 'May', netSales: 209, profit: 130 },
     { month: 'June', netSales: 214, profit: 140 },
   ];
+  console.log('🚀 > MessageBubble > chartData:', chartData);
 
   // const tableData = [
   //   {
@@ -228,7 +228,7 @@ as ShadcnButton                        variant="light"
                 />
               );
             })}
-            <RenderChart data={chartData} chartType="area" />
+            {/* <RenderChart data={chartData} chartType="area" /> */}
 
             {/* <RenderTable data={tableData} /> */}
           </article>

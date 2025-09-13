@@ -129,7 +129,7 @@ export function ChatInterface({
   if (messagesError) {
     return (
       <section
-        className={`flex justify-center items-center h-full bg-background ${className}`}
+        className={`flex justify-center items-center h-full  ${className}`}
         aria-label="Chat error"
       >
         <div className="text-center">
@@ -146,10 +146,7 @@ export function ChatInterface({
   }
 
   return (
-    <section
-      className={`flex flex-col h-full bg-background ${className}`}
-      aria-label="Chat interface"
-    >
+    <section className={`flex flex-col h-full  ${className}`} aria-label="Chat interface">
       {/* Message list with loading and suggestion handling */}
       <MessageList
         messages={messages}

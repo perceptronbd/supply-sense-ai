@@ -48,10 +48,10 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
   if (messages.length === 0 && !isLoading) {
     return (
       <section
-        className="flex flex-1 justify-center items-center bg-background"
+        className="flex flex-1 justify-center items-center"
         aria-label="Chat welcome message"
       >
-        <div className="px-8 w-full max-w-4xl text-center">
+        <div className="px-8 w-full text-center">
           {/* Personalized Greeting */}
           <header className="mb-12">
             <Text variant="display" color="default" weight="bold" className="mb-4" as="h1">
@@ -72,7 +72,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
           </header>
 
           {/* Suggestion Cards */}
-          <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-5">
             {defaultSuggestions.map((suggestion) => {
               const IconComponent = suggestion.icon;
               return (
@@ -80,13 +80,13 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
                   key={suggestion.title}
                   isPressable
                   onPress={() => onSuggestionClick?.(suggestion.title)}
-                  className="border transition-all duration-200 cursor-pointer bg-content1 hover:bg-content2 border-divider hover:shadow-medium"
+                  className="border transition-all duration-200 cursor-pointer bg-default-300 hover:bg-content2 border-divider hover:shadow-medium"
                 >
                   <CardBody className="p-4">
-                    <div className="flex gap-3 items-start">
-                      <IconComponent className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div className="flex gap-3 items-start ">
+                      <IconComponent className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
                       <Text
-                        variant="bodyMedium"
+                        variant="bodyXSmall"
                         color="default"
                         weight="medium"
                         className="text-left"
@@ -106,11 +106,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
   }
 
   return (
-    <section
-      className="overflow-y-auto flex-1 p-4 bg-background"
-      role="log"
-      aria-label="Chat messages"
-    >
+    <section className="overflow-y-auto flex-1 p-4" role="log" aria-label="Chat messages">
       <div className="mx-auto max-w-4xl">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
