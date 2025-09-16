@@ -1,4 +1,5 @@
 import { createTool } from '@mastra/core';
+import { EXECUTE_QUERY_TOOL, SQL_GENERATION_QUERY_SYSTEM_PROMPT } from '@supplysense/constant';
 import { PrismaClient } from '@supplysense/prisma-client';
 import {
   DbCredentials,
@@ -9,10 +10,7 @@ import {
 import { PoolClient } from 'pg';
 import { z } from 'zod';
 import { sqlGenerationAgent } from '../agents/sql-generation-agent';
-import {
-  EXECUTE_QUERY_TOOL,
-  SQL_GENERATION_QUERY_SYSTEM_PROMPT,
-} from '../constants/system-instructions/sql-generation';
+
 // Removed formatQueryResults import
 
 // Type definitions

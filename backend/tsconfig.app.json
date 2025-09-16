@@ -18,7 +18,8 @@
       "@supplysense/utils": ["../libs/shared/utils/src/index.ts"],
       "@supplysense/utils/server": ["../libs/shared/utils/src/server.ts"],
       "@supplysense/prisma": ["../libs/shared/prisma/src/index.ts"],
-      "@supplysense/prisma-client": ["../libs/shared/prisma/generated"]
+      "@supplysense/prisma-client": ["../libs/shared/prisma/generated"],
+      "@supplysense/mastra": ["../libs/shared/mastra/src/index.ts"]
     }
   },
   "include": [

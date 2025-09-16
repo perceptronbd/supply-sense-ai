@@ -95,7 +95,6 @@ Refer to the provided schema information in the user context for:
 ### Schema Mismatches:
 If requested data cannot be found in schema:
 \`\`\`sql
--- Return informative comment instead of invalid query
 -- ERROR: Table 'customers' not found in schema. Available tables: items, stock, orders
 -- SUGGESTION: Use 'users' or 'buyers' table if available for customer data
 \`\`\`
