@@ -1,8 +1,8 @@
 import { createTool } from '@mastra/core';
+import { QUERY_ANALYSIS_SYSTEM_PROMPT, QUERY_ANALYSIS_TOOL } from '@supplysense/constant';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { z } from 'zod';
 import { queryAnalysisAgent } from '../agents/query-analysis-agent';
-import { QUERY_ANALYSIS_TOOL } from '../constants/system-instructions/query-analysis';
 
 const inputSchema = z.object({
   dbConnectionId: z.string(),
@@ -41,17 +41,14 @@ export const queryAnalysisTool = createTool({
     const agentResponse = await queryAnalysisAgent.generate([
       {
         role: 'system',
-        content: ` You are a database analyst who helps to analyze the database and user quires and returns a detailed analysis of the query prompt that will another tool will be used to generate a SQL query. 
-            
-            Available context:
-            - Business Context: ${businessContext}
-            - Schema Cache: ${JSON.stringify(SchemaCache, null, 2)}
-            - User Query: ${input.context.userQuery}
-           `,
+        content: QUERY_ANALYSIS_SYSTEM_PROMPT,
       },
       {
         role: 'user',
-        content: input.context.userQuery,
+        content: ` Available context:
+            - Business Context: ${businessContext}
+            - Schema Cache: ${JSON.stringify(SchemaCache, null, 2)}
+            - User Query: ${input.context.userQuery}`,
       },
     ]);
 

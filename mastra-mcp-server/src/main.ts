@@ -3,14 +3,9 @@ import { MCPServer } from '@mastra/mcp';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { mastra } from './mastra/index.js';
 
-import {
-  analyzeTableMetadataTool,
-  executeQueryTool,
-  formatResultsTool,
-  queryAnalysisTool,
-  supplyChainTool,
-  testMetadataTool,
-} from './mastra/tools';
+import { analyzeTableMetadataTool, supplyChainTool, testMetadataTool } from './mastra/tools';
+
+import { executeQueryTool, formatResultsTool, queryAnalysisTool } from '@supplysense/mastra';
 
 // Global Prisma client instance for main server operations
 const prisma = new PrismaClient();

@@ -1,6 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { TChartType } from '@supplysense/constant';
 import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
@@ -16,17 +17,48 @@ export interface ChatSession {
   updatedAt: string;
 }
 
+// export interface ChatMessage {
+//   id: string;
+//   sessionId: string;
+//   content: string;
+//   type: 'user' | 'assistant' | 'system' | 'error';
+//   contentType: 'text' | 'data' | 'chart' | 'table';
+//   metadata?: Record<string, unknown>;
+//   parentMessageId?: string;
+//   userId: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 export interface ChatMessage {
   id: string;
-  sessionId: string;
   content: string;
-  type: 'user' | 'assistant' | 'system' | 'error';
-  contentType: 'text' | 'data' | 'chart' | 'table';
-  metadata?: Record<string, unknown>;
-  parentMessageId?: string;
-  userId: string;
+  type: 'user' | 'assistant';
+  metadata: Record<string, unknown> | null;
   createdAt: string;
-  updatedAt: string;
+  sessionId: string;
+  structuredData?: {
+    message: string;
+    summary: string;
+    formattedData: (
+      | {
+          id: string;
+          name: string;
+          availableQty: number;
+        }
+      | {
+          name: string;
+          quantity: string;
+          unitPrice: string | null;
+          supplierId: string | null;
+          availableQty: string;
+        }
+      | {
+          name: string;
+          value: number;
+        }
+    )[];
+    visualizationType: 'table' & TChartType;
+  } | null;
 }
 
 // Chart data interface
