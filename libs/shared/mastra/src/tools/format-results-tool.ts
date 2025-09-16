@@ -1,25 +1,11 @@
 import { createTool } from '@mastra/core';
+import { FORMATTING_SYSTEM_PROMPT, FORMAT_RESULTS_TOOL } from '@supplysense/constant';
 import { z } from 'zod';
 import { formattingAgent } from '../agents/formatting-agent';
-import {
-  FORMATTING_SYSTEM_PROMPT,
-  FORMAT_RESULTS_TOOL,
-} from '../constants/system-instructions/result-formatting';
-
-// Chart.js TypeScript interfaces for proper type safety
-interface ChartDataset {
-  label: string;
-  data: number[];
-}
-
-interface ChartData {
-  labels: string[];
-  datasets: ChartDataset[];
-}
 
 // Union type for different data formats
 // Support flexible array of objects for table data, preserving original query structure
-type FormattedData = ChartData | Record<string, unknown>[] | string;
+type FormattedData = Record<string, unknown>[] | string;
 
 type FormattedResults = {
   visualizationType: 'table' | 'bar' | 'pie' | 'line' | 'doughnut' | 'text';

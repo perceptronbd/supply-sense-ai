@@ -1,11 +1,11 @@
 import { Agent } from '@mastra/core/agent';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
-import { GetOpenRouter } from '@supplysense/utils';
 import {
   QUERY_ANALYSIS_AGENT_DESCRIPTION,
   QUERY_ANALYSIS_AGENT_NAME,
   QUERY_ANALYSIS_INSTRUCTION,
-} from '../constants/system-instructions/query-analysis';
+} from '@supplysense/constant';
+import { GetOpenRouter } from '@supplysense/utils';
 
 const openrouter = new GetOpenRouter();
 

@@ -1,0 +1,20 @@
+{
+  "name": "mastra",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/mastra/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/mastra",
+        "tsConfig": "libs/shared/mastra/tsconfig.lib.json",
+        "packageJson": "libs/shared/mastra/package.json",
+        "main": "libs/shared/mastra/src/index.ts",
+        "assets": ["libs/shared/mastra/*.md"]
+      }
+    }
+  }
+}

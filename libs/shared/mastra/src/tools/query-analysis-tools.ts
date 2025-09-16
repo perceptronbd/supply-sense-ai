@@ -1,11 +1,8 @@
 import { createTool } from '@mastra/core';
+import { QUERY_ANALYSIS_SYSTEM_PROMPT, QUERY_ANALYSIS_TOOL } from '@supplysense/constant';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { z } from 'zod';
 import { queryAnalysisAgent } from '../agents/query-analysis-agent';
-import {
-  QUERY_ANALYSIS_SYSTEM_PROMPT,
-  QUERY_ANALYSIS_TOOL,
-} from '../constants/system-instructions/query-analysis';
 
 const inputSchema = z.object({
   dbConnectionId: z.string(),
