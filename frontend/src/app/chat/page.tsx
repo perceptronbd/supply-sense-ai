@@ -10,8 +10,7 @@ import { useEffect, useState } from 'react';
 
 export default function ChatPage() {
   // State management for active chat session
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
-      );
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
   console.log('🚀 > ChatPage > selectedDbConnectionId:', selectedDbConnectionId);
 

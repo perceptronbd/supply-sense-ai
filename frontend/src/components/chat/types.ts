@@ -3,7 +3,7 @@ export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 
 export interface ChatInputProps {
-  onSendMessage: ( message: string ) => void;
+  onSendMessage: (message: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
 }
@@ -11,7 +11,7 @@ export interface ChatInputProps {
 export interface MessageListProps {
   messages: ChatMessageResponse[];
   isLoading?: boolean;
-  onSuggestionClick?: ( suggestion: string ) => void;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export interface ChatInterfaceProps {

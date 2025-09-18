@@ -5,28 +5,29 @@ import { formatResultsTool } from '../tools/format-results-tool';
 import { queryAnalysisTool } from '../tools/query-analysis-tools';
 
 // Step 1: Query Analysis
-const queryAnalysisStep = createStep( {
+const queryAnalysisStep = createStep({
   id: 'query-analysis',
   description: 'Analyze the user query to understand intent and required data',
-  inputSchema: z.object( {
-    dbConnectionId: z.string().describe( 'Database connection ID' ),
-    userQuery: z.string().describe( "The user's natural language query" ),
-  } ),
-  outputSchema: z.object( {
+  inputSchema: z.object({
+    dbConnectionId: z.string().describe('Database connection ID'),
+    userQuery: z.string().describe("The user's natural language query"),
+  }),
+  outputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
-  } ),
-  execute: async ( context ) => {
+  }),
+  execute: async (context) => {
     const { dbConnectionId, userQuery } = context.inputData;
 
     // Call the actual queryAnalysisTool
-    const result = await queryAnalysisTool.execute( {
+    const result = await queryAnalysisTool.execute({
       context: {
         dbConnectionId,
         userQuery,
       },
-    } as any );
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    } as any);
 
     return {
       dbConnectionId,
@@ -34,35 +35,36 @@ const queryAnalysisStep = createStep( {
       queryAnalysis: result.queryAnalysis,
     };
   },
-} );
+});
 
 // Step 2: Execute Query
-const executeQueryStep = createStep( {
+const executeQueryStep = createStep({
   id: 'execute-query',
   description: 'Generate and execute SQL query based on analysis',
-  inputSchema: z.object( {
+  inputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
-  } ),
-  outputSchema: z.object( {
+  }),
+  outputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
     sqlQuery: z.string(),
-    queryResults: z.array( z.record( z.any() ) ),
-  } ),
-  execute: async ( context ) => {
+    queryResults: z.array(z.record(z.any())),
+  }),
+  execute: async (context) => {
     const { dbConnectionId, userQuery, queryAnalysis } = context.inputData;
 
     // Call the actual executeQueryTool
-    const result = await executeQueryTool.execute( {
+    const result = await executeQueryTool.execute({
       context: {
         dbConnectionId,
         userQuery,
         queryAnalysis,
       },
-    } as any );
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    } as any);
 
     return {
       dbConnectionId,
@@ -72,43 +74,44 @@ const executeQueryStep = createStep( {
       queryResults: result.queryResults,
     };
   },
-} );
+});
 
 // Step 3: Format Results
-const formatResultsStep = createStep( {
+const formatResultsStep = createStep({
   id: 'format-results',
   description: 'Format query results for user presentation',
-  inputSchema: z.object( {
+  inputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
     sqlQuery: z.string(),
-    queryResults: z.array( z.record( z.any() ) ),
-  } ),
-  outputSchema: z.object( {
-    visualizationType: z.enum( ['table', 'bar', 'pie', 'line', 'doughnut', 'text'] ),
-    formattedData: z.union( [
+    queryResults: z.array(z.record(z.any())),
+  }),
+  outputSchema: z.object({
+    visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+    formattedData: z.union([
       // Chart.js data structure
-      z.record( z.string(), z.unknown() ),
+      z.record(z.string(), z.unknown()),
       // Array of objects for table data
-      z.array( z.record( z.any() ) ),
+      z.array(z.record(z.any())),
       // Simple text
       z.string(),
-    ] ),
+    ]),
     summary: z.string(),
     message: z.string(),
-  } ),
-  execute: async ( context ) => {
+  }),
+  execute: async (context) => {
     const { userQuery, sqlQuery, queryResults } = context.inputData;
 
     // Call the actual formatResultsTool
-    const result = await formatResultsTool.execute( {
+    const result = await formatResultsTool.execute({
       context: {
         userQuery,
         sqlQuery,
         queryResults,
       },
-    } as any );
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    } as any);
 
     return {
       visualizationType: result.visualizationType,
@@ -117,30 +120,30 @@ const formatResultsStep = createStep( {
       message: result.summary, // Using summary as message since formatResultsTool doesn't return a message field
     };
   },
-} );
+});
 export const CHART_WORKFLOW_NAME = 'chat-query-processing';
-export const chatWorkflow = createWorkflow( {
+export const chatWorkflow = createWorkflow({
   id: CHART_WORKFLOW_NAME,
   description: 'Process user chat queries through analysis, execution, and formatting',
-  inputSchema: z.object( {
-    dbConnectionId: z.string().describe( 'Database connection ID' ),
-    userQuery: z.string().describe( "The user's natural language query" ),
-  } ),
-  outputSchema: z.object( {
-    visualizationType: z.enum( ['table', 'bar', 'pie', 'line', 'doughnut', 'text'] ),
-    formattedData: z.union( [
+  inputSchema: z.object({
+    dbConnectionId: z.string().describe('Database connection ID'),
+    userQuery: z.string().describe("The user's natural language query"),
+  }),
+  outputSchema: z.object({
+    visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+    formattedData: z.union([
       // rechart data structure
-      z.record( z.string(), z.unknown() ),
+      z.record(z.string(), z.unknown()),
       // Array of objects for table data
-      z.array( z.record( z.any() ) ),
+      z.array(z.record(z.any())),
       // Simple text
       z.string(),
-    ] ),
+    ]),
     summary: z.string(),
     message: z.string(),
-  } ),
-} )
-  .then( queryAnalysisStep )
-  .then( executeQueryStep )
-  .then( formatResultsStep )
+  }),
+})
+  .then(queryAnalysisStep)
+  .then(executeQueryStep)
+  .then(formatResultsStep)
   .commit();
