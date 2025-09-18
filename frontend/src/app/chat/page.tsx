@@ -10,7 +10,8 @@ import { useEffect, useState } from 'react';
 
 export default function ChatPage() {
   // State management for active chat session
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
+      );
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
   console.log('🚀 > ChatPage > selectedDbConnectionId:', selectedDbConnectionId);
 
@@ -137,8 +138,8 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="w-full h-[calc(100vh-40px)] ">
-      <div className="flex overflow-y-auto relative h-full  text-foreground">
+    <main className="w-full h-full ">
+      <div className=" relative h-full  text-foreground">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
           isVisible={isCreatingSession}
@@ -147,7 +148,7 @@ export default function ChatPage() {
         />
 
         {/* Main chat interface container with session manager */}
-        <section className="flex flex-1 w-full ">
+        <section className="flex flex-1 w-full h-full">
           {/* Session Manager Sidebar */}
           {/* <div className="flex-shrink-0">
             {selectedDbConnectionId && (
@@ -161,27 +162,25 @@ export default function ChatPage() {
           </div> */}
 
           {/* Chat Interface */}
-          <div className="flex flex-col flex-1">
-            {activeSessionId && selectedDbConnectionId ? (
-              <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
-            ) : (
-              /* Loading state while session is being created */
-              <article
-                className="flex flex-1 justify-center items-center p-8"
-                aria-label="Loading section"
-              >
-                <header className="max-w-4xl text-center">
-                  <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
-                    Initializing SupplySense AI
-                  </Text>
+          {activeSessionId && selectedDbConnectionId ? (
+            <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
+          ) : (
+            /* Loading state while session is being created */
+            <article
+              className="flex flex-1 justify-center items-center p-8"
+              aria-label="Loading section"
+            >
+              <header className="max-w-4xl text-center">
+                <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
+                  Initializing SupplySense AI
+                </Text>
 
-                  <Text variant="bodyLarge" color="muted" as="p">
-                    Setting up your chat session with database connection...
-                  </Text>
-                </header>
-              </article>
-            )}
-          </div>
+                <Text variant="bodyLarge" color="muted" as="p">
+                  Setting up your chat session with database connection...
+                </Text>
+              </header>
+            </article>
+          )}
         </section>
       </div>
     </main>

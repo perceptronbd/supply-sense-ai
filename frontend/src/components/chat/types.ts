@@ -1,17 +1,17 @@
 ﻿// Re-export types from the API
 export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
-import type { ChatMessage } from '@/store/api/chatApi';
+import type { ChatMessageResponse } from '@/store/api/chatApi';
 
 export interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: ( message: string ) => void;
   isLoading?: boolean;
   disabled?: boolean;
 }
 
 export interface MessageListProps {
-  messages: ChatMessage[];
+  messages: ChatMessageResponse[];
   isLoading?: boolean;
-  onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionClick?: ( suggestion: string ) => void;
 }
 
 export interface ChatInterfaceProps {

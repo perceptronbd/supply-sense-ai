@@ -48,7 +48,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
   if (messages.length === 0 && !isLoading) {
     return (
       <section
-        className="flex flex-1 justify-center items-center"
+        className="md:flex justify-center items-center overflow-y-auto size-full max-md:mt-5"
         aria-label="Chat welcome message"
       >
         <div className="px-8 w-full text-center">
@@ -72,7 +72,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
           </header>
 
           {/* Suggestion Cards */}
-          <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-5">
+          <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-40 md:mb-5">
             {defaultSuggestions.map((suggestion) => {
               const IconComponent = suggestion.icon;
               return (
@@ -106,7 +106,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
   }
 
   return (
-    <section className="overflow-y-auto flex-1 p-4" role="log" aria-label="Chat messages">
+    <section className="overflow-y-auto p-5 mb-20" role="log" aria-label="Chat messages">
       <div className="mx-auto max-w-4xl">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />

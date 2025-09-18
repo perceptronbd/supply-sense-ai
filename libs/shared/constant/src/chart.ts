@@ -3,7 +3,6 @@ export const CHART_TYPES = {
   AREA: 'area',
   LINE: 'line',
   RADAR: 'radar',
-  PIE: 'pie',
 } as const;
 
 export const CHART_TYPES_VALUES = Object.values(CHART_TYPES);

@@ -2,7 +2,7 @@
 
 import { Text } from '@/components/ui/Text';
 import { useGetSessionMessagesQuery, useSendQueryMutation } from '@/store/api/chatApi';
-import type { ChatMessage } from '@/store/api/chatApi';
+import type { ChatMessage, ChatMessageResponse } from '@/store/api/chatApi';
 import { useEffect, useState } from 'react';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
@@ -129,7 +129,7 @@ export function ChatInterface({
   if (messagesError) {
     return (
       <section
-        className={`flex justify-center items-center h-full  ${className}`}
+        className={`flex justify-center items-center h-full max-h-[calc(100vh-40px)] ${className}`}
         aria-label="Chat error"
       >
         <div className="text-center">
@@ -146,10 +146,10 @@ export function ChatInterface({
   }
 
   return (
-    <section className={`flex flex-col h-full  ${className}`} aria-label="Chat interface">
+    <section className={`flex flex-col size-full max-h-[calc(100vh-40px)] overflow-y-auto  relative ${className}`} aria-label="Chat interface">
       {/* Message list with loading and suggestion handling */}
       <MessageList
-        messages={messages}
+        messages={messages as unknown as ChatMessageResponse[]}
         isLoading={isLoadingMessages || isSendingMessage}
         onSuggestionClick={handleSuggestionClick}
       />

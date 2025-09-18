@@ -37,7 +37,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
   }, [message]);
 
   return (
-    <section className="px-10">
+    <section className="pb-7 px-10 w-full fixed lg:absolute bottom-0 z-50">
       <form
         onSubmit={handleSubmit}
         className="relative rounded-xl border bg-content1 border-divider shadow-small"
@@ -59,8 +59,8 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
               variant="flat"
               classNames={{
                 base: 'w-full',
-                input: 'resize-none text-foreground text-medium max-h-96 bg-transparent',
-                inputWrapper: 'bg-transparent border-none shadow-none ',
+                input: 'resize-none text-foreground text-medium max-h-96 bg-transparent p-2',
+                inputWrapper: 'bg-transparent border-none shadow-none p-0',
               }}
             />
           </div>

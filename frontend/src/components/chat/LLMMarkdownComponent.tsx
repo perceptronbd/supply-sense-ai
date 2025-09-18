@@ -179,7 +179,7 @@ const LLMMarkdownComponent: LLMOutputComponent = ({ blockMatch }) => {
           ),
           // Custom paragraph styling with HeroUI tokens
           p: ({ children, ...props }) => (
-            <p className="my-2 text-default-700 leading-relaxed" {...props}>
+            <p className="text-default-700 leading-relaxed" {...props}>
               {children}
             </p>
           ),

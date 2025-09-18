@@ -4,7 +4,7 @@ import { UserIcon } from '@/components/icons';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
-import type { ChatMessage } from '@/store/api/chatApi';
+import type {  ChatMessageResponse } from '@/store/api/chatApi';
 import { Avatar, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
@@ -13,13 +13,15 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
+import { RenderTable } from './RenderTable';
+import { RenderChart } from './RenderChart';
+import { CHART_TYPES_VALUES } from '@supplysense/constant';
 interface MessageBubbleProps {
-  message: ChatMessage;
+  message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
 }
 
-export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps) {
-  console.log('🚀 onSuggestionClick:', onSuggestionClick);
+export function MessageBubble({ message, onSuggestionClick:_ }: MessageBubbleProps) {
   const isUser = message.type === 'user';
 
   // Use llm-ui for AI message rendering
@@ -58,99 +60,9 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
 
   const timestamp = getFormattedTime(message.createdAt);
 
-  const chartData = [
-    { month: 'January', netSales: 186, profit: 80 },
-    { month: 'February', netSales: 305, profit: 200 },
-    { month: 'March', netSales: 237, profit: 120 },
-    { month: 'April', netSales: 73, profit: 190 },
-    { month: 'May', netSales: 209, profit: 130 },
-    { month: 'June', netSales: 214, profit: 140 },
-  ];
-  console.log('🚀 > MessageBubble > chartData:', chartData);
-
-  // const tableData = [
-  //   {
-  //     id: '35cf4c05-ee4a-4ae9-9539-4ada8cbc2cd8',
-  //     name: 'Raw Material A - Premium Grade',
-  //     sku: 'RM001-62a7',
-  //     quantity: 62,
-  //     availableQty: 62,
-  //   },
-  //   {
-  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-62a7',
-  //     quantity: 45,
-  //     availableQty: 45,
-  //   },
-  //   {
-  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-62a7',
-  //     quantity: 50,
-  //     availableQty: 50,
-  //   },
-  //   {
-  //     id: 'b36b2106-5d11-4953-b255-3f11bf624024',
-  //     name: 'Chemical Component X',
-  //     sku: 'RM003-62A7',
-  //     quantity: 92,
-  //     availableQty: 92,
-  //   },
-  //   {
-  //     id: 'cfd5fa58-75a5-4950-864e-dae54c7860f4',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-62a7',
-  //     quantity: 33,
-  //     availableQty: 33,
-  //   },
-  //   {
-  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-28fe',
-  //     quantity: 20,
-  //     availableQty: 20,
-  //   },
-  //   {
-  //     id: '116c5020-95b2-4511-b37f-bc1e23b43ac3',
-  //     name: 'Raw Material A - Premium Grade',
-  //     sku: 'RM001-28fe',
-  //     quantity: 98,
-  //     availableQty: 98,
-  //   },
-  //   {
-  //     id: '82806843-ccc9-4c20-b0da-b1c0513b5d07',
-  //     name: 'Raw Material B - Standard Grade',
-  //     sku: 'RM002-28fe',
-  //     quantity: 54,
-  //     availableQty: 54,
-  //   },
-  //   {
-  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-28fe',
-  //     quantity: 52,
-  //     availableQty: 52,
-  //   },
-  //   {
-  //     id: '6d6a68e0-c706-413c-8d98-f5c0121ca572',
-  //     name: 'Chemical Component X',
-  //     sku: 'RM003-28fe',
-  //     quantity: 86,
-  //     availableQty: 86,
-  //   },
-  //   {
-  //     id: '7b37ac4d-6937-4ce7-9447-deecc386f4e1',
-  //     name: 'Finished Product Alpha',
-  //     sku: 'FG001-28fe',
-  //     quantity: 16,
-  //     availableQty: 16,
-  //   },
-  // ];
-
   return (
     <article
-      className={`flex gap-3 w-full ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
+      className={`flex gap-3 w-full overflow-x-clip ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
       aria-label={`${isUser ? 'User' : 'AI Assistant'} message at ${timestamp}`}
     >
       {/* Avatar */}
@@ -173,11 +85,11 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
       </div>{' '}
       {/* Message content */}
       <div
-        className={`flex-1 max-w-[min(80%,800px)] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
+        className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
       >
         {isUser ? (
           <Card className="bg-primary text-primary-foreground w-full">
-            <CardBody className="overflow-x-auto p-3 min-w-0">
+            <CardBody className="overflow-x-clip p-3 min-w-0">
               {isUser && (
                 <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
                   {message.content}
@@ -218,7 +130,7 @@ as ShadcnButton                        variant="light"
             </CardBody>
           </Card>
         ) : (
-          <article className="overflow-x-auto chat-markdown text-foreground">
+          <article className="overflow-x-auto chat-markdown w-full text-foreground">
             {blockMatches.map((blockMatch, index) => {
               const Component = blockMatch.block.component;
               return (
@@ -229,7 +141,16 @@ as ShadcnButton                        variant="light"
               );
             })}
             {/* <RenderChart data={chartData} chartType="area" /> */}
-
+            {
+              message.structuredData?.visualizationType === 'table' && (
+                <RenderTable data={message.structuredData?.formattedData as Record<string, string>[]} className="mt-4"/>
+              )
+            }
+            {
+              message.structuredData?.visualizationType && CHART_TYPES_VALUES.includes(message.structuredData?.visualizationType) && (
+                <RenderChart data={message.structuredData?.formattedData as Record<string, string>[]} chartType={message.structuredData?.visualizationType}/>
+              )
+            }
             {/* <RenderTable data={tableData} /> */}
           </article>
         )}

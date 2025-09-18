@@ -17,19 +17,20 @@ export interface ChatSession {
   updatedAt: string;
 }
 
-// export interface ChatMessage {
-//   id: string;
-//   sessionId: string;
-//   content: string;
-//   type: 'user' | 'assistant' | 'system' | 'error';
-//   contentType: 'text' | 'data' | 'chart' | 'table';
-//   metadata?: Record<string, unknown>;
-//   parentMessageId?: string;
-//   userId: string;
-//   createdAt: string;
-//   updatedAt: string;
-// }
 export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  content: string;
+  type: 'user' | 'assistant' | 'system' | 'error';
+  contentType: 'text' | 'data' | 'chart' | 'table';
+  metadata?: Record<string, unknown>;
+  parentMessageId?: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageResponse {
   id: string;
   content: string;
   type: 'user' | 'assistant';
@@ -41,21 +42,21 @@ export interface ChatMessage {
     summary: string;
     formattedData: (
       | {
-          id: string;
-          name: string;
-          availableQty: number;
-        }
+        id: string;
+        name: string;
+        availableQty: number;
+      }
       | {
-          name: string;
-          quantity: string;
-          unitPrice: string | null;
-          supplierId: string | null;
-          availableQty: string;
-        }
+        name: string;
+        quantity: string;
+        unitPrice: string | null;
+        supplierId: string | null;
+        availableQty: string;
+      }
       | {
-          name: string;
-          value: number;
-        }
+        name: string;
+        value: number;
+      }
     )[];
     visualizationType: 'table' & TChartType;
   } | null;
@@ -67,10 +68,7 @@ export interface ChartDataset {
   data: number[];
 }
 
-export interface ChartData {
-  labels: string[];
-  datasets: ChartDataset[];
-}
+
 
 export interface CreateSessionRequest {
   title: string;
@@ -98,96 +96,96 @@ export interface ChatQueryResponse {
   databaseQuery?: string;
 }
 
-export const chatApi = createApi({
+export const chatApi = createApi( {
   reducerPath: 'chatApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: config.getApiUrl('/api/chat'),
-    prepareHeaders: (headers, { getState }) => {
+  baseQuery: fetchBaseQuery( {
+    baseUrl: config.getApiUrl( '/api/chat' ),
+    prepareHeaders: ( headers, { getState } ) => {
       const state = getState() as RootState;
       const token = state.auth.token;
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
+      if ( token ) {
+        headers.set( 'authorization', `Bearer ${ token }` );
       }
       return headers;
     },
-  }),
+  } ),
   tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE, TAG_TYPES.DATABASE_CONNECTION],
-  endpoints: (builder) => ({
+  endpoints: ( builder ) => ( {
     // Health check - temporarily disable transform to test
     getHealth: builder.query<
-      ApiResponse<{ status: string; timestamp: string; services: Record<string, string> }>,
+      ApiResponse<{ status: string; timestamp: string; services: Record<string, string>; }>,
       void
-    >({
+    >( {
       query: () => '/health',
       // Temporarily removed transformResponse for testing
-    }),
+    } ),
 
     // Session management
-    createSession: builder.mutation<ChatSession, CreateSessionRequest>({
-      query: (sessionData) => ({
+    createSession: builder.mutation<ChatSession, CreateSessionRequest>( {
+      query: ( sessionData ) => ( {
         url: '/sessions',
         method: 'POST',
         body: sessionData,
-      }),
-      transformResponse: (response: ApiResponse<ChatSession>) => transformApiResponse(response),
+      } ),
+      transformResponse: ( response: ApiResponse<ChatSession> ) => transformApiResponse( response ),
       invalidatesTags: [TAG_TYPES.CHAT_SESSION],
-    }),
+    } ),
 
-    getSessions: builder.query<ChatSession[], { limit?: number; offset?: number }>({
-      query: ({ limit = 20, offset = 0 } = {}) => ({
+    getSessions: builder.query<ChatSession[], { limit?: number; offset?: number; }>( {
+      query: ( { limit = 20, offset = 0 } = {} ) => ( {
         url: '/sessions',
         params: { limit, offset },
-      }),
-      transformResponse: (response: ApiResponse<ChatSession[]>) => transformApiResponse(response),
+      } ),
+      transformResponse: ( response: ApiResponse<ChatSession[]> ) => transformApiResponse( response ),
       providesTags: [TAG_TYPES.CHAT_SESSION],
-    }),
+    } ),
 
-    getSession: builder.query<ChatSession, string>({
-      query: (sessionId) => `/sessions/${sessionId}`,
-      transformResponse: (response: ApiResponse<ChatSession>) => transformApiResponse(response),
-      providesTags: (_result, _error, sessionId) => [
+    getSession: builder.query<ChatSession, string>( {
+      query: ( sessionId ) => `/sessions/${ sessionId }`,
+      transformResponse: ( response: ApiResponse<ChatSession> ) => transformApiResponse( response ),
+      providesTags: ( _result, _error, sessionId ) => [
         { type: TAG_TYPES.CHAT_SESSION, id: sessionId },
       ],
-    }),
+    } ),
 
-    deleteSession: builder.mutation<void, string>({
-      query: (sessionId) => ({
-        url: `/sessions/${sessionId}`,
+    deleteSession: builder.mutation<void, string>( {
+      query: ( sessionId ) => ( {
+        url: `/sessions/${ sessionId }`,
         method: 'DELETE',
-      }),
+      } ),
       invalidatesTags: [TAG_TYPES.CHAT_SESSION],
-    }),
+    } ),
 
     // Message management
     getSessionMessages: builder.query<
       ChatMessage[],
-      { sessionId: string; limit?: number; offset?: number }
-    >({
-      query: ({ sessionId, limit = 50, offset = 0 }) => ({
-        url: `/sessions/${sessionId}/messages`,
+      { sessionId: string; limit?: number; offset?: number; }
+    >( {
+      query: ( { sessionId, limit = 50, offset = 0 } ) => ( {
+        url: `/sessions/${ sessionId }/messages`,
         params: { limit, offset },
-      }),
-      transformResponse: (response: ApiResponse<ChatMessage[]>) => transformApiResponse(response),
-      providesTags: (_result, _error, { sessionId }) => [
+      } ),
+      transformResponse: ( response: ApiResponse<ChatMessageResponse[]> ) => transformApiResponse( response ),
+      providesTags: ( _result, _error, { sessionId } ) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],
-    }),
+    } ),
 
     // Chat query with database connection support
-    sendQuery: builder.mutation<ChatQueryResponse, ChatQueryRequest>({
-      query: (queryData) => ({
+    sendQuery: builder.mutation<ChatQueryResponse, ChatQueryRequest>( {
+      query: ( queryData ) => ( {
         url: '/query',
         method: 'POST',
         body: queryData,
-      }),
+      } ),
       // Chat endpoint bypasses ResponseInterceptor, so we handle raw response
-      transformResponse: (response: ChatQueryResponse) => response,
-      invalidatesTags: (_result, _error, { sessionId }) => [
+      transformResponse: ( response: ChatQueryResponse ) => response,
+      invalidatesTags: ( _result, _error, { sessionId } ) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],
-    }),
-  }),
-});
+    } ),
+  } ),
+} );
 
 export const {
   useGetHealthQuery,
