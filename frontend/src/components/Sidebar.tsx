@@ -106,7 +106,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
       {isOpen && (
         <input
           type="button"
-          className="fixed inset-0 z-40 bg-overlay/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           onKeyDown={(e) => e.key === 'Escape' && onClose()}
           tabIndex={0}
@@ -115,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
       {/* Sidebar */}
       <aside
         className={`
-        fixed inset-y-0 left-0 z-50 w-80 rounded-xl mr-2  transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-0 bg-black
       `}
@@ -181,8 +181,8 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             </ul>
           </nav>
           {/* User info and logout */}
-          <footer className="p-4 border-t rounded-b-xl border-divider">
-            <div className="flex items-center gap-x-6">
+          <footer className="p-4 border-t rounded-b-xl border-divider flex-shrink-0">
+            <div className="flex items-center gap-x-4">
               <div className="size-14 rounded-full overflow- flex-shrink-0">
                 <Image
                   src={'/avatar.png'}

@@ -26,6 +26,7 @@ const queryAnalysisStep = createStep({
         dbConnectionId,
         userQuery,
       },
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     } as any);
 
     return {
@@ -62,6 +63,7 @@ const executeQueryStep = createStep({
         userQuery,
         queryAnalysis,
       },
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     } as any);
 
     return {
@@ -89,15 +91,7 @@ const formatResultsStep = createStep({
     visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
     formattedData: z.union([
       // Chart.js data structure
-      z.object({
-        labels: z.array(z.string()),
-        datasets: z.array(
-          z.object({
-            label: z.string(),
-            data: z.array(z.number()),
-          })
-        ),
-      }),
+      z.record(z.string(), z.unknown()),
       // Array of objects for table data
       z.array(z.record(z.any())),
       // Simple text
@@ -116,6 +110,7 @@ const formatResultsStep = createStep({
         sqlQuery,
         queryResults,
       },
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     } as any);
 
     return {
@@ -137,16 +132,8 @@ export const chatWorkflow = createWorkflow({
   outputSchema: z.object({
     visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
     formattedData: z.union([
-      // Chart.js data structure
-      z.object({
-        labels: z.array(z.string()),
-        datasets: z.array(
-          z.object({
-            label: z.string(),
-            data: z.array(z.number()),
-          })
-        ),
-      }),
+      // rechart data structure
+      z.record(z.string(), z.unknown()),
       // Array of objects for table data
       z.array(z.record(z.any())),
       // Simple text

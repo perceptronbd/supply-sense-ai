@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { ChatInterface } from '@/components/chat';
-import { SessionManager } from '@/components/chat/SessionManager';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -74,21 +73,21 @@ export default function ChatPage() {
     }
   }, [activeSessionId, selectedDbConnectionId, createSession, isCreatingSession]);
 
-  // Handle session selection from SessionManager
-  const handleSessionSelect = (sessionId: string) => {
-    setActiveSessionId(sessionId);
-  };
+  // // Handle session selection from SessionManager
+  // const handleSessionSelect = (sessionId: string) => {
+  //   setActiveSessionId(sessionId);
+  // };
 
-  // Handle new session creation from SessionManager
-  const handleSessionCreate = (sessionId: string) => {
-    setActiveSessionId(sessionId);
-  };
+  // // Handle new session creation from SessionManager
+  // const handleSessionCreate = (sessionId: string) => {
+  //   setActiveSessionId(sessionId);
+  // };
 
   // Show loading state while connections are being fetched
   if (isLoadingConnections) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] bg-background">
-        <div className="flex overflow-hidden relative h-full bg-background text-foreground">
+      <main className="w-full h-[calc(100vh-40px)] ">
+        <div className="flex overflow-hidden relative h-full  text-foreground">
           <LoadingOverlay
             isVisible={true}
             message="Loading database connections..."
@@ -102,7 +101,7 @@ export default function ChatPage() {
   // Show error state if connections failed to load
   if (connectionsError) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] bg-background">
+      <main className="w-full h-[calc(100vh-40px)] ">
         <div className="flex flex-1 justify-center items-center p-8">
           <div className="max-w-4xl text-center">
             <Text variant="titleLarge" color="danger" className="mb-4" as="h1">
@@ -121,7 +120,7 @@ export default function ChatPage() {
   // Show error state if no database connections are available
   if (databaseConnections && databaseConnections.length === 0) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] bg-background">
+      <main className="w-full h-[calc(100vh-40px)] ">
         <div className="flex flex-1 justify-center items-center p-8">
           <div className="max-w-4xl text-center">
             <Text variant="titleLarge" color="default" className="mb-4" as="h1">
@@ -138,8 +137,8 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="w-full h-[calc(100vh-40px)] bg-background">
-      <div className="flex overflow-hidden relative h-full bg-background text-foreground">
+    <main className="w-full h-full ">
+      <div className=" relative h-full  text-foreground">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
           isVisible={isCreatingSession}
@@ -148,9 +147,9 @@ export default function ChatPage() {
         />
 
         {/* Main chat interface container with session manager */}
-        <section className="flex flex-1 w-full bg-background">
+        <section className="flex flex-1 w-full h-full">
           {/* Session Manager Sidebar */}
-          <div className="flex-shrink-0">
+          {/* <div className="flex-shrink-0">
             {selectedDbConnectionId && (
               <SessionManager
                 selectedSessionId={activeSessionId}
@@ -159,30 +158,28 @@ export default function ChatPage() {
                 onSessionCreate={handleSessionCreate}
               />
             )}
-          </div>
+          </div> */}
 
           {/* Chat Interface */}
-          <div className="flex flex-col flex-1">
-            {activeSessionId && selectedDbConnectionId ? (
-              <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
-            ) : (
-              /* Loading state while session is being created */
-              <article
-                className="flex flex-1 justify-center items-center p-8"
-                aria-label="Loading section"
-              >
-                <header className="max-w-4xl text-center">
-                  <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
-                    Initializing SupplySense AI
-                  </Text>
+          {activeSessionId && selectedDbConnectionId ? (
+            <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
+          ) : (
+            /* Loading state while session is being created */
+            <article
+              className="flex flex-1 justify-center items-center p-8"
+              aria-label="Loading section"
+            >
+              <header className="max-w-4xl text-center">
+                <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
+                  Initializing SupplySense AI
+                </Text>
 
-                  <Text variant="bodyLarge" color="muted" as="p">
-                    Setting up your chat session with database connection...
-                  </Text>
-                </header>
-              </article>
-            )}
-          </div>
+                <Text variant="bodyLarge" color="muted" as="p">
+                  Setting up your chat session with database connection...
+                </Text>
+              </header>
+            </article>
+          )}
         </section>
       </div>
     </main>

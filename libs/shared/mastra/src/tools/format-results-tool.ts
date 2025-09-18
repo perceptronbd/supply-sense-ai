@@ -1,11 +1,12 @@
 import { createTool } from '@mastra/core';
 import { FORMATTING_SYSTEM_PROMPT, FORMAT_RESULTS_TOOL } from '@supplysense/constant';
+import type { ChartData } from 'recharts/types/state/chartDataSlice';
 import { z } from 'zod';
 import { formattingAgent } from '../agents/formatting-agent';
 
 // Union type for different data formats
 // Support flexible array of objects for table data, preserving original query structure
-type FormattedData = Record<string, unknown>[] | string;
+type FormattedData = ChartData | Record<string, unknown>[] | string;
 
 type FormattedResults = {
   visualizationType: 'table' | 'bar' | 'pie' | 'line' | 'doughnut' | 'text';
@@ -22,16 +23,8 @@ const inputSchema = z.object({
 const outputSchema = z.object({
   visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
   formattedData: z.union([
-    // Chart.js data structure
-    z.object({
-      labels: z.array(z.string()),
-      datasets: z.array(
-        z.object({
-          label: z.string(),
-          data: z.array(z.number()),
-        })
-      ),
-    }),
+    // Recharts data structure
+    z.record(z.string(), z.unknown()),
     // Array of objects for table data (flexible format for any query results)
     z.array(z.record(z.any())),
     // Simple text
@@ -46,9 +39,6 @@ export async function formatQueryResults(
   sqlQuery: string,
   userQuery?: string
 ) {
-  console.log('🚀 > formatQueryResults > userQuery:', userQuery);
-  console.log('🚀 > formatQueryResults > sqlQuery:', sqlQuery);
-  console.log('🚀 > formatQueryResults > queryResults:', queryResults);
   // Analyze the query results to determine visualization format
   const agentResponse = await formattingAgent.generate([
     {
@@ -58,14 +48,13 @@ export async function formatQueryResults(
     {
       role: 'user',
       content: `
-Query Results: ${JSON.stringify(queryResults, null, 2)}
-SQL Query: ${sqlQuery}
-${userQuery ? `User Query: ${userQuery}` : ''}
+      Query Results: ${JSON.stringify(queryResults, null, 2)}
+      SQL Query: ${sqlQuery}
+      ${userQuery ? `User Query: ${userQuery}` : ''}
 
-Analyze this data and determine the best visualization format: ${JSON.stringify(queryResults, null, 2)}`,
+      Analyze this data and determine the best visualization format: ${JSON.stringify(queryResults, null, 2)}`,
     },
   ]);
-  console.log('🚀 > formatQueryResults > agentResponse:', agentResponse.text.trim());
 
   let result: FormattedResults;
   try {
@@ -78,7 +67,6 @@ Analyze this data and determine the best visualization format: ${JSON.stringify(
       .trim();
 
     result = JSON.parse(cleanedResponse);
-    console.log('🚀 > formatQueryResults > result:', result);
   } catch (error) {
     console.error('error:', error);
     // Fallback to table format if parsing fails

@@ -58,7 +58,6 @@ export const RenderChart = ({
 }: RenderChartProps) => {
   // Generate chart configuration from data
   const { config: chartConfig, xAxisKey } = generateChartConfig(data);
-
   // Chart configuration based on type
   const renderChart = () => {
     if (!data || data.length === 0) {

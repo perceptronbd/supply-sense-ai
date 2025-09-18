@@ -17,19 +17,20 @@ export interface ChatSession {
   updatedAt: string;
 }
 
-// export interface ChatMessage {
-//   id: string;
-//   sessionId: string;
-//   content: string;
-//   type: 'user' | 'assistant' | 'system' | 'error';
-//   contentType: 'text' | 'data' | 'chart' | 'table';
-//   metadata?: Record<string, unknown>;
-//   parentMessageId?: string;
-//   userId: string;
-//   createdAt: string;
-//   updatedAt: string;
-// }
 export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  content: string;
+  type: 'user' | 'assistant' | 'system' | 'error';
+  contentType: 'text' | 'data' | 'chart' | 'table';
+  metadata?: Record<string, unknown>;
+  parentMessageId?: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageResponse {
   id: string;
   content: string;
   type: 'user' | 'assistant';
@@ -65,11 +66,6 @@ export interface ChatMessage {
 export interface ChartDataset {
   label: string;
   data: number[];
-}
-
-export interface ChartData {
-  labels: string[];
-  datasets: ChartDataset[];
 }
 
 export interface CreateSessionRequest {
@@ -167,7 +163,8 @@ export const chatApi = createApi({
         url: `/sessions/${sessionId}/messages`,
         params: { limit, offset },
       }),
-      transformResponse: (response: ApiResponse<ChatMessage[]>) => transformApiResponse(response),
+      transformResponse: (response: ApiResponse<ChatMessageResponse[]>) =>
+        transformApiResponse(response),
       providesTags: (_result, _error, { sessionId }) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],

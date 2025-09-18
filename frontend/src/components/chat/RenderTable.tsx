@@ -1,12 +1,14 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
 
 interface RenderTableProps {
   data: Record<string, string>[];
+  className?: string;
 }
 
-export const RenderTable = ({ data }: RenderTableProps) => {
+export const RenderTable = ({ data, className }: RenderTableProps) => {
   // Handle empty data case
   if (!data || data.length === 0) {
     return <div>No data available</div>;
@@ -28,14 +30,13 @@ export const RenderTable = ({ data }: RenderTableProps) => {
   }));
 
   return (
-    <div className="overflow-x-auto w-full">
+    <div className={cn('max-w-[min(80%,800px)] w-full', className)}>
       <Table
         aria-label="Data table"
         classNames={{
-          base: 'min-w-full',
-          table: 'min-w-full',
-          th: 'text-left',
-          td: 'text-left',
+          wrapper: 'overflow-x-auto',
+          th: 'text-left whitespace-nowrap',
+          td: 'text-left whitespace-nowrap',
         }}
       >
         <TableHeader>

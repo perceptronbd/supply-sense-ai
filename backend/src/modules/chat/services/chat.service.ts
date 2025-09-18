@@ -3,10 +3,15 @@ import { WorkflowService } from '@/modules/mastra-workflow/mastra-workflow.servi
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
+import { withRetry } from '@supplysense/utils/server';
 import { MessageType } from '../dto/chat.dto';
 import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
-import { generateSummaryAgentSystemPrompt } from '../helpers/prompt.helper';
+import {
+  generateChatAgentUserPrompt,
+  generateSummaryAgentSystemPrompt,
+} from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -161,14 +166,6 @@ export class ChatService {
       const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
       this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
 
-      // Extract additional context from userContext if available
-      // This might include permissions, preferences, or other relevant information
-      // const additionalContext = userContext
-      //   ? Object.entries(userContext)
-      //       .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-      //       .join('\n')
-      //   : '';
-
       // Verify that the database connection exists
       const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
         where: { id: dbConnectionId },
@@ -181,152 +178,81 @@ export class ChatService {
       }
 
       // Generate a summary of the conversation history to provide context
-      // const summarizeConversationHistory = await this.generateConversationSummary(
-      //   sessionHistory.map((msg) => msg.content)
-      // );
-
-      // Get the MCP client and available toolsets
-      /*  const mcpClient = this.mcpClientService.getMcpClient();
-        const toolsets = await mcpClient.getToolsets();
-  
-        // Track token usage for billing purposes
-        let totalPromptTokens = 0;
-        let totalCompletionTokens = 0;
-  
-        // Generate the AI response with retry logic in case of failures
-        const agentResponse = await withRetry(
-          async () => {
-            // Use the chat agent to process the message with a system prompt
-            
-            return this.chatAgent.generate(
-              [
-                {
-                  role: 'system',
-                  // Generate a detailed system prompt
-                  content: generateChatAgentSystemPrompt(),
-                },
-                {
-                  role: 'user',
-                  content: generateChatAgentUserPrompt(
-                    dbConnectionId,
-                    userId,
-                    additionalContext,
-                    '',
-                    message
-                  ),
-                },
-              ],
-              {
-                toolsets,
-                // Track token usage for each step of the generation process
-                onStepFinish: async ({ usage }) => {
-                  if (usage) {
-                    this.logger.debug('usage', usage);
-                    // Aggregate tokens from each step
-                    totalPromptTokens += usage.promptTokens || 0;
-                    totalCompletionTokens += usage.completionTokens || 0;
-                  }
-                },
-              }
-            );
-          },
-          3, // Maximum number of retries
-          1000 // Initial delay between retries in milliseconds
-        );
-  
-        // Extract the AI response text or provide a fallback
-        const aiResponse = agentResponse.text || 'I apologize, but I could not process your request.';
-        this.logger.log('AI response generated successfully', aiResponse);
-  
-        // Define the type for the parsed response
-        type TParsedResponse = {
-          visualizationType: VisualizationType;
-          formattedData: unknown;
-          summary: string;
-          message: string;
-          sqlQuery: string;
-          queryResults: unknown;
-        };
-  
-        // Try to parse the structured JSON response from the agent
-        let parsedResponse = {} as TParsedResponse;
-  
-        try {
-          // Look for JSON in the response
-          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const jsonStr = jsonMatch[0];
-            parsedResponse = JSON.parse(jsonStr);
-            this.logger.log('Successfully parsed structured response:', parsedResponse);
-          }
-        } catch (error) {
-          this.logger.warn('Could not parse structured response, using fallback:', error);
-        }
-  
-        this.logger.debug('Determined parsedResponse:', parsedResponse);
-  
-        // Extract the response message and data from the parsed response
-        const responseMessage = parsedResponse.message || aiResponse;
-        const responseData = parsedResponse.formattedData;
-  
-        // Calculate and record token usage for billing
-        if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
-          this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
-  
-          await this.tokenAndCredit.tokenPriceCalculate({
-            companyId,
-            inputTokens: totalPromptTokens,
-            outputTokens: totalCompletionTokens,
-            modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
-            metadata: {
-              question: message,
-              answer: responseMessage,
-              structuredData: JSON.stringify(parsedResponse),
-            },
-          });
-        }
-       
-  
-        // Save the AI's response to the database
-        await this.messageService.createMessage({
-          sessionId,
-          content: responseMessage,
-          type: MessageType.ASSISTANT,
-          structuredData: parsedResponse,
-        });
-  
-        this.logger.log('Assistant message created successfully');
-  
-        // Return the final response to the caller
-        return {
-          message: responseMessage,
-          type: 'data',
-          data: responseData,
-          sessionId,
-          timestamp: new Date().toISOString(),
-        }; */
-
-      // Execute the workflow
-      const workflowResult = await this.workflowService.executeChatWorkflow(
-        dbConnectionId,
-        message
+      const summarizeConversationHistory = await this.generateConversationSummary(
+        sessionHistory.map((msg) => msg.content)
       );
 
-      // Save the AI's response to the database
+      let totalPromptTokens = 0;
+      let totalCompletionTokens = 0;
+
+      const generateWithRetry = () =>
+        this.chatAgent.generate(
+          [
+            {
+              role: 'user',
+              content: generateChatAgentUserPrompt(
+                dbConnectionId,
+                userId,
+                summarizeConversationHistory,
+                message
+              ),
+            },
+          ],
+          {
+            toolChoice: {
+              type: 'tool',
+              toolName: 'supplySense_run_chatWorkflow',
+            },
+            onStepFinish: async ({ usage }) => {
+              if (usage) {
+                this.logger.debug('usage', usage);
+                // Aggregate tokens from each step
+                totalPromptTokens += usage.promptTokens || 0;
+                totalCompletionTokens += usage.completionTokens || 0;
+              }
+            },
+          }
+        );
+
+      const aiResponse = await withRetry(
+        generateWithRetry,
+        3, // maxRetries
+        1000 // initial delay in ms (will be doubled each retry)
+      );
+
+      this.logger.debug('AI response generated successfully after retries');
+      const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
+      const result = parsedResult.result;
+      this.logger.log('result:', result);
+
+      // Calculate and record token usage for billing
+      if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
+        this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
+
+        await this.tokenAndCredit.tokenPriceCalculate({
+          companyId,
+          inputTokens: totalPromptTokens,
+          outputTokens: totalCompletionTokens,
+          modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
+          metadata: {
+            question: message,
+            answer: result.message,
+            structuredData: JSON.stringify(result),
+          },
+        });
+      }
+
       await this.messageService.createMessage({
         sessionId,
-        content: workflowResult.message,
+        content: result.message,
         type: MessageType.ASSISTANT,
-        structuredData: workflowResult,
+        structuredData: result,
       });
 
-      this.logger.log('Assistant message created successfully');
-
-      // Return the final response to the caller
       return {
-        message: workflowResult.message,
+        message: result.message,
         type: 'data',
-        data: workflowResult.data,
+        data: result,
         sessionId,
         timestamp: new Date().toISOString(),
       };
