@@ -30,15 +30,14 @@ export const RenderTable = ({ data, className }: RenderTableProps) => {
   }));
 
   return (
-    <div className={cn("max-w-[min(80%,800px)] w-full", className)}>
+    <div className={cn('max-w-[min(80%,800px)] w-full', className)}>
       <Table
         aria-label="Data table"
         classNames={{
-          wrapper:'overflow-x-auto',
+          wrapper: 'overflow-x-auto',
           th: 'text-left whitespace-nowrap',
           td: 'text-left whitespace-nowrap',
         }}
-        
       >
         <TableHeader>
           {columns.map((column) => (

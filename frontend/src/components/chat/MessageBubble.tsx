@@ -4,7 +4,7 @@ import { UserIcon } from '@/components/icons';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
-import type {  ChatMessageResponse } from '@/store/api/chatApi';
+import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { Avatar, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
@@ -13,15 +13,15 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
-import { RenderTable } from './RenderTable';
-import { RenderChart } from './RenderChart';
 import { CHART_TYPES_VALUES } from '@supplysense/constant';
+import { RenderChart } from './RenderChart';
+import { RenderTable } from './RenderTable';
 interface MessageBubbleProps {
   message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
 }
 
-export function MessageBubble({ message, onSuggestionClick:_ }: MessageBubbleProps) {
+export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubbleProps) {
   const isUser = message.type === 'user';
 
   // Use llm-ui for AI message rendering
@@ -84,11 +84,9 @@ export function MessageBubble({ message, onSuggestionClick:_ }: MessageBubblePro
         />
       </div>{' '}
       {/* Message content */}
-      <div
-        className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
-      >
+      <div className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col flex-1`}>
         {isUser ? (
-          <Card className="bg-primary text-primary-foreground w-full">
+          <Card className="bg-primary text-primary-foreground w-fit max-w-md">
             <CardBody className="overflow-x-clip p-3 min-w-0">
               {isUser && (
                 <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
@@ -130,7 +128,7 @@ as ShadcnButton                        variant="light"
             </CardBody>
           </Card>
         ) : (
-          <article className="overflow-x-auto chat-markdown w-full text-foreground">
+          <article className="overflow-x-auto chat-markdown w-full text-foreground ">
             {blockMatches.map((blockMatch, index) => {
               const Component = blockMatch.block.component;
               return (
@@ -141,16 +139,19 @@ as ShadcnButton                        variant="light"
               );
             })}
             {/* <RenderChart data={chartData} chartType="area" /> */}
-            {
-              message.structuredData?.visualizationType === 'table' && (
-                <RenderTable data={message.structuredData?.formattedData as Record<string, string>[]} className="mt-4"/>
-              )
-            }
-            {
-              message.structuredData?.visualizationType && CHART_TYPES_VALUES.includes(message.structuredData?.visualizationType) && (
-                <RenderChart data={message.structuredData?.formattedData as Record<string, string>[]} chartType={message.structuredData?.visualizationType}/>
-              )
-            }
+            {message.structuredData?.visualizationType === 'table' && (
+              <RenderTable
+                data={message.structuredData?.formattedData as Record<string, string>[]}
+                className="mt-4"
+              />
+            )}
+            {message.structuredData?.visualizationType &&
+              CHART_TYPES_VALUES.includes(message.structuredData?.visualizationType) && (
+                <RenderChart
+                  data={message.structuredData?.formattedData as Record<string, string>[]}
+                  chartType={message.structuredData?.visualizationType}
+                />
+              )}
             {/* <RenderTable data={tableData} /> */}
           </article>
         )}

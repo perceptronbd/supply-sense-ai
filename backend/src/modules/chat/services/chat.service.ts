@@ -3,10 +3,15 @@ import { WorkflowService } from '@/modules/mastra-workflow/mastra-workflow.servi
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
+import { withRetry } from '@supplysense/utils/server';
 import { MessageType } from '../dto/chat.dto';
 import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
-import { generateSummaryAgentSystemPrompt } from '../helpers/prompt.helper';
+import {
+  generateChatAgentUserPrompt,
+  generateSummaryAgentSystemPrompt,
+} from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -181,9 +186,9 @@ export class ChatService {
       }
 
       // Generate a summary of the conversation history to provide context
-      // const summarizeConversationHistory = await this.generateConversationSummary(
-      //   sessionHistory.map((msg) => msg.content)
-      // );
+      const summarizeConversationHistory = await this.generateConversationSummary(
+        sessionHistory.map((msg) => msg.content)
+      );
 
       // Get the MCP client and available toolsets
       /*  const mcpClient = this.mcpClientService.getMcpClient();
@@ -307,26 +312,101 @@ export class ChatService {
         }; */
 
       // Execute the workflow
-      const workflowResult = await this.workflowService.executeChatWorkflow(
-        dbConnectionId,
-        message
+      // const workflowResult = await this.workflowService.executeChatWorkflow(
+      //   dbConnectionId,
+      //   message
+      // );
+
+      // // Save the AI's response to the database
+      // await this.messageService.createMessage({
+      //   sessionId,
+      //   content: workflowResult.message,
+      //   type: MessageType.ASSISTANT,
+      //   structuredData: workflowResult,
+      // });
+
+      // this.logger.log('Assistant message created successfully');
+
+      // // Return the final response to the caller
+      // return {
+      //   message: workflowResult.message,
+      //   type: 'data',
+      //   data: workflowResult.data,
+      //   sessionId,
+      //   timestamp: new Date().toISOString(),
+      // };
+
+      let totalPromptTokens = 0;
+      let totalCompletionTokens = 0;
+
+      const generateWithRetry = () =>
+        this.chatAgent.generate(
+          [
+            {
+              role: 'user',
+              content: generateChatAgentUserPrompt(
+                dbConnectionId,
+                userId,
+                summarizeConversationHistory,
+                message
+              ),
+            },
+          ],
+          {
+            toolChoice: {
+              type: 'tool',
+              toolName: 'supplySense_run_chatWorkflow',
+            },
+            onStepFinish: async ({ usage }) => {
+              if (usage) {
+                this.logger.debug('usage', usage);
+                // Aggregate tokens from each step
+                totalPromptTokens += usage.promptTokens || 0;
+                totalCompletionTokens += usage.completionTokens || 0;
+              }
+            },
+          }
+        );
+
+      const aiResponse = await withRetry(
+        generateWithRetry,
+        3, // maxRetries
+        1000 // initial delay in ms (will be doubled each retry)
       );
 
-      // Save the AI's response to the database
+      this.logger.debug('AI response generated successfully after retries');
+      const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
+      const result = parsedResult.result;
+      this.logger.log('result:', result);
+
+      // Calculate and record token usage for billing
+      if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
+        this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
+
+        await this.tokenAndCredit.tokenPriceCalculate({
+          companyId,
+          inputTokens: totalPromptTokens,
+          outputTokens: totalCompletionTokens,
+          modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
+          metadata: {
+            question: message,
+            answer: result.message,
+            structuredData: JSON.stringify(result),
+          },
+        });
+      }
+
       await this.messageService.createMessage({
         sessionId,
-        content: workflowResult.message,
+        content: result.message,
         type: MessageType.ASSISTANT,
-        structuredData: workflowResult,
+        structuredData: result,
       });
 
-      this.logger.log('Assistant message created successfully');
-
-      // Return the final response to the caller
       return {
-        message: workflowResult.message,
+        message: result.message,
         type: 'data',
-        data: workflowResult.data,
+        data: result,
         sessionId,
         timestamp: new Date().toISOString(),
       };

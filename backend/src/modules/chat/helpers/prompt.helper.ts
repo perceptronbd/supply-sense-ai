@@ -99,7 +99,6 @@ Remember: You are an agent. Your job is to orchestrate tools. The tools do the w
  * Generate the user prompt for the chat agent with all context information
  * @param dbConnectionId - The database connection ID
  * @param userId - The user ID
- * @param additionalContext - Additional context information
  * @param conversationHistory - Conversation history summary
  * @param userMessage - The user's original message
  * @returns Formatted user prompt string
@@ -107,15 +106,12 @@ Remember: You are an agent. Your job is to orchestrate tools. The tools do the w
 export function generateChatAgentUserPrompt(
   dbConnectionId: string,
   userId: string,
-  additionalContext: string,
   conversationHistory: string,
   userMessage: string
 ): string {
   return `Available context:
 - Database Connection ID: ${dbConnectionId}
 - User ID: ${userId}
-- Additional Context:
-${additionalContext}
 - Conversation History:
 ${conversationHistory}
 
