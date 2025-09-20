@@ -98,7 +98,7 @@ export const RenderChart = ({
           />
         );
       default:
-        return <HatchedBarMultipleChart data={data} config={chartConfig} xAxisKey={xAxisKey} />;
+        return <HatchedBarMultipleChart data={data} config={chartConfig} />;
     }
   };
 

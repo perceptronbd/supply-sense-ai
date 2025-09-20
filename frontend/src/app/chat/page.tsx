@@ -10,7 +10,10 @@ import { useEffect, useState } from 'react';
 
 export default function ChatPage() {
   // State management for active chat session
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
+    'cmfrrwoyx000116c4rvtbaz3k'
+  );
+  console.log('🚀 > ChatPage > activeSessionId:', activeSessionId);
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
   console.log('🚀 > ChatPage > selectedDbConnectionId:', selectedDbConnectionId);
 
@@ -48,17 +51,18 @@ export default function ChatPage() {
       try {
         // Create session with timestamp-based title and selected database connection
         const sessionTitle = `Chat ${new Date().toLocaleString()}`;
+        console.log('🚀 > initializeSession > sessionTitle:', sessionTitle);
 
-        const newSession = await createSession({
-          title: sessionTitle,
-          description: 'New chat session for supply chain analytics',
-          dbConnectionId: selectedDbConnectionId,
-        }).unwrap();
+        // const newSession = await createSession({
+        //   title: sessionTitle,
+        //   description: 'New chat session for supply chain analytics',
+        //   dbConnectionId: selectedDbConnectionId,
+        // }).unwrap();
 
-        // Set the active session ID for the chat interface
-        setActiveSessionId(newSession.id);
+        // // Set the active session ID for the chat interface
+        // setActiveSessionId(newSession.id);
 
-        console.log('Chat session initialized:', newSession.id);
+        // console.log('Chat session initialized:', newSession.id);
       } catch (error) {
         console.error('Failed to initialize chat session:', error);
 

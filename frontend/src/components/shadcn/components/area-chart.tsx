@@ -2,8 +2,9 @@
 
 import { Card, CardBody } from '@heroui/react';
 import React from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
+import { Area, AreaChart, CartesianGrid } from 'recharts';
+import { CustomTooltipContent } from './bar-chart';
+import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
 
 // Animation configuration
 const ANIMATION_CONFIG = {
@@ -22,13 +23,43 @@ interface AnimatedHighlightedAreaChartProps {
 export function AnimatedHighlightedAreaChart({
   data,
   config,
-  xAxisKey,
   height = 300,
   className = '',
-  xAxisFormatter = (value) => String(value).slice(0, 3),
 }: AnimatedHighlightedAreaChartProps) {
   const [xAxis, setXAxis] = React.useState<number | null>(null);
   const dataKeys = Object.keys(config);
+
+  // Validate data structure for area chart
+  if (!data || data.length === 0) {
+    return (
+      <Card className={className}>
+        <CardBody>
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">No data available</p>
+          </div>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  // Check if data has multiple numeric series (required for area chart)
+  const hasMultipleNumericSeries =
+    dataKeys.length > 1 ||
+    (dataKeys.length === 1 && data.every((item) => typeof item[dataKeys[0]] === 'number'));
+
+  if (!hasMultipleNumericSeries) {
+    return (
+      <Card className={className}>
+        <CardBody>
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">
+              Area chart requires multiple numeric data series
+            </p>
+          </div>
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
     <Card
@@ -46,14 +77,8 @@ export function AnimatedHighlightedAreaChart({
             className="h-full"
           >
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey={xAxisKey}
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={xAxisFormatter}
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+
+            <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
             <defs>
               <linearGradient id="animated-highlighted-mask-grad" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="transparent" />

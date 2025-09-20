@@ -37,7 +37,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
   }, [message]);
 
   return (
-    <section className="pb-7 px-10 w-full fixed lg:absolute bottom-0 z-50">
+    <section className="pb-7 px-10 w-full fixed lg:absolute bottom-0 z-30">
       <form
         onSubmit={handleSubmit}
         className="relative rounded-xl border bg-content1 border-divider shadow-small"

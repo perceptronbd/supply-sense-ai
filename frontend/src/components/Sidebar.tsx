@@ -106,7 +106,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
       {isOpen && (
         <input
           type="button"
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           onKeyDown={(e) => e.key === 'Escape' && onClose()}
           tabIndex={0}
@@ -202,7 +202,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                 >
                   {user?.firstName} {user?.lastName}
                 </Text>
-                <Text variant="bodyXSmall" color="muted" className="truncate" as="p">
+                <Text variant="bodyXSmall" color="muted" className="truncate max-w-28" as="p">
                   {user?.email}
                 </Text>
                 <Chip
