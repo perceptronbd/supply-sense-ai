@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 export default function ChatPage() {
   // State management for active chat session
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
-    'cmfrrwoyx000116c4rvtbaz3k'
+    'cmft8f5ek00011630zzmqz8xh'
   );
   console.log('🚀 > ChatPage > activeSessionId:', activeSessionId);
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
