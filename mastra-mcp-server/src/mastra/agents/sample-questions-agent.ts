@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
@@ -20,7 +21,7 @@ export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   instructions: SAMPLE_QUESTIONS_INSTRUCTION,
-  model: openrouter.getModel(),
+  model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
 // Custom function to use the agent

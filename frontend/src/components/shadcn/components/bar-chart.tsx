@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart } from 'recharts';
+import { Bar, BarChart, XAxis } from 'recharts';
 
 import { Card, CardBody } from '@heroui/react';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
@@ -19,9 +19,14 @@ export interface BarChartConfig
 interface HatchedBarMultipleChartProps {
   data: ChartData;
   config: BarChartConfig;
+  xAxisKey: string;
 }
 
-export const HatchedBarMultipleChart = ({ data, config }: HatchedBarMultipleChartProps) => {
+export const HatchedBarMultipleChart = ({
+  data,
+  config,
+  xAxisKey,
+}: HatchedBarMultipleChartProps) => {
   return (
     <Card>
       <CardBody>
@@ -37,6 +42,13 @@ export const HatchedBarMultipleChart = ({ data, config }: HatchedBarMultipleChar
             <defs>
               <DottedBackgroundPattern />
             </defs>
+            <XAxis
+              dataKey={xAxisKey}
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => value.substring(0, 5)}
+            />
             <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
             {Object.entries(config).map(([dataKey, { color, isHatched = true }]) => (
               <Bar

@@ -1,5 +1,9 @@
 import { Agent } from '@mastra/core/agent';
-import { METADATA_UPDATE_FREQUENCIES, type TMetadataUpdateFrequency } from '@supplysense/constant';
+import {
+  AI_MODEL_NAMES,
+  METADATA_UPDATE_FREQUENCIES,
+  type TMetadataUpdateFrequency,
+} from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
@@ -14,7 +18,7 @@ export const updateFrequencyAgent = new Agent({
   name: UPDATE_FREQUENCY_AGENT_NAME,
   description: UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   instructions: UPDATE_FREQUENCY_INSTRUCTION,
-  model: openrouter.getModel(),
+  model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
 // Custom function to use the agent for determining update frequency
