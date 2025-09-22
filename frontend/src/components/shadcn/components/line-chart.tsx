@@ -2,17 +2,39 @@
 
 import { Card, CardBody } from '@heroui/react';
 import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
+import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
+import { CustomTooltipContent } from './custom-tooltip-content';
+const CustomizedDot = (
+  props: React.SVGProps<SVGCircleElement> & { cx?: number; cy?: number; stroke?: string }
+) => {
+  const { cx, cy, stroke } = props;
+
+  return (
+    <g>
+      {/* Main dot */}
+      <circle cx={cx} cy={cy} r={3} fill={stroke} />
+      {/* Ping animation circles */}
+      <circle cx={cx} cy={cy} r={3} stroke={stroke} fill="none" strokeWidth="1" opacity="0.8">
+        <animate attributeName="r" values="3;10" dur="1s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.8;0" dur="1s" repeatCount="indefinite" />
+      </circle>
+    </g>
+  );
+};
 
 interface LineChartProps {
   data: Array<Record<string, string | number>>;
   config: ChartConfig;
   xAxisKey: string;
+  title?: string;
+  description?: string;
   height?: number | string;
   className?: string;
   xAxisFormatter?: (value: string) => string;
   showDots?: boolean;
   dashedLines?: string[];
+  showTrendingBadge?: boolean;
+  trendValue?: string;
 }
 
 export function DottedMultiLineChart({
@@ -21,29 +43,31 @@ export function DottedMultiLineChart({
   xAxisKey,
   height = 300,
   className = '',
-  xAxisFormatter = (value) => String(value).slice(0, 3),
-  showDots = true,
+  xAxisFormatter = (value) => String(value).slice(0, 5),
+  showDots = false,
   dashedLines = [],
 }: LineChartProps) {
   const dataKeys = Object.keys(config);
 
   const defaultLineProps = {
-    type: 'linear' as const,
-    dot: showDots,
-    activeDot: {
-      r: 4,
-      fill: 'currentColor',
-      stroke: 'var(--background)',
-      strokeWidth: 2,
+    type: 'bump' as const,
+    dot: showDots
+      ? (props: any) => {
+          const { cx, cy, stroke, key } = props;
+          return <CustomizedDot key={key} cx={cx} cy={cy} stroke={stroke} />;
+        }
+      : false,
+    activeDot: (props: any) => {
+      const { cx, cy, stroke, key } = props;
+      return <CustomizedDot key={key} cx={cx} cy={cy} stroke={stroke} />;
     },
+    strokeWidth: 2,
+    filter: 'url(#rainbow-line-glow)',
   };
 
   return (
-    <Card
-      className={className}
-      style={{ height: typeof height === 'number' ? `${height}px` : height }}
-    >
-      <CardBody className="h-full">
+    <Card className={className} style={{ height }}>
+      <CardBody>
         <ChartContainer config={config} className="h-full">
           <LineChart
             accessibilityLayer
@@ -52,7 +76,7 @@ export function DottedMultiLineChart({
               top: 10,
               right: 10,
               left: 0,
-              bottom: 0,
+              bottom: 5,
             }}
             className="h-full"
           >
@@ -63,18 +87,24 @@ export function DottedMultiLineChart({
               axisLine={false}
               tickMargin={8}
               tickFormatter={xAxisFormatter}
+              height={30}
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-
-            {dataKeys.map((key, index) => (
+            <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
+            {dataKeys.map((key) => (
               <Line
                 key={key}
                 dataKey={key}
                 {...defaultLineProps}
                 stroke={`var(--color-${key})`}
-                strokeDasharray={dashedLines.includes(key) || index === 0 ? '4 4' : undefined}
+                strokeDasharray={dashedLines.includes(key) ? '4 4' : undefined}
               />
             ))}
+            <defs>
+              <filter id="rainbow-line-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="10" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
           </LineChart>
         </ChartContainer>
       </CardBody>

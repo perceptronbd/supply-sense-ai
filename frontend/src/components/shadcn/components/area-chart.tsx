@@ -3,8 +3,8 @@
 import { Card, CardBody } from '@heroui/react';
 import React from 'react';
 import { Area, AreaChart, CartesianGrid } from 'recharts';
-import { CustomTooltipContent } from './bar-chart';
 import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
+import { CustomTooltipContent } from './custom-tooltip-content';
 
 // Animation configuration
 const ANIMATION_CONFIG = {
@@ -27,6 +27,7 @@ export function AnimatedHighlightedAreaChart({
   className = '',
 }: AnimatedHighlightedAreaChartProps) {
   const [xAxis, setXAxis] = React.useState<number | null>(null);
+  console.log('🚀 > xAxis:', xAxis);
   const dataKeys = Object.keys(config);
 
   // Validate data structure for area chart
@@ -71,7 +72,10 @@ export function AnimatedHighlightedAreaChart({
           <AreaChart
             accessibilityLayer
             data={data}
-            onMouseMove={(e) => setXAxis(e.chartX as number)}
+            onMouseMove={(e) => {
+              console.log('🚀 > e:', e);
+              setXAxis((e.activeCoordinate as { x: number; y: number })?.x);
+            }}
             onMouseLeave={() => setXAxis(null)}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             className="h-full"

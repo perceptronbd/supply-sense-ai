@@ -81,7 +81,6 @@ export const RenderChart = ({
             data={data}
             config={chartConfig}
             xAxisKey={xAxisKey}
-            height={300}
             className="w-full"
             dashedLines={dashedLines}
             showDots={showDots}
