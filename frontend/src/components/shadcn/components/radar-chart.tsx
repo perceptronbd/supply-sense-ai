@@ -9,7 +9,8 @@ import {
   RadarChart as RechartsRadarChart,
 } from 'recharts';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
+import { ChartContainer, ChartTooltip } from './chart';
+import { CustomTooltipContent } from './custom-tooltip-content';
 
 export interface RadarChartConfig
   extends Record<
@@ -56,8 +57,8 @@ export function RadarChart({
               bottom: 5,
             }}
           >
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarGrid gridType="circle" strokeOpacity={gridStrokeOpacity} />
+            <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
+            <PolarGrid gridType="circle" strokeOpacity={gridStrokeOpacity} strokeDasharray="3 3" />
             <PolarAngleAxis dataKey={angleAxisKey} />
             {showPolarRadiusAxis && <PolarRadiusAxis angle={30} />}
             {dataKeys.map((dataKey) => {
