@@ -1,5 +1,4 @@
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { WorkflowService } from '@/modules/mastra-workflow/mastra-workflow.service';
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
@@ -39,9 +38,7 @@ export class ChatService {
     @Inject(PrismaService)
     private readonly prismaService: PrismaService,
     @Inject(TokenAndCredit)
-    private readonly tokenAndCredit: TokenAndCredit,
-    @Inject(WorkflowService)
-    private readonly workflowService: WorkflowService
+    private readonly tokenAndCredit: TokenAndCredit
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
   }

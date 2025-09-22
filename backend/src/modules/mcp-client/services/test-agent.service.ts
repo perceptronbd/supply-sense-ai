@@ -1,6 +1,7 @@
 import { McpClientService } from '@/modules/mcp-client';
 import { Agent } from '@mastra/core';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 
 @Injectable()
@@ -31,7 +32,7 @@ export class TestAgentService {
         description: 'you have to answer questions about simple math',
         instructions:
           'You are a simple math agent that can answer questions about simple math operations.',
-        model: this.openrouter.getModel(),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
         tools,
       });
 

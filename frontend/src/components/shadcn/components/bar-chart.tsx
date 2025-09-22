@@ -4,7 +4,7 @@ import { Bar, BarChart, XAxis } from 'recharts';
 
 import { Card, CardBody } from '@heroui/react';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from './chart';
+import { ChartContainer, ChartTooltip } from './chart';
 
 export interface BarChartConfig
   extends Record<
@@ -20,14 +20,12 @@ interface HatchedBarMultipleChartProps {
   data: ChartData;
   config: BarChartConfig;
   xAxisKey: string;
-  xAxisFormatter?: (value: string | number) => string;
 }
 
 export const HatchedBarMultipleChart = ({
   data,
   config,
   xAxisKey,
-  xAxisFormatter = (value) => String(value).slice(0, 3),
 }: HatchedBarMultipleChartProps) => {
   return (
     <Card>
@@ -49,18 +47,15 @@ export const HatchedBarMultipleChart = ({
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={xAxisFormatter}
+              tickFormatter={(value) => value.substring(0, 5)}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="dashed" hideLabel />}
-            />
+            <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
             {Object.entries(config).map(([dataKey, { color, isHatched = true }]) => (
               <Bar
                 key={dataKey}
                 dataKey={dataKey}
                 fill={color}
-                shape={<CustomHatchedBar isHatched={isHatched} dataKey={dataKey} />}
+                shape={<CustomHatchedBar isHatched={true} dataKey={dataKey} />}
                 radius={4}
               />
             ))}
@@ -126,5 +121,32 @@ const DottedBackgroundPattern = () => {
     >
       <circle className="dark:text-muted/40 text-muted" cx="2" cy="2" r="1" fill="currentColor" />
     </pattern>
+  );
+};
+
+export const CustomTooltipContent = ({ active, payload }: any) => {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const data = payload[0]?.payload;
+
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <div className="border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="grid gap-1">
+        {Object.entries(data).map(([key, value]) => (
+          <div key={key} className="flex justify-between items-center gap-4">
+            <span className="text-muted-foreground text-xs font-medium">{key}:</span>
+            <span className="text-foreground font-mono font-medium tabular-nums text-xs">
+              {String(value)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

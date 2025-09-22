@@ -2,6 +2,7 @@ import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service
 import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { Agent } from '@mastra/core/agent';
 import { BadRequestException, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import { McpClientService } from './mcp-client.service';
 
@@ -80,7 +81,7 @@ export class TableDescriptionAgentService {
     - "This means every order belongs to a customer. Confirming this helps the AI group orders by customer for better insights."
     - "This shows products are organized into categories. This allows the AI to analyze sales trends by product type."
     - "This means purchases are linked to specific suppliers. This helps track which vendors provide which products."`,
-        model: this.openRouter.getModel(),
+        model: this.openRouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
         tools,
       });
 

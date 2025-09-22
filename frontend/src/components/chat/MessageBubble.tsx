@@ -150,6 +150,7 @@ as ShadcnButton                        variant="light"
                 <RenderChart
                   data={message.structuredData?.formattedData as Record<string, string>[]}
                   chartType={message.structuredData?.visualizationType}
+                  // chartType='radar'
                 />
               )}
             {/* <RenderTable data={tableData} /> */}

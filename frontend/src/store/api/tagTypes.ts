@@ -14,43 +14,6 @@ export const TAG_TYPES = {
   USER: 'User',
   ROLE: 'Role',
   PERMISSION: 'Permission',
-  BRANCH: 'Branch',
-  ITEM: 'Item',
-
-  // Purchase Request Module
-  PURCHASE_REQUEST: 'PurchaseRequest',
-  PURCHASE_REQUEST_TEMPLATE: 'PurchaseRequestTemplate',
-
-  // Purchase Order Module
-  PURCHASE_ORDER: 'PurchaseOrder',
-  PURCHASE_ORDER_TEMPLATE: 'PurchaseOrderTemplate',
-
-  // Goods Receipt Module
-  GOODS_RECEIPT: 'GoodsReceipt',
-
-  // Inventory & Stock
-  STOCK: 'Stock',
-  INVENTORY: 'Inventory',
-
-  // Suppliers & Vendors
-  SUPPLIER: 'Supplier',
-  VENDOR: 'Vendor',
-
-  // Categories & Classifications
-  CATEGORY: 'Category',
-  PRODUCT_CATEGORY: 'ProductCategory',
-
-  // Workflow & Approvals
-  APPROVAL: 'Approval',
-  WORKFLOW: 'Workflow',
-
-  // Reports & Analytics
-  REPORT: 'Report',
-  ANALYTICS: 'Analytics',
-
-  // AI & Recommendations
-  AI_RECOMMENDATION: 'AiRecommendation',
-  AI_FORECAST: 'AiForecast',
 
   // Chat Module
   CHAT_SESSION: 'ChatSession',
@@ -83,29 +46,9 @@ export function getTagTypes(keys: TagTypeKeys[]): TagTypes[] {
  * Common tag type combinations for different modules
  */
 export const TAG_TYPE_GROUPS = {
-  PURCHASE_REQUEST_MODULE: getTagTypes([
-    'PURCHASE_REQUEST',
-    'PURCHASE_REQUEST_TEMPLATE',
-    'BRANCH',
-    'ITEM',
-  ]),
-
-  PURCHASE_ORDER_MODULE: getTagTypes([
-    'PURCHASE_ORDER',
-    'PURCHASE_ORDER_TEMPLATE',
-    'PURCHASE_REQUEST', // Added because PO can be created from PR
-    'SUPPLIER',
-    'ITEM',
-    'BRANCH',
-  ]),
-
-  GOODS_RECEIPT_MODULE: getTagTypes(['GOODS_RECEIPT', 'PURCHASE_ORDER', 'ITEM', 'STOCK', 'BRANCH']),
-
-  INVENTORY_MODULE: getTagTypes(['STOCK', 'INVENTORY', 'ITEM', 'BRANCH', 'CATEGORY']),
-
   AUTH_MODULE: getTagTypes(['AUTH', 'USER_PROFILE']),
 
-  USER_MODULE: getTagTypes(['USER', 'ROLE', 'PERMISSION', 'BRANCH']),
+  USER_MODULE: getTagTypes(['USER', 'ROLE', 'PERMISSION']),
 
   ROLE_MODULE: getTagTypes(['ROLE', 'PERMISSION', 'USER']),
 

@@ -19,6 +19,7 @@ import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/
  * This service focuses specifically on table analysis and metadata generation
  */
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 
 @Injectable()
 export class TableMetadataAgentService {
@@ -66,7 +67,7 @@ export class TableMetadataAgentService {
           '9. Avoid generic phrases like "manage data" or "store information" - be specific about WHAT data and WHY',
           '',
         ].join('\n'),
-        model: this.openrouter.getModel(),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
         tools,
       });
 

@@ -3,6 +3,7 @@ import type { ITableSchemaInput } from '@supplysense/types';
 const openrouter = new GetOpenRouter();
 
 import { Agent } from '@mastra/core/agent';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
@@ -14,7 +15,7 @@ export const generatePurposeAgent = new Agent({
   name: PURPOSE_GENERATION_AGENT_NAME,
   description: PURPOSE_GENERATION_AGENT_DESCRIPTION,
   instructions: PURPOSE_GENERATION_INSTRUCTION,
-  model: openrouter.getModel(),
+  model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
 // Custom function to use the agent for generating table purpose

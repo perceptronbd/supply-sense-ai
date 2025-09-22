@@ -5,7 +5,6 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '@supplysense/prisma';
 import { TokenAndCredit } from '../common/services/tokenAndCredit.service';
-import { WorkflowService } from '../mastra-workflow/mastra-workflow.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
@@ -34,7 +33,6 @@ import { SessionService } from './services/session.service';
     DatabaseSchemaService,
     ChatService,
     TokenAndCredit,
-    WorkflowService,
   ],
   exports: [ChatService, MessageService, SessionService],
 })
