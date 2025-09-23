@@ -10,13 +10,8 @@ import { useEffect, useState } from 'react';
 
 export default function ChatPage() {
   // State management for active chat session
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
-    'cmft8f5ek00011630zzmqz8xh'
-  );
-  console.log('🚀 > ChatPage > activeSessionId:', activeSessionId);
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
-  console.log('🚀 > ChatPage > selectedDbConnectionId:', selectedDbConnectionId);
-
   // Get user's company ID for database connections
   const { companyId } = useGetCompanyId();
 
@@ -44,23 +39,20 @@ export default function ChatPage() {
     // Function to initialize a new chat session
     const initializeSession = async () => {
       if (!selectedDbConnectionId) {
-        console.log('No database connection selected yet');
         return;
       }
 
       try {
         // Create session with timestamp-based title and selected database connection
         const sessionTitle = `Chat ${new Date().toLocaleString()}`;
-        console.log('🚀 > initializeSession > sessionTitle:', sessionTitle);
+        const newSession = await createSession({
+          title: sessionTitle,
+          description: 'New chat session for supply chain analytics',
+          dbConnectionId: selectedDbConnectionId,
+        }).unwrap();
 
-        // const newSession = await createSession({
-        //   title: sessionTitle,
-        //   description: 'New chat session for supply chain analytics',
-        //   dbConnectionId: selectedDbConnectionId,
-        // }).unwrap();
-
-        // // Set the active session ID for the chat interface
-        // setActiveSessionId(newSession.id);
+        // Set the active session ID for the chat interface
+        setActiveSessionId(newSession.id);
 
         // console.log('Chat session initialized:', newSession.id);
       } catch (error) {
@@ -105,7 +97,7 @@ export default function ChatPage() {
   // Show error state if connections failed to load
   if (connectionsError) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] ">
+      <main className="w-full h-[calc(100vh-40px)] grid place-items-center ">
         <div className="flex flex-1 justify-center items-center p-8">
           <div className="max-w-4xl text-center">
             <Text variant="titleLarge" color="danger" className="mb-4" as="h1">

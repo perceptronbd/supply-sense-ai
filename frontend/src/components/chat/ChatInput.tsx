@@ -72,7 +72,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
             isIconOnly
             isLoading={isLoading}
             disabled={!message.trim() || disabled}
-            className="mb-1 rounded-full rotate-45"
+            className="mb-1 rounded-full"
             aria-label="Send message"
             size="sm"
             variant="solid"

@@ -46,55 +46,12 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
       icon: <Icons.Message className="w-5 h-5" />,
       permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
-
     {
       name: 'Connections',
       href: '#',
       icon: <Icons.Connection className="w-5 h-5" />,
       permission: USER_PERMISSIONS.READ,
     },
-    // {
-    //   name: 'Roles',
-    //   href: ROUTE_PATHS.ROLES,
-    //   icon: <Shield className="w-5 h-5" />,
-    //   permission: ROLE_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Branches',
-    //   href: ROUTE_PATHS.BRANCHES,
-    //   icon: <Building2 className="w-5 h-5" />,
-    //   permission: BRANCH_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Items',
-    //   href: ROUTE_PATHS.ITEMS,
-    //   icon: <Package className="w-5 h-5" />,
-    //   permission: ITEM_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Suppliers',
-    //   href: ROUTE_PATHS.SUPPLIERS,
-    //   icon: <Container className="w-5 h-5" />,
-    //   permission: SUPPLIER_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Purchase Requests',
-    //   href: ROUTE_PATHS.PURCHASE_REQUESTS,
-    //   icon: <FileText className="w-5 h-5" />,
-    //   permission: PURCHASE_REQUEST_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Purchase Orders',
-    //   href: ROUTE_PATHS.PURCHASE_ORDERS,
-    //   icon: <ClipboardList className="w-5 h-5" />,
-    //   permission: PURCHASE_ORDER_PERMISSIONS.READ,
-    // },
-    // {
-    //   name: 'Goods Receipts',
-    //   href: ROUTE_PATHS.GOODS_RECEIPTS,
-    //   icon: <Inbox className="w-5 h-5" />,
-    //   permission: GOODS_RECEIPT_PERMISSIONS.READ,
-    // },
   ];
 
   // Filter navigation items based on user permissions
