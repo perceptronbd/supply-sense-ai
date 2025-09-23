@@ -1,14 +1,79 @@
 import http from 'node:http';
 import { MCPServer } from '@mastra/mcp';
+import { PrismaClient } from '@supplysense/prisma-client';
 import { mastra } from './mastra/index.js';
-import { analyzeTableMetadataTool } from './mastra/tools/metadata-tool.js';
-import { supplyChainTool } from './mastra/tools/supply-chain-tool.js';
-import { testMetadataTool } from './mastra/tools/test-metadata-tool.js';
+
+import {
+  analyzeTableMetadataTool,
+  executeQueryTool,
+  formatResultsTool,
+  queryAnalysisTool,
+  supplyChainTool,
+  testMetadataTool,
+} from './mastra/tools';
+
+// Global Prisma client instance for main server operations
+const prisma = new PrismaClient();
+
+// Initialize Prisma connection
+async function initializePrisma() {
+  try {
+    // Validate that DATABASE_URL is set
+    if (!process.env.DATABASE_URL) {
+      console.warn(
+        '⚠️ DATABASE_URL environment variable is not set. Database operations will be limited.'
+      );
+      return false;
+    }
+
+    await prisma.$connect();
+    const maskedUrl = process.env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@');
+    console.log('✅ Prisma client connected successfully to:', maskedUrl);
+
+    // Test database connection with a simple query
+    try {
+      await prisma.$queryRaw`SELECT 1 as test`;
+      console.log('✅ Database health check passed');
+    } catch (error) {
+      console.warn('⚠️ Database connection established but query test failed:', error.message);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to connect Prisma client:', error);
+    console.warn('⚠️ Database operations will not work until DATABASE_URL is properly configured.');
+    return false;
+  }
+}
+
+// Graceful Prisma and connection pool shutdown
+async function shutdownPrisma() {
+  try {
+    // Clean up database connection pools first
+    console.log('🔄 Cleaning up database connection pools...');
+
+    // Then disconnect Prisma
+    await prisma.$disconnect();
+    console.log('🔌 Prisma client disconnected gracefully');
+  } catch (error) {
+    console.error('❌ Error disconnecting Prisma client:', error);
+  }
+}
 
 async function main() {
   console.log('🚀 Starting SupplySense Mastra MCP Server...');
 
   try {
+    // Initialize Prisma database connection first
+    console.log('🔗 Initializing database connection...');
+    const databaseConnected = await initializePrisma();
+
+    if (databaseConnected) {
+      console.log('✅ Database connection established');
+    } else {
+      console.log('⚠️ Continuing without database connection');
+    }
+
     // Create MCP Server with our Mastra agents, tools, and workflows
     console.log('🔧 Initializing MCP Server with Supply Chain capabilities...');
 
@@ -22,7 +87,14 @@ async function main() {
       // Expose agents, workflows, and tools
       agents,
       workflows,
-      tools: { supplyChainTool, analyzeTableMetadataTool, testMetadataTool }, // Include standalone tools
+      tools: {
+        supplyChainTool,
+        analyzeTableMetadataTool,
+        testMetadataTool,
+        queryAnalysisTool,
+        executeQueryTool,
+        formatResultsTool,
+      }, // Include standalone tools
     });
 
     console.log('✅ MCP Server initialized successfully');
@@ -49,7 +121,9 @@ async function main() {
     // Log available tools
     console.log('🔧 Direct Tools:');
     console.log('   - supplyChainTool: Get supply chain status and metrics');
-    console.log('   - analyzeTableMetadataTool: Analyze database schema and generate metadata'); // Start the MCP server using HTTP transport with SSE
+    console.log('   - analyzeTableMetadataTool: Analyze database schema and generate metadata');
+    console.log('   - queryAnalysisTool: Analyze user queries and extract insights');
+    console.log('   - testMetadataTool: Test metadata analysis functionality'); // Start the MCP server using HTTP transport with SSE
     const port = process.env.MCP_PORT || 3002;
     console.log('🚀 ~ port:', port);
     const host = process.env.MCP_HOST || '0.0.0.0';
@@ -97,14 +171,30 @@ async function main() {
 }
 
 // Handle graceful shutdown
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('\n🛑 Received SIGINT, shutting down MCP Server...');
+  await shutdownPrisma();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('\n🛑 Received SIGTERM, shutting down MCP Server...');
+  await shutdownPrisma();
   process.exit(0);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', async (error) => {
+  console.error('💥 Uncaught Exception:', error);
+  await shutdownPrisma();
+  process.exit(1);
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+  await shutdownPrisma();
+  process.exit(1);
 });
 
 // Start the server

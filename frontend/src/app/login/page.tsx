@@ -210,7 +210,7 @@ export default function LoginPage() {
       });
 
       dispatch(setCredentials(result));
-      router.push(ROUTE_PATHS.CHAT);
+      router.push(ROUTE_PATHS.ONBOARDING);
     } catch (err: unknown) {
       console.error('Login failed:', err);
       console.error('Error details:', JSON.stringify(err, null, 2));

@@ -1,7 +1,7 @@
-﻿import { PrismaService } from '@app/prisma.service';
-import { AuthModule } from '@modules/auth/auth.module';
+﻿import { AuthModule } from '@modules/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaService } from '@supplysense/prisma';
 import { AiController } from './ai.controller';
 
 @Module({

@@ -16,8 +16,12 @@
     "baseUrl": ".",
     "paths": {
       "@supplysense/constant": ["libs/shared/constant/src/index.ts"],
+      "@supplysense/mastra": ["libs/shared/mastra/src/index.ts"],
+      "@supplysense/prisma": ["libs/shared/prisma/src/index.ts"],
+      "@supplysense/prisma-client": ["libs/shared/prisma/generated"],
       "@supplysense/types": ["libs/shared/src/index.ts"],
-      "@supplysense/utils": ["libs/shared/utils/src/index.ts"]
+      "@supplysense/utils": ["libs/shared/utils/src/index.ts"],
+      "@supplysense/utils/server": ["libs/shared/utils/src/server.ts"]
     },
     "noImplicitAny": true
   },

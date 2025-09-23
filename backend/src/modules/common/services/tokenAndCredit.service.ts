@@ -1,13 +1,13 @@
-import { PrismaService } from '@/app/prisma.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
-import type { UsageRecord } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
-  AI_MODEL_INPUT_TOKEN_COST,
-  AI_MODEL_NAME,
-  AI_MODEL_OUTPUT_TOKEN_COST,
+  AI_MODEL_COSTS,
+  AI_MODEL_NAMES,
   AI_MODEL_TOKENS_PER_CREDIT,
+  TAiModelNames,
 } from '@supplysense/constant';
+import { PrismaService } from '@supplysense/prisma';
+import type { UsageRecord } from '@supplysense/prisma-client';
 
 /**
  * Interface defining parameters for token price calculation
@@ -16,7 +16,7 @@ interface ITokenPriceCalculate {
   inputTokens: number;
   outputTokens: number;
   isDeductCredit?: boolean; // Whether to deduct credits from company subscription
-  toolUsed?: string; // Name of the AI tool/model used
+  modelUsed?: TAiModelNames; // Name of the AI tool/model used
   companyId: string; // ID of the company to charge
   metadata?: Record<string, string>; // Additional metadata for usage tracking
   tx?: PrismaService; // Transactional Prisma service instance
@@ -39,16 +39,19 @@ export class TokenAndCredit {
     outputTokens,
     isDeductCredit = false,
     companyId,
-    toolUsed = AI_MODEL_NAME,
+    modelUsed = AI_MODEL_NAMES.DEEPSEEK,
     metadata = {},
     tx,
   }: ITokenPriceCalculate) {
+    // get the input and output token costs dynamically based on
+    const modelCosts = AI_MODEL_COSTS[modelUsed] || AI_MODEL_COSTS[AI_MODEL_NAMES.DEEPSEEK];
+
     const run = async (prisma: PrismaService) => {
       // Calculate input token cost (cost per 1M tokens converted to actual usage)
-      const calculatedInputPrice = (AI_MODEL_INPUT_TOKEN_COST / 1000000) * inputTokens;
+      const calculatedInputPrice = (modelCosts.input / 1000000) * inputTokens;
 
       // Calculate output token cost (cost per 1M tokens converted to actual usage)
-      const calculatedOutputPrice = (AI_MODEL_OUTPUT_TOKEN_COST / 1000000) * outputTokens;
+      const calculatedOutputPrice = (modelCosts.output / 1000000) * outputTokens;
 
       // Calculate total tokens used
       const totalTokens = inputTokens + outputTokens;
@@ -73,7 +76,8 @@ export class TokenAndCredit {
         inputTokens,
         outputTokens,
         totalTokens,
-        toolUsed,
+        modelUsed,
+        toolUsed: '',
         costUSD: new Decimal(totalTokenPrice), // Using Decimal for precise currency handling
         creditsCharged: totalCredit,
         metadata,
@@ -105,7 +109,7 @@ export class TokenAndCredit {
       select: { remainingCredits: true },
     });
     if (!companySubscription) {
-      throw new BadRequestException('Company subscription not found');
+      throw new BadRequestException('No subscription plan purchased');
     }
     return companySubscription.remainingCredits.gt(0);
   }
@@ -116,5 +120,21 @@ export class TokenAndCredit {
   async isAvailableChatCredit(companyId: string) {
     const available = await this.isAvailableCredit(companyId);
     return available;
+  }
+  // this will be used for all credit checks other than chat
+  async canContinueFurther(companyId: string) {
+    const hasAvailableCredit = await this.isAvailableCredit(companyId);
+    if (!hasAvailableCredit) {
+      this.logger.error('Insufficient credit for generating descriptions');
+      throw new BadRequestException('Insufficient credit');
+    }
+  }
+  // this will be used for chat only
+  async canContinueForChat(companyId: string) {
+    const hasAvailableCredit = await this.isAvailableChatCredit(companyId);
+    if (!hasAvailableCredit) {
+      this.logger.error('Insufficient credit for generating descriptions');
+      throw new BadRequestException('Insufficient credit');
+    }
   }
 }

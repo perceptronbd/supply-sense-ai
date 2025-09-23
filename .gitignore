@@ -53,4 +53,9 @@ Thumbs.db
 .next
 out
 
-/generated/prisma
+libs/shared/prisma/generated
+libs/shared/prisma/generated/**
+
+# Ignore Kiro project steering files
+.kiro/
+

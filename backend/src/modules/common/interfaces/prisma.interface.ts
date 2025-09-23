@@ -1,5 +1,5 @@
-import { type PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { type PrismaClient } from '@supplysense/prisma-client';
 
 /**
  * Prisma transaction type for database operations

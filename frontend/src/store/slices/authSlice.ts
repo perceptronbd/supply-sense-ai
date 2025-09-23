@@ -15,16 +15,24 @@ interface User {
   companyId: string;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  contactEmail: string;
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  company: Company | null;
 }
 
 const initialState: AuthState = {
   user: null,
   token: null,
+  company: null,
   isAuthenticated: false,
   isLoading: false,
 };
@@ -33,22 +41,35 @@ const initialState: AuthState = {
 const persistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['user', 'token', 'isAuthenticated'], // Only persist these fields
+  whitelist: ['user', 'token', 'isAuthenticated', 'company'], // Only persist these fields
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (state, action: PayloadAction<{ user: User; access_token: string }>) => {
-      const { user, access_token } = action.payload;
+    setCredentials: (
+      state,
+      action: PayloadAction<{ user: User; access_token: string; company?: Company }>
+    ) => {
+      const { user, access_token, company } = action.payload;
       state.user = user;
       state.token = access_token;
       state.isAuthenticated = true;
+      if (company) {
+        state.company = company;
+      }
+    },
+    // Action specifically for handling registration success with company data
+    setRegistrationCredentials: (state, action: PayloadAction<{ company: Company }>) => {
+      const { company } = action.payload;
+
+      state.company = company;
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.company = null;
       state.isAuthenticated = false;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -82,5 +103,6 @@ const authSlice = createSlice({
 
 const persistedAuthReducer = persistReducer(persistConfig, authSlice.reducer);
 
-export const { setCredentials, logout, setLoading, validateToken } = authSlice.actions;
+export const { setCredentials, setRegistrationCredentials, logout, setLoading, validateToken } =
+  authSlice.actions;
 export default persistedAuthReducer;

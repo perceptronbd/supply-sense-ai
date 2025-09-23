@@ -1,5 +1,5 @@
-import { PrismaService } from '@app/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 
 export interface TableMetadata {
   tableName: string;
@@ -58,7 +58,7 @@ export class SchemaContextService {
   private schemaCacheTime = 0;
   private readonly CACHE_TTL = 300000; // 5 minutes
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Get comprehensive schema context with business annotations

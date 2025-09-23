@@ -161,16 +161,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       // Process the message with the chat service
-      const response = await this.chatService.processUserMessage(
-        data.sessionId,
-        data.message,
-        user.id,
-        {
-          userRole: user.role,
-          branchId: user.branchId,
-          userPermissions: [], // You might want to fetch these from user data
-        }
-      );
+      const response = await this.chatService.processUserMessage({
+        sessionId: data.sessionId,
+        message: data.message,
+        userId: user.id,
+        userContext: {
+          // userPermissions: user.permissions, // Use actual permissions
+        },
+        dbConnectionId: '',
+        companyId: user.branchId,
+      });
 
       // Stop thinking indicator
       this.server.to(`session_${data.sessionId}`).emit('ai_thinking', {

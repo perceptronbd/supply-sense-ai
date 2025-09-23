@@ -1,16 +1,12 @@
 import { Agent } from '@mastra/core/agent';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { AI_MODEL_NAME } from '@supplysense/constant';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
+import { GetOpenRouter } from '@supplysense/utils';
 import {
   SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
 } from '../constants/system-instructions/sample-questions';
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -19,11 +15,13 @@ export interface GenerateQuestionsInput {
   businessContext?: string;
 }
 
+const openrouter = new GetOpenRouter();
+
 export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   instructions: SAMPLE_QUESTIONS_INSTRUCTION,
-  model: openrouter(AI_MODEL_NAME),
+  model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
 // Custom function to use the agent

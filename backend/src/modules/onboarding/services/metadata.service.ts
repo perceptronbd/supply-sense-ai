@@ -1,8 +1,8 @@
-import { PrismaService } from '@/app/prisma.service';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { ConnectionsService } from '@/modules/connections/connections.service';
 import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@supplysense/prisma';
 import type {
   IDatabaseClient,
   IDatabaseRow,
@@ -10,7 +10,7 @@ import type {
   ITableRelationship,
   ITableSchemaInput,
 } from '@supplysense/types';
-import { withDbConnection } from 'src/helpers/db-connection.helper';
+import { withDbConnection } from '@supplysense/utils/server';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
 import type { BatchSaveMetadataDto, CaptureMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';

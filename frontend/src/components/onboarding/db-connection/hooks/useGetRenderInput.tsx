@@ -52,6 +52,7 @@ export const useGetRenderInput = ({ control, errors }: IUseGetRenderInputProps) 
     const { name, label, placeholder, type = 'text' } = props;
     return (
       <Controller
+        // biome-ignore lint/suspicious/noExplicitAny: Controller requires flexible name typing for nested fields
         name={name as any}
         control={control}
         render={({ field }) => (

@@ -1,6 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { TChartType } from '@supplysense/constant';
 import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
@@ -10,6 +11,7 @@ export interface ChatSession {
   title: string;
   description?: string;
   userId: string;
+  dbConnectionId: string;
   lastActivityAt: string;
   createdAt: string;
   updatedAt: string;
@@ -28,14 +30,54 @@ export interface ChatMessage {
   updatedAt: string;
 }
 
+export interface ChatMessageResponse {
+  id: string;
+  content: string;
+  type: 'user' | 'assistant';
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  sessionId: string;
+  structuredData?: {
+    message: string;
+    summary: string;
+    formattedData: (
+      | {
+          id: string;
+          name: string;
+          availableQty: number;
+        }
+      | {
+          name: string;
+          quantity: string;
+          unitPrice: string | null;
+          supplierId: string | null;
+          availableQty: string;
+        }
+      | {
+          name: string;
+          value: number;
+        }
+    )[];
+    visualizationType: 'table' & TChartType;
+  } | null;
+}
+
+// Chart data interface
+export interface ChartDataset {
+  label: string;
+  data: number[];
+}
+
 export interface CreateSessionRequest {
   title: string;
   description?: string;
+  dbConnectionId: string;
 }
 
 export interface ChatQueryRequest {
   sessionId: string;
   query: string;
+  dbConnectionId: string;
   includeDatabaseQuery?: boolean;
   context?: Record<string, unknown>;
 }
@@ -65,7 +107,7 @@ export const chatApi = createApi({
       return headers;
     },
   }),
-  tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE],
+  tagTypes: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE, TAG_TYPES.DATABASE_CONNECTION],
   endpoints: (builder) => ({
     // Health check - temporarily disable transform to test
     getHealth: builder.query<
@@ -121,13 +163,14 @@ export const chatApi = createApi({
         url: `/sessions/${sessionId}/messages`,
         params: { limit, offset },
       }),
-      transformResponse: (response: ApiResponse<ChatMessage[]>) => transformApiResponse(response),
+      transformResponse: (response: ApiResponse<ChatMessageResponse[]>) =>
+        transformApiResponse(response),
       providesTags: (_result, _error, { sessionId }) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],
     }),
 
-    // Chat query
+    // Chat query with database connection support
     sendQuery: builder.mutation<ChatQueryResponse, ChatQueryRequest>({
       query: (queryData) => ({
         url: '/query',

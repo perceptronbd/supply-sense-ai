@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { MCPClient } from '@mastra/mcp';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import { appConfig } from '../../../config/app.config';
 
@@ -68,9 +69,10 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
           supplySense: {
             url: new URL(`${appConfig.mcpServerUrl}/mcp`), // MCP server HTTP endpoint
             timeout: appConfig.mcpServerTimeout, // Configurable timeout
+            logger: (message) => this.logger.debug('MCP Client log', message),
           },
         },
-        timeout: 60000, // Global 60 second timeout
+        timeout: appConfig.mcpServerTimeout, // Global 5 minute timeout
       });
 
       // Get tools from MCP server and initialize agent
@@ -87,7 +89,7 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
         description: 'AI assistant specialized in supply chain management and logistics',
         instructions:
           'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
-        model: this.openrouter.getModel(),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
         tools, // Pass MCP tools directly to the agent
       });
 

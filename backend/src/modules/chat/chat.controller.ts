@@ -19,7 +19,6 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
-import { McpClientService } from '../mcp-client';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
 
@@ -28,39 +27,8 @@ import { ChatService } from './services/chat.service';
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(
-    @Inject(ChatService) private readonly chatService: ChatService,
-    @Inject(McpClientService) private readonly mcpClientService: McpClientService
-  ) {
+  constructor(@Inject(ChatService) private readonly chatService: ChatService) {
     this.logger.log('ChatController constructor - explicit injection');
-  }
-
-  @Get('health')
-  @ApiOperation({ summary: 'Check chat service health' })
-  @ApiResponse({ status: 200, description: 'Service is healthy' })
-  async health() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      services: {
-        chat: 'active',
-        ai: 'connected',
-        database: 'operational',
-        websocket: 'ready',
-      },
-    };
-  }
-
-  @Get('mcp/health')
-  @ApiOperation({ summary: 'Check MCP client health and connection status' })
-  @ApiResponse({
-    status: 200,
-    description: 'MCP health check completed',
-    example: { status: 'ok' },
-  })
-  async mcpHealth(@Res() res: Response) {
-    // Bypass the ResponseInterceptor by using @Res() directly
-    return res.status(200).json({ status: 'ok' });
   }
 
   @Post('sessions')
@@ -76,6 +44,7 @@ export class ChatController {
     return this.chatService.createSession(
       createSessionDto.title,
       user.id,
+      createSessionDto.dbConnectionId,
       createSessionDto.description
     );
   }
@@ -147,16 +116,17 @@ export class ChatController {
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response
   ) {
-    const result = await this.chatService.processUserMessage(
-      queryDto.sessionId,
-      queryDto.query,
-      user.id,
-      {
-        userRole: user.roles[0] || 'USER', // Use first role or default
-        branchId: user.branchIds[0] || '', // Use first branch or empty
+    const result = await this.chatService.processUserMessage({
+      companyId: user.companyId,
+      sessionId: queryDto.sessionId,
+      message: queryDto.query,
+      userId: user.id,
+      userContext: {
         userPermissions: user.permissions, // Use actual permissions
-      }
-    );
+        ...queryDto.context, // Include the context from the payload
+      },
+      dbConnectionId: queryDto.dbConnectionId,
+    });
     return res.status(HttpStatus.OK).json(result);
   }
 
@@ -170,31 +140,15 @@ export class ChatController {
     @Body() sendMessageDto: SendMessageDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.chatService.processUserMessage(
-      sendMessageDto.sessionId,
-      sendMessageDto.content,
-      user.id,
-      {
-        userRole: user.roles[0] || 'USER', // Use first role or default
-        branchId: user.branchIds[0] || '', // Use first branch or empty
+    return this.chatService.processUserMessage({
+      companyId: user.companyId,
+      sessionId: sendMessageDto.sessionId,
+      message: sendMessageDto.content,
+      userId: user.id,
+      userContext: {
         userPermissions: user.permissions, // Use actual permissions
-      }
-    );
-  }
-
-  @Post('mcp/test')
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
-  @ApiOperation({ summary: 'Test MCP integration without authentication' })
-  @ApiResponse({ status: 200, description: 'MCP test completed' })
-  async testMcp(@Body() testDto: { query: string }) {
-    return this.chatService.testMcpIntegration(testDto.query);
-  }
-
-  @Post('mcp/test-workflow')
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
-  @ApiOperation({ summary: 'Test MCP workflow integration without authentication' })
-  @ApiResponse({ status: 200, description: 'MCP workflow test completed' })
-  async testMcpWorkflow(@Body() testDto: { workflowInput: Record<string, unknown> }) {
-    return this.chatService.testMcpWorkflow(testDto.workflowInput);
+      },
+      dbConnectionId: '',
+    });
   }
 }

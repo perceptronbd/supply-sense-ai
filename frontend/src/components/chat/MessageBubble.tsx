@@ -4,8 +4,8 @@ import { UserIcon } from '@/components/icons';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
-import type { ChatMessage } from '@/store/api/chatApi';
-import { Avatar, Button, Card, CardBody } from '@heroui/react';
+import type { ChatMessageResponse } from '@/store/api/chatApi';
+import { Avatar, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
@@ -13,13 +13,15 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
-
+import { CHART_TYPES_VALUES } from '@supplysense/constant';
+import { RenderChart } from './RenderChart';
+import { RenderTable } from './RenderTable';
 interface MessageBubbleProps {
-  message: ChatMessage;
+  message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
 }
 
-export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps) {
+export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubbleProps) {
   const isUser = message.type === 'user';
 
   // Use llm-ui for AI message rendering
@@ -57,9 +59,10 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
   };
 
   const timestamp = getFormattedTime(message.createdAt);
+
   return (
     <article
-      className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
+      className={`flex gap-3 w-full overflow-x-clip ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
       aria-label={`${isUser ? 'User' : 'AI Assistant'} message at ${timestamp}`}
     >
       {/* Avatar */}
@@ -81,35 +84,16 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
         />
       </div>{' '}
       {/* Message content */}
-      <div
-        className={`flex-1 max-w-[min(80%,800px)] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}
-      >
-        <Card
-          className={`${
-            isUser
-              ? 'bg-primary text-primary-foreground'
-              : 'border bg-content2 text-foreground border-divider'
-          } w-full`}
-        >
-          <CardBody className="overflow-x-auto p-3 min-w-0">
-            {isUser ? (
-              <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
-                {message.content}
-              </Text>
-            ) : (
-              <article className="overflow-x-auto min-w-0 chat-markdown text-foreground">
-                {blockMatches.map((blockMatch, index) => {
-                  const Component = blockMatch.block.component;
-                  return (
-                    <Component
-                      key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
-                      blockMatch={blockMatch}
-                    />
-                  );
-                })}
-              </article>
-            )}
-            {!isUser &&
+      <div className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col flex-1`}>
+        {isUser ? (
+          <Card className="bg-primary text-primary-foreground w-fit max-w-md">
+            <CardBody className="overflow-x-clip p-3 min-w-0">
+              {isUser && (
+                <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
+                  {message.content}
+                </Text>
+              )}
+              {/* {!isUser &&
             message.metadata &&
             message.metadata.suggestions &&
             Array.isArray(message.metadata.suggestions) ? (
@@ -127,7 +111,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                   {message.metadata.suggestions.map((suggestion: string, index: number) => (
                     <li key={`suggestion-${index}-${suggestion.slice(0, 20)}`}>
                       <Button
-                        variant="light"
+as ShadcnButton                        variant="light"
                         size="sm"
                         className="justify-start p-2 w-full h-auto text-left text-tiny text-primary/80 hover:text-primary hover:bg-primary/10"
                         onPress={() => {
@@ -135,14 +119,44 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
                         }}
                       >
                         {suggestion}
-                      </Button>
+                      </Button>as ShadcnButton
                     </li>
                   ))}
                 </ul>
               </section>
-            ) : null}
-          </CardBody>
-        </Card>
+            ) : null} */}
+            </CardBody>
+          </Card>
+        ) : (
+          <article className="overflow-x-auto chat-markdown w-full text-foreground ">
+            {blockMatches.map((blockMatch, index) => {
+              const Component = blockMatch.block.component;
+              return (
+                <Component
+                  key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
+                  blockMatch={blockMatch}
+                />
+              );
+            })}
+            {/* <RenderChart data={chartData} chartType="area" /> */}
+            {message.structuredData?.visualizationType === 'table' && (
+              <RenderTable
+                data={message.structuredData?.formattedData as Record<string, string>[]}
+                className="mt-4"
+              />
+            )}
+            {message.structuredData?.visualizationType &&
+              CHART_TYPES_VALUES.includes(message.structuredData?.visualizationType) && (
+                <RenderChart
+                  data={message.structuredData?.formattedData as Record<string, string>[]}
+                  chartType={message.structuredData?.visualizationType}
+                  // chartType='radar'
+                />
+              )}
+            {/* <RenderTable data={tableData} /> */}
+          </article>
+        )}
+
         <Text
           variant="bodyXSmall"
           className={`mt-1 text-default-400 ${isUser ? 'text-right' : 'text-left'}`}

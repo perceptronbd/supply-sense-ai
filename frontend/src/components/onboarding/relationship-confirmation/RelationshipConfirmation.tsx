@@ -158,29 +158,34 @@ const RelationshipConfirmation = () => {
         </div>
 
         {/* Show loading spinner or the list of relationship cards */}
-        {isLoading
-          ? Array.from({ length: 2 }, (_, index) => <RelationshipCardSkeleton key={index} />)
-          : tableRelationships.data.map((table) => {
-              const leftKey = `${table.tableName}_${table.columnName}`;
+        {isLoading ? (
+          <>
+            <RelationshipCardSkeleton key="skeleton-1" />
+            <RelationshipCardSkeleton key="skeleton-2" />
+          </>
+        ) : (
+          tableRelationships.data.map((table) => {
+            const leftKey = `${table.tableName}_${table.columnName}`;
 
-              // Use Map for O(1) lookup instead of O(n) find
-              const selectedTable = relationTablesMap.get(leftKey);
-              const rightKey = selectedTable
-                ? `${selectedTable.refTable}_${selectedTable.refColumn}`
-                : `${table.refTable}_${table.refColumn}`;
+            // Use Map for O(1) lookup instead of O(n) find
+            const selectedTable = relationTablesMap.get(leftKey);
+            const rightKey = selectedTable
+              ? `${selectedTable.refTable}_${selectedTable.refColumn}`
+              : `${table.refTable}_${table.refColumn}`;
 
-              return (
-                <MemoizedRelationshipCard
-                  key={leftKey}
-                  table={table}
-                  isLoading={isLoading}
-                  rightSelectOptions={rightSelectOptions}
-                  leftSelectedKey={leftKey}
-                  rightSelectedKey={rightKey}
-                  onRightSelectChange={handleRightSelectChange}
-                />
-              );
-            })}
+            return (
+              <MemoizedRelationshipCard
+                key={leftKey}
+                table={table}
+                isLoading={isLoading}
+                rightSelectOptions={rightSelectOptions}
+                leftSelectedKey={leftKey}
+                rightSelectedKey={rightKey}
+                onRightSelectChange={handleRightSelectChange}
+              />
+            );
+          })
+        )}
       </section>
     </>
   );
