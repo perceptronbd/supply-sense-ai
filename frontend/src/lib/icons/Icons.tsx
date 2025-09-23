@@ -365,4 +365,38 @@ export const Icons = {
       />
     </svg>
   ),
+  ToggleSession: (props: IconType) => (
+    <svg
+      {...props}
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M1.66675 9.16667C1.66675 6.02397 1.66675 4.45262 2.64306 3.47631C3.61937 2.5 5.19072 2.5 8.33342 2.5H11.6667C14.8094 2.5 16.3808 2.5 17.3571 3.47631C18.3334 4.45262 18.3334 6.02397 18.3334 9.16667V10.8333C18.3334 13.976 18.3334 15.5474 17.3571 16.5237C16.3808 17.5 14.8094 17.5 11.6667 17.5H8.33341C5.19072 17.5 3.61937 17.5 2.64306 16.5237C1.66675 15.5474 1.66675 13.976 1.66675 10.8333V9.16667Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+      />
+      <path
+        d="M12.5 17.5L12.5 2.5"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+    </svg>
+  ),
+  Plus: (props: IconType) => (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  ),
 };

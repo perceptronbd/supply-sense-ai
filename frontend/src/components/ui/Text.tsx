@@ -18,8 +18,8 @@ const textVariants = cva('', {
       bodyMedium: 'text-lg  font-montserrat leading-medium',
       bodyBase: 'text-base  font-montserrat leading-medium',
       bodySmall: 'text-sm font-montserrat  leading-small',
-      bodyXSmall: 'text-tiny  font-montserrat leading-tiny',
-      caption: 'text-tiny font-montserrat  leading-tiny',
+      bodyXSmall: 'text-xs font-montserrat leading-tiny',
+      caption: 'text-xs font-montserrat  leading-tiny',
       label: 'text-sm  font-montserrat leading-small font-medium',
       // Special variants for supply chain data
       data: 'text-sm font-data tabular-nums leading-small',

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { ChatInterface } from '@/components/chat';
+import { ChatInterface, SessionManager } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 export default function ChatPage() {
   // State management for active chat session
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
+  console.log('🚀 > activeSessionId:', activeSessionId);
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
   // Get user's company ID for database connections
   const { companyId } = useGetCompanyId();
@@ -69,15 +70,15 @@ export default function ChatPage() {
     }
   }, [activeSessionId, selectedDbConnectionId, createSession, isCreatingSession]);
 
-  // // Handle session selection from SessionManager
-  // const handleSessionSelect = (sessionId: string) => {
-  //   setActiveSessionId(sessionId);
-  // };
+  // Handle session selection from SessionManager
+  const handleSessionSelect = (sessionId: string) => {
+    setActiveSessionId(sessionId);
+  };
 
-  // // Handle new session creation from SessionManager
-  // const handleSessionCreate = (sessionId: string) => {
-  //   setActiveSessionId(sessionId);
-  // };
+  // Handle new session creation from SessionManager
+  const handleSessionCreate = (sessionId: string) => {
+    setActiveSessionId(sessionId);
+  };
 
   // Show loading state while connections are being fetched
   if (isLoadingConnections) {
@@ -133,8 +134,8 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="w-full h-full ">
-      <div className=" relative h-full  text-foreground">
+    <main className="w-full h-full bg-background flex gap-2">
+      <div className=" relative h-full text-foreground rounded-2xl bg-content2 flex-1 w-full">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
           isVisible={isCreatingSession}
@@ -144,18 +145,6 @@ export default function ChatPage() {
 
         {/* Main chat interface container with session manager */}
         <section className="flex flex-1 w-full h-full">
-          {/* Session Manager Sidebar */}
-          {/* <div className="flex-shrink-0">
-            {selectedDbConnectionId && (
-              <SessionManager
-                selectedSessionId={activeSessionId}
-                dbConnectionId={selectedDbConnectionId}
-                onSessionSelect={handleSessionSelect}
-                onSessionCreate={handleSessionCreate}
-              />
-            )}
-          </div> */}
-
           {/* Chat Interface */}
           {activeSessionId && selectedDbConnectionId ? (
             <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
@@ -178,6 +167,15 @@ export default function ChatPage() {
           )}
         </section>
       </div>
+      {/* Session Manager Sidebar */}
+      {selectedDbConnectionId && (
+        <SessionManager
+          selectedSessionId={activeSessionId}
+          dbConnectionId={selectedDbConnectionId}
+          onSessionSelect={handleSessionSelect}
+          onSessionCreate={handleSessionCreate}
+        />
+      )}
     </main>
   );
 }

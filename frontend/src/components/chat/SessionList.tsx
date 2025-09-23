@@ -1,9 +1,11 @@
 'use client';
 
-import { PlusIcon } from '@/components/icons';
+import { Loading, PlusIcon } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
+import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
 import { Button, Card, CardBody } from '@heroui/react';
-import { format } from 'date-fns';
+import { useState } from 'react';
 import type { ChatSession } from './types';
 
 interface SessionListProps {
@@ -21,85 +23,59 @@ export function SessionList({
   onNewSession,
   isLoading = false,
 }: Readonly<SessionListProps>) {
+  const [expanded, setExpanded] = useState(false);
+  if (isLoading) {
+    return <Loading />;
+  }
   return (
     <aside
-      className="w-64 border-r border-divider bg-content1 flex flex-col h-full"
       aria-label="Chat sessions"
+      className={cn(
+        'flex-shrink-0 mr-2 max-w-[208px] overflow-y-auto no-scrollbar bottom-fade relative',
+        expanded ? 'w-full' : 'w-auto'
+      )}
     >
-      {/* Header */}
-      <header className="p-4 border-b border-divider">
-        <div className="flex items-center justify-between mb-4">
-          <Text variant="titleSmall" weight="semiBold" color="default" as="h2">
-            Chat Sessions
-          </Text>
-          <Button
-            isIconOnly
-            size="sm"
-            variant="flat"
-            onPress={onNewSession}
-            disabled={isLoading}
-            aria-label="Create new chat session"
+      <header className="flex items-center justify-between mb-5 sticky top-0 z-50 bg-background/40 backdrop-blur-sm">
+        {expanded && (
+          <button
+            type="button"
+            className="flex items-center gap-1 text-default-600"
+            onClick={onNewSession}
           >
-            <PlusIcon className="w-4 h-4" />
-          </Button>
-        </div>
-      </header>
-      {/* Sessions list */}
-      <nav className="overflow-y-auto h-full p-2" aria-label="Session navigation">
-        {sessions.length === 0 && !isLoading ? (
-          <div className="text-center py-8">
-            <Text variant="bodySmall" color="muted" as="p">
-              No chat sessions yet
+            <PlusIcon className="size-3" />{' '}
+            <Text variant="bodyXSmall" weight="bold" className="text-default-600">
+              Session
             </Text>
-            <Button size="sm" variant="flat" onPress={onNewSession} className="mt-2">
-              Start New Chat
-            </Button>
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {sessions.map((session) => (
-              <li key={session.id}>
-                <Card
-                  isPressable
-                  onPress={() => onSessionSelect(session.id)}
-                  className={`cursor-pointer transition-colors ${
-                    activeSessionId === session.id
-                      ? 'bg-primary border-primary'
-                      : 'bg-content2 hover:bg-content3'
-                  }`}
-                >
-                  <CardBody className="p-3">
-                    <Text
-                      variant="bodyMedium"
-                      weight="medium"
-                      className={
-                        activeSessionId === session.id
-                          ? 'text-primary-foreground'
-                          : 'text-default-700'
-                      }
-                      as="h3"
-                    >
-                      {session.title || 'New Chat'}
-                    </Text>
-                    <Text variant="bodyXSmall" color="muted" as="time" className="mt-1">
-                      {(() => {
-                        try {
-                          const date = new Date(session.updatedAt);
-                          return Number.isNaN(date.getTime())
-                            ? 'Just now'
-                            : format(date, 'MMM d, HH:mm');
-                        } catch {
-                          return 'Just now';
-                        }
-                      })()}
-                    </Text>
-                  </CardBody>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          </button>
         )}
-      </nav>
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          aria-label="Toggle sessions list"
+          className="text-secondary border-none"
+          onPress={() => setExpanded(!expanded)}
+        >
+          <Icons.ToggleSession />
+        </Button>
+      </header>
+
+      <section className="flex flex-col gap-2">
+        {expanded &&
+          sessions.map((session) => (
+            <Card key={session.id} aria-label="Session">
+              <CardBody onClick={() => onSessionSelect(session.id)} className="cursor-pointer">
+                <Text
+                  variant="bodyMedium"
+                  weight="medium"
+                  color={session.id === activeSessionId ? 'primary' : 'default'}
+                >
+                  {session.title}
+                </Text>
+              </CardBody>
+            </Card>
+          ))}
+      </section>
     </aside>
   );
 }
