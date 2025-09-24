@@ -246,6 +246,14 @@ export class ChatService {
         structuredData: result,
       });
 
+      // Generate and update session title based on the conversation
+      await this.sessionService.updateSessionTitleIfNeeded(
+        sessionId,
+        userId,
+        message,
+        result.message
+      );
+
       return {
         message: result.message,
         type: 'data',

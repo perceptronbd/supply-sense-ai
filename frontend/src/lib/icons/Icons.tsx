@@ -5,6 +5,8 @@ export const Icons = {
   Check: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -17,6 +19,8 @@ export const Icons = {
   ArrowRight: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -33,6 +37,8 @@ export const Icons = {
   X: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -45,6 +51,8 @@ export const Icons = {
   ChevronDownCircle: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -61,6 +69,8 @@ export const Icons = {
   Down: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -73,6 +83,8 @@ export const Icons = {
   ChevronRight: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -316,6 +328,8 @@ export const Icons = {
   Send: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -390,6 +404,8 @@ export const Icons = {
   Plus: (props: IconType) => (
     <svg
       {...props}
+      width="24"
+      height="24"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

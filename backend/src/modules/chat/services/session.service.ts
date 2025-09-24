@@ -1,6 +1,9 @@
+import { Agent } from '@mastra/core/agent';
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import type { Session } from '@supplysense/prisma-client';
+import { initializeTitleAgent } from '../helpers/agent.helper';
+import { generateTitleAgentSystemPrompt } from '../helpers/prompt.helper';
 
 @Injectable()
 export class SessionService implements OnModuleDestroy {
@@ -10,6 +13,7 @@ export class SessionService implements OnModuleDestroy {
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
   private readonly MAX_CACHE_SIZE = 10000; // Prevent unlimited memory growth
   private readonly cleanupInterval: NodeJS.Timeout;
+  private titleAgent: Agent | null = null;
 
   constructor(
     @Inject(PrismaService)
@@ -337,6 +341,103 @@ export class SessionService implements OnModuleDestroy {
       }
 
       this.logger.warn(`Cache size exceeded limit. Removed ${entriesToRemove} oldest sessions.`);
+    }
+  }
+
+  /**
+   * Initialize the title agent if it hasn't been initialized yet
+   * This agent is responsible for generating meaningful session titles
+   */
+  private async initializeTitleAgent(): Promise<void> {
+    // Check if agent is already initialized to avoid redundant initialization
+    if (this.titleAgent) {
+      return;
+    }
+
+    try {
+      // Use the helper function to initialize the title agent
+      this.titleAgent = await initializeTitleAgent();
+    } catch (error) {
+      this.logger.error('Failed to initialize title agent:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a meaningful session title based on user question and AI response
+   */
+  async generateSessionTitle(userQuestion: string, aiResponse: string): Promise<string> {
+    try {
+      // Ensure the title agent is initialized
+      await this.initializeTitleAgent();
+      if (!this.titleAgent) {
+        throw new Error('Title agent not initialized');
+      }
+
+      // Generate title using the title agent with a system prompt
+      const agentResponse = await this.titleAgent.generate(
+        [
+          {
+            role: 'system',
+            content: generateTitleAgentSystemPrompt(),
+          },
+          {
+            role: 'user',
+            content: `Generate a title for this conversation:\nUser: ${userQuestion}\nAI: ${aiResponse}`,
+          },
+        ],
+        {}
+      );
+
+      // Extract the title text and clean it up
+      let title = agentResponse.text?.trim() || 'Chat Session';
+
+      // Remove quotes if present
+      title = title.replace(/^["']|["']$/g, '');
+
+      // Ensure title is not too long (max 60 characters)
+      if (title.length > 60) {
+        title = `${title.substring(0, 57)}...`;
+      }
+
+      this.logger.debug('Session title generated successfully:', title);
+      return title;
+    } catch (error) {
+      this.logger.error('Failed to generate session title:', error);
+      // Return a fallback title based on the user question
+      const fallbackTitle =
+        userQuestion.length > 50 ? `${userQuestion.substring(0, 47)}...` : userQuestion;
+      return fallbackTitle || 'Chat Session';
+    }
+  }
+
+  /**
+   * Update session title if it's still using the default format
+   */
+  async updateSessionTitleIfNeeded(
+    sessionId: string,
+    userId: string,
+    userMessage: string,
+    aiResponse: string
+  ): Promise<void> {
+    try {
+      const session = await this.getSession(sessionId, userId);
+      if (session) {
+        // Only update title if it's still the default format (contains timestamp or is generic)
+        const isDefaultTitle =
+          session.title.startsWith('Chat ') ||
+          session.title === 'New Chat' ||
+          session.title.match(/^Chat \d{1,2}\/\d{1,2}\/\d{4}/);
+
+        if (isDefaultTitle) {
+          const newTitle = await this.generateSessionTitle(userMessage, aiResponse);
+          await this.updateSession(sessionId, userId, { title: newTitle });
+          this.logger.log(`Session title updated to: "${newTitle}"`);
+        }
+      }
+    } catch (titleError) {
+      // Don't fail the entire request if title generation fails
+      this.logger.warn('Failed to update session title:', titleError);
     }
   }
 

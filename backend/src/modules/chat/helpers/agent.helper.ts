@@ -58,3 +58,22 @@ export async function initializeSummaryAgent(): Promise<Agent> {
     throw error;
   }
 }
+
+export async function initializeTitleAgent(): Promise<Agent> {
+  try {
+    const titleAgent = new Agent({
+      name: 'TitleAgent',
+      description:
+        'An intelligent AI assistant that specializes in generating meaningful session titles based on user questions and AI responses',
+      instructions:
+        'You are a session title generation AI assistant. Your task is to analyze user questions and AI responses to create concise, descriptive session titles that capture the essence of the conversation. Focus on the main topic, data being analyzed, or business question being addressed.',
+      model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
+    });
+
+    logger.log('✅ Title agent initialized successfully');
+    return titleAgent;
+  } catch (error) {
+    logger.error('❌ Failed to initialize title agent:', error);
+    throw error;
+  }
+}

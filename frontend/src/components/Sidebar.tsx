@@ -176,7 +176,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                 </Chip>
               </div>
               <button type="button" onClick={() => setShowLogout((prev) => !prev)}>
-                <Icons.Down />
+                <Icons.Down className="text-white" />
               </button>
             </div>
             {/* Logout button */}

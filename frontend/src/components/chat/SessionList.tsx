@@ -27,6 +27,7 @@ export function SessionList({
   if (isLoading) {
     return <Loading />;
   }
+
   return (
     <aside
       aria-label="Chat sessions"
