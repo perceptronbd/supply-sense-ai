@@ -117,8 +117,10 @@ export const executeQueryTool = createTool({
                 - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
                 - Query Analysis: ${input.context.queryAnalysis}
 
-                 Table names: ${Object.keys(parsedSchema.tables).join(', ')}
-                 CRITICAL QUOTING RULES FOR ALL COLUMNS:
+                 EXACT TABLE NAMES (use these exactly): ${Object.keys(parsedSchema.tables).join(', ')}
+                 CRITICAL QUOTING RULES:
+                   - Table names: Use exact case and quote if mixed case: ${Object.keys(parsedSchema.tables).map(name => /[A-Z]/.test(name) ? `"${name}"` : name).join(', ')}
+                   - Column quoting rules:
                    - ${generateColumnQuotingGuidance(parsedSchema)}
                 
                 Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
@@ -164,13 +166,17 @@ function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
 
   for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {
     if (typeof tableInfo === 'object' && tableInfo !== null && 'columns' in tableInfo) {
+      // Determine if table name needs quotes
+      const tableHasUppercase = /[A-Z]/.test(tableName);
+      const quotedTableName = tableHasUppercase ? `"${tableName}"` : tableName;
+
       for (const columnName of Object.keys(tableInfo.columns)) {
         // Check if column name contains uppercase letters or mixed case
         const hasUppercase = /[A-Z]/.test(columnName);
         if (hasUppercase) {
-          guidance.push(`${tableName}."${columnName}" (quote because of mixed case)`);
+          guidance.push(`${quotedTableName}."${columnName}" (quote column because of mixed case)`);
         } else {
-          guidance.push(`${tableName}.${columnName} (no quotes - lowercase)`);
+          guidance.push(`${quotedTableName}.${columnName} (no quotes on column - lowercase)`);
         }
       }
     }

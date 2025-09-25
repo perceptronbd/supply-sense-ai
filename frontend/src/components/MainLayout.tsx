@@ -8,41 +8,42 @@ import { useSelector } from 'react-redux';
 import Sidebar from './Sidebar';
 import LogoIcon from './icons/LogoIcon';
 import { Text } from './ui/Text';
+import { useDisclosure } from '@heroui/react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+export default function MainLayout ( { children }: Readonly<MainLayoutProps> ) {
+  const [sidebarOpen, setSidebarOpen] = useState( false );
+  const [isHydrated, setIsHydrated] = useState( false );
+  const { isAuthenticated } = useSelector( ( state: RootState ) => state.auth );
   const pathname = usePathname();
-
+  const { onOpen } = useDisclosure();
   // Handle hydration mismatch
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  useEffect( () => {
+    setIsHydrated( true );
+  }, [] );
 
   // Don't show sidebar on login page or if not authenticated
   const showSidebar = isHydrated && isAuthenticated && pathname !== '/login';
 
   // During SSR and before hydration, always render children without sidebar
-  if (!isHydrated || !showSidebar) {
+  if ( !isHydrated || !showSidebar ) {
     return <main className="min-h-screen bg-background">{children}</main>;
   }
 
   return (
     <div className="flex p-2 h-screen  text-foreground">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen( false )} />
 
       <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
         {/* Top bar for mobile */}
-        <header className="flex justify-between items-center px-4 py-3 border-b lg:hidden bg-content1 shadow-small border-divider">
+        <header className="flex justify-between items-center px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSidebarOpen(true)}
+              onClick={() => setSidebarOpen( true )}
               className="p-2 transition-colors rounded-medium text-default-500 hover:text-foreground hover:bg-content2"
             >
               <Icons.HamburgerList className="size-10" />
@@ -66,8 +67,8 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
               </Text>
             </Text>
           </div>
-          <button type="button">
-            <Icons.EditV2 className="size-7" />
+          <button onClick={() => onOpen()} type="button">
+            <Icons.ToggleSession className="size-8 text-secondary-500" />
           </button>
         </header>
         {/* Main content */}

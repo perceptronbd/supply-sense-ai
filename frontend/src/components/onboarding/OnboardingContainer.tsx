@@ -10,7 +10,7 @@ import {
 import OnboardingFinishing from './OnboardingFinishing';
 
 const OnboardingContainer = () => {
-  const { currentStep = 1 } = useOnboardingStore();
+  const { currentStep = 1 ,setOnboardingStep} = useOnboardingStore();
   return (
     <section className="lg:h-screen flex flex-col pt-12 w-full container gap-y-7">
       {currentStep < 5 && (
@@ -29,6 +29,8 @@ const OnboardingContainer = () => {
       {currentStep <= 4 && <ProgressStep currentStep={currentStep} />}
       {/* Final step - onboarding complete */}
       {currentStep === 5 && <OnboardingFinishing />}
+
+      <button onClick={() => setOnboardingStep(2)}>bac</button>
     </section>
   );
 };

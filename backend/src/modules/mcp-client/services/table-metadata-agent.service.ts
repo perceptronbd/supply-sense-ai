@@ -20,6 +20,7 @@ import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/
  */
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
+import { withRetry } from '@supplysense/utils/server';
 
 @Injectable()
 export class TableMetadataAgentService {
@@ -29,7 +30,7 @@ export class TableMetadataAgentService {
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
-  ) {}
+  ) { }
 
   /**
    * Initialize the table metadata agent with specific tools for table analysis
@@ -78,75 +79,7 @@ export class TableMetadataAgentService {
     }
   }
 
-  /**
-   * Generate with retry logic for rate limiting
-   */
-  private isRateLimitError(errorMessage: string): boolean {
-    return errorMessage.includes('Too Many Requests') || errorMessage.includes('429');
-  }
 
-  private async delayRetry(delay: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, delay));
-  }
-
-  private async generateWithRetry(
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    messages: any[],
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    options: any,
-    tableName: string,
-    maxRetries = 5,
-    baseDelay = 2000
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  ): Promise<any> {
-    let lastError: Error = new Error('No retry attempts made');
-    if (maxRetries <= 0) {
-      throw new Error('maxRetries must be greater than 0');
-    }
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        if (!this.metadataAgent) {
-          throw new Error('Table metadata agent not initialized');
-        }
-
-        return await this.metadataAgent.generate(messages, options);
-      } catch (error) {
-        lastError = error as Error;
-        if (this.shouldRetryOnRateLimit(error, tableName, attempt, maxRetries, baseDelay)) {
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    throw lastError;
-  }
-
-  /**
-   * Handles rate limit retry logic for generateWithRetry
-   */
-  private shouldRetryOnRateLimit(
-    error: unknown,
-    tableName: string,
-    attempt: number,
-    maxRetries: number,
-    baseDelay: number
-  ): boolean {
-    const errorMessage = error instanceof Error ? error.message : String(error as string);
-    if (this.isRateLimitError(errorMessage)) {
-      const delay = baseDelay * 2 ** (attempt - 1); // Exponential backoff
-      this.logger.warn(
-        `Rate limit hit for table ${tableName}, attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`
-      );
-
-      if (attempt < maxRetries) {
-        this.delayRetry(delay);
-        return true;
-      }
-    }
-    return false;
-  }
 
   /**
    * Generate table metadata using the specialized agent for multiple tables
@@ -175,45 +108,35 @@ export class TableMetadataAgentService {
           tableSchema,
         })),
       };
-      // Use the specialized agent to generate metadata for all tables at once
-      const response = await this.metadataAgent.generate(
-        [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify(inputData, null, 2),
-          },
-        ],
-        {
-          toolChoice: {
-            type: 'tool',
-            toolName: 'supplySense_analyzeTableMetadataTool',
-          },
-        }
-        // `${tables.length} tables`
+
+      // Use the specialized agent to generate metadata for all tables at once with retry logic
+      this.logger.debug('Starting table metadata generation with retry logic...');
+      const response = await withRetry(
+        async () => {
+          this.logger.debug('Attempting to generate table metadata...');
+          return await this.metadataAgent!.generate(
+            [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: JSON.stringify(inputData, null, 2),
+              },
+            ],
+            {
+              toolChoice: {
+                type: 'tool',
+                toolName: 'supplySense_analyzeTableMetadataTool',
+              },
+            }
+          );
+        },
+        3, // maxRetries
+        5000, // 5 second delay, longer for MCP timeout
       );
-      // const response = await this.generateWithRetry(
-      //   [
-      //     {
-      //       role: 'system',
-      //       content: systemPrompt,
-      //     },
-      //     {
-      //       role: 'user',
-      //       content: JSON.stringify(inputData, null, 2),
-      //     },
-      //   ],
-      //   {
-      //     toolChoice: {
-      //       type: 'tool',
-      //       toolName: 'supplySense_analyzeTableMetadataTool',
-      //     },
-      //   },
-      //   `${tables.length} tables`
-      // );
+
 
       this.logger.log('✅ Table metadata generated successfully for all tables', {
         usage: response.usage,

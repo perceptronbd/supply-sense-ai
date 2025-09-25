@@ -40,24 +40,7 @@ export interface ChatMessageResponse {
   structuredData?: {
     message: string;
     summary: string;
-    formattedData: (
-      | {
-          id: string;
-          name: string;
-          availableQty: number;
-        }
-      | {
-          name: string;
-          quantity: string;
-          unitPrice: string | null;
-          supplierId: string | null;
-          availableQty: string;
-        }
-      | {
-          name: string;
-          value: number;
-        }
-    )[];
+    formattedData: unknown
     visualizationType: 'table' & TChartType;
   } | null;
 }

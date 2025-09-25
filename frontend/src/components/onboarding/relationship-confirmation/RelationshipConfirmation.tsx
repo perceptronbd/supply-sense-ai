@@ -48,7 +48,7 @@ const RelationshipConfirmation = () => {
 
   // Create a lookup map for fast access to selected relationships by table/column
   const relationTablesMap = useMemo(() => {
-    return new Map(relationTables.map((item) => [`${item.tableName}_${item.columnName}`, item]));
+    return new Map(relationTables.map((item) => [`${item.tableName}.${item.columnName}`, item]));
   }, [relationTables]);
 
   // Build unique right-side select options for relationship cards
@@ -56,8 +56,8 @@ const RelationshipConfirmation = () => {
     const seen = new Set<string>();
     return tableRelationships.data
       .map((relatedTable) => ({
-        value: `${relatedTable.refTable}_${relatedTable.refColumn}`,
-        label: `${relatedTable.refTable}_${relatedTable.refColumn}`,
+        value: `${relatedTable.refTable}.${relatedTable.refColumn}`,
+        label: `${relatedTable.refTable}.${relatedTable.refColumn}`,
         table: relatedTable.tableName,
       }))
       .filter((option) => {
@@ -165,13 +165,13 @@ const RelationshipConfirmation = () => {
           </>
         ) : (
           tableRelationships.data.map((table) => {
-            const leftKey = `${table.tableName}_${table.columnName}`;
+            const leftKey = `${table.tableName}.${table.columnName}`;
 
             // Use Map for O(1) lookup instead of O(n) find
             const selectedTable = relationTablesMap.get(leftKey);
             const rightKey = selectedTable
-              ? `${selectedTable.refTable}_${selectedTable.refColumn}`
-              : `${table.refTable}_${table.refColumn}`;
+              ? `${selectedTable.refTable}.${selectedTable.refColumn}`
+              : `${table.refTable}.${table.refColumn}`;
 
             return (
               <MemoizedRelationshipCard
