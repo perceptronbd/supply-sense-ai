@@ -150,14 +150,13 @@ as ShadcnButton                        variant="light"
                 <RenderChart
                   data={message.structuredData?.formattedData as Record<string, string>[]}
                   chartType={message.structuredData?.visualizationType}
-                // chartType='radar'
+                  // chartType='radar'
                 />
               )}
-            {
-              message.structuredData?.visualizationType === 'text' && typeof message.structuredData?.formattedData === 'string' && (
+            {message.structuredData?.visualizationType === 'text' &&
+              typeof message.structuredData?.formattedData === 'string' && (
                 <p>{message.structuredData?.formattedData as string}</p>
-              )
-            }
+              )}
           </article>
         )}
 

@@ -40,7 +40,7 @@ export interface ChatMessageResponse {
   structuredData?: {
     message: string;
     summary: string;
-    formattedData: unknown
+    formattedData: unknown;
     visualizationType: 'table' & TChartType;
   } | null;
 }

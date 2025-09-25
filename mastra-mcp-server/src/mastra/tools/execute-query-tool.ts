@@ -119,7 +119,11 @@ export const executeQueryTool = createTool({
 
                  EXACT TABLE NAMES (use these exactly): ${Object.keys(parsedSchema.tables).join(', ')}
                  CRITICAL QUOTING RULES:
-                   - Table names: Use exact case and quote if mixed case: ${Object.keys(parsedSchema.tables).map(name => /[A-Z]/.test(name) ? `"${name}"` : name).join(', ')}
+                   - Table names: Use exact case and quote if mixed case: ${Object.keys(
+                     parsedSchema.tables
+                   )
+                     .map((name) => (/[A-Z]/.test(name) ? `"${name}"` : name))
+                     .join(', ')}
                    - Column quoting rules:
                    - ${generateColumnQuotingGuidance(parsedSchema)}
                 
@@ -130,7 +134,7 @@ export const executeQueryTool = createTool({
       1000 // initial delay in ms
     );
 
-    const sqlQuery = agentResponse.text
+    let sqlQuery = agentResponse.text
       .trim()
       // Remove markdown code blocks
       .replace(/```sql\s*/gi, '')
@@ -138,7 +142,20 @@ export const executeQueryTool = createTool({
       // Remove any leading/trailing whitespace and newlines
       .replace(/^\s+|\s+$/g, '')
       // Ensure query ends with semicolon if it doesn't already
-      .replace(/;?$/, ';');
+      .replace(/;?$/, '');
+
+    // Make the query case-insensitive by modifying string comparisons
+    sqlQuery = `${sqlQuery
+      // Convert all LIKE to ILIKE for case-insensitive comparison
+      .replace(/\bLIKE\b/gi, 'ILIKE')
+      // Ensure string literals in WHERE/AND/OR conditions are properly formatted
+      .replace(
+        /(WHERE|AND|OR)\s+([^=<>!]+)\s*=\s*'([^']*)'/gi,
+        (_match, operator, column, value) =>
+          `${operator} LOWER(${column.trim()}) = LOWER('${value}')`
+      )};`;
+
+    console.log('🚀 > sqlQuery:', sqlQuery);
 
     // Execute the SQL query against the database
     let queryResults: unknown[] = [];

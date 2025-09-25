@@ -30,7 +30,7 @@ export class TableMetadataAgentService {
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
-  ) { }
+  ) {}
 
   /**
    * Initialize the table metadata agent with specific tools for table analysis
@@ -79,8 +79,6 @@ export class TableMetadataAgentService {
     }
   }
 
-
-
   /**
    * Generate table metadata using the specialized agent for multiple tables
    */
@@ -114,7 +112,7 @@ export class TableMetadataAgentService {
       const response = await withRetry(
         async () => {
           this.logger.debug('Attempting to generate table metadata...');
-          return await this.metadataAgent!.generate(
+          return await this.metadataAgent?.generate(
             [
               {
                 role: 'system',
@@ -134,9 +132,8 @@ export class TableMetadataAgentService {
           );
         },
         3, // maxRetries
-        5000, // 5 second delay, longer for MCP timeout
+        5000 // 5 second delay, longer for MCP timeout
       );
-
 
       this.logger.log('✅ Table metadata generated successfully for all tables', {
         usage: response.usage,

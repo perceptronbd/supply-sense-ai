@@ -4,27 +4,21 @@ import { Loading, PlusIcon } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-import {
-  Button,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  useDisclosure,
-} from '@heroui/react';
+import { Button, Drawer, DrawerBody, DrawerContent, useDisclosure } from '@heroui/react';
 import { useState } from 'react';
 import type { ChatSession } from './types';
 
 interface SessionListProps {
   sessions: ChatSession[];
   activeSessionId?: string;
-  onSessionSelect: ( sessionId: string ) => void;
+  onSessionSelect: (sessionId: string) => void;
   onNewSession: () => void;
   isLoading?: boolean;
   controlExpanded?: boolean;
-  onControlExpandedChange?: ( expanded: boolean ) => void;
+  onControlExpandedChange?: (expanded: boolean) => void;
 }
 
-export function SessionList ( {
+export function SessionList({
   sessions,
   activeSessionId,
   onSessionSelect,
@@ -32,10 +26,9 @@ export function SessionList ( {
   isLoading = false,
   controlExpanded,
   onControlExpandedChange,
-}: Readonly<SessionListProps> ) {
-
-  const [expanded, setExpanded] = useState( controlExpanded || false );
-  if ( isLoading ) {
+}: Readonly<SessionListProps>) {
+  const [expanded, setExpanded] = useState(controlExpanded || false);
+  if (isLoading) {
     return <Loading />;
   }
 
@@ -67,8 +60,8 @@ export function SessionList ( {
           aria-label="Toggle sessions list"
           className="text-secondary border-none"
           onPress={() => {
-            setExpanded( !expanded );
-            onControlExpandedChange?.( !expanded );
+            setExpanded(!expanded);
+            onControlExpandedChange?.(!expanded);
           }}
         >
           <Icons.ToggleSession />
@@ -77,10 +70,10 @@ export function SessionList ( {
 
       <section className="flex flex-col gap-2">
         {expanded &&
-          sessions.map( ( session ) => (
+          sessions.map((session) => (
             <button
               key={session.id}
-              onClick={() => onSessionSelect( session.id )}
+              onClick={() => onSessionSelect(session.id)}
               className="cursor-pointer max-w-full px-4 py-3 mb-1"
               type="button"
             >
@@ -95,36 +88,49 @@ export function SessionList ( {
               <Text
                 variant="bodyXSmall"
                 as="p"
-                className={cn( "text-left", session.id === activeSessionId ? 'text-secondary/30' : 'text-default-500' )}
+                className={cn(
+                  'text-left',
+                  session.id === activeSessionId ? 'text-secondary/30' : 'text-default-500'
+                )}
               >
-                {new Date( session.createdAt ).toLocaleTimeString( 'en-US', { hour: '2-digit', minute: '2-digit', hour12: true } ).toLowerCase()}
-                {' '}{new Date( session.createdAt ).toLocaleDateString( 'en-US', { month: '2-digit', day: '2-digit', year: '2-digit' } )}
+                {new Date(session.createdAt)
+                  .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                  .toLowerCase()}{' '}
+                {new Date(session.createdAt).toLocaleDateString('en-US', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  year: '2-digit',
+                })}
               </Text>
             </button>
-          ) )}
+          ))}
       </section>
     </aside>
   );
 }
 
-export const SessionListMobile = ( {
+export const SessionListMobile = ({
   sessions,
   activeSessionId,
   onSessionSelect,
   onNewSession,
   isLoading = false,
-}: Readonly<SessionListProps> ) => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  console.log( "🚀 > isOpen:", isOpen );
+}: Readonly<SessionListProps>) => {
+  const { isOpen, onOpenChange } = useDisclosure();
   return (
     <>
-
-      <Drawer isOpen={isOpen} onOpenChange={onOpenChange} backdrop='blur' hideCloseButton aria-label="Session List" classNames={{
-        base: 'w-[100vw]',
-        wrapper: 'w-[100vw]',
-        body: 'w-[100vw]',
-      }}>
-
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        backdrop="blur"
+        hideCloseButton
+        aria-label="Session List"
+        classNames={{
+          base: 'w-[100vw]',
+          wrapper: 'w-[100vw]',
+          body: 'w-[100vw]',
+        }}
+      >
         <DrawerContent>
           {() => (
             <>

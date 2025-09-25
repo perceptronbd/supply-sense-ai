@@ -1,28 +1,28 @@
 'use client';
 
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
-import { SessionList, SessionListMobile } from './SessionList';
 import { Fragment } from 'react';
+import { SessionList } from './SessionList';
 
 interface SessionManagerProps {
   selectedSessionId?: string;
   dbConnectionId: string;
-  onSessionSelect: ( sessionId: string ) => void;
-  onSessionCreate: ( sessionId: string ) => void;
+  onSessionSelect: (sessionId: string) => void;
+  onSessionCreate: (sessionId: string) => void;
 }
 
-export function SessionManager ( {
+export function SessionManager({
   selectedSessionId,
   dbConnectionId,
   onSessionSelect,
   onSessionCreate,
-}: SessionManagerProps ) {
+}: SessionManagerProps) {
   // Fetch sessions
   const {
     data: sessions = [],
     isLoading: isLoadingSessions,
     error: sessionsError,
-  } = useGetSessionsQuery( {} );
+  } = useGetSessionsQuery({});
 
   // Create session mutation
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
@@ -30,23 +30,23 @@ export function SessionManager ( {
   // Handle new session creation
   const handleNewSession = async () => {
     try {
-      const sessionTitle = `Chat ${ new Date().toLocaleString() }`;
+      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
 
-      const newSession = await createSession( {
+      const newSession = await createSession({
         title: sessionTitle,
         description: 'New chat session for supply chain analytics',
         dbConnectionId,
-      } ).unwrap();
+      }).unwrap();
 
       // Notify parent component about the new session
-      onSessionCreate( newSession.id );
-    } catch ( error ) {
-      console.error( 'Failed to create new session:', error );
+      onSessionCreate(newSession.id);
+    } catch (error) {
+      console.error('Failed to create new session:', error);
     }
   };
 
   // Show error state if sessions failed to load
-  if ( sessionsError ) {
+  if (sessionsError) {
     return (
       <aside className="w-64 border-r border-divider bg-content1 flex flex-col">
         <div className="flex-1 flex items-center justify-center p-4">

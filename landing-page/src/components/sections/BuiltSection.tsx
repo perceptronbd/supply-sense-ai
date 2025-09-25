@@ -9,7 +9,7 @@ import TableBox from '../ui/TableBox';
 const BuiltSection = () => {
   const { CheckCircle, Message, Search, Document } = useGradientIcons();
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
+  useScroll({
     target: ref,
     offset: ['end end', 'start start'],
   });

@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 export default function ChatPage() {
   // State management for active chat session
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
-  
+
   const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
   // Get user's company ID for database connections
   const { companyId } = useGetCompanyId();

@@ -1,4 +1,12 @@
-export const CustomTooltipContent = ({ active, payload }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: Record<string, unknown>;
+    [key: string]: unknown;
+  }>;
+}
+
+export const CustomTooltipContent = ({ active, payload }: TooltipProps) => {
   if (!active || !payload?.length) {
     return null;
   }
