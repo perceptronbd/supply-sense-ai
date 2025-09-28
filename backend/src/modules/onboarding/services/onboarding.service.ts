@@ -66,12 +66,18 @@ export class OnboardingService {
               tc.table_name AS foreign_table,
               kcu.column_name AS foreign_column,
               ccu.table_name AS primary_table,
-              ccu.column_name AS primary_column
+              ccu.column_name AS primary_column,
+              c.data_type AS column_data_type,
+              c.udt_name AS column_udt_name
             FROM information_schema.table_constraints AS tc
             JOIN information_schema.key_column_usage AS kcu
               ON tc.constraint_name = kcu.constraint_name
             JOIN information_schema.constraint_column_usage AS ccu
               ON ccu.constraint_name = tc.constraint_name
+            JOIN information_schema.columns c
+              ON c.table_name = tc.table_name 
+              AND c.column_name = kcu.column_name
+              AND c.table_schema = tc.table_schema
             WHERE constraint_type = 'FOREIGN KEY'
               AND tc.table_schema = $1;
           `,

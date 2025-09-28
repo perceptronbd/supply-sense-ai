@@ -1,19 +1,27 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { ConnectionsService } from '@/modules/connections/connections.service';
+import { ColumnExampleAgentService } from '@/modules/mcp-client/services/column-example-agent.service';
 import { PrismaService } from '@supplysense/prisma';
 import { SchemaCache } from '@supplysense/prisma-client';
 import { withDbConnection } from '@supplysense/utils/server';
 
+interface ColumnInfo {
+  type: string;
+  description: string;
+  example: string;
+}
+
 interface TableSchema {
   label: string;
   purpose: string;
-  columns: Record<string, string>;
+  columns: Record<string, ColumnInfo>;
   relationships: Array<{
     column: string;
     refTable: string;
     refColumn: string;
   }>;
+  sampleData?: Array<Record<string, any>>;
 }
 
 interface CompleteSchema {
@@ -28,7 +36,9 @@ export class SchemaBuilderService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConnectionsService)
-    private readonly connectionsService: ConnectionsService
+    private readonly connectionsService: ConnectionsService,
+    @Inject(ColumnExampleAgentService)
+    private readonly columnExampleAgent: ColumnExampleAgentService
   ) {}
 
   /**
@@ -40,6 +50,7 @@ export class SchemaBuilderService {
   async buildAndCacheSchema(companyId: string, dbConnectionId: string): Promise<SchemaCache> {
     try {
       this.logger.log(`Building schema for company ${companyId}, connection ${dbConnectionId}`);
+
       // 1. Load db connection details
       const dbConnection = await this.prisma.dbConnection.findUnique({
         where: { id: dbConnectionId },
@@ -70,20 +81,85 @@ export class SchemaBuilderService {
         // 3. Connect to Customer DB and query columns for each table
         await withDbConnection(connectionDetails, async (client) => {
           for (const tableMetadata of dbConnection.TableMetadata) {
+            this.logger.debug(`Processing table ${tableMetadata.tableName}`);
+
             // For each table, get its columns
-            const result = await client.query(
+            const columnsResult = await client.query(
               `
               SELECT column_name, data_type
               FROM information_schema.columns
               WHERE table_name=$1
+              ORDER BY ordinal_position
             `,
               [tableMetadata.tableName]
             );
 
-            // Build columns object
-            const columns: Record<string, string> = {};
-            for (const row of result.rows) {
-              columns[row.column_name] = row.data_type;
+            // Build columns object with enhanced structure
+            const columns: Record<string, ColumnInfo> = {};
+
+            // Get 5 sample rows from the table
+            let sampleData: Array<Record<string, any>> = [];
+            try {
+              const sampleResult = await client.query(
+                `SELECT * FROM "${tableMetadata.tableName}" LIMIT 5`
+              );
+
+              sampleData = sampleResult.rows;
+            } catch (error) {
+              this.logger.warn(
+                `Could not fetch sample data for table ${tableMetadata.tableName}: ${error.message}`
+              );
+            }
+
+            // Prepare column data for example generation with sample data
+            const columnInputs = columnsResult.rows.map((row) => ({
+              tableName: tableMetadata.tableName,
+              columnName: row.column_name,
+              dataType: row.data_type,
+              sampleData: sampleData, // Pass the actual sample data
+            }));
+
+            // Generate column examples using the agent
+            let columnExamples: Record<string, string> = {};
+            let columnDescriptions: Record<string, string> = {};
+
+            try {
+              const exampleResults =
+                await this.columnExampleAgent.generateColumnExamples(columnInputs);
+
+              columnExamples = exampleResults.reduce(
+                (acc, result) => {
+                  acc[result.columnName] = result.exampleValue;
+                  return acc;
+                },
+                {} as Record<string, string>
+              );
+
+              // Extract descriptions from the agent results if available
+              columnDescriptions = exampleResults.reduce(
+                (acc, result) => {
+                  // Use the description from agent if available, otherwise generate a basic one
+                  acc[result.columnName] = (result as any).description;
+                  return acc;
+                },
+                {} as Record<string, string>
+              );
+            } catch (error) {
+              this.logger.warn(
+                `Could not generate column examples for table ${tableMetadata.tableName}: ${error.message}`
+              );
+            }
+
+            // Build the enhanced columns structure
+            for (const row of columnsResult.rows) {
+              const columnName = row.column_name;
+              const dataType = row.data_type;
+
+              columns[columnName] = {
+                type: this.mapDataTypeToSimpleType(dataType),
+                description: columnDescriptions[columnName],
+                example: columnExamples[columnName],
+              };
             }
 
             // Get relationships for this table
@@ -167,6 +243,42 @@ export class SchemaBuilderService {
   private isCacheExpired(cachedAt: Date): boolean {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
     return cachedAt < twentyFourHoursAgo;
+  }
+
+  /**
+   * Maps database data types to simple, user-friendly types
+   * @param dataType The database data type
+   * @returns A simplified type string
+   */
+  private mapDataTypeToSimpleType(dataType: string): string {
+    const type = dataType.toLowerCase();
+
+    if (type.includes('int') || type.includes('serial') || type.includes('bigint')) {
+      return 'number';
+    }
+    if (type.includes('varchar') || type.includes('text') || type.includes('char')) {
+      return 'string';
+    }
+    if (type.includes('bool')) {
+      return 'boolean';
+    }
+    if (type.includes('date') || type.includes('time')) {
+      return 'date';
+    }
+    if (
+      type.includes('decimal') ||
+      type.includes('numeric') ||
+      type.includes('float') ||
+      type.includes('double')
+    ) {
+      return 'number';
+    }
+    if (type.includes('json')) {
+      return 'object';
+    }
+
+    return 'string'; // Default fallback
   }
 }
