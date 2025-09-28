@@ -1,7 +1,7 @@
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { TChartType } from '@supplysense/constant';
+import type { IChatFormattedResult } from '@supplysense/types';
 import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 
@@ -34,15 +34,11 @@ export interface ChatMessageResponse {
   id: string;
   content: string;
   type: 'user' | 'assistant';
+  contentType: 'text' | 'data' | 'chart' | 'table';
   metadata: Record<string, unknown> | null;
   createdAt: string;
   sessionId: string;
-  structuredData?: {
-    message: string;
-    summary: string;
-    formattedData: unknown;
-    visualizationType: 'table' & TChartType;
-  } | null;
+  structuredData?: IChatFormattedResult;
 }
 
 // Chart data interface
@@ -146,8 +142,8 @@ export const chatApi = createApi({
         url: `/sessions/${sessionId}/messages`,
         params: { limit, offset },
       }),
-      transformResponse: (response: ApiResponse<ChatMessageResponse[]>) =>
-        transformApiResponse(response),
+      transformResponse: (response) =>
+        transformApiResponse(response as ApiResponse<ChatMessage[] | Promise<ChatMessage[]>>),
       providesTags: (_result, _error, { sessionId }) => [
         { type: TAG_TYPES.CHAT_MESSAGE, id: sessionId },
       ],

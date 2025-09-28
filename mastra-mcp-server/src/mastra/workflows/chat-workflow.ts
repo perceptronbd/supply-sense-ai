@@ -88,7 +88,7 @@ const formatResultsStep = createStep({
     queryResults: z.array(z.record(z.any())),
   }),
   outputSchema: z.object({
-    visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+    visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),
     formattedData: z.union([
       // Chart.js data structure
       z.record(z.string(), z.unknown()),
@@ -98,7 +98,6 @@ const formatResultsStep = createStep({
       z.string(),
     ]),
     summary: z.string(),
-    message: z.string(),
   }),
   execute: async (context) => {
     const { userQuery, sqlQuery, queryResults } = context.inputData;
@@ -117,7 +116,6 @@ const formatResultsStep = createStep({
       visualizationType: result.visualizationType,
       formattedData: result.formattedData,
       summary: result.summary,
-      message: result.summary, // Using summary as message since formatResultsTool doesn't return a message field
     };
   },
 });
@@ -130,7 +128,7 @@ export const chatWorkflow = createWorkflow({
     userQuery: z.string().describe("The user's natural language query"),
   }),
   outputSchema: z.object({
-    visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+    visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),
     formattedData: z.union([
       // rechart data structure
       z.record(z.string(), z.unknown()),
@@ -140,7 +138,6 @@ export const chatWorkflow = createWorkflow({
       z.string(),
     ]),
     summary: z.string(),
-    message: z.string(),
   }),
 })
   .then(queryAnalysisStep)

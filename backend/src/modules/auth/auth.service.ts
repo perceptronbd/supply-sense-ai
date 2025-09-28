@@ -160,7 +160,7 @@ export class AuthService {
           totalCredits: defaultPlan.credits,
           remainingCredits: defaultPlan.credits,
           isCancelAtPeriodEnd: false,
-          stripeSubscriptionId: randomUUID(), // To be set after Stripe integration
+          stripeSubscriptionId: randomUUID(), // TODO: To be set after Stripe integration
           companyId: company.id,
           subscriptionPlanId: defaultPlan.id,
         },

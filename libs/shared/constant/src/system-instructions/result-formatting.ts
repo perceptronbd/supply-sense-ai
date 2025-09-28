@@ -86,16 +86,19 @@ Respond with ONLY a valid JSON object containing exactly these fields:
 \`\`\`
 
 ## Summary Guidelines:
-- Keep summaries SHORT and DIRECT (2-4 words when possible)
-- For zero/empty results: use simple phrases like "No data found" or "0 results"
-- Avoid explanatory text about why a format was chosen
-- Focus on what the data shows, not the visualization method
+- Provide clear explanations of 2-3 sentences
+- First sentence: describe what the data shows at a high level
+- Second sentence: highlight key findings or patterns
+- Third sentence: provide context or implications
+- For single values: explain the metric's meaning and significance
+- For charts: describe the distribution and notable data points
+- For tables: explain the data structure and analytical value
 
 ## Quality Checklist:
 ✅ JSON is valid and parsable
-✅ visualizationType matches available options
-✅ formattedData structure is correct for chosen type
-✅ All meaningful data preserved
-✅ Summary is concise and direct
+✅ visualizationType correctly matches data structure (text for single values)
+✅ formattedData is properly structured (null for text format)
+✅ Explanation is 2-3 sentences and provides meaningful context
+✅ All data is accurately represented in the chosen format
 
 Return ONLY the JSON response. No markdown, explanations, or additional text.`;

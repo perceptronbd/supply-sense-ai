@@ -4,6 +4,7 @@ import { McpClientService } from '@modules/mcp-client/services/mcp-client.servic
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
+import type { IChatFormattedResult } from '@supplysense/types';
 import { withRetry } from '@supplysense/utils/server';
 import { MessageType } from '../dto/chat.dto';
 import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
@@ -219,7 +220,7 @@ export class ChatService {
 
       this.logger.debug('AI response generated successfully after retries');
       const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
-      const result = parsedResult.result;
+      const result = parsedResult.result as IChatFormattedResult;
       this.logger.log('result:', result);
 
       // Calculate and record token usage for billing
@@ -233,7 +234,7 @@ export class ChatService {
           modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
           metadata: {
             question: message,
-            answer: result.message,
+            answer: result.summary,
             structuredData: JSON.stringify(result),
           },
         });
@@ -241,7 +242,7 @@ export class ChatService {
 
       await this.messageService.createMessage({
         sessionId,
-        content: result.message,
+        content: result.summary,
         type: MessageType.ASSISTANT,
         structuredData: result,
       });
@@ -251,11 +252,11 @@ export class ChatService {
         sessionId,
         userId,
         message,
-        result.message
+        result.summary
       );
 
       return {
-        message: result.message,
+        message: result.summary,
         type: 'data',
         data: result,
         sessionId,

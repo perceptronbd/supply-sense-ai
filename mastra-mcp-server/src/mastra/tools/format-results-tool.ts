@@ -9,7 +9,7 @@ import { formattingAgent } from '../agents/formatting-agent';
 type FormattedData = ChartData | Record<string, unknown>[] | string;
 
 type FormattedResults = {
-  visualizationType: 'table' | 'bar' | 'pie' | 'line' | 'doughnut' | 'text';
+  visualizationType: 'table' | 'bar' | 'line' | 'area' | 'radar' | 'text';
   formattedData: FormattedData;
   summary: string;
 };
@@ -21,7 +21,7 @@ const inputSchema = z.object({
 });
 
 const outputSchema = z.object({
-  visualizationType: z.enum(['table', 'bar', 'pie', 'line', 'doughnut', 'text']),
+  visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),
   formattedData: z.union([
     // Recharts data structure
     z.record(z.string(), z.unknown()),
@@ -39,6 +39,10 @@ export async function formatQueryResults(
   sqlQuery: string,
   userQuery?: string
 ) {
+  console.log(' formatQueryResult input => queryResults:', queryResults);
+  console.log(' formatQueryResult input => sqlQuery:', sqlQuery);
+  console.log(' formatQueryResult input => userQuery:', userQuery);
+
   // Analyze the query results to determine visualization format
   const agentResponse = await formattingAgent.generate([
     {
