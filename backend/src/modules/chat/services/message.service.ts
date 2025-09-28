@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import { Message, Prisma } from '@supplysense/prisma-client';
+import type { IChatFormattedResult } from '@supplysense/types';
 import { MessageType } from '../dto/chat.dto';
 
 type MessageDto = {
@@ -8,7 +9,7 @@ type MessageDto = {
   content: string;
   type: MessageType;
   metadata?: Record<string, unknown>;
-  structuredData?: Record<string, unknown>;
+  structuredData?: IChatFormattedResult;
 };
 
 @Injectable()
@@ -80,7 +81,7 @@ export class MessageService {
           type,
           metadata: metadata ? (metadata as Record<string, never>) : null,
           sessionId,
-          structuredData: structuredData ? (structuredData as Record<string, never>) : null,
+          structuredData: structuredData ? (structuredData as unknown as string) : null,
         },
         select: this.messageIncludeQuery,
       });

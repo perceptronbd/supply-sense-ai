@@ -45,7 +45,7 @@ Respond with ONLY a valid JSON object containing exactly these fields:
 {
   "visualizationType": "table|bar|line|area|radar|text",
   "formattedData": Record<string, unknown>[],
-  "summary": "Concise description of what the data shows and why this format was chosen"
+  "summary": "Brief, direct summary - avoid verbose explanations"
 }
 \`\`\`
 
@@ -80,22 +80,25 @@ Respond with ONLY a valid JSON object containing exactly these fields:
 \`\`\`json
 {
   "visualizationType": "text",
-  "formattedData": {
-    "value": "Total Sales: $1,234,567",
-    "metric": 1234567,
-    "unit": "USD"
-  },
-  "summary": "Textual representation of the data"
+  "formattedData": "Total Sales: $1,234,567",
+  "summary": "Sales total"
 }
 \`\`\`
 
+## Summary Guidelines:
+- Provide clear explanations of 2-3 sentences
+- First sentence: describe what the data shows at a high level
+- Second sentence: highlight key findings or patterns
+- Third sentence: provide context or implications
+- For single values: explain the metric's meaning and significance
+- For charts: describe the distribution and notable data points
+- For tables: explain the data structure and analytical value
+
 ## Quality Checklist:
-✅ JSON is valid and parseable
-✅ visualizationType matches available options
-✅ formattedData structure is correct for chosen type
-✅ Chart.js compatibility maintained
-✅ All meaningful data preserved
-✅ Summary explains the visualization choice
-✅ Colors and styling enhance readability
+✅ JSON is valid and parsable
+✅ visualizationType correctly matches data structure (text for single values)
+✅ formattedData is properly structured (null for text format)
+✅ Explanation is 2-3 sentences and provides meaningful context
+✅ All data is accurately represented in the chosen format
 
 Return ONLY the JSON response. No markdown, explanations, or additional text.`;

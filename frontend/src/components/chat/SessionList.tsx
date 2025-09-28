@@ -4,7 +4,7 @@ import { Loading, PlusIcon } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-import { Button, Card, CardBody } from '@heroui/react';
+import { Button, Drawer, DrawerBody, DrawerContent, useDisclosure } from '@heroui/react';
 import { useState } from 'react';
 import type { ChatSession } from './types';
 
@@ -14,6 +14,8 @@ interface SessionListProps {
   onSessionSelect: (sessionId: string) => void;
   onNewSession: () => void;
   isLoading?: boolean;
+  controlExpanded?: boolean;
+  onControlExpandedChange?: (expanded: boolean) => void;
 }
 
 export function SessionList({
@@ -22,16 +24,19 @@ export function SessionList({
   onSessionSelect,
   onNewSession,
   isLoading = false,
+  controlExpanded,
+  onControlExpandedChange,
 }: Readonly<SessionListProps>) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(controlExpanded || false);
   if (isLoading) {
     return <Loading />;
   }
+
   return (
     <aside
       aria-label="Chat sessions"
       className={cn(
-        'flex-shrink-0 mr-2 max-w-[208px] overflow-y-auto no-scrollbar bottom-fade relative',
+        'flex-shrink-0 mr-2 lg:max-w-[208px]  relative',
         expanded ? 'w-full' : 'w-auto'
       )}
     >
@@ -54,7 +59,10 @@ export function SessionList({
           variant="ghost"
           aria-label="Toggle sessions list"
           className="text-secondary border-none"
-          onPress={() => setExpanded(!expanded)}
+          onPress={() => {
+            setExpanded(!expanded);
+            onControlExpandedChange?.(!expanded);
+          }}
         >
           <Icons.ToggleSession />
         </Button>
@@ -63,19 +71,84 @@ export function SessionList({
       <section className="flex flex-col gap-2">
         {expanded &&
           sessions.map((session) => (
-            <Card key={session.id} aria-label="Session">
-              <CardBody onClick={() => onSessionSelect(session.id)} className="cursor-pointer">
-                <Text
-                  variant="bodyMedium"
-                  weight="medium"
-                  color={session.id === activeSessionId ? 'primary' : 'default'}
-                >
-                  {session.title}
-                </Text>
-              </CardBody>
-            </Card>
+            <button
+              key={session.id}
+              onClick={() => onSessionSelect(session.id)}
+              className="cursor-pointer max-w-full px-4 py-3 mb-1"
+              type="button"
+            >
+              <Text
+                variant="bodySmall"
+                weight="medium"
+                color={session.id === activeSessionId ? 'secondary' : 'default'}
+                className="mb-1 line-clamp-1 text-left"
+              >
+                {session.title}
+              </Text>
+              <Text
+                variant="bodyXSmall"
+                as="p"
+                className={cn(
+                  'text-left',
+                  session.id === activeSessionId ? 'text-secondary/30' : 'text-default-500'
+                )}
+              >
+                {new Date(session.createdAt)
+                  .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                  .toLowerCase()}{' '}
+                {new Date(session.createdAt).toLocaleDateString('en-US', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  year: '2-digit',
+                })}
+              </Text>
+            </button>
           ))}
       </section>
     </aside>
   );
 }
+
+export const SessionListMobile = ({
+  sessions,
+  activeSessionId,
+  onSessionSelect,
+  onNewSession,
+  isLoading = false,
+}: Readonly<SessionListProps>) => {
+  const { isOpen, onOpenChange } = useDisclosure();
+  return (
+    <>
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        backdrop="blur"
+        hideCloseButton
+        aria-label="Session List"
+        classNames={{
+          base: 'w-[100vw]',
+          wrapper: 'w-[100vw]',
+          body: 'w-[100vw]',
+        }}
+      >
+        <DrawerContent>
+          {() => (
+            <>
+              <DrawerBody>
+                <SessionList
+                  sessions={sessions}
+                  activeSessionId={activeSessionId}
+                  onSessionSelect={onSessionSelect}
+                  onNewSession={onNewSession}
+                  isLoading={isLoading}
+                  controlExpanded={isOpen}
+                  onControlExpandedChange={onOpenChange}
+                />
+              </DrawerBody>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+};

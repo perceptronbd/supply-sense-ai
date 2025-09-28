@@ -13,6 +13,7 @@ import { roleApi } from './api/roleApi';
 import { supplierApi } from './api/supplierApi';
 import { userApi } from './api/userApi';
 import authSlice from './slices/authSlice';
+import commonSlice from './slices/commonSlice';
 import onboardingSlice from './slices/onboardingSlice';
 import themeSlice from './slices/themeSlice';
 
@@ -21,6 +22,7 @@ export const store = configureStore({
     auth: authSlice,
     theme: themeSlice,
     onboarding: onboardingSlice,
+    commonSlice,
     [baseApi.reducerPath]: baseApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,

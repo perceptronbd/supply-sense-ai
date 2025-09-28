@@ -117,8 +117,14 @@ export const executeQueryTool = createTool({
                 - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
                 - Query Analysis: ${input.context.queryAnalysis}
 
-                 Table names: ${Object.keys(parsedSchema.tables).join(', ')}
-                 CRITICAL QUOTING RULES FOR ALL COLUMNS:
+                 EXACT TABLE NAMES (use these exactly): ${Object.keys(parsedSchema.tables).join(', ')}
+                 CRITICAL QUOTING RULES:
+                   - Table names: Use exact case and quote if mixed case: ${Object.keys(
+                     parsedSchema.tables
+                   )
+                     .map((name) => (/[A-Z]/.test(name) ? `"${name}"` : name))
+                     .join(', ')}
+                   - Column quoting rules:
                    - ${generateColumnQuotingGuidance(parsedSchema)}
                 
                 Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
@@ -128,7 +134,7 @@ export const executeQueryTool = createTool({
       1000 // initial delay in ms
     );
 
-    const sqlQuery = agentResponse.text
+    let sqlQuery = agentResponse.text
       .trim()
       // Remove markdown code blocks
       .replace(/```sql\s*/gi, '')
@@ -136,7 +142,20 @@ export const executeQueryTool = createTool({
       // Remove any leading/trailing whitespace and newlines
       .replace(/^\s+|\s+$/g, '')
       // Ensure query ends with semicolon if it doesn't already
-      .replace(/;?$/, ';');
+      .replace(/;?$/, '');
+
+    // Make the query case-insensitive by modifying string comparisons
+    sqlQuery = `${sqlQuery
+      // Convert all LIKE to ILIKE for case-insensitive comparison
+      .replace(/\bLIKE\b/gi, 'ILIKE')
+      // Ensure string literals in WHERE/AND/OR conditions are properly formatted
+      .replace(
+        /(WHERE|AND|OR)\s+([^=<>!]+)\s*=\s*'([^']*)'/gi,
+        (_match, operator, column, value) =>
+          `${operator} LOWER(${column.trim()}) = LOWER('${value}')`
+      )};`;
+
+    console.log('🚀 > sqlQuery:', sqlQuery);
 
     // Execute the SQL query against the database
     let queryResults: unknown[] = [];
@@ -164,13 +183,17 @@ function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
 
   for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {
     if (typeof tableInfo === 'object' && tableInfo !== null && 'columns' in tableInfo) {
+      // Determine if table name needs quotes
+      const tableHasUppercase = /[A-Z]/.test(tableName);
+      const quotedTableName = tableHasUppercase ? `"${tableName}"` : tableName;
+
       for (const columnName of Object.keys(tableInfo.columns)) {
         // Check if column name contains uppercase letters or mixed case
         const hasUppercase = /[A-Z]/.test(columnName);
         if (hasUppercase) {
-          guidance.push(`${tableName}."${columnName}" (quote because of mixed case)`);
+          guidance.push(`${quotedTableName}."${columnName}" (quote column because of mixed case)`);
         } else {
-          guidance.push(`${tableName}.${columnName} (no quotes - lowercase)`);
+          guidance.push(`${quotedTableName}.${columnName} (no quotes on column - lowercase)`);
         }
       }
     }

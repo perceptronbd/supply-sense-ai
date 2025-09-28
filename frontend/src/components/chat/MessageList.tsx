@@ -1,7 +1,6 @@
 'use client';
 import { Text } from '@/components/ui/Text';
 import type { RootState } from '@/store/store';
-import { Card, CardBody } from '@heroui/react';
 import { BarChart3, Building2, DollarSign, FileText, Inbox, Package } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
@@ -66,13 +65,15 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
             <Text variant="headerMedium" color="default" weight="bold" className="mb-6" as="h2">
               What can I help you with?
             </Text>
-            <Text variant="bodyLarge" color="muted" as="p">
+            {/* TODO: enable suggestions later */}
+            {/* <Text variant="bodyLarge" color="muted" as="p">
               Choose a prompt below or write your own to start chatting with SupplySense AI.
-            </Text>
+            </Text> */}
           </header>
 
+          {/* TODO: enable suggestions later */}
           {/* Suggestion Cards */}
-          <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-40 md:mb-5">
+          {/* <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-40 md:mb-5">
             {defaultSuggestions.map((suggestion) => {
               const IconComponent = suggestion.icon;
               return (
@@ -99,7 +100,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
                 </Card>
               );
             })}
-          </div>
+          </div> */}
         </div>
       </section>
     );

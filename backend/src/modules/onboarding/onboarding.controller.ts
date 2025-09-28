@@ -101,6 +101,15 @@ export class OnboardingController {
     return await this.schemaBuilderService.getSchema(params.companyId, params.dbConnectionId);
   }
 
+  @Get('/:companyId/:dbConnectionId/schema/build')
+  @HttpCode(HttpStatus.OK)
+  async buildSchema(@Param() params: GetSchemaDto) {
+    return await this.schemaBuilderService.buildAndCacheSchema(
+      params.companyId,
+      params.dbConnectionId
+    );
+  }
+
   @Get('/test-agent')
   @HttpCode(HttpStatus.OK)
   async testAgent() {

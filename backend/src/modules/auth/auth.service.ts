@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -159,7 +160,7 @@ export class AuthService {
           totalCredits: defaultPlan.credits,
           remainingCredits: defaultPlan.credits,
           isCancelAtPeriodEnd: false,
-          stripeSubscriptionId: '', // To be set after Stripe integration
+          stripeSubscriptionId: randomUUID(), // TODO: To be set after Stripe integration
           companyId: company.id,
           subscriptionPlanId: defaultPlan.id,
         },

@@ -2,6 +2,7 @@
 
 import { Icons } from '@/lib/icons/Icons';
 import type { RootState } from '@/store/store';
+import { useDisclosure } from '@heroui/react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -18,7 +19,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
   const [isHydrated, setIsHydrated] = useState(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const pathname = usePathname();
-
+  const { onOpen } = useDisclosure();
   // Handle hydration mismatch
   useEffect(() => {
     setIsHydrated(true);
@@ -38,7 +39,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
 
       <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
         {/* Top bar for mobile */}
-        <header className="flex justify-between items-center px-4 py-3 border-b lg:hidden bg-content1 shadow-small border-divider">
+        <header className="flex justify-between items-center px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -66,8 +67,8 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
               </Text>
             </Text>
           </div>
-          <button type="button">
-            <Icons.EditV2 className="size-7" />
+          <button onClick={() => onOpen()} type="button">
+            <Icons.ToggleSession className="size-8 text-secondary-500" />
           </button>
         </header>
         {/* Main content */}

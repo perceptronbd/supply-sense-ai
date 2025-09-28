@@ -39,7 +39,7 @@ export const appConfig: AppConfig = {
   // MCP Server settings
   mcpServerUrl: process.env.MCP_SERVER_URL || 'http://localhost:3002',
   mcpServerEndpoint: process.env.MCP_SERVER_ENDPOINT || '/mcp',
-  mcpServerTimeout: Number.parseInt(process.env.MCP_SERVER_TIMEOUT || '30000', 10),
+  mcpServerTimeout: Number.parseInt(process.env.MCP_SERVER_TIMEOUT || '120000', 10), // 2 minutes for complex table analysis
 };
 
 // Validation function to ensure required environment variables are set

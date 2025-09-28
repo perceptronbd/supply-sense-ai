@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
-import { CHART_TYPES_VALUES } from '@supplysense/constant';
+import { CHART_TYPES_VALUES, type TChartType } from '@supplysense/constant';
 import { RenderChart } from './RenderChart';
 import { RenderTable } from './RenderTable';
 interface MessageBubbleProps {
@@ -146,14 +146,19 @@ as ShadcnButton                        variant="light"
               />
             )}
             {message.structuredData?.visualizationType &&
-              CHART_TYPES_VALUES.includes(message.structuredData?.visualizationType) && (
+              CHART_TYPES_VALUES.includes(
+                message.structuredData?.visualizationType as TChartType
+              ) && (
                 <RenderChart
                   data={message.structuredData?.formattedData as Record<string, string>[]}
-                  chartType={message.structuredData?.visualizationType}
+                  chartType={message.structuredData?.visualizationType as TChartType}
                   // chartType='radar'
                 />
               )}
-            {/* <RenderTable data={tableData} /> */}
+            {message.structuredData?.visualizationType === 'text' &&
+              typeof message.structuredData?.formattedData === 'string' && (
+                <p>{message.structuredData?.formattedData as string}</p>
+              )}
           </article>
         )}
 

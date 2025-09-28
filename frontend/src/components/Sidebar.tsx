@@ -8,9 +8,8 @@ import { Icons } from '@/lib/icons/Icons';
 import { logout } from '@/store/slices/authSlice';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
-import { Button, Chip } from '@heroui/react';
+import { Avatar, Button, Chip } from '@heroui/react';
 import { CHAT_PERMISSIONS, USER_PERMISSIONS } from '@supplysense/types';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -140,15 +139,14 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           {/* User info and logout */}
           <footer className="p-4 border-t rounded-b-xl border-divider flex-shrink-0">
             <div className="flex items-center gap-x-4">
-              <div className="size-14 rounded-full overflow- flex-shrink-0">
-                <Image
-                  src={'/avatar.png'}
-                  alt="User Avatar"
-                  width={56}
-                  height={56}
-                  className="object-cover size-full"
-                />
-              </div>
+              {/* <Image
+                src={'/avatar.png'}
+                alt="User Avatar"
+                width={56}
+                height={56}
+                className="object-cover size-full"
+              /> */}
+              <Avatar icon={<Icons.At />} />
               <div className="">
                 <Text
                   variant="bodySmall"
@@ -176,7 +174,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                 </Chip>
               </div>
               <button type="button" onClick={() => setShowLogout((prev) => !prev)}>
-                <Icons.Down />
+                <Icons.Down className="text-white" />
               </button>
             </div>
             {/* Logout button */}

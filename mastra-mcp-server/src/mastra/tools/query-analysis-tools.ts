@@ -35,7 +35,8 @@ export const queryAnalysisTool = createTool({
     }
     // then extract business context, schema cache
     const { businessContext, SchemaCache } = dbConnection;
-
+    console.log('businessContext', businessContext);
+    console.log('SchemaCache', SchemaCache);
     // call the query analysis agent and pass the business context and schema cache to the system prompt and user query to the user prompt
 
     const agentResponse = await queryAnalysisAgent.generate([

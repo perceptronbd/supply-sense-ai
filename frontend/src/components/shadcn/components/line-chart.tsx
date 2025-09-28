@@ -1,14 +1,15 @@
 'use client';
 
 import { Card, CardBody } from '@heroui/react';
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import { CartesianGrid, DotProps, Line, LineChart, XAxis } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
 import { CustomTooltipContent } from './custom-tooltip-content';
-const CustomizedDot = (
-  props: React.SVGProps<SVGCircleElement> & { cx?: number; cy?: number; stroke?: string }
-) => {
-  const { cx, cy, stroke } = props;
-
+const CustomizedDot = ({
+  cx,
+  cy,
+  stroke,
+  ..._rest
+}: React.SVGProps<SVGCircleElement> & { cx?: number; cy?: number; stroke?: string }) => {
   return (
     <g>
       {/* Main dot */}
@@ -52,14 +53,14 @@ export function DottedMultiLineChart({
   const defaultLineProps = {
     type: 'bump' as const,
     dot: showDots
-      ? (props: any) => {
-          const { cx, cy, stroke, key } = props;
-          return <CustomizedDot key={key} cx={cx} cy={cy} stroke={stroke} />;
+      ? (props: DotProps) => {
+          const { cx, cy, stroke } = props;
+          return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
         }
       : false,
-    activeDot: (props: any) => {
-      const { cx, cy, stroke, key } = props;
-      return <CustomizedDot key={key} cx={cx} cy={cy} stroke={stroke} />;
+    activeDot: (props: DotProps) => {
+      const { cx, cy, stroke } = props;
+      return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
     },
     strokeWidth: 2,
     filter: 'url(#rainbow-line-glow)',

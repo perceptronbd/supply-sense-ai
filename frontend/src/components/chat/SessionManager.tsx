@@ -1,6 +1,7 @@
 'use client';
 
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
+import { Fragment } from 'react';
 import { SessionList } from './SessionList';
 
 interface SessionManagerProps {
@@ -56,12 +57,25 @@ export function SessionManager({
   }
 
   return (
-    <SessionList
-      sessions={sessions}
-      activeSessionId={selectedSessionId}
-      onSessionSelect={onSessionSelect}
-      onNewSession={handleNewSession}
-      isLoading={isLoadingSessions || isCreatingSession}
-    />
+    <Fragment>
+      <div className="hidden md:block overflow-y-auto no-scrollbar bottom-fade">
+        <SessionList
+          sessions={sessions}
+          activeSessionId={selectedSessionId}
+          onSessionSelect={onSessionSelect}
+          onNewSession={handleNewSession}
+          isLoading={isLoadingSessions || isCreatingSession}
+        />
+      </div>
+      {/* <div className="md:hidden overflow-y-auto no-scrollbar bottom-fade">
+        <SessionListMobile
+          sessions={sessions}
+          activeSessionId={selectedSessionId}
+          onSessionSelect={onSessionSelect}
+          onNewSession={handleNewSession}
+          isLoading={isLoadingSessions || isCreatingSession}
+        />
+      </div> */}
+    </Fragment>
   );
 }
