@@ -105,7 +105,7 @@ export const chatApi = createApi({
         body: sessionData,
       }),
       transformResponse: (response: ApiResponse<ChatSession>) => transformApiResponse(response),
-      invalidatesTags: [TAG_TYPES.CHAT_SESSION],
+      invalidatesTags: [TAG_TYPES.CHAT_SESSION, TAG_TYPES.CHAT_MESSAGE],
     }),
 
     getSessions: builder.query<ChatSession[], { limit?: number; offset?: number }>({

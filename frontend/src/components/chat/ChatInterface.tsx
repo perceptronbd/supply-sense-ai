@@ -12,9 +12,11 @@ export function ChatInterface({
   sessionId,
   dbConnectionId,
   className,
+  handleCreateSession,
 }: Readonly<ChatInterfaceProps>) {
   // Local state for managing messages
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isFirstMessage, setIsFirstMessage] = useState(false);
 
   // RTK Query hooks for data fetching and mutations
   const {
@@ -28,15 +30,41 @@ export function ChatInterface({
   // Update local messages when fetched from API
   useEffect(() => {
     if (fetchedMessages) {
-      setMessages(fetchedMessages);
+      // If we're sending the first message, preserve temporary messages
+      if (isFirstMessage) {
+        setMessages((prevMessages) => {
+          const tempMessages = prevMessages.filter((msg) => msg.id.startsWith('temp-'));
+          return [...fetchedMessages, ...tempMessages];
+        });
+      } else {
+        setMessages(fetchedMessages);
+      }
+    } else if (!sessionId) {
+      // Clear messages when no session is selected
+      setMessages([]);
     }
-  }, [fetchedMessages]);
+  }, [fetchedMessages, isFirstMessage, sessionId]);
 
   // Handle sending messages with database connection support
   const handleSendMessage = async (content: string) => {
-    if (!sessionId) {
-      console.error('No session ID available');
-      return;
+    let currentSessionId = sessionId;
+    let isNewSession = false;
+
+    // Ensure we have a session before sending message
+    if (!currentSessionId) {
+      try {
+        // Create session and wait for it to be available
+        currentSessionId = await handleCreateSession();
+        if (!currentSessionId) {
+          console.error('Failed to create session');
+          return;
+        }
+        isNewSession = true;
+        setIsFirstMessage(true);
+      } catch (error) {
+        console.error('Failed to create session:', error);
+        return;
+      }
     }
 
     if (!dbConnectionId) {
@@ -47,7 +75,7 @@ export function ChatInterface({
     // Create a temporary message for immediate UI feedback
     const tempMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
-      sessionId: sessionId,
+      sessionId: currentSessionId,
       content,
       type: 'user',
       contentType: 'text',
@@ -62,14 +90,9 @@ export function ChatInterface({
     try {
       // Send message via API with database connection ID
       const response = await sendQuery({
-        sessionId: sessionId,
+        sessionId: currentSessionId,
         query: content,
         dbConnectionId: dbConnectionId,
-        // includeDatabaseQuery: true,
-        // context: {},
-
-        // query:"which item has the stock below 100. show me in bar",
-        // sessionId:"cmetigv8u0001166s2mylwbes",
         // dbConnectionId: "4211de11-d909-44ee-ab1e-420e095f9cae"
       }).unwrap();
 
@@ -98,6 +121,11 @@ export function ChatInterface({
 
         return [...filtered, userMessage, aiMessage];
       });
+
+      // Clear first message flag after successful send
+      if (isNewSession) {
+        setIsFirstMessage(false);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
 
@@ -107,7 +135,7 @@ export function ChatInterface({
       // Add error message to chat
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
-        sessionId: sessionId,
+        sessionId: currentSessionId,
         content: 'Failed to send message. Please try again.',
         type: 'error',
         contentType: 'text',
@@ -117,6 +145,11 @@ export function ChatInterface({
       };
 
       setMessages((prev) => [...prev, errorMessage]);
+
+      // Clear first message flag on error too
+      if (isNewSession) {
+        setIsFirstMessage(false);
+      }
     }
   };
 

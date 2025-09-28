@@ -1,12 +1,12 @@
 ﻿'use client';
-
 import { ChatInterface, SessionManager } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useCreateSessionMutation } from '@/store/api/chatApi';
 import { useGetDatabaseConnectionsQuery } from '@/store/api/dbConnectionApi';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 export default function ChatPage() {
   // State management for active chat session
@@ -36,37 +36,36 @@ export default function ChatPage() {
   }, [databaseConnections, selectedDbConnectionId]);
 
   // Auto-create session when database connection is selected
-  useEffect(() => {
-    // Function to initialize a new chat session
-    const initializeSession = async () => {
-      if (!selectedDbConnectionId) {
-        return;
-      }
-
-      try {
-        // Create session with timestamp-based title and selected database connection
-        const sessionTitle = `Chat ${new Date().toLocaleString()}`;
-        const newSession = await createSession({
-          title: sessionTitle,
-          description: 'New chat session for supply chain analytics',
-          dbConnectionId: selectedDbConnectionId,
-        }).unwrap();
-
-        // Set the active session ID for the chat interface
-        setActiveSessionId(newSession.id);
-
-        // console.log('Chat session initialized:', newSession.id);
-      } catch (error) {
-        console.error('Failed to initialize chat session:', error);
-
-        // Reset session ID on error to show error state
-        setActiveSessionId(undefined);
-      }
-    };
-
+  const handleCreateSession = useCallback(async () => {
     // Only initialize if no active session exists and db connection is selected
-    if (!activeSessionId && selectedDbConnectionId && !isCreatingSession) {
-      initializeSession();
+    if (activeSessionId || !selectedDbConnectionId || isCreatingSession) {
+      return activeSessionId;
+    }
+
+    try {
+      // Create session with timestamp-based title and selected database connection
+      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
+      const newSession = await createSession({
+        title: sessionTitle,
+        description: 'New chat session for supply chain analytics',
+        dbConnectionId: selectedDbConnectionId,
+      }).unwrap();
+
+      // Set the active session ID for the chat interface
+      flushSync(() => {
+        setActiveSessionId(newSession.id);
+      });
+
+      console.log('Chat session initialized:', newSession.id);
+      return newSession.id;
+    } catch (error) {
+      console.error('Failed to initialize chat session:', error);
+
+      // Reset session ID on error to show error state
+      flushSync(() => {
+        setActiveSessionId(undefined);
+      });
+      throw error;
     }
   }, [activeSessionId, selectedDbConnectionId, createSession, isCreatingSession]);
 
@@ -146,25 +145,12 @@ export default function ChatPage() {
         {/* Main chat interface container with session manager */}
         <section className="flex flex-1 w-full h-full">
           {/* Chat Interface */}
-          {activeSessionId && selectedDbConnectionId ? (
-            <ChatInterface sessionId={activeSessionId} dbConnectionId={selectedDbConnectionId} />
-          ) : (
-            /* Loading state while session is being created */
-            <article
-              className="flex flex-1 justify-center items-center p-8"
-              aria-label="Loading section"
-            >
-              <header className="max-w-4xl text-center">
-                <Text variant="titleLarge" color="default" weight="bold" className="mb-4" as="h1">
-                  Initializing SupplySense AI
-                </Text>
 
-                <Text variant="bodyLarge" color="muted" as="p">
-                  Setting up your chat session with database connection...
-                </Text>
-              </header>
-            </article>
-          )}
+          <ChatInterface
+            sessionId={activeSessionId}
+            dbConnectionId={selectedDbConnectionId}
+            handleCreateSession={handleCreateSession}
+          />
         </section>
       </div>
       {/* Session Manager Sidebar */}
