@@ -1,11 +1,9 @@
 'use client';
 
-import './global.css';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import WithoutSidebar from '@/components/WithoutSidebar';
-import ClarityProvider from '@/components/analytics/Clarity';
 import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
 import { cn } from '@/lib/utils';
 import { persistor, store } from '@/store/store';
@@ -69,12 +67,11 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning={true} className={'min-h-screen'}>
         {/* Microsoft Clarity Analytics */}
-        <ClarityProvider projectId={process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID} />
 
         <Provider store={store}>
           <PersistGate
             loading={
-              <main className="min-h-screen flex items-center justify-center bg-background">
+              <main className="flex items-center justify-center min-h-screen bg-background">
                 <SSRSafeDrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
               </main>
             }
