@@ -2,88 +2,98 @@
 import { ChatInterface, SessionManager } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
-import { useGetCompanyId } from '@/hooks/useGetCompanyId';
-import { useCreateSessionMutation } from '@/store/api/chatApi';
-import { useGetDatabaseConnectionsQuery } from '@/store/api/dbConnectionApi';
-import { useCallback, useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
+import { useSessionManager } from '@/hooks/useSessionManager';
+import { useCallback, useMemo, useRef } from 'react';
 
 export default function ChatPage() {
-  // State management for active chat session
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
-
-  const [selectedDbConnectionId, setSelectedDbConnectionId] = useState<string | undefined>();
-  // Get user's company ID for database connections
-  const { companyId } = useGetCompanyId();
-
-  // RTK Query hooks
-  const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
-
+  // Database connection management
   const {
-    data: databaseConnections,
-    isLoading: isLoadingConnections,
-    error: connectionsError,
-  } = useGetDatabaseConnectionsQuery(companyId, {
-    skip: !companyId,
-  });
+    databaseConnections,
+    selectedDbConnectionId,
+    isLoadingConnections,
+    connectionsError,
+  } = useDatabaseConnections();
 
-  // Auto-select first database connection when available
-  useEffect(() => {
-    if (databaseConnections && databaseConnections.length > 0 && !selectedDbConnectionId) {
-      const firstConnection = databaseConnections[0];
-      setSelectedDbConnectionId(firstConnection.id);
-    }
-  }, [databaseConnections, selectedDbConnectionId]);
+  // Session management
+  const {
+    activeSessionId,
+    isCreatingSession,
+    createNewSession,
+    selectSession,
+  } = useSessionManager(selectedDbConnectionId);
 
-  // Auto-create session when database connection is selected
+  // Memoized handlers to prevent unnecessary re-renders
   const handleCreateSession = useCallback(async () => {
-    // Only initialize if no active session exists and db connection is selected
-    if (activeSessionId || !selectedDbConnectionId || isCreatingSession) {
-      return activeSessionId;
+    if (activeSessionId) return activeSessionId;
+    return await createNewSession();
+  }, [activeSessionId, createNewSession]);
+
+  const handleSessionSelect = useCallback((sessionId: string) => {
+    selectSession(sessionId);
+  }, [selectSession]);
+
+  const handleSessionCreate = useCallback((sessionId: string) => {
+    selectSession(sessionId);
+  }, [selectSession]);
+
+  // Store the session refetch function
+  const sessionRefetchRef = useRef<(() => void) | null>(null);
+
+  // Handle session updates (like title changes after first AI response)
+  const handleSessionUpdate = useCallback(() => {
+    // Trigger a refetch of sessions to get updated titles
+    if (sessionRefetchRef.current) {
+      console.log('Session updated, refreshing session list...');
+      sessionRefetchRef.current();
+    }
+  }, []);
+
+  // Handle session refetch function registration
+  const handleRefreshSessions = useCallback((refetchFn: () => void) => {
+    sessionRefetchRef.current = refetchFn;
+  }, []);
+
+  // Memoized error and loading states for better performance
+  const errorState = useMemo(() => {
+    if (connectionsError) {
+      return (
+        <div className="flex flex-1 justify-center items-center p-8">
+          <div className="max-w-4xl text-center">
+            <Text variant="titleLarge" color="danger" className="mb-4" as="h1">
+              Database Connection Error
+            </Text>
+            <Text variant="bodyLarge" color="muted" as="p">
+              Failed to load database connections. Please check your setup or contact support.
+            </Text>
+          </div>
+        </div>
+      );
     }
 
-    try {
-      // Create session with timestamp-based title and selected database connection
-      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
-      const newSession = await createSession({
-        title: sessionTitle,
-        description: 'New chat session for supply chain analytics',
-        dbConnectionId: selectedDbConnectionId,
-      }).unwrap();
-
-      // Set the active session ID for the chat interface
-      flushSync(() => {
-        setActiveSessionId(newSession.id);
-      });
-
-      console.log('Chat session initialized:', newSession.id);
-      return newSession.id;
-    } catch (error) {
-      console.error('Failed to initialize chat session:', error);
-
-      // Reset session ID on error to show error state
-      flushSync(() => {
-        setActiveSessionId(undefined);
-      });
-      throw error;
+    if (databaseConnections?.length === 0) {
+      return (
+        <div className="flex flex-1 justify-center items-center p-8">
+          <div className="max-w-4xl text-center">
+            <Text variant="titleLarge" color="default" className="mb-4" as="h1">
+              No Database Connections
+            </Text>
+            <Text variant="bodyLarge" color="muted" as="p">
+              Please set up a database connection in the onboarding section before using the chat.
+            </Text>
+          </div>
+        </div>
+      );
     }
-  }, [activeSessionId, selectedDbConnectionId, createSession, isCreatingSession]);
 
-  // Handle session selection from SessionManager
-  const handleSessionSelect = (sessionId: string) => {
-    setActiveSessionId(sessionId);
-  };
-
-  // Handle new session creation from SessionManager
-  const handleSessionCreate = (sessionId: string) => {
-    setActiveSessionId(sessionId);
-  };
+    return null;
+  }, [connectionsError, databaseConnections]);
 
   // Show loading state while connections are being fetched
   if (isLoadingConnections) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] ">
-        <div className="flex overflow-hidden relative h-full  text-foreground">
+      <main className="w-full h-[calc(100vh-40px)]">
+        <div className="flex overflow-hidden relative h-full text-foreground">
           <LoadingOverlay
             isVisible={true}
             message="Loading database connections..."
@@ -94,47 +104,19 @@ export default function ChatPage() {
     );
   }
 
-  // Show error state if connections failed to load
-  if (connectionsError) {
+  // Show error states
+  if (errorState) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] grid place-items-center ">
-        <div className="flex flex-1 justify-center items-center p-8">
-          <div className="max-w-4xl text-center">
-            <Text variant="titleLarge" color="danger" className="mb-4" as="h1">
-              Database Connection Error
-            </Text>
-
-            <Text variant="bodyLarge" color="muted" as="p">
-              Failed to load database connections. Please check your setup or contact support.
-            </Text>
-          </div>
-        </div>
+      <main className="w-full h-[calc(100vh-40px)] grid place-items-center">
+        {errorState}
       </main>
     );
   }
 
-  // Show error state if no database connections are available
-  if (databaseConnections && databaseConnections.length === 0) {
-    return (
-      <main className="w-full h-[calc(100vh-40px)] ">
-        <div className="flex flex-1 justify-center items-center p-8">
-          <div className="max-w-4xl text-center">
-            <Text variant="titleLarge" color="default" className="mb-4" as="h1">
-              No Database Connections
-            </Text>
-
-            <Text variant="bodyLarge" color="muted" as="p">
-              Please set up a database connection in the onboarding section before using the chat.
-            </Text>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
+  // Main chat interface - only render when we have a database connection
   return (
     <main className="w-full h-full bg-background flex gap-2">
-      <div className=" relative h-full text-foreground rounded-2xl bg-content2 flex-1 w-full">
+      <div className="relative h-full text-foreground rounded-2xl bg-content2 flex-1 w-full">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
           isVisible={isCreatingSession}
@@ -142,24 +124,25 @@ export default function ChatPage() {
           opacity="light"
         />
 
-        {/* Main chat interface container with session manager */}
+        {/* Main chat interface container */}
         <section className="flex flex-1 w-full h-full">
-          {/* Chat Interface */}
-
           <ChatInterface
             sessionId={activeSessionId}
             dbConnectionId={selectedDbConnectionId}
             handleCreateSession={handleCreateSession}
+            onSessionUpdate={handleSessionUpdate}
           />
         </section>
       </div>
-      {/* Session Manager Sidebar */}
+
+      {/* Session Manager Sidebar - only show when database connection is available */}
       {selectedDbConnectionId && (
         <SessionManager
           selectedSessionId={activeSessionId}
           dbConnectionId={selectedDbConnectionId}
           onSessionSelect={handleSessionSelect}
           onSessionCreate={handleSessionCreate}
+          onRefreshSessions={handleRefreshSessions}
         />
       )}
     </main>

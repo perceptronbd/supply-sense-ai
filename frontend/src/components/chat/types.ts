@@ -19,4 +19,5 @@ export interface ChatInterfaceProps {
   dbConnectionId?: string;
   className?: string;
   handleCreateSession: () => Promise<string | undefined>;
+  onSessionUpdate?: () => void;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { SessionList } from './SessionList';
 
 interface SessionManagerProps {
@@ -9,6 +9,7 @@ interface SessionManagerProps {
   dbConnectionId: string;
   onSessionSelect: (sessionId: string) => void;
   onSessionCreate: (sessionId: string) => void;
+  onRefreshSessions?: (refetchFn: () => void) => void;
 }
 
 export function SessionManager({
@@ -16,16 +17,25 @@ export function SessionManager({
   dbConnectionId,
   onSessionSelect,
   onSessionCreate,
+  onRefreshSessions,
 }: SessionManagerProps) {
   // Fetch sessions
   const {
     data: sessions = [],
     isLoading: isLoadingSessions,
     error: sessionsError,
+    refetch: refetchSessions,
   } = useGetSessionsQuery({});
 
   // Create session mutation
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
+
+  // Expose refetch function to parent
+  useEffect(() => {
+    if (onRefreshSessions) {
+      onRefreshSessions(refetchSessions);
+    }
+  }, [onRefreshSessions, refetchSessions]);
 
   // Handle new session creation
   const handleNewSession = async () => {
