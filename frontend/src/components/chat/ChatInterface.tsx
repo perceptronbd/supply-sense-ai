@@ -1,10 +1,11 @@
 'use client';
 
 import { Text } from '@/components/ui/Text';
+import { useMessageManager } from '@/hooks/useMessageManager';
+import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import { useSendQueryMutation } from '@/store/api/chatApi';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
-import { useMessageManager } from '@/hooks/useMessageManager';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 import type { ChatInterfaceProps } from './types';
@@ -14,95 +15,70 @@ export function ChatInterface({
   dbConnectionId,
   className,
   handleCreateSession,
-  onSessionUpdate,
 }: Readonly<ChatInterfaceProps>) {
-  const {
-    messages,
-    isLoadingMessages,
-    messagesError,
-    addErrorMessage,
-    refetchMessages,
-  } = useMessageManager(sessionId);
+  const { messages, isLoadingMessages, messagesError, addErrorMessage, refetchMessages } =
+    useMessageManager(sessionId);
 
   const [sendQuery, { isLoading: isSendingMessage }] = useSendQueryMutation();
 
-  // Track if we've seen the first assistant message for this session
-  const hasSeenFirstAssistantMessage = useRef<Set<string>>(new Set());
-
-  // Monitor messages to detect first assistant message and trigger session update
-  useEffect(() => {
-    if (!sessionId || !onSessionUpdate || !messages.length) return;
-
-    // Check if this session already had its first assistant message processed
-    if (hasSeenFirstAssistantMessage.current.has(sessionId)) return;
-
-    // Look for the first assistant message
-    const firstAssistantMessage = messages.find(msg => msg.type === 'assistant');
-
-    if (firstAssistantMessage) {
-      console.log('First assistant message detected for session:', sessionId);
-
-      // Mark this session as having seen its first assistant message
-      hasSeenFirstAssistantMessage.current.add(sessionId);
-
-      // Trigger session update to refresh the title
-      onSessionUpdate();
-    }
-  }, [messages, sessionId, onSessionUpdate]);
+  // Handle session title updates when first AI response is received
+  useSessionTitleUpdate(sessionId, messages);
 
   // Handle sending messages with improved error handling and session management
-  const handleSendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return;
+  const handleSendMessage = useCallback(
+    async (content: string) => {
+      if (!content.trim()) return;
 
-    let currentSessionId = sessionId;
+      let currentSessionId = sessionId;
 
-    // Ensure we have a session before sending message
-    if (!currentSessionId) {
-      try {
-        currentSessionId = await handleCreateSession();
-        if (!currentSessionId) {
+      // Ensure we have a session before sending message
+      if (!currentSessionId) {
+        try {
+          currentSessionId = await handleCreateSession();
+          if (!currentSessionId) {
+            addErrorMessage('', 'Failed to create session. Please try again.');
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to create session:', error);
           addErrorMessage('', 'Failed to create session. Please try again.');
           return;
         }
-      } catch (error) {
-        console.error('Failed to create session:', error);
-        addErrorMessage('', 'Failed to create session. Please try again.');
+      }
+
+      if (!dbConnectionId) {
+        addErrorMessage(
+          currentSessionId,
+          'No database connection available. Please check your setup.'
+        );
         return;
       }
-    }
 
-    if (!dbConnectionId) {
-      addErrorMessage(currentSessionId, 'No database connection available. Please check your setup.');
-      return;
-    }
+      try {
+        // Send message via API
+        await sendQuery({
+          sessionId: currentSessionId,
+          query: content,
+          dbConnectionId: dbConnectionId,
+        }).unwrap();
 
-    try {
-      // Send message via API
-      await sendQuery({
-        sessionId: currentSessionId,
-        query: content,
-        dbConnectionId: dbConnectionId,
-      }).unwrap();
-
-      // Refetch messages to get the complete conversation from database
-      refetchMessages();
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
-    }
-  }, [
-    sessionId,
-    dbConnectionId,
-    handleCreateSession,
-    addErrorMessage,
-    refetchMessages,
-    sendQuery,
-  ]);
+        // Refetch messages to get the complete conversation from database
+        refetchMessages();
+      } catch (error) {
+        console.error('Failed to send message:', error);
+        addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
+      }
+    },
+    [sessionId, dbConnectionId, handleCreateSession, addErrorMessage, refetchMessages, sendQuery]
+  );
 
   // Handle suggestion clicks by sending them as messages
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    handleSendMessage(suggestion);
-  }, [handleSendMessage]);
+  const handleSuggestionClick = useCallback(
+    (suggestion: string) => {
+      handleSendMessage(suggestion);
+    },
+    [handleSendMessage]
+  );
 
   // Memoized error state for better performance
   const errorState = useMemo(() => {

@@ -4,24 +4,16 @@ import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { useSessionManager } from '@/hooks/useSessionManager';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export default function ChatPage() {
   // Database connection management
-  const {
-    databaseConnections,
-    selectedDbConnectionId,
-    isLoadingConnections,
-    connectionsError,
-  } = useDatabaseConnections();
+  const { databaseConnections, selectedDbConnectionId, isLoadingConnections, connectionsError } =
+    useDatabaseConnections();
 
   // Session management
-  const {
-    activeSessionId,
-    isCreatingSession,
-    createNewSession,
-    selectSession,
-  } = useSessionManager(selectedDbConnectionId);
+  const { activeSessionId, isCreatingSession, createNewSession, selectSession } =
+    useSessionManager(selectedDbConnectionId);
 
   // Memoized handlers to prevent unnecessary re-renders
   const handleCreateSession = useCallback(async () => {
@@ -29,30 +21,19 @@ export default function ChatPage() {
     return await createNewSession();
   }, [activeSessionId, createNewSession]);
 
-  const handleSessionSelect = useCallback((sessionId: string) => {
-    selectSession(sessionId);
-  }, [selectSession]);
+  const handleSessionSelect = useCallback(
+    (sessionId: string) => {
+      selectSession(sessionId);
+    },
+    [selectSession]
+  );
 
-  const handleSessionCreate = useCallback((sessionId: string) => {
-    selectSession(sessionId);
-  }, [selectSession]);
-
-  // Store the session refetch function
-  const sessionRefetchRef = useRef<(() => void) | null>(null);
-
-  // Handle session updates (like title changes after first AI response)
-  const handleSessionUpdate = useCallback(() => {
-    // Trigger a refetch of sessions to get updated titles
-    if (sessionRefetchRef.current) {
-      console.log('Session updated, refreshing session list...');
-      sessionRefetchRef.current();
-    }
-  }, []);
-
-  // Handle session refetch function registration
-  const handleRefreshSessions = useCallback((refetchFn: () => void) => {
-    sessionRefetchRef.current = refetchFn;
-  }, []);
+  const handleSessionCreate = useCallback(
+    (sessionId: string) => {
+      selectSession(sessionId);
+    },
+    [selectSession]
+  );
 
   // Memoized error and loading states for better performance
   const errorState = useMemo(() => {
@@ -107,9 +88,7 @@ export default function ChatPage() {
   // Show error states
   if (errorState) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] grid place-items-center">
-        {errorState}
-      </main>
+      <main className="w-full h-[calc(100vh-40px)] grid place-items-center">{errorState}</main>
     );
   }
 
@@ -130,7 +109,6 @@ export default function ChatPage() {
             sessionId={activeSessionId}
             dbConnectionId={selectedDbConnectionId}
             handleCreateSession={handleCreateSession}
-            onSessionUpdate={handleSessionUpdate}
           />
         </section>
       </div>
@@ -142,7 +120,6 @@ export default function ChatPage() {
           dbConnectionId={selectedDbConnectionId}
           onSessionSelect={handleSessionSelect}
           onSessionCreate={handleSessionCreate}
-          onRefreshSessions={handleRefreshSessions}
         />
       )}
     </main>

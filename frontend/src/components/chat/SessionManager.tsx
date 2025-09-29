@@ -1,7 +1,8 @@
 'use client';
 
+import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 import { SessionList } from './SessionList';
 
 interface SessionManagerProps {
@@ -9,7 +10,6 @@ interface SessionManagerProps {
   dbConnectionId: string;
   onSessionSelect: (sessionId: string) => void;
   onSessionCreate: (sessionId: string) => void;
-  onRefreshSessions?: (refetchFn: () => void) => void;
 }
 
 export function SessionManager({
@@ -17,7 +17,6 @@ export function SessionManager({
   dbConnectionId,
   onSessionSelect,
   onSessionCreate,
-  onRefreshSessions,
 }: SessionManagerProps) {
   // Fetch sessions
   const {
@@ -30,12 +29,8 @@ export function SessionManager({
   // Create session mutation
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
 
-  // Expose refetch function to parent
-  useEffect(() => {
-    if (onRefreshSessions) {
-      onRefreshSessions(refetchSessions);
-    }
-  }, [onRefreshSessions, refetchSessions]);
+  // Handle session refresh when triggered by Redux state
+  useSessionRefresh(refetchSessions);
 
   // Handle new session creation
   const handleNewSession = async () => {

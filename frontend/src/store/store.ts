@@ -13,6 +13,7 @@ import { roleApi } from './api/roleApi';
 import { supplierApi } from './api/supplierApi';
 import { userApi } from './api/userApi';
 import authSlice from './slices/authSlice';
+import chatSlice from './slices/chatSlice';
 import commonSlice from './slices/commonSlice';
 import onboardingSlice from './slices/onboardingSlice';
 import themeSlice from './slices/themeSlice';
@@ -20,6 +21,7 @@ import themeSlice from './slices/themeSlice';
 export const store = configureStore({
   reducer: {
     auth: authSlice,
+    chat: chatSlice,
     theme: themeSlice,
     onboarding: onboardingSlice,
     commonSlice,
