@@ -12,6 +12,9 @@ const nextConfig = {
   // See: https://nx.dev/recipes/next/next-config-setup
   nx: {},
   
+  // Enable standalone output for Docker
+  output: 'standalone',
+  
   // Bundle optimization
   compress: true,
   

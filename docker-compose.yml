@@ -1,18 +1,81 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15
-    container_name: supply-chain-postgres
+  # MCP Server (AI Agent)
+  mcp-server:
+    build:
+      context: ./mastra-mcp-server
+      dockerfile: Dockerfile
+    container_name: supply-chain-mcp-server
     restart: unless-stopped
+    env_file:
+      - ./mastra-mcp-server/.env
     environment:
-      POSTGRES_DB: supply_chain_ai
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+      NODE_ENV: production
+      MCP_PORT: 3005
+      MCP_HOST: 0.0.0.0
     ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - '3005:3005'
+    networks:
+      - supply-chain-network
+    # Resource limits for Nanode (more memory available without local DB)
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 192M
 
-volumes:
-  postgres_data:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: supply-chain-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      MCP_SERVER_URL: http://mcp-server:3005
+    ports:
+      - '3004:3004'
+    depends_on:
+      - mcp-server
+    networks:
+      - supply-chain-network
+    # Resource limits for Nanode (more memory available without local DB)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: supply-chain-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      NODE_ENV: production
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    networks:
+      - supply-chain-network
+    # Resource limits for Nanode (more memory available without local DB)
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 192M
+
+networks:
+  supply-chain-network:
+    driver: bridge
