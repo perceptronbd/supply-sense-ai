@@ -20,14 +20,11 @@ RUN pnpm install --frozen-lockfile
 COPY mastra-mcp-server ./mastra-mcp-server
 COPY libs ./libs
 
-# Set working directory to MCP server
-WORKDIR /app/mastra-mcp-server
-
-# Generate Prisma client if schema exists
-RUN if [ -f "prisma/schema.prisma" ]; then npx prisma generate; fi
+# Generate Prisma client from the shared schema
+WORKDIR /app
+RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
 
 # Build the MCP server application using pnpm from root
-WORKDIR /app
 RUN pnpm run mcp-server:build
 
 # Set final working directory
