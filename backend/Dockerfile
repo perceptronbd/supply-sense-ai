@@ -1,5 +1,5 @@
-# Use Node.js 18 Alpine as base image for smaller size
-FROM node:18-alpine
+# Use the base image with shared setup and Prisma client
+FROM node:18-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -16,18 +16,19 @@ COPY nx.json tsconfig.base.json ./
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy only the backend source code and shared libraries
-COPY backend ./backend
+# Copy shared libraries (including Prisma schema)
 COPY libs ./libs
 
-# Set working directory to backend
-WORKDIR /app/backend
+# Generate Prisma client once for the entire monorepo
+RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
 
-# Generate Prisma client
-RUN npx prisma generate
+# Backend-specific stage
+FROM base AS backend-build
+
+# Copy only the backend source code
+COPY backend ./backend
 
 # Build the backend application using pnpm from root
-WORKDIR /app
 RUN pnpm run backend:build
 
 # Set final working directory

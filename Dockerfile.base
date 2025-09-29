@@ -1,0 +1,26 @@
+# Base Dockerfile for shared setup
+FROM node:18-alpine AS base
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Copy package files from monorepo root
+COPY package.json pnpm-lock.yaml* ./
+
+# Copy Nx configuration files
+COPY nx.json tsconfig.base.json ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy shared libraries (including Prisma schema)
+COPY libs ./libs
+
+# Generate Prisma client once for the entire monorepo
+RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
+
+# This stage will be used by other services
+FROM base AS workspace

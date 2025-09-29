@@ -194,12 +194,34 @@ sudo apt install -y postgresql-client
 psql "postgresql://your_db_user:your_db_password@your-db-host:5432/your_database_name" -c "SELECT version();"
 ```
 
+## Architecture Overview
+
+### Centralized Prisma Client Generation
+
+This project uses a **centralized Prisma client generation strategy** to optimize build times and ensure consistency across all services:
+
+- **Single Generation**: Prisma client is generated once at the workspace level during Docker build
+- **Shared Location**: Generated client is stored in `libs/shared/prisma/generated`
+- **Import Path**: All services import via `@supplysense/prisma-client` path mapping
+- **Benefits**: Faster builds, consistent client version, reduced Docker layer size
+
+### Build Process Flow
+
+```
+1. Install dependencies (pnpm install)
+2. Copy shared libraries (libs/)
+3. Generate Prisma client once (npx prisma generate --schema=libs/shared/prisma/schema.prisma)
+4. Copy service-specific code (backend/, mastra-mcp-server/)
+5. Build individual services (pnpm run backend:build, pnpm run mcp-server:build)
+```
+
 ## Deployment Steps
 
 ### 1. Build and Start Services
 
 ```bash
 # Build all containers (this will take some time on first run)
+# Note: Prisma client is generated once during the base build stage
 docker-compose build
 
 # Start all services

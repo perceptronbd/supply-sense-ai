@@ -1,5 +1,5 @@
-# Use Node.js 18 Alpine as base image for smaller size
-FROM node:18-alpine
+# Use the base image with shared setup and Prisma client
+FROM node:18-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -16,13 +16,17 @@ COPY nx.json tsconfig.base.json ./
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy only the MCP server source code
-COPY mastra-mcp-server ./mastra-mcp-server
+# Copy shared libraries (including Prisma schema)
 COPY libs ./libs
 
-# Generate Prisma client from the shared schema
-WORKDIR /app
+# Generate Prisma client once for the entire monorepo
 RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
+
+# MCP Server-specific stage
+FROM base AS mcp-build
+
+# Copy only the MCP server source code
+COPY mastra-mcp-server ./mastra-mcp-server
 
 # Build the MCP server application using pnpm from root
 RUN pnpm run mcp-server:build
