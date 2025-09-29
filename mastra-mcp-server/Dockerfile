@@ -28,11 +28,26 @@ FROM base AS mcp-build
 # Copy only the MCP server source code
 COPY mastra-mcp-server ./mastra-mcp-server
 
-# Build the MCP server application using pnpm from root
-RUN pnpm run mcp-server:build
+# Build the MCP server application using nx directly (faster)
+RUN npx nx build mastra-mcp-server --skip-nx-cache
 
-# Set final working directory
-WORKDIR /app/mastra-mcp-server
+# Production stage - use a smaller base image
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 mcpuser
+
+# Copy built application from build stage
+COPY --from=mcp-build --chown=mcpuser:nodejs /app/dist/mastra-mcp-server ./dist
+COPY --from=mcp-build --chown=mcpuser:nodejs /app/node_modules ./node_modules
+
+USER mcpuser
 
 # Expose port (MCP server port)
 EXPOSE 3005

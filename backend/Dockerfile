@@ -28,11 +28,26 @@ FROM base AS backend-build
 # Copy only the backend source code
 COPY backend ./backend
 
-# Build the backend application using pnpm from root
-RUN pnpm run backend:build
+# Build the backend application using nx directly (faster)
+RUN npx nx build backend --skip-nx-cache
 
-# Set final working directory
-WORKDIR /app/backend
+# Production stage - use a smaller base image
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nestjs
+
+# Copy built application from build stage
+COPY --from=backend-build --chown=nestjs:nodejs /app/dist/backend ./dist
+COPY --from=backend-build --chown=nestjs:nodejs /app/node_modules ./node_modules
+
+USER nestjs
 
 # Expose port (default NestJS port)
 EXPOSE 3004
