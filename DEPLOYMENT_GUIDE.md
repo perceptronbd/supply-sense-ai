@@ -48,9 +48,44 @@ sudo reboot
 
 ### 2. Clone and Setup Project
 
+#### Option A: Using Personal Access Token (Recommended for Private Repos)
+
 ```bash
-# Clone your repository
-git clone https://github.com/your-username/supply-sense-ai.git
+# Generate a Personal Access Token from GitHub:
+# 1. Go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)
+# 2. Generate new token with 'repo' scope
+# 3. Copy the token
+
+# Clone using token authentication
+git clone https://your-token@github.com/your-username/supply-sense-ai.git
+cd supply-sense-ai
+```
+
+#### Option B: Using SSH Key
+
+```bash
+# Generate SSH key on your VPS (if not already done)
+ssh-keygen -t ed25519 -C "your-email@example.com"
+
+# Add the public key to your GitHub account:
+# Copy the content of ~/.ssh/id_ed25519.pub to GitHub Settings > SSH and GPG keys
+
+# Clone using SSH
+git clone git@github.com:your-username/supply-sense-ai.git
+cd supply-sense-ai
+```
+
+#### Option C: Using GitHub CLI (Alternative)
+
+```bash
+# Install GitHub CLI
+sudo apt install gh
+
+# Authenticate with GitHub
+gh auth login
+
+# Clone the repository
+gh repo clone your-username/supply-sense-ai
 cd supply-sense-ai
 ```
 

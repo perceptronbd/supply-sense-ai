@@ -31,12 +31,7 @@ echo "📋 Please provide the following information:"
 echo ""
 
 # Database Configuration
-prompt_with_default "Database Host" "your-db-host.com" "DB_HOST"
-prompt_with_default "Database Name" "supply_chain_ai" "DB_NAME"
-prompt_with_default "Database User" "your-db-user" "DB_USER"
-echo -n "Database Password: "
-read -s DB_PASSWORD
-echo ""
+prompt_with_default "Database URL (postgresql://user:password@host:5432/database)" "postgresql://username:password@your-db-host:5432/supply_chain_ai" "DATABASE_URL"
 
 # VPS Configuration
 prompt_with_default "VPS IP Address" "localhost" "VPS_IP"
@@ -49,8 +44,7 @@ DB_ENCRYPTION_KEY=$(generate_key)
 # Optional API Key
 prompt_with_default "OpenRouter API Key (optional, press enter to skip)" "" "OPENROUTER_KEY"
 
-# Build connection strings
-DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME"
+# Build frontend URLs
 FRONTEND_URLS="http://$VPS_IP:3000,http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://$VPS_IP:3004"
 
@@ -99,7 +93,7 @@ echo "  - frontend/.env.local"
 echo "  - mastra-mcp-server/.env"
 echo ""
 echo "🔧 Configuration Summary:"
-echo "  Database: $DB_HOST/$DB_NAME"
+echo "  Database URL: $DATABASE_URL"
 echo "  VPS IP: $VPS_IP"
 echo "  Frontend URL: $NEXT_PUBLIC_API_URL"
 echo "  Backend URL: http://$VPS_IP:3004"
