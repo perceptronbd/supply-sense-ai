@@ -23,6 +23,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 
+# Copy package files from monorepo root (needed for pnpm commands)
+COPY package.json pnpm-lock.yaml* ./
+
 # Copy Nx configuration files
 COPY nx.json tsconfig.base.json ./
 
@@ -37,6 +40,9 @@ RUN npm install -g pnpm
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
+
+# Enable standalone output for Docker builds
+ENV DOCKER_BUILD=true
 
 # Build the frontend application using pnpm from root
 RUN pnpm run frontend:build

@@ -125,6 +125,9 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      chart.js:
+        specifier: ^4.5.0
+        version: 4.5.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -182,6 +185,9 @@ importers:
       react:
         specifier: 19.0.0
         version: 19.0.0
+      react-chartjs-2:
+        specifier: ^5.3.0
+        version: 5.3.0(chart.js@4.5.0)(react@19.0.0)
       react-dom:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
@@ -2713,6 +2719,9 @@ packages:
     engines: {node: '>=10.0'}
     peerDependencies:
       tslib: '2'
+
+  '@kurkle/color@0.3.4':
+    resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
 
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
@@ -6554,6 +6563,10 @@ packages:
 
   character-reference-invalid@2.0.1:
     resolution: {integrity: sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw==}
+
+  chart.js@4.5.0:
+    resolution: {integrity: sha512-aYeC/jDgSEx8SHWZvANYMioYMZ2KX02W6f6uVfyteuCGcadDLcYVHdfdygsTQkQ4TKn5lghoojAsPj5pu0SnvQ==}
+    engines: {pnpm: '>=8'}
 
   check-more-types@2.24.0:
     resolution: {integrity: sha512-Pj779qHxV2tuapviy1bSZNEL1maXr13bPYpsvSDB68HlYcYuhlDrmGd63i0JHMCLKzc7rUSNIrpdJlhVlNwrxA==}
@@ -11380,6 +11393,12 @@ packages:
   raw-body@3.0.0:
     resolution: {integrity: sha512-RmkhL8CAyCRPXCE28MMH0z2PNWQBNk2Q09ZdxM9IOOXwxwZbN+qbWaatPkdkWIKL2ZVDImrN/pK5HTRz2PcS4g==}
     engines: {node: '>= 0.8'}
+
+  react-chartjs-2@5.3.0:
+    resolution: {integrity: sha512-UfZZFnDsERI3c3CZGxzvNJd02SHjaSJ8kgW1djn65H1KK8rehwTjyrRKOG3VTMG8wtHZ5rgAO5oTHtHi9GCCmw==}
+    peerDependencies:
+      chart.js: ^4.1.1
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-dom@19.0.0:
     resolution: {integrity: sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ==}
@@ -16642,6 +16661,8 @@ snapshots:
   '@jsonjoy.com/util@1.6.0(tslib@2.8.1)':
     dependencies:
       tslib: 2.8.1
+
+  '@kurkle/color@0.3.4': {}
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
@@ -22152,6 +22173,10 @@ snapshots:
   character-entities@2.0.2: {}
 
   character-reference-invalid@2.0.1: {}
+
+  chart.js@4.5.0:
+    dependencies:
+      '@kurkle/color': 0.3.4
 
   check-more-types@2.24.0: {}
 
@@ -28090,6 +28115,11 @@ snapshots:
       http-errors: 2.0.0
       iconv-lite: 0.6.3
       unpipe: 1.0.0
+
+  react-chartjs-2@5.3.0(chart.js@4.5.0)(react@19.0.0):
+    dependencies:
+      chart.js: 4.5.0
+      react: 19.0.0
 
   react-dom@19.0.0(react@19.0.0):
     dependencies:
