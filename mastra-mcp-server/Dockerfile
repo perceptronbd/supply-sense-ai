@@ -10,6 +10,9 @@ RUN npm install -g pnpm
 # Copy package files from monorepo root
 COPY package.json pnpm-lock.yaml* ./
 
+# Copy Nx configuration files
+COPY nx.json tsconfig.base.json ./
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 

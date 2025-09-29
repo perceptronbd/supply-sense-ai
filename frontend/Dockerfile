@@ -12,12 +12,19 @@ RUN npm install -g pnpm
 
 # Copy package files from monorepo root
 COPY package.json pnpm-lock.yaml* ./
+
+# Copy Nx configuration files
+COPY nx.json tsconfig.base.json ./
+
 RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy Nx configuration files
+COPY nx.json tsconfig.base.json ./
 
 # Copy only the frontend source code and shared libraries
 COPY frontend ./frontend
