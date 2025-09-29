@@ -7,20 +7,28 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package files
+# Copy package files from monorepo root
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy only the MCP server source code
+COPY mastra-mcp-server ./mastra-mcp-server
+COPY libs ./libs
+
+# Set working directory to MCP server
+WORKDIR /app/mastra-mcp-server
 
 # Generate Prisma client if schema exists
 RUN if [ -f "prisma/schema.prisma" ]; then npx prisma generate; fi
 
-# Build the application
-RUN pnpm run build
+# Build the MCP server application using pnpm from root
+WORKDIR /app
+RUN pnpm run mcp-server:build
+
+# Set final working directory
+WORKDIR /app/mastra-mcp-server
 
 # Expose port (MCP server port)
 EXPOSE 3005

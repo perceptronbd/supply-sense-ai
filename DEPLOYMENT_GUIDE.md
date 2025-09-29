@@ -35,9 +35,16 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Install Docker Compose (Method 1: Compose V2 Plugin - Recommended)
+sudo apt update
+sudo apt install -y docker-compose-plugin
+
+# Alternative Method 2: Standalone Docker Compose (if plugin doesn't work)
+# sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# sudo chmod +x /usr/local/bin/docker-compose
+
+# Alternative Method 3: Via package manager (older version)
+# sudo apt install -y docker-compose
 
 # Install Git and other utilities
 sudo apt install -y git htop curl wget
@@ -367,7 +374,32 @@ chmod +x ~/monitor.sh
 
 ### Common Issues
 
-1. **Out of Memory Errors**
+1. **Docker Compose Command Not Found**
+   ```bash
+   # Error: Command 'docker-compose' not found
+   
+   # Solution 1: Install Docker Compose Plugin (Recommended)
+   sudo apt update
+   sudo apt install -y docker-compose-plugin
+   
+   # Then use: docker compose (note the space, not hyphen)
+   docker compose up -d
+   docker compose build
+   
+   # Solution 2: Install standalone Docker Compose
+   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   
+   # Verify installation
+   docker-compose --version
+   # or
+   docker compose version
+   
+   # Solution 3: Use package manager (older version)
+   sudo apt install -y docker-compose
+   ```
+
+2. **Out of Memory Errors**
    ```bash
    # Check memory usage
    free -h

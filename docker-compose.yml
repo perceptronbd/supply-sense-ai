@@ -2,8 +2,8 @@ services:
   # MCP Server (AI Agent)
   mcp-server:
     build:
-      context: ./mastra-mcp-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./mastra-mcp-server/Dockerfile
     container_name: supply-chain-mcp-server
     restart: unless-stopped
     env_file:
@@ -27,8 +27,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
     container_name: supply-chain-backend
     restart: unless-stopped
     env_file:
@@ -54,8 +54,8 @@ services:
   # Frontend Application
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile
     container_name: supply-chain-frontend
     restart: unless-stopped
     env_file:
