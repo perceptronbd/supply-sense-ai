@@ -46,6 +46,7 @@ RUN adduser --system --uid 1001 nestjs
 # Copy built application from build stage
 COPY --from=backend-build --chown=nestjs:nodejs /app/dist/backend ./dist
 COPY --from=backend-build --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=backend-build --chown=nestjs:nodejs /app/libs/shared/prisma/generated ./libs/shared/prisma/generated
 
 USER nestjs
 
