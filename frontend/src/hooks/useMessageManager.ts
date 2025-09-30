@@ -1,6 +1,6 @@
 import { useGetSessionMessagesQuery } from '@/store/api/chatApi';
 import type { ChatMessage } from '@/store/api/chatApi';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface UseMessageManagerReturn {
   messages: ChatMessage[];
@@ -17,7 +17,6 @@ export interface UseMessageManagerReturn {
  * Handles message fetching, temporary messages, and error messages
  */
 export function useMessageManager(sessionId: string | undefined): UseMessageManagerReturn {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [tempMessages, setTempMessages] = useState<Record<string, ChatMessage>>({});
 
   const {
@@ -27,31 +26,36 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     refetch,
   } = useGetSessionMessagesQuery({ sessionId: sessionId as string }, { skip: !sessionId });
 
-  // Update local messages when fetched from API
-  useEffect(() => {
-    if (fetchedMessages) {
-      // Merge temp messages with fetched messages
-      const updatedMessages = [...fetchedMessages];
+  // Compute merged messages using useMemo instead of useEffect + useState
+  const messages = useMemo(() => {
+    if (!fetchedMessages) {
+      return sessionId ? [] : [];
+    }
 
-      // Add temp messages that don't have a corresponding real message yet
-      for (const tempMsg of Object.values(tempMessages)) {
-        if (!updatedMessages.some((msg) => msg.id === tempMsg.id)) {
-          updatedMessages.push(tempMsg);
-        }
+    // Merge temp messages with fetched messages
+    const updatedMessages = [...fetchedMessages];
+
+    // Add temp messages that don't have a corresponding real message yet
+    for (const tempMsg of Object.values(tempMessages)) {
+      if (!updatedMessages.some((msg) => msg.id === tempMsg.id)) {
+        updatedMessages.push(tempMsg);
       }
+    }
 
-      // Sort by creation time
-      updatedMessages.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
+    // Sort by creation time
+    updatedMessages.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
 
-      setMessages(updatedMessages);
-    } else if (!sessionId) {
-      // Clear messages when no session is selected
-      setMessages([]);
+    return updatedMessages;
+  }, [fetchedMessages, tempMessages, sessionId]);
+
+  // Clear temp messages when session changes
+  useEffect(() => {
+    if (!sessionId) {
       setTempMessages({});
     }
-  }, [fetchedMessages, sessionId, tempMessages]);
+  }, [sessionId]);
 
   // Add a temporary message
   const addTempMessage = useCallback(
@@ -94,7 +98,10 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
       updatedAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, errorMessage]);
+    setTempMessages((prev) => ({
+      ...prev,
+      [errorMessage.id]: errorMessage,
+    }));
   }, []);
 
   const refetchMessages = useCallback(() => {
