@@ -20,6 +20,7 @@ export class RegistrationResponseDto {
     id: string;
     name: string;
     contactEmail: string;
+    industry: string;
   };
 
   @ApiProperty({

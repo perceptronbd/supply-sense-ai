@@ -12,6 +12,11 @@ const baseRegistrationSchema = z.object({
     .min(1, 'Company email is required')
     .email('Please enter a valid company email address'),
 
+  industry: z
+    .string()
+    .min(2, 'Industry must be at least 2 characters')
+    .max(100, 'Industry must not exceed 100 characters'),
+
   firstName: z
     .string()
     .min(1, 'First name is required')
@@ -64,6 +69,7 @@ export const registrationFieldSchemas = {
   email: baseRegistrationSchema.shape.email,
   password: baseRegistrationSchema.shape.password,
   confirmPassword: baseRegistrationSchema.shape.confirmPassword,
+  industry: baseRegistrationSchema.shape.industry,
   taxId: baseRegistrationSchema.shape.taxId,
   businessAddress: baseRegistrationSchema.shape.businessAddress,
   contactPhone: baseRegistrationSchema.shape.contactPhone,

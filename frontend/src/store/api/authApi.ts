@@ -12,6 +12,7 @@ interface LoginRequest {
 interface RegisterRequest {
   companyName: string;
   companyEmail: string;
+  industry: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -43,6 +44,7 @@ interface RegistrationResponse {
     id: string;
     name: string;
     contactEmail: string;
+    industry: string;
   };
   user: {
     id: string;

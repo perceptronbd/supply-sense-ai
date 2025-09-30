@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState<RegistrationFormData>({
     companyName: '',
     companyEmail: '',
+    industry: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -153,6 +154,19 @@ export default function RegisterPage() {
                         errors={fieldErrors.companyEmail}
                         onValueChange={handleFieldChange}
                         isRequired
+                      />
+
+                      <ValidatedInput
+                        name="industry"
+                        label="Industry"
+                        placeholder="e.g., Automotive Manufacturing"
+                        variant="bordered"
+                        fieldSchema={registrationFieldSchemas.industry}
+                        wasSubmitted={wasSubmitted}
+                        errors={fieldErrors.industry}
+                        onValueChange={handleFieldChange}
+                        isRequired
+                        className="md:col-span-2"
                       />
 
                       <ValidatedInput

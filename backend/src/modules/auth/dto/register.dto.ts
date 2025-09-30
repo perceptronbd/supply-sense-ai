@@ -19,6 +19,15 @@ export class RegisterDto {
   companyEmail: string;
 
   @ApiProperty({
+    description: 'Primary industry the company operates in',
+    example: 'Automotive Manufacturing',
+  })
+  @IsString()
+  @MinLength(2, { message: 'Industry must be at least 2 characters' })
+  @MaxLength(100, { message: 'Industry must not exceed 100 characters' })
+  industry: string;
+
+  @ApiProperty({
     description: 'User first name',
     example: 'John',
   })

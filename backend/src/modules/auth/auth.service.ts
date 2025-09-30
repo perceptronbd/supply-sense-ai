@@ -43,6 +43,7 @@ interface UserWithRelations {
     businessAddress: string | null;
     contactPhone: string | null;
     contactEmail: string;
+    industry: string | null;
     defaultCurrency: string;
     timezone: string;
     createdAt: Date;
@@ -138,6 +139,7 @@ export class AuthService {
           taxId: registerDto.taxId,
           businessAddress: registerDto.businessAddress,
           contactPhone: registerDto.contactPhone,
+          industry: registerDto.industry,
         },
       });
 
@@ -228,6 +230,7 @@ export class AuthService {
         id: result.company.id,
         name: result.company.name,
         contactEmail: result.company.contactEmail,
+        industry: result.company.industry ?? '',
       },
       user: {
         id: result.user.id,
