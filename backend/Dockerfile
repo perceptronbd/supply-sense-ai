@@ -1,5 +1,5 @@
 # Use the base image with shared setup and Prisma client
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -29,10 +29,15 @@ FROM base AS backend-build
 COPY backend ./backend
 
 # Build the backend application using nx directly (faster)
-RUN npx nx build backend --skip-nx-cache
+RUN npx nx build backend
+
+# Prepare production dependencies only
+FROM backend-build AS backend-prod-deps
+ENV NODE_ENV=production
+RUN pnpm install --prod --frozen-lockfile
 
 # Production stage - use a smaller base image
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
@@ -45,7 +50,7 @@ RUN adduser --system --uid 1001 nestjs
 
 # Copy built application from build stage
 COPY --from=backend-build --chown=nestjs:nodejs /app/dist/backend ./dist
-COPY --from=backend-build --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=backend-prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=backend-build --chown=nestjs:nodejs /app/libs/shared/prisma/generated ./libs/shared/prisma/generated
 
 USER nestjs

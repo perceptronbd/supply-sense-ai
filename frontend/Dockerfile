@@ -1,5 +1,5 @@
 # Multi-stage build for Next.js application
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -47,6 +47,11 @@ ENV DOCKER_BUILD=true
 # Build the frontend application using pnpm from root
 RUN pnpm run frontend:build
 
+# Prepare production-only dependencies
+FROM deps AS prod-deps
+ENV NODE_ENV=production
+RUN pnpm install --prod --frozen-lockfile
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
@@ -69,7 +74,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/dist/frontend/package.json ./pack
 COPY --from=builder --chown=nextjs:nodejs /app/dist/frontend/next.config.js ./next.config.js
 
 # Include node_modules so we can run the Next.js production server
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Ensure ownership of the working directory
 RUN chown -R nextjs:nodejs /app

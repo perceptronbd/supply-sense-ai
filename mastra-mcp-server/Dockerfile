@@ -1,5 +1,5 @@
 # Use the base image with shared setup and Prisma client
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -29,10 +29,15 @@ FROM base AS mcp-build
 COPY mastra-mcp-server ./mastra-mcp-server
 
 # Build the MCP server application using nx directly (faster)
-RUN npx nx build mastra-mcp-server --skip-nx-cache
+RUN npx nx build mastra-mcp-server
+
+# Prepare production dependencies only
+FROM mcp-build AS mcp-prod-deps
+ENV NODE_ENV=production
+RUN pnpm install --prod --frozen-lockfile
 
 # Production stage - use a smaller base image
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
@@ -45,7 +50,7 @@ RUN adduser --system --uid 1001 mcpuser
 
 # Copy built application from build stage
 COPY --from=mcp-build --chown=mcpuser:nodejs /app/dist/mastra-mcp-server ./dist
-COPY --from=mcp-build --chown=mcpuser:nodejs /app/node_modules ./node_modules
+COPY --from=mcp-prod-deps --chown=mcpuser:nodejs /app/node_modules ./node_modules
 COPY --from=mcp-build --chown=mcpuser:nodejs /app/libs/shared/prisma/generated ./libs/shared/prisma/generated
 
 USER mcpuser
