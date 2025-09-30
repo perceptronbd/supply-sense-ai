@@ -1,5 +1,7 @@
 'use client';
 
+import './global.css';
+
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
