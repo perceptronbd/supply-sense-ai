@@ -8,6 +8,8 @@ export interface UseMessageManagerReturn {
   messagesError: unknown;
   addErrorMessage: (sessionId: string, errorText: string) => void;
   refetchMessages: () => void;
+  addTempMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => string;
+  removeTempMessage: (tempId: string) => void;
 }
 
 /**
@@ -16,6 +18,7 @@ export interface UseMessageManagerReturn {
  */
 export function useMessageManager(sessionId: string | undefined): UseMessageManagerReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [tempMessages, setTempMessages] = useState<Record<string, ChatMessage>>({});
 
   const {
     data: fetchedMessages,
@@ -27,13 +30,57 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
   // Update local messages when fetched from API
   useEffect(() => {
     if (fetchedMessages) {
-      // Use fetched messages as the single source of truth
-      setMessages(fetchedMessages);
+      // Merge temp messages with fetched messages
+      const updatedMessages = [...fetchedMessages];
+
+      // Add temp messages that don't have a corresponding real message yet
+      for (const tempMsg of Object.values(tempMessages)) {
+        if (!updatedMessages.some((msg) => msg.id === tempMsg.id)) {
+          updatedMessages.push(tempMsg);
+        }
+      }
+
+      // Sort by creation time
+      updatedMessages.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+      setMessages(updatedMessages);
     } else if (!sessionId) {
       // Clear messages when no session is selected
       setMessages([]);
+      setTempMessages({});
     }
-  }, [fetchedMessages, sessionId]);
+  }, [fetchedMessages, sessionId, tempMessages]);
+
+  // Add a temporary message
+  const addTempMessage = useCallback(
+    (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const tempMessage: ChatMessage = {
+        ...message,
+        id: `temp-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setTempMessages((prev) => ({
+        ...prev,
+        [tempMessage.id]: tempMessage,
+      }));
+
+      return tempMessage.id;
+    },
+    []
+  );
+
+  // Remove a temporary message
+  const removeTempMessage = useCallback((tempId: string) => {
+    setTempMessages((prev) => {
+      const newTempMessages = { ...prev };
+      delete newTempMessages[tempId];
+      return newTempMessages;
+    });
+  }, []);
 
   const addErrorMessage = useCallback((sessionId: string, errorText: string) => {
     const errorMessage: ChatMessage = {
@@ -62,5 +109,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     messagesError,
     addErrorMessage,
     refetchMessages,
+    addTempMessage,
+    removeTempMessage,
   };
 }
