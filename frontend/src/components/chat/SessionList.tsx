@@ -4,7 +4,9 @@ import { Loading, PlusIcon } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-import { Button, Drawer, DrawerBody, DrawerContent, useDisclosure } from '@heroui/react';
+import { useAppDispatch } from '@/store/hooks';
+import { setToggleValue } from '@/store/slices/commonSlice';
+import { Button, Drawer, DrawerBody, DrawerContent } from '@heroui/react';
 import { useState } from 'react';
 import type { ChatSession } from './types';
 
@@ -16,6 +18,9 @@ interface SessionListProps {
   isLoading?: boolean;
   controlExpanded?: boolean;
   onControlExpandedChange?: (expanded: boolean) => void;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  isMobile?: boolean;
 }
 
 export function SessionList({
@@ -26,8 +31,11 @@ export function SessionList({
   isLoading = false,
   controlExpanded,
   onControlExpandedChange,
+  isMobile,
 }: Readonly<SessionListProps>) {
   const [expanded, setExpanded] = useState(controlExpanded || false);
+  const dispatch = useAppDispatch();
+
   if (isLoading) {
     return <Loading />;
   }
@@ -36,23 +44,20 @@ export function SessionList({
     <aside
       aria-label="Chat sessions"
       className={cn(
-        'flex-shrink-0 mr-2 lg:max-w-[208px]  relative',
-        expanded ? 'w-full' : 'w-auto'
+        'flex-shrink-0 mr-2 lg:max-w-[208px] w-full bg-background max-lg:p-4 relative',
+        expanded || isMobile ? 'w-full' : 'w-auto'
       )}
     >
-      <header className="flex items-center justify-between mb-5 sticky top-0 z-50 bg-background/40 backdrop-blur-sm">
-        {expanded && (
-          <button
-            type="button"
-            className="flex items-center gap-1 text-default-600"
-            onClick={onNewSession}
-          >
+      <header className="flex items-center justify-between mb-8 sticky top-0 z-50 bg-background py-1.5">
+        {(expanded || isMobile) && (
+          <Button size="lg" variant="light" color="default" onPress={onNewSession}>
             <PlusIcon className="size-3" />{' '}
-            <Text variant="bodyXSmall" weight="bold" className="text-default-600">
+            <Text variant="bodyBase" className="text-default-600">
               Session
             </Text>
-          </button>
+          </Button>
         )}
+
         <Button
           isIconOnly
           size="sm"
@@ -60,25 +65,29 @@ export function SessionList({
           aria-label="Toggle sessions list"
           className="text-secondary border-none"
           onPress={() => {
-            setExpanded(!expanded);
-            onControlExpandedChange?.(!expanded);
+            if (isMobile) {
+              dispatch(setToggleValue({ sidebar: false }));
+            } else {
+              setExpanded(!expanded);
+              onControlExpandedChange?.(!expanded);
+            }
           }}
         >
           <Icons.ToggleSession />
         </Button>
       </header>
 
-      <section className="flex flex-col gap-2">
-        {expanded &&
+      <section className="flex flex-col gap-2 ">
+        {(expanded || isMobile) &&
           sessions.map((session) => (
             <button
               key={session.id}
               onClick={() => onSessionSelect(session.id)}
-              className="cursor-pointer max-w-full px-4 py-3 mb-1"
+              className="cursor-pointer max-w-full px-4 py-3"
               type="button"
             >
               <Text
-                variant="bodySmall"
+                variant="bodyMedium"
                 weight="medium"
                 color={session.id === activeSessionId ? 'secondary' : 'default'}
                 className="mb-1 line-clamp-1 text-left"
@@ -115,20 +124,20 @@ export const SessionListMobile = ({
   onSessionSelect,
   onNewSession,
   isLoading = false,
+  isOpen,
+  onOpenChange,
 }: Readonly<SessionListProps>) => {
-  const { isOpen, onOpenChange } = useDisclosure();
   return (
     <>
       <Drawer
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        backdrop="blur"
+        backdrop="transparent"
         hideCloseButton
         aria-label="Session List"
+        radius="none"
         classNames={{
-          base: 'w-[100vw]',
-          wrapper: 'w-[100vw]',
-          body: 'w-[100vw]',
+          body: 'p-0',
         }}
       >
         <DrawerContent>
@@ -141,8 +150,7 @@ export const SessionListMobile = ({
                   onSessionSelect={onSessionSelect}
                   onNewSession={onNewSession}
                   isLoading={isLoading}
-                  controlExpanded={isOpen}
-                  onControlExpandedChange={onOpenChange}
+                  isMobile={true}
                 />
               </DrawerBody>
             </>

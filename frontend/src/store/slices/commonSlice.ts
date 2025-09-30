@@ -1,18 +1,18 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  isOpen: false,
+  toggleKey: {} as { [key: string]: boolean },
 };
 
 const commonSlice = createSlice({
   name: 'commonSlice',
   initialState,
   reducers: {
-    setIsOpen: (state, action: PayloadAction<boolean>) => {
-      state.isOpen = action.payload;
+    setToggleValue: (state, action: PayloadAction<{ [key: string]: boolean }>) => {
+      state.toggleKey = action.payload;
     },
   },
 });
 
-export const { setIsOpen } = commonSlice.actions;
+export const { setToggleValue } = commonSlice.actions;
 export default commonSlice.reducer;
