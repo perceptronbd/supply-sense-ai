@@ -46,6 +46,7 @@ RUN adduser --system --uid 1001 mcpuser
 # Copy built application from build stage
 COPY --from=mcp-build --chown=mcpuser:nodejs /app/dist/mastra-mcp-server ./dist
 COPY --from=mcp-build --chown=mcpuser:nodejs /app/node_modules ./node_modules
+COPY --from=mcp-build --chown=mcpuser:nodejs /app/libs/shared/prisma/generated ./libs/shared/prisma/generated
 
 USER mcpuser
 
