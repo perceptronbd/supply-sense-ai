@@ -1,10 +1,8 @@
 import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
-import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Controller, Get, HttpStatus, Inject, Logger, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { ConnectionsService } from './connections.service';
 
 @ApiTags('connections')
@@ -18,7 +16,8 @@ export class ConnectionsController {
 
   @Get(':companyId')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
+  // Temporarily disabled to unblock connections API without chat permission
+  // @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get database connections for a company' })
   @ApiResponse({

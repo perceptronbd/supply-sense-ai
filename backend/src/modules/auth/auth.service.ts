@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CREDIT } from '@supplysense/constant';
-import {
-  BillingCycle,
-  type SubscriptionPlan,
-  SubscriptionStatus,
-} from '@supplysense/prisma-client';
+import { BillingCycle, SubscriptionStatus } from '@supplysense/prisma-client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../../../libs/shared/prisma/src/lib/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
@@ -130,89 +126,106 @@ export class AuthService {
     const hashedPassword = await argon2.hash(registerDto.password);
 
     // Create company and user in a transaction
-    const result = await this.prisma.$transaction(async (tx) => {
-      // Create the company
-      const company = await tx.company.create({
-        data: {
-          name: registerDto.companyName,
-          contactEmail: registerDto.companyEmail,
-          taxId: registerDto.taxId,
-          businessAddress: registerDto.businessAddress,
-          contactPhone: registerDto.contactPhone,
-          industry: registerDto.industry,
-        },
-      });
+    const result = await this.prisma.$transaction(
+      async (tx) => {
+        // Create the company
+        const company = await tx.company.create({
+          data: {
+            name: registerDto.companyName,
+            contactEmail: registerDto.companyEmail,
+            taxId: registerDto.taxId,
+            businessAddress: registerDto.businessAddress,
+            contactPhone: registerDto.contactPhone,
+            industry: registerDto.industry,
+          },
+        });
 
-      // Find or create the default subscription plan (TRIAL)
+        // Find or create the default subscription plan (TRIAL)
+        let defaultPlan = await tx.subscriptionPlan.findFirst({
+          where: {
+            name: CREDIT.TRIAL.name,
+            isActive: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        });
 
-      const defaultPlan: SubscriptionPlan = await tx.subscriptionPlan.create({
-        data: {
-          ...CREDIT.TRIAL,
-          isActive: true,
-        },
-      });
+        if (!defaultPlan) {
+          defaultPlan = await tx.subscriptionPlan.create({
+            data: {
+              ...CREDIT.TRIAL,
+              isActive: true,
+            },
+          });
+        }
 
-      // Create the company subscription
-      await tx.companySubscription.create({
-        data: {
-          status: SubscriptionStatus.ACTIVE,
-          billingCycle: BillingCycle.MONTHLY,
-          startPeriod: new Date(),
-          endPeriod: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-          totalCredits: defaultPlan.credits,
-          remainingCredits: defaultPlan.credits,
-          isCancelAtPeriodEnd: false,
-          stripeSubscriptionId: randomUUID(), // TODO: To be set after Stripe integration
-          companyId: company.id,
-          subscriptionPlanId: defaultPlan.id,
-        },
-      });
+        // Create the company subscription
+        await tx.companySubscription.create({
+          data: {
+            status: SubscriptionStatus.ACTIVE,
+            billingCycle: BillingCycle.MONTHLY,
+            startPeriod: new Date(),
+            endPeriod: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+            totalCredits: defaultPlan.credits,
+            remainingCredits: defaultPlan.credits,
+            isCancelAtPeriodEnd: false,
+            stripeSubscriptionId: randomUUID(), // TODO: To be set after Stripe integration
+            companyId: company.id,
+            subscriptionPlanId: defaultPlan.id,
+          },
+        });
 
-      // Create default "Super Admin" role for the company
-      const superAdminRole = await tx.role.create({
-        data: {
-          name: 'Super Admin',
-          description: 'Full access to all company resources and settings',
-          companyId: company.id,
-        },
-      });
+        // Create default "Super Admin" role for the company
+        const superAdminRole = await tx.role.create({
+          data: {
+            name: 'Super Admin',
+            description: 'Full access to all company resources and settings',
+            companyId: company.id,
+          },
+        });
 
-      // Get all available permissions
-      const allPermissions = await tx.permission.findMany();
+        // Get all available permissions
+        const allPermissions = await tx.permission.findMany();
 
-      // Assign all permissions to Super Admin role
-      const rolePermissions = allPermissions.map((permission) => ({
-        roleId: superAdminRole.id,
-        permissionId: permission.id,
-      }));
-
-      await tx.rolePermission.createMany({
-        data: rolePermissions,
-      });
-
-      // Create the super admin user
-      const user = await tx.user.create({
-        data: {
-          email: registerDto.email,
-          username: registerDto.email, // Use email as default username
-          firstName: registerDto.firstName,
-          lastName: registerDto.lastName,
-          password: hashedPassword,
-          isSuperAdmin: true,
-          companyId: company.id,
-        },
-      });
-
-      // Assign Super Admin role to user
-      await tx.userRole.create({
-        data: {
-          userId: user.id,
+        // Assign all permissions to Super Admin role
+        const rolePermissions = allPermissions.map((permission) => ({
           roleId: superAdminRole.id,
-        },
-      });
+          permissionId: permission.id,
+        }));
 
-      return { company, user };
-    });
+        await tx.rolePermission.createMany({
+          data: rolePermissions,
+        });
+
+        // Create the super admin user
+        const user = await tx.user.create({
+          data: {
+            email: registerDto.email,
+            username: registerDto.email, // Use email as default username
+            firstName: registerDto.firstName,
+            lastName: registerDto.lastName,
+            password: hashedPassword,
+            isSuperAdmin: true,
+            companyId: company.id,
+          },
+        });
+
+        // Assign Super Admin role to user
+        await tx.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: superAdminRole.id,
+          },
+        });
+
+        return { company, user };
+      },
+      {
+        timeout: 20000, // 20 seconds to account for remote DB latency
+        maxWait: 5000,
+      }
+    );
 
     // Get the user with full relations for token generation
     const userWithRelations = await this.getUserById(result.user.id);
