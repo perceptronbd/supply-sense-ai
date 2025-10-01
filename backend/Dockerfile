@@ -34,7 +34,7 @@ RUN npx nx build backend
 # Prepare production dependencies only
 FROM backend-build AS backend-prod-deps
 ENV NODE_ENV=production
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Production stage - use a smaller base image
 FROM node:20-alpine AS production
