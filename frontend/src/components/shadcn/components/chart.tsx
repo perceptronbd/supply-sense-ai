@@ -113,14 +113,24 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<'div'> & {
-    hideLabel?: boolean;
-    hideIndicator?: boolean;
-    indicator?: 'line' | 'dot' | 'dashed';
-    nameKey?: string;
-    labelKey?: string;
-  }) {
+}: {
+  active?: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  payload?: Array<any>;
+  className?: string;
+  indicator?: 'line' | 'dot' | 'dashed';
+  hideLabel?: boolean;
+  hideIndicator?: boolean;
+  label?: React.ReactNode;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  labelFormatter?: (label: any, payload: Array<any>) => React.ReactNode;
+  labelClassName?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation
+  formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode;
+  color?: string;
+  nameKey?: string;
+  labelKey?: string;
+}) {
   const { config } = useChart();
 
   const tooltipLabel = React.useMemo(() => {
@@ -220,7 +230,7 @@ function ChartTooltipContent({
                       </span>
                     </div>
                     {item.value && (
-                      <span className="text-foreground font-mono font-medium tabular-nums">
+                      <span className="font-mono font-medium text-foreground tabular-nums">
                         {item.value.toLocaleString()}
                       </span>
                     )}

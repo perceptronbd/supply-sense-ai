@@ -1,5 +1,4 @@
-import { addToast } from '@heroui/react';
-import type { ToastProps } from '@heroui/toast';
+import { type ToastProps, addToast } from '@heroui/react';
 
 type ToastOptions = Partial<ToastProps>;
 

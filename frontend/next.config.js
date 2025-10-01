@@ -12,6 +12,9 @@ const nextConfig = {
   // See: https://nx.dev/recipes/next/next-config-setup
   nx: {},
   
+  // Enable standalone output for Docker only (disable for Windows due to symlink issues)
+  output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
+  
   // Bundle optimization
   compress: true,
   

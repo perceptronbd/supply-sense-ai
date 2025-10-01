@@ -1,6 +1,7 @@
 'use client';
 
 import './global.css';
+
 import AuthProvider from '@/components/AuthProvider';
 import MainLayout from '@/components/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -72,7 +73,7 @@ export default function RootLayout({
         <Provider store={store}>
           <PersistGate
             loading={
-              <main className="min-h-screen flex items-center justify-center bg-background">
+              <main className="flex items-center justify-center min-h-screen bg-background">
                 <SSRSafeDrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
               </main>
             }
