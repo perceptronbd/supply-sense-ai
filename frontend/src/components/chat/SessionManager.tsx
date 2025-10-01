@@ -2,8 +2,11 @@
 
 import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setToggleValue } from '@/store/slices/commonSlice';
+import { useDisclosure } from '@heroui/react';
 import { Fragment } from 'react';
-import { SessionList } from './SessionList';
+import { SessionList, SessionListMobile } from './SessionList';
 
 interface SessionManagerProps {
   selectedSessionId?: string;
@@ -26,6 +29,9 @@ export function SessionManager({
     refetch: refetchSessions,
   } = useGetSessionsQuery({});
 
+  const { toggleKey } = useAppSelector((state) => state.commonSlice);
+  const { onOpenChange } = useDisclosure();
+  const dispatch = useAppDispatch();
   // Create session mutation
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
 
@@ -50,6 +56,11 @@ export function SessionManager({
     }
   };
 
+  const handleOpenChange = () => {
+    onOpenChange();
+    dispatch(setToggleValue({ sidebar: !toggleKey?.sidebar }));
+  };
+
   // Show error state if sessions failed to load
   if (sessionsError) {
     return (
@@ -63,7 +74,7 @@ export function SessionManager({
 
   return (
     <Fragment>
-      <div className="hidden md:block overflow-y-auto no-scrollbar bottom-fade">
+      <div className="hidden lg:block overflow-y-auto no-scrollbar bottom-fade">
         <SessionList
           sessions={sessions}
           activeSessionId={selectedSessionId}
@@ -72,15 +83,17 @@ export function SessionManager({
           isLoading={isLoadingSessions || isCreatingSession}
         />
       </div>
-      {/* <div className="md:hidden overflow-y-auto no-scrollbar bottom-fade">
+      <div className="lg:hidden overflow-y-auto no-scrollbar bottom-fade">
         <SessionListMobile
           sessions={sessions}
           activeSessionId={selectedSessionId}
           onSessionSelect={onSessionSelect}
           onNewSession={handleNewSession}
           isLoading={isLoadingSessions || isCreatingSession}
+          isOpen={toggleKey?.sidebar}
+          onOpenChange={handleOpenChange}
         />
-      </div> */}
+      </div>
     </Fragment>
   );
 }

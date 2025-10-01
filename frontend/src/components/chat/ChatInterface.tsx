@@ -16,8 +16,15 @@ export function ChatInterface({
   className,
   handleCreateSession,
 }: Readonly<ChatInterfaceProps>) {
-  const { messages, isLoadingMessages, messagesError, addErrorMessage, refetchMessages } =
-    useMessageManager(sessionId);
+  const {
+    messages,
+    isLoadingMessages,
+    messagesError,
+    addErrorMessage,
+    refetchMessages,
+    addTempMessage,
+    removeTempMessage,
+  } = useMessageManager(sessionId);
 
   const [sendQuery, { isLoading: isSendingMessage }] = useSendQueryMutation();
 
@@ -53,7 +60,13 @@ export function ChatInterface({
         );
         return;
       }
-
+      const tempId = addTempMessage({
+        sessionId: currentSessionId,
+        content: content,
+        type: 'user',
+        contentType: 'text',
+        userId: 'current-user-id',
+      });
       try {
         // Send message via API
         await sendQuery({
@@ -64,9 +77,11 @@ export function ChatInterface({
 
         // Refetch messages to get the complete conversation from database
         refetchMessages();
+        removeTempMessage(tempId);
       } catch (error) {
         console.error('Failed to send message:', error);
         addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
+        removeTempMessage(tempId);
       }
     },
     [sessionId, dbConnectionId, handleCreateSession, addErrorMessage, refetchMessages, sendQuery]
