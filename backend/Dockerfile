@@ -34,15 +34,15 @@ RUN npx nx build backend
 # Prepare production dependencies only
 FROM backend-build AS backend-prod-deps
 ENV NODE_ENV=production
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Production stage - use a smaller base image
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks and tini for proper signal handling
+RUN apk add --no-cache curl tini
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
@@ -61,6 +61,9 @@ EXPOSE 3004
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3004/health || exit 1
+
+# Use tini as entrypoint for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application
 CMD ["node", "dist/main"]

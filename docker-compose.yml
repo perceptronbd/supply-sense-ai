@@ -16,6 +16,9 @@ services:
       - '3005:3005'
     networks:
       - supply-chain-network
+    # Proper stop configuration
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
     # Resource limits for Nanode (more memory available without local DB)
     deploy:
       resources:
@@ -43,6 +46,9 @@ services:
       - mcp-server
     networks:
       - supply-chain-network
+    # Proper stop configuration
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
     # Resource limits for Nanode (more memory available without local DB)
     deploy:
       resources:
@@ -68,6 +74,9 @@ services:
       - backend
     networks:
       - supply-chain-network
+    # Proper stop configuration
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
     # Resource limits for Nanode (more memory available without local DB)
     deploy:
       resources:

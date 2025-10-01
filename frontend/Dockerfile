@@ -50,11 +50,14 @@ RUN pnpm run frontend:build
 # Prepare production-only dependencies
 FROM deps AS prod-deps
 ENV NODE_ENV=production
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
+
+# Install tini for proper signal handling
+RUN apk add --no-cache tini
 
 ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
@@ -86,6 +89,9 @@ EXPOSE 3000
 ENV PORT 3000
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
+
+# Use tini as entrypoint for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the production server using the Next.js CLI
 CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
