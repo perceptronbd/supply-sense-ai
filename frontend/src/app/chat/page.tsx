@@ -94,7 +94,7 @@ export default function ChatPage() {
 
   // Main chat interface - only render when we have a database connection
   return (
-    <main className="w-full h-full bg-background flex gap-2">
+    <main className="w-full h-full bg-background lg:flex gap-2">
       <div className="relative h-full text-foreground rounded-2xl bg-content2 flex-1 w-full">
         {/* Loading overlay during session creation */}
         <LoadingOverlay

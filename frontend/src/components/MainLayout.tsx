@@ -1,8 +1,9 @@
 'use client';
 
 import { Icons } from '@/lib/icons/Icons';
+import { useAppDispatch } from '@/store/hooks';
+import { setToggleValue } from '@/store/slices/commonSlice';
 import type { RootState } from '@/store/store';
-import { useDisclosure } from '@heroui/react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -18,8 +19,16 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [openMobileSidebar, setOpenMobileSidebar] = useState(false);
+
   const pathname = usePathname();
-  const { onOpen } = useDisclosure();
+  const dispatch = useAppDispatch();
+
+  const handleOpenSidebar = () => {
+    setOpenMobileSidebar(!openMobileSidebar);
+    dispatch(setToggleValue({ sidebar: !openMobileSidebar }));
+  };
+
   // Handle hydration mismatch
   useEffect(() => {
     setIsHydrated(true);
@@ -67,7 +76,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
               </Text>
             </Text>
           </div>
-          <button onClick={() => onOpen()} type="button">
+          <button onClick={handleOpenSidebar} type="button">
             <Icons.ToggleSession className="size-8 text-secondary-500" />
           </button>
         </header>
