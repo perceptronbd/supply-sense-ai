@@ -50,7 +50,7 @@ RUN pnpm run frontend:build
 # Prepare production-only dependencies
 FROM deps AS prod-deps
 ENV NODE_ENV=production
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Production image, copy all the files and run next
 FROM base AS runner
