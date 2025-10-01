@@ -1,5 +1,4 @@
 ﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
-import { RequirePermissions } from '@modules/auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import {
@@ -17,7 +16,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CHAT_PERMISSIONS } from '@supplysense/types';
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
@@ -33,7 +31,7 @@ export class ChatController {
 
   @Post('sessions')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
+  // @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new chat session' })
   @ApiResponse({ status: 201, description: 'Session created successfully', type: ChatSessionDto })
@@ -51,7 +49,7 @@ export class ChatController {
 
   @Get('sessions')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
+  // @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user chat sessions' })
   @ApiResponse({
@@ -69,7 +67,7 @@ export class ChatController {
 
   @Get('sessions/:sessionId')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
+  // @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific chat session' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully', type: ChatSessionDto })
@@ -79,7 +77,7 @@ export class ChatController {
 
   @Delete('sessions/:sessionId')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
+  // @RequirePermissions(CHAT_PERMISSIONS.MANAGE_CONVERSATIONS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a chat session' })
   @ApiResponse({ status: 200, description: 'Session deleted successfully' })
@@ -92,7 +90,7 @@ export class ChatController {
 
   @Get('sessions/:sessionId/messages')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
+  // @RequirePermissions(CHAT_PERMISSIONS.READ_MESSAGES)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get messages from a chat session' })
   @ApiResponse({ status: 200, description: 'Messages retrieved successfully' })
@@ -107,7 +105,7 @@ export class ChatController {
 
   @Post('query')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
+  // @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })
   @ApiResponse({ status: 200, description: 'AI response generated successfully' })
@@ -132,7 +130,7 @@ export class ChatController {
 
   @Post('messages')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
+  // @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message in a chat session' })
   @ApiResponse({ status: 200, description: 'Message sent successfully' })

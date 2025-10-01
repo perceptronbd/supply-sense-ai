@@ -1,1 +1,0 @@
-export { GoodsReceiptForm } from './GoodsReceiptFormSimple';

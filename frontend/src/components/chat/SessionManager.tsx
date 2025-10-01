@@ -1,5 +1,6 @@
 'use client';
 
+import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
 import { Fragment } from 'react';
 import { SessionList } from './SessionList';
@@ -22,10 +23,14 @@ export function SessionManager({
     data: sessions = [],
     isLoading: isLoadingSessions,
     error: sessionsError,
+    refetch: refetchSessions,
   } = useGetSessionsQuery({});
 
   // Create session mutation
   const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
+
+  // Handle session refresh when triggered by Redux state
+  useSessionRefresh(refetchSessions);
 
   // Handle new session creation
   const handleNewSession = async () => {

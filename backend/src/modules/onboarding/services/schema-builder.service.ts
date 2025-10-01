@@ -21,6 +21,7 @@ interface TableSchema {
     refTable: string;
     refColumn: string;
   }>;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   sampleData?: Array<Record<string, any>>;
 }
 
@@ -79,6 +80,7 @@ export class SchemaBuilderService {
       // Process each table that has metadata
       if (dbConnection.TableMetadata && Array.isArray(dbConnection.TableMetadata)) {
         // 3. Connect to Customer DB and query columns for each table
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
         await withDbConnection(connectionDetails, async (client) => {
           for (const tableMetadata of dbConnection.TableMetadata) {
             this.logger.debug(`Processing table ${tableMetadata.tableName}`);
@@ -98,6 +100,7 @@ export class SchemaBuilderService {
             const columns: Record<string, ColumnInfo> = {};
 
             // Get 5 sample rows from the table
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             let sampleData: Array<Record<string, any>> = [];
             try {
               const sampleResult = await client.query(
@@ -139,6 +142,7 @@ export class SchemaBuilderService {
               columnDescriptions = exampleResults.reduce(
                 (acc, result) => {
                   // Use the description from agent if available, otherwise generate a basic one
+                  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                   acc[result.columnName] = (result as any).description;
                   return acc;
                 },

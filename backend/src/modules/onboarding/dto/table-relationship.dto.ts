@@ -54,7 +54,7 @@ export class TableRelationshipDto {
   description?: string;
 
   @IsOptional()
-  sampleData?: any[];
+  sampleData?: Array<Record<string, string | number | boolean | null>>;
 
   @ValidateNested({ each: true })
   @Type(() => ColumnExampleDto)

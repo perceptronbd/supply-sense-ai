@@ -1,0 +1,71 @@
+# Node modules (will be installed in container)
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+.next/
+**/.next/
+
+# Development files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/test/
+**/tests/
+**/__tests__/
+
+# Cache directories
+.cache/
+.tmp/
+.nx/
+**/.nx/
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Coverage reports
+coverage/
+**/coverage/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package manager files (except lock files)
+.npmrc
+.yarnrc
+.pnpmrc
+
+# Frontend specific (when building backend)
+frontend-e2e/
+landing-page/
+landing-page-e2e/
+
+# Backend specific (when building frontend)
+backend-e2e/

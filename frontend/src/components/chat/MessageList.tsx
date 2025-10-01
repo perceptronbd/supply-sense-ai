@@ -1,44 +1,14 @@
 'use client';
 import { Text } from '@/components/ui/Text';
 import type { RootState } from '@/store/store';
-import { BarChart3, Building2, DollarSign, FileText, Inbox, Package } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { LoadingMessage, MessageBubble } from './MessageBubble';
 import type { MessageListProps } from './types';
 
-const defaultSuggestions = [
-  {
-    title: 'Show suppliers with low performance',
-    icon: BarChart3,
-  },
-  {
-    title: 'What items are running low on stock?',
-    icon: Package,
-  },
-  {
-    title: 'Analyze our purchase costs this month',
-    icon: DollarSign,
-  },
-  {
-    title: 'List pending purchase requests',
-    icon: FileText,
-  },
-  {
-    title: 'Show goods receipts from this week',
-    icon: Inbox,
-  },
-  {
-    title: 'Which branches have the highest inventory?',
-    icon: Building2,
-  },
-];
-
 export function MessageList({ messages, isLoading = false, onSuggestionClick }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useSelector((state: RootState) => state.auth);
-
-  // Auto-scroll to bottom when new messages arrive
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages and isLoading dependencies are needed for auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

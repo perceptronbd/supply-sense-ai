@@ -9,7 +9,7 @@ interface ColumnExampleInput {
   tableName: string;
   columnName: string;
   dataType: string;
-  sampleData?: Array<Record<string, any>>;
+  sampleData?: Array<Record<string, string | number | boolean | null>>;
   isEnum?: boolean;
   enumValues?: string[];
 }
