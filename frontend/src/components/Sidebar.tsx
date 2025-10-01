@@ -53,9 +53,6 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
     },
   ];
 
-  // Filter navigation items based on user permissions
-  const visibleNavigation = navigation.filter((item) => hasPermission(item.permission));
-
   return (
     <>
       {/* Mobile backdrop */}
@@ -104,7 +101,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             <ul className="space-y-2">
-              {visibleNavigation.map((item) => (
+              {navigation.map((item) => (
                 <li key={item.name}>
                   <button
                     type="button"
