@@ -90,15 +90,18 @@ export const executeQueryTool = createTool({
     logSchemaInformation(parsedSchema);
 
     // Build credentials from database connection fields
+    const encryptionKey = process.env.DB_ENCRYPTION_KEY ?? process.env.ENCRYPTION_KEY ?? undefined;
+
+    if (!encryptionKey) {
+      throw new Error('DB_ENCRYPTION_KEY environment variable is not set for the MCP server');
+    }
+
     const credentials: DbCredentials = {
       host,
       port,
       database,
       username,
-      password: decryptPassword(
-        encryptedPassword,
-        process.env.ENCRYPTION_KEY || 'your-32-character-secret-key-here'
-      ),
+      password: decryptPassword(encryptedPassword, encryptionKey),
       sslEnabled: sslEnabled || false,
     };
 

@@ -19,6 +19,7 @@ interface Company {
   id: string;
   name: string;
   contactEmail: string;
+  industry: string;
 }
 
 interface AuthState {
