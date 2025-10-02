@@ -22,7 +22,8 @@
       "cypress.config.ts",
       "webpack.config.js",
       "next.config.js",
-      "postcss.config.js"
+      "postcss.config.js",
+      "**/.mastra/**"
     ]
   },
   "formatter": {
