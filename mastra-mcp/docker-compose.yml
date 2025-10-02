@@ -1,0 +1,21 @@
+services:
+  mastra-mcp:
+    build:
+      context: ..
+      dockerfile: mastra-mcp/Dockerfile
+    ports:
+      - "4111:4111"
+    volumes:
+      - /app/node_modules
+      - /app/.mastra
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+      - WATCHPACK_POLLING=true
+      - OTEL_TRACES_EXPORTER=none
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src

@@ -1,0 +1,10 @@
+node_modules
+.mastra
+dist
+.git
+.env
+*.log
+coverage
+.vscode
+.nx
+output.txt

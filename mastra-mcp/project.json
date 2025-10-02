@@ -1,0 +1,24 @@
+{
+  "name": "mastra-mcp",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "mastra-mcp/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/.mastra"],
+      "options": {
+        "command": "mastra build",
+        "cwd": "mastra-mcp"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mastra dev",
+        "cwd": "mastra-mcp"
+      }
+    }
+  },
+  "tags": []
+}
