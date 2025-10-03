@@ -4,7 +4,6 @@
   "license": "MIT",
   "scripts": {
     "mastra:serve": "npx nx serve mastra-mcp",
-    "mcp-server:start": "node dist/mastra-mcp-server/main.mjs",
     "mastra:build": "cd mastra-mcp && mastra build",
     "backend:serve": "npx nx serve backend",
     "backend:build": "npx nx build backend",
