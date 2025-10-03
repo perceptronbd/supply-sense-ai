@@ -1,9 +1,10 @@
+import { MastraClient } from '@mastra/client-js';
 import { Agent } from '@mastra/core/agent';
 import { MCPClient } from '@mastra/mcp';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { AI_MODEL_NAMES } from '@supplysense/constant';
-import { GetOpenRouter } from '@supplysense/utils';
-import { appConfig } from '../../../config/app.config';
+// import { openrouter } from '@openrouter/ai-sdk-provider';
+// import { AI_MODEL_NAMES } from '@supplysense/constant';
+// import { appConfig } from '../../../config/app.config';
 
 interface AgentResponse {
   success: boolean;
@@ -34,8 +35,8 @@ interface WorkflowResponse {
 export class McpClientService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(McpClientService.name);
   private mcpClient: MCPClient | null = null;
+  private mastraClient: MastraClient | null = null;
   private agent: Agent | null = null;
-  private readonly openrouter = new GetOpenRouter();
   private isConnected = false;
 
   constructor() {
@@ -63,41 +64,70 @@ export class McpClientService implements OnModuleInit, OnModuleDestroy {
     try {
       this.logger.log('Initializing MCP client connection to Mastra server...');
 
-      // Create MCPClient instance with HTTP server configuration per Mastra docs
-      this.mcpClient = new MCPClient({
-        servers: {
-          supplySense: {
-            url: new URL(`${appConfig.mcpServerUrl}/mcp`), // MCP server HTTP endpoint
-            timeout: appConfig.mcpServerTimeout, // Configurable timeout
-            logger: (message) => this.logger.debug('MCP Client log', message),
-          },
-        },
-        timeout: appConfig.mcpServerTimeout, // Global 5 minute timeout
+      this.mastraClient = new MastraClient({
+        baseUrl: process.env.MASTRA_SERVER_URL || 'http://localhost:4111',
       });
+
+      // Test connection by getting workflows
+      const workflows = await this.mastraClient.getWorkflows();
+      this.logger.log(`✅ Connected to Mastra server, found ${Object.keys(workflows)} workflows`);
+
+      //Get the workflow by the ID
+      const workflow = await this.mastraClient.getWorkflow('chatWorkflow');
+
+      const run = await workflow.createRunAsync();
+
+      // Start the workflow and await results
+      const result = await workflow.startAsync({
+        runId: run.runId,
+        inputData: {
+          dbConnectionId: 'cf91e1a7-9a95-41ff-8764-df894e54b554',
+          userQuery: 'How many drivers are there are and who has there assigned routes completed?',
+        },
+      });
+
+      this.logger.log('Workflow started successfully, result:', result);
+
+      // Create MCPClient instance with HTTP server configuration per Mastra docs
+      // this.mcpClient = new MCPClient({
+      //   servers: {
+      //     supplySense: {
+      //       url: new URL(`${appConfig.mcpServerUrl}/mcp`), // MCP server HTTP endpoint
+      //       timeout: appConfig.mcpServerTimeout, // Configurable timeout
+      //       logger: (message) => this.logger.debug('MCP Client log', message),
+      //     },
+      //   },
+      //   timeout: appConfig.mcpServerTimeout, // Global 5 minute timeout
+      // });
 
       // Get tools from MCP server and initialize agent
-      const tools = await this.mcpClient.getTools();
-      this.logger.log(
-        `📋 Loaded ${
-          Object.keys(tools).length
-        } tools from MCP server: ${Object.keys(tools).join(', ')}`
-      );
+      // const tools = await this.mcpClient.getTools();
+      // this.logger.log(
+      //   `📋 Loaded ${
+      //     Object.keys(tools).length
+      //   } tools from MCP server: ${Object.keys(tools).join(', ')}`
+      // );
 
-      // Initialize agent with Gemini model and MCP tools
-      this.agent = new Agent({
-        name: 'SupplyChainAgent',
-        description: 'AI assistant specialized in supply chain management and logistics',
-        instructions:
-          'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
-        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
-        tools, // Pass MCP tools directly to the agent
-      });
+      // Initialize agent with OpenRouter model and MCP tools
+      // this.agent = new Agent({
+      //   name: 'SupplyChainAgent',
+      //   description: 'AI assistant specialized in supply chain management and logistics',
+      //   instructions:
+      //     'You are a supply chain AI assistant. Use the available tools to help with supply chain queries, inventory management, purchase orders, and logistics operations.',
+      //   model: openrouter(AI_MODEL_NAMES.GPT_4_NANO, {
+      //     reasoning: {
+      //       enabled: false,
+      //       max_tokens: 10000,
+      //     },
+      //   }),
+      //   tools, // Pass MCP tools directly to the agent
+      // });
 
-      // Test the connection to ensure it's working
-      await this.testConnection();
+      // // Test the connection to ensure it's working
+      // await this.testConnection();
 
-      this.isConnected = true;
-      this.logger.log('✅ MCP client and agent successfully initialized');
+      // this.isConnected = true;
+      // this.logger.log('✅ MCP client and agent successfully initialized');
     } catch (error) {
       this.logger.error('❌ Failed to initialize MCP client and agent:', error);
       this.isConnected = false;

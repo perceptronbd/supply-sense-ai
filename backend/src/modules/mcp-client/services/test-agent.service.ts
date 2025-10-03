@@ -81,7 +81,7 @@ export class TestAgentService {
       this.logger.log('🔍 Agent Text response:', response.text);
       this.logger.log(
         '🔍 Agent response:',
-        response.toolResults.map((result) => result.result)
+        response.toolResults?.map((result) => (result as any).result)
       );
       // parse the response to extract answers
       const parseResponse = response.text

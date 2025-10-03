@@ -44,6 +44,9 @@ importers:
       '@llm-ui/react':
         specifier: ^0.13.3
         version: 0.13.3(react@19.0.0)
+      '@mastra/client-js':
+        specifier: ^0.15.0
+        version: 0.15.0(@sinclair/typebox@0.34.41)(effect@3.16.12)(encoding@0.1.13)(openapi-types@12.1.3)(react@19.0.0)(zod@3.25.76)
       '@mastra/core':
         specifier: ^0.20.0
         version: 0.20.0(@sinclair/typebox@0.34.41)(effect@3.16.12)(encoding@0.1.13)(openapi-types@12.1.3)(react@19.0.0)(zod@3.25.76)
@@ -2765,6 +2768,15 @@ packages:
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
+
+  '@lukeed/uuid@2.0.1':
+    resolution: {integrity: sha512-qC72D4+CDdjGqJvkFMMEAtancHUQ7/d/tAiHf64z8MopFDmcrtbcJuerDtFceuAfQJ2pDSfCKCtbqoGBNnwg0w==}
+    engines: {node: '>=8'}
+
+  '@mastra/client-js@0.15.0':
+    resolution: {integrity: sha512-3JLYjmbkeLlM3Iw/y+/RJQJ+FLaPO6TkNKUTOL5X5gnuEaY0zhpGZ3zyW4tH4vh54u0MNyA7eCLKTiWmM78c0Q==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
 
   '@mastra/core@0.20.0':
     resolution: {integrity: sha512-zFGnUUTJmJSaWaTnPxpW0GB6iFQyFTY2Iq4towAv8mhtDqiZYSgLi630BPQ3Atj+q5bX1xSHFFKUaOQA3fkikA==}
@@ -17934,6 +17946,36 @@ snapshots:
       - react
 
   '@lukeed/csprng@1.1.0': {}
+
+  '@lukeed/uuid@2.0.1':
+    dependencies:
+      '@lukeed/csprng': 1.1.0
+
+  '@mastra/client-js@0.15.0(@sinclair/typebox@0.34.41)(effect@3.16.12)(encoding@0.1.13)(openapi-types@12.1.3)(react@19.0.0)(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/ui-utils': 1.2.11(zod@3.25.76)
+      '@lukeed/uuid': 2.0.1
+      '@mastra/core': 0.20.0(@sinclair/typebox@0.34.41)(effect@3.16.12)(encoding@0.1.13)(openapi-types@12.1.3)(react@19.0.0)(zod@3.25.76)
+      json-schema: 0.4.0
+      rxjs: 7.8.1
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.6(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@hono/arktype-validator'
+      - '@hono/effect-validator'
+      - '@hono/typebox-validator'
+      - '@hono/valibot-validator'
+      - '@hono/zod-validator'
+      - '@sinclair/typebox'
+      - '@valibot/to-json-schema'
+      - arktype
+      - effect
+      - encoding
+      - openapi-types
+      - react
+      - supports-color
+      - valibot
+      - zod-openapi
 
   '@mastra/core@0.20.0(@sinclair/typebox@0.34.41)(effect@3.16.12)(encoding@0.1.13)(openapi-types@12.1.3)(react@19.0.0)(zod@3.25.76)':
     dependencies:
