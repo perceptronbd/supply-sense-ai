@@ -5,10 +5,8 @@ import { generatePurposeAgent } from './agents/generate-purpose-agent';
 import { queryAnalysisAgent } from './agents/query-analysis-agent';
 import { sampleQuestionsAgent } from './agents/sample-questions-agent';
 import { sqlGenerationAgent } from './agents/sql-generation-agent';
-import { supplyChainAgent } from './agents/supply-chain-agent';
 import { updateFrequencyAgent } from './agents/update-frequency-agent';
 import { chatWorkflow } from './workflows/chat-workflow';
-import { supplyChainWorkflow } from './workflows/supply-chain-workflow';
 import { tableMetadataWorkflow } from './workflows/table-metadata-workflow';
 
 export const mastra = new Mastra({
@@ -18,11 +16,9 @@ export const mastra = new Mastra({
     queryAnalysisAgent,
     sampleQuestionsAgent,
     sqlGenerationAgent,
-    supplyChainAgent,
     updateFrequencyAgent,
   },
   workflows: {
-    supplyChainWorkflow,
     tableMetadataWorkflow,
     chatWorkflow,
   },
