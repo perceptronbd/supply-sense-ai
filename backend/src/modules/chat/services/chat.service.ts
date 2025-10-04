@@ -2,16 +2,15 @@ import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service
 import { Agent } from '@mastra/core/agent';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
-import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
+import { MessageType } from '../dto/chat.dto';
+import { initializeSummaryAgent } from '../helpers/agent.helper';
+
+import { RuntimeContext } from '@mastra/core/runtime-context';
+import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { IChatFormattedResult } from '@supplysense/types';
 import { withRetry } from '@supplysense/utils/server';
-import { MessageType } from '../dto/chat.dto';
-import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
-import {
-  generateChatAgentUserPrompt,
-  generateSummaryAgentSystemPrompt,
-} from '../helpers/prompt.helper';
+import { generateChatAgentUserPrompt } from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -45,25 +44,6 @@ export class ChatService {
   }
 
   /**
-   * Initialize the chat agent if it hasn't been initialized yet
-   * This agent is responsible for processing user queries and interacting with database tools
-   */
-  private async initializeChatAgent(): Promise<void> {
-    // Check if agent is already initialized to avoid redundant initialization
-    if (this.chatAgent) {
-      return;
-    }
-
-    try {
-      // Use the helper function to initialize the chat agent
-      this.chatAgent = await initializeChatAgent(this.mcpClientService);
-    } catch (error) {
-      this.logger.error('Failed to initialize chat agent:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Initialize the summary agent if it hasn't been initialized yet
    * This agent is responsible for summarizing conversation history
    */
@@ -79,45 +59,6 @@ export class ChatService {
     } catch (error) {
       this.logger.error('Failed to initialize summary agent:', error);
       throw error;
-    }
-  }
-
-  //   Generate a summary of the conversation history
-  async generateConversationSummary(conversationHistory: string[]): Promise<string> {
-    try {
-      // Ensure the summary agent is initialized
-      await this.initializeSummaryAgent();
-      if (!this.summaryAgent) {
-        throw new Error('Summary agent not initialized');
-      }
-
-      // Format the conversation history for processing
-      const formattedHistory = conversationHistory
-        .map((msg, index) => `Message ${index + 1}: ${msg}`)
-        .join('\n');
-
-      // Generate summary using the summary agent with a system prompt
-      const agentResponse = await this.summaryAgent.generate(
-        [
-          {
-            role: 'system',
-            content: generateSummaryAgentSystemPrompt(formattedHistory),
-          },
-          {
-            role: 'user',
-            content: formattedHistory,
-          },
-        ],
-        {}
-      );
-
-      // Extract the summary text or provide a fallback
-      const summary = agentResponse.text || 'No summary available.';
-      this.logger.debug('Conversation summary generated successfully', summary);
-      return summary;
-    } catch (error) {
-      this.logger.error('Failed to generate conversation summary:', error);
-      return 'Failed to generate conversation summary.';
     }
   }
 
@@ -139,8 +80,8 @@ export class ChatService {
       await this.tokenAndCredit.canContinueForChat(companyId);
 
       // Ensure the chat agent is initialized before processing
-      await this.initializeChatAgent();
-      if (!this.chatAgent) {
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
+      if (!mcpClient) {
         throw new Error('Chat agent not initialized');
       }
 
@@ -175,40 +116,38 @@ export class ChatService {
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
 
-      // Generate a summary of the conversation history to provide context
-      const summarizeConversationHistory = await this.generateConversationSummary(
-        sessionHistory.map((msg) => msg.content)
-      );
+      const agents = await mcpClient.getAgents();
+      this.logger.log('Agents:', agents);
 
-      let totalPromptTokens = 0;
-      let totalCompletionTokens = 0;
+      const agent = await mcpClient.getAgent('chatWorkflowAgent');
+      this.logger.log('Agent:', agent);
 
+      // Create RuntimeContext and set your dynamic values
+      const runtimeContext = new RuntimeContext<{ dbConnectionId: string; userQuery: string }>();
+      runtimeContext.set('dbConnectionId', dbConnectionId);
+      runtimeContext.set('userQuery', message);
       const generateWithRetry = () =>
-        this.chatAgent.generate(
+        agent.generate(
           [
             {
               role: 'user',
-              content: generateChatAgentUserPrompt(
-                dbConnectionId,
-                userId,
-                summarizeConversationHistory,
-                message
-              ),
+              content: generateChatAgentUserPrompt(dbConnectionId, userId, '', message),
             },
           ],
           {
-            toolChoice: {
-              type: 'tool',
-              toolName: 'supplySense_run_chatWorkflow',
-            },
-            onStepFinish: async ({ usage }) => {
-              if (usage) {
-                this.logger.debug('usage', usage);
-                // Aggregate tokens from each step
-                totalPromptTokens += usage.promptTokens || 0;
-                totalCompletionTokens += usage.completionTokens || 0;
-              }
-            },
+            runtimeContext,
+            // toolChoice: {
+            //   type: 'tool',
+            //   toolName: 'chat_query_processing',
+            // },
+            // onStepFinish: async ( { usage } ) => {
+            //   if ( usage ) {
+            //     this.logger.debug( 'usage', usage );
+            //     // Aggregate tokens from each step
+            //     totalPromptTokens += usage.inputTokens || 0;
+            //     totalCompletionTokens += usage.outputTokens || 0;
+            //   }
+            // },
           }
         );
 
@@ -218,12 +157,17 @@ export class ChatService {
         1000 // initial delay in ms (will be doubled each retry)
       );
 
-      this.logger.debug('AI response generated successfully after retries');
-      const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
-      const result = parsedResult.result as IChatFormattedResult;
+      const totalPromptTokens = aiResponse.totalUsage.inputTokens;
+      const totalCompletionTokens = aiResponse.totalUsage.outputTokens;
+
+      this.logger.debug('AI response generated successfully after retries', aiResponse.text);
+
+      const parsedResult = JSON.parse(aiResponse.text || '{}');
+
+      const result = parsedResult as IChatFormattedResult;
       this.logger.log('result:', result);
 
-      // Calculate and record token usage for billing
+      // // Calculate and record token usage for billing
       if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
         this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
 
@@ -240,11 +184,28 @@ export class ChatService {
         });
       }
 
+      // Test connection - just get workflows, don't create runs yet
+
+      // const workflows =await mcpClient.getWorkflows();
+      // this.logger.log( 'Workflows:', workflows );
+      // const workflow = await mcpClient.getWorkflow( 'chatWorkflow' );
+      // this.logger.log( 'Workflow:', workflow );
+
+      // const run = await workflow.createRunAsync();
+
+      // const result = await workflow.startAsync( {
+      //   runId: run.runId,
+      //   inputData: {
+      //     dbConnectionId,
+      //     userQuery: message,
+      //   },
+      // } );
+      // this.logger.log( 'Workflow started successfully, result:', result );
+
       await this.messageService.createMessage({
         sessionId,
         content: result.summary,
         type: MessageType.ASSISTANT,
-        structuredData: result,
       });
 
       // Generate and update session title based on the conversation

@@ -119,9 +119,9 @@ const formatResultsStep = createStep({
     };
   },
 });
-export const CHART_WORKFLOW_NAME = 'chat-query-processing';
+
 export const chatWorkflow = createWorkflow({
-  id: CHART_WORKFLOW_NAME,
+  id: 'chat-query-processing',
   description: 'Process user chat queries through analysis, execution, and formatting',
   inputSchema: z.object({
     dbConnectionId: z.string().describe('Database connection ID'),

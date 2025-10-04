@@ -1,5 +1,6 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
+import { chatWorkflowAgent } from './agents/execute-chat-workflow-agent';
 import { formattingAgent } from './agents/formatting-agent';
 import { generatePurposeAgent } from './agents/generate-purpose-agent';
 import { queryAnalysisAgent } from './agents/query-analysis-agent';
@@ -17,6 +18,7 @@ export const mastra = new Mastra({
     sampleQuestionsAgent,
     sqlGenerationAgent,
     updateFrequencyAgent,
+    chatWorkflowAgent,
   },
   workflows: {
     tableMetadataWorkflow,
