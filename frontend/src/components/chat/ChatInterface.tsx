@@ -84,7 +84,16 @@ export function ChatInterface({
         removeTempMessage(tempId);
       }
     },
-    [sessionId, dbConnectionId, handleCreateSession, addErrorMessage, refetchMessages, sendQuery]
+    [
+      sessionId,
+      dbConnectionId,
+      handleCreateSession,
+      addErrorMessage,
+      refetchMessages,
+      sendQuery,
+      addTempMessage,
+      removeTempMessage,
+    ]
   );
 
   // Handle suggestion clicks by sending them as messages

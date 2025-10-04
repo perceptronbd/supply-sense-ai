@@ -62,7 +62,7 @@ Respond ONLY with valid JSON in this format:
 
     try {
       classification = JSON.parse(classificationResult.text);
-    } catch (error) {
+    } catch (_error) {
       // Fallback if parsing fails - assume analytical to be safe
       classification = {
         queryType: 'analytical',
@@ -145,7 +145,8 @@ const queryAnalysisStep = createStep({
         dbConnectionId,
         userQuery,
       },
-    } as any);
+      runtimeContext: undefined,
+    });
 
     return {
       dbConnectionId,
@@ -177,10 +178,11 @@ const executeQueryStep = createStep({
     const result = await executeQueryTool.execute({
       context: {
         dbConnectionId,
-        userQuery,
         queryAnalysis,
+        userQuery,
       },
-    } as any);
+      runtimeContext: undefined,
+    });
 
     return {
       dbConnectionId,
@@ -217,11 +219,12 @@ const formatResultsStep = createStep({
 
     const result = await formatResultsTool.execute({
       context: {
-        userQuery,
-        sqlQuery,
         queryResults,
+        sqlQuery,
+        userQuery,
       },
-    } as any);
+      runtimeContext: undefined,
+    });
 
     return {
       visualizationType: result.visualizationType,
