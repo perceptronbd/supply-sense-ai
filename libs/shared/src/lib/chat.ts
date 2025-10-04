@@ -17,5 +17,5 @@ export interface IChatFormattedResult {
    * Human-readable explanation of the data and visualization choice
    * Should be 3-5 sentences providing context and insights
    */
-  summary: string;
+  response: string;
 }
