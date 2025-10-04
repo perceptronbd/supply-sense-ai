@@ -202,19 +202,19 @@ export class TableDescriptionAgentService {
       this.logger.log(`✅ Generated ${descriptions.length} descriptions successfully`, {
         usage: response.usage,
       });
-
-      if (response.usage) {
-        await this.tokenAndCredit.tokenPriceCalculate({
-          companyId,
-          inputTokens: response.usage.promptTokens,
-          outputTokens: response.usage.completionTokens,
-          isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
-          metadata: {
-            question: systemPrompt,
-            answer: JSON.stringify(descriptions),
-          },
-        });
-      }
+      //TODO: fix token price calculate
+      // if (response.usage) {
+      //   await this.tokenAndCredit.tokenPriceCalculate({
+      //     companyId,
+      //     inputTokens: response.usage.promptTokens,
+      //     outputTokens: response.usage.completionTokens,
+      //     isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
+      //     metadata: {
+      //       question: systemPrompt,
+      //       answer: JSON.stringify(descriptions),
+      //     },
+      //   });
+      // }
       return descriptions;
     } catch (error) {
       this.logger.error('❌ Error generating batch descriptions:', error);

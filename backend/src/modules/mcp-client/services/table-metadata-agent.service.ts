@@ -20,7 +20,6 @@ import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/
  */
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
-import { withRetry } from '@supplysense/utils/server';
 
 @Injectable()
 export class TableMetadataAgentService {
@@ -106,45 +105,45 @@ export class TableMetadataAgentService {
           tableSchema,
         })),
       };
+      //TODO: fix token price calculate uncomment all the below code
+      // // Use the specialized agent to generate metadata for all tables at once with retry logic
+      // this.logger.debug('Starting table metadata generation with retry logic...');
+      // const response = await withRetry(
+      //   async () => {
+      //     this.logger.debug('Attempting to generate table metadata...');
+      //     return await this.metadataAgent?.generate(
+      //       [
+      //         {
+      //           role: 'system',
+      //           content: systemPrompt,
+      //         },
+      //         {
+      //           role: 'user',
+      //           content: JSON.stringify(inputData, null, 2),
+      //         },
+      //       ],
+      //       {
+      //         toolChoice: {
+      //           type: 'tool',
+      //           toolName: 'supplySense_analyzeTableMetadataTool',
+      //         },
+      //       }
+      //     );
+      //   },
+      //   3, // maxRetries
+      //   5000 // 5 second delay, longer for MCP timeout
+      // );
 
-      // Use the specialized agent to generate metadata for all tables at once with retry logic
-      this.logger.debug('Starting table metadata generation with retry logic...');
-      const response = await withRetry(
-        async () => {
-          this.logger.debug('Attempting to generate table metadata...');
-          return await this.metadataAgent?.generate(
-            [
-              {
-                role: 'system',
-                content: systemPrompt,
-              },
-              {
-                role: 'user',
-                content: JSON.stringify(inputData, null, 2),
-              },
-            ],
-            {
-              toolChoice: {
-                type: 'tool',
-                toolName: 'supplySense_analyzeTableMetadataTool',
-              },
-            }
-          );
-        },
-        3, // maxRetries
-        5000 // 5 second delay, longer for MCP timeout
-      );
+      // this.logger.log('✅ Table metadata generated successfully for all tables', {
+      //   usage: response.usage,
+      // });
 
-      this.logger.log('✅ Table metadata generated successfully for all tables', {
-        usage: response.usage,
-      });
+      // this.logger.debug('Response text:', response.text);
+      // // Parse the response to extract structured metadata for all tables
+      // const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
+      // results.push(...parsedResults);
 
-      this.logger.debug('Response text:', response.text);
-      // Parse the response to extract structured metadata for all tables
-      const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
-      results.push(...parsedResults);
-
-      return { result: results, usage: response.usage, question: systemPrompt };
+      // return { result: results, usage: response.usage, question: systemPrompt };
     } catch (error) {
       this.logger.error('❌ Failed to generate metadata for tables:', error);
       const fallbackResults = input.tables.map(({ tableName, tableSchema }) =>

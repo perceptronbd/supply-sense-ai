@@ -1,17 +1,12 @@
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { Agent } from '@mastra/core/agent';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import type { IChatFormattedResult } from '@supplysense/types';
-import { withRetry } from '@supplysense/utils/server';
 import { MessageType } from '../dto/chat.dto';
-import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
-import {
-  generateChatAgentUserPrompt,
-  generateSummaryAgentSystemPrompt,
-} from '../helpers/prompt.helper';
+import { generateChatAgentUserPrompt } from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -28,8 +23,6 @@ interface IProcessUserMessage {
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
-  private chatAgent: Agent | null = null;
-  private summaryAgent: Agent | null = null;
 
   constructor(
     @Inject(SessionService) private readonly sessionService: SessionService,
@@ -42,83 +35,6 @@ export class ChatService {
     private readonly tokenAndCredit: TokenAndCredit
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
-  }
-
-  /**
-   * Initialize the chat agent if it hasn't been initialized yet
-   * This agent is responsible for processing user queries and interacting with database tools
-   */
-  private async initializeChatAgent(): Promise<void> {
-    // Check if agent is already initialized to avoid redundant initialization
-    if (this.chatAgent) {
-      return;
-    }
-
-    try {
-      // Use the helper function to initialize the chat agent
-      this.chatAgent = await initializeChatAgent(this.mcpClientService);
-    } catch (error) {
-      this.logger.error('Failed to initialize chat agent:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Initialize the summary agent if it hasn't been initialized yet
-   * This agent is responsible for summarizing conversation history
-   */
-  private async initializeSummaryAgent(): Promise<void> {
-    // Check if agent is already initialized to avoid redundant initialization
-    if (this.summaryAgent) {
-      return;
-    }
-
-    try {
-      // Use the helper function to initialize the summary agent
-      this.summaryAgent = await initializeSummaryAgent();
-    } catch (error) {
-      this.logger.error('Failed to initialize summary agent:', error);
-      throw error;
-    }
-  }
-
-  //   Generate a summary of the conversation history
-  async generateConversationSummary(conversationHistory: string[]): Promise<string> {
-    try {
-      // Ensure the summary agent is initialized
-      await this.initializeSummaryAgent();
-      if (!this.summaryAgent) {
-        throw new Error('Summary agent not initialized');
-      }
-
-      // Format the conversation history for processing
-      const formattedHistory = conversationHistory
-        .map((msg, index) => `Message ${index + 1}: ${msg}`)
-        .join('\n');
-
-      // Generate summary using the summary agent with a system prompt
-      const agentResponse = await this.summaryAgent.generate(
-        [
-          {
-            role: 'system',
-            content: generateSummaryAgentSystemPrompt(formattedHistory),
-          },
-          {
-            role: 'user',
-            content: formattedHistory,
-          },
-        ],
-        {}
-      );
-
-      // Extract the summary text or provide a fallback
-      const summary = agentResponse.text || 'No summary available.';
-      this.logger.debug('Conversation summary generated successfully', summary);
-      return summary;
-    } catch (error) {
-      this.logger.error('Failed to generate conversation summary:', error);
-      return 'Failed to generate conversation summary.';
-    }
   }
 
   /**
@@ -135,23 +51,16 @@ export class ChatService {
   }: IProcessUserMessage): Promise<AIChatResponse> {
     try {
       // Check if the user has sufficient credits to continue with the chat
-      // If not, this will throw an error
       await this.tokenAndCredit.canContinueForChat(companyId);
 
       // Ensure the chat agent is initialized before processing
-      await this.initializeChatAgent();
-      if (!this.chatAgent) {
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
+      if (!mcpClient) {
         throw new Error('Chat agent not initialized');
       }
 
-      // Log the incoming message for debugging purposes
-      this.logger.log(
-        `Processing user message: "${message}" for user ${userId} in session ${sessionId}`
-      );
-
       // Update the last activity timestamp for the session
       await this.sessionService.updateLastActivity(sessionId);
-      this.logger.log('Session activity updated');
 
       // Save the user's message to the database
       await this.messageService.createMessage({
@@ -160,10 +69,6 @@ export class ChatService {
         type: MessageType.USER,
       });
 
-      // Retrieve recent session history for context (last 10 messages)
-      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
-      this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
-
       // Verify that the database connection exists
       const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
         where: { id: dbConnectionId },
@@ -171,62 +76,45 @@ export class ChatService {
 
       // If the database connection doesn't exist, throw an error
       if (!dbConnectionExist) {
-        this.logger.error(`Database connection not found: ${dbConnectionId}`);
         throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
       }
 
-      // Generate a summary of the conversation history to provide context
-      const summarizeConversationHistory = await this.generateConversationSummary(
-        sessionHistory.map((msg) => msg.content)
-      );
+      const agents = await mcpClient.getAgents();
+      this.logger.log('Agents:', agents);
 
-      let totalPromptTokens = 0;
-      let totalCompletionTokens = 0;
+      const agent = await mcpClient.getAgent('chatWorkflowAgent');
+      this.logger.log('Agent:', agent);
 
+      // Create RuntimeContext and set your dynamic values
+      const runtimeContext = new RuntimeContext<{ dbConnectionId: string; userQuery: string }>();
+      runtimeContext.set('dbConnectionId', dbConnectionId);
+      runtimeContext.set('userQuery', message);
       const generateWithRetry = () =>
-        this.chatAgent.generate(
+        agent.generate(
           [
             {
               role: 'user',
-              content: generateChatAgentUserPrompt(
-                dbConnectionId,
-                userId,
-                summarizeConversationHistory,
-                message
-              ),
+              content: generateChatAgentUserPrompt(dbConnectionId, userId, '', message),
             },
           ],
           {
-            toolChoice: {
-              type: 'tool',
-              toolName: 'supplySense_run_chatWorkflow',
-            },
-            onStepFinish: async ({ usage }) => {
-              if (usage) {
-                this.logger.debug('usage', usage);
-                // Aggregate tokens from each step
-                totalPromptTokens += usage.promptTokens || 0;
-                totalCompletionTokens += usage.completionTokens || 0;
-              }
-            },
+            runtimeContext,
           }
         );
 
-      const aiResponse = await withRetry(
-        generateWithRetry,
-        3, // maxRetries
-        1000 // initial delay in ms (will be doubled each retry)
-      );
+      const aiResponse = await generateWithRetry();
 
-      this.logger.debug('AI response generated successfully after retries');
-      const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
-      const result = parsedResult.result as IChatFormattedResult;
-      this.logger.log('result:', result);
+      const totalPromptTokens = aiResponse.totalUsage.inputTokens;
+      const totalCompletionTokens = aiResponse.totalUsage.outputTokens;
 
-      // Calculate and record token usage for billing
+      const parsedResult = JSON.parse(aiResponse.text || '{}');
+
+      this.logger.log('Workflow Response: ', aiResponse);
+
+      const result = parsedResult as IChatFormattedResult;
+
+      //Calculate and record token usage for billing
       if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
-        this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
-
         await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
           inputTokens: totalPromptTokens,
@@ -234,7 +122,7 @@ export class ChatService {
           modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
           metadata: {
             question: message,
-            answer: result.summary,
+            answer: result.response,
             structuredData: JSON.stringify(result),
           },
         });
@@ -242,9 +130,8 @@ export class ChatService {
 
       await this.messageService.createMessage({
         sessionId,
-        content: result.summary,
+        content: result.response,
         type: MessageType.ASSISTANT,
-        structuredData: result,
       });
 
       // Generate and update session title based on the conversation
@@ -252,11 +139,11 @@ export class ChatService {
         sessionId,
         userId,
         message,
-        result.summary
+        result.response
       );
 
       return {
-        message: result.summary,
+        message: result.response,
         type: 'data',
         data: result,
         sessionId,
@@ -264,7 +151,6 @@ export class ChatService {
       };
     } catch (error) {
       this.logger.error('Failed to process user message:', error);
-      this.logger.error('Error stack:', error.stack);
 
       // Create error message in the database
       await this.messageService.createMessage({
