@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "prepare": "husky",
+    "all:serve": "concurrently \"pnpm run mastra:serve\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\"",
+    "all:start": "concurrently \"pnpm run backend:start\" \"pnpm run frontend:start\" \"pnpm run landing:start\"",
+    "build:all": "npx nx run-many -t build --projects=backend,frontend,mastra-mcp-server --parallel=3",
     "mastra:serve": "npx nx serve mastra-mcp",
     "mastra:build": "cd mastra-mcp && mastra build",
     "backend:serve": "npx nx serve backend",
@@ -22,9 +26,6 @@
     "landing:test": "npx nx test landing-page",
     "landing:analyze": "ANALYZE=true npx nx build landing-page",
     "landing:clean": "npx nx reset landing-page",
-    "build:all": "npx nx run-many -t build --projects=backend,frontend,mastra-mcp-server --parallel=3",
-    "start": "pnpm run start:prod",
-    "start:prod": "concurrently \"pnpm run backend:start\" \"pnpm run frontend:start\" \"pnpm run mcp-server:start\"",
     "db:deploy": "cd backend && npx prisma migrate deploy --schema=../libs/shared/prisma/schema.prisma",
     "db:dev": "cd backend && npx prisma migrate dev --schema=../libs/shared/prisma/schema.prisma",
     "db:start": "docker-compose up -d postgres",
@@ -32,13 +33,10 @@
     "db:generate": "npx prisma generate --schema=libs/shared/prisma/schema.prisma",
     "db:studio": "npx prisma studio --schema=libs/shared/prisma/schema.prisma",
     "db:seed": "cd libs/shared/prisma && npx tsx src/lib/seeds/index.ts",
-    "start:dev": "pnpm run db:start && pnpm run backend:serve",
-    "dev": "concurrently \"pnpm run mastra:serve\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\"",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "format:check": "biome format .",
-    "prepare": "husky"
+    "format:check": "biome format ."
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css}": ["biome check --write"]
