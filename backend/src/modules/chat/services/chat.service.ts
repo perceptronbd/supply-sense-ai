@@ -89,27 +89,28 @@ export class ChatService {
       const runtimeContext = new RuntimeContext<{ dbConnectionId: string; userQuery: string }>();
       runtimeContext.set('dbConnectionId', dbConnectionId);
       runtimeContext.set('userQuery', message);
-      const generateWithRetry = () =>
-        agent.generate(
-          [
-            {
-              role: 'user',
-              content: generateChatAgentUserPrompt(dbConnectionId, userId, '', message),
-            },
-          ],
-          {
-            runtimeContext,
-          }
-        );
 
-      const aiResponse = await generateWithRetry();
+      const aiResponse = await agent.generate(
+        [
+          {
+            role: 'user',
+            content: generateChatAgentUserPrompt(dbConnectionId, userId, '', message),
+          },
+        ],
+        {
+          runtimeContext,
+        }
+      );
+
+      this.logger.log('AI Response:', JSON.parse(JSON.stringify(aiResponse)));
+      this.logger.log('AI Response: ', aiResponse.text);
+      // @ts-ignore
+      this.logger.log('AI Tool Results: ', aiResponse.toolResults[0].payload.result);
 
       const totalPromptTokens = aiResponse.totalUsage.inputTokens;
       const totalCompletionTokens = aiResponse.totalUsage.outputTokens;
 
       const parsedResult = JSON.parse(aiResponse.text || '{}');
-
-      this.logger.log('Workflow Response: ', aiResponse);
 
       const result = parsedResult as IChatFormattedResult;
 
