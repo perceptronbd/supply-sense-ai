@@ -92,14 +92,14 @@ export class TableMetadataAgentService {
       const { tables } = input;
 
       // Process all tables at once to avoid rate limiting
-      const results: IMcpTableMetadata[] = [];
+      const _results: IMcpTableMetadata[] = [];
 
       // Create a focused prompt for multiple table metadata generation
-      const { systemPrompt } = buildMultipleTablesMetadataPrompt();
+      const { systemPrompt: _systemPrompt } = buildMultipleTablesMetadataPrompt();
 
       this.logger.log(`🔍 Analyzing table metadata for ${tables.length} tables`);
 
-      const inputData = {
+      const _inputData = {
         tables: tables.map(({ tableName, tableSchema }) => ({
           tableName,
           tableSchema,
