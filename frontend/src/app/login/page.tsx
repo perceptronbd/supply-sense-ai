@@ -5,6 +5,7 @@ import { SupplySenseTextIcon } from '@/components/icons/SupplySenseTextIcon';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
+import BlinkingLogo from '@/components/ui/animations/BlinkingLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useLoginMutation } from '@/store/api/authApi';
@@ -240,21 +241,22 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-content2 flex items-center justify-center p-4">
+    <main className="flex items-center justify-center min-h-screen p-4 bg-content2">
+      <BlinkingLogo color="black" />
       <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 place-items-center">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 place-items-center">
           {/* Welcome Section - Left Side */}
-          <section className="w-full flex items-center justify-center">
-            <div className="text-center ml-6 lg:text-left space-y-6 max-w-3xl">
+          <section className="flex items-center justify-center w-full">
+            <div className="max-w-3xl ml-6 space-y-6 text-center lg:text-left">
               <header>
-                <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+                <div className="flex items-center justify-center gap-3 mb-6 lg:justify-start">
                   <LogoIcon className="w-12 h-12" />
                   <SupplySenseTextIcon className="h-10" />
                 </div>
-                <Text variant="display" as="h1" weight="bold" className="text-foreground mb-4">
+                <Text variant="display" as="h1" weight="bold" className="mb-4 text-foreground">
                   Welcome Back
                 </Text>
-                <Text variant="headerSmall" as="h2" className="text-primary-700 mb-6">
+                <Text variant="headerSmall" as="h2" className="mb-6 text-primary-700">
                   Sign in to your SupplySense account
                 </Text>
               </header>
@@ -266,25 +268,25 @@ export default function LoginPage() {
 
                 <ul className="space-y-3 text-left">
                   <li className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <div className="w-2 h-2 rounded-full bg-primary-500" />
                     <Text variant="bodyMedium" as="span" className="text-foreground-600">
                       Real-time inventory tracking and monitoring
                     </Text>
                   </li>
                   <li className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <div className="w-2 h-2 rounded-full bg-primary-500" />
                     <Text variant="bodyMedium" as="span" className="text-foreground-600">
                       Streamlined purchase and manufacturing workflows
                     </Text>
                   </li>
                   <li className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <div className="w-2 h-2 rounded-full bg-primary-500" />
                     <Text variant="bodyMedium" as="span" className="text-foreground-600">
                       AI-powered insights and recommendations
                     </Text>
                   </li>
                   <li className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full" />
+                    <div className="w-2 h-2 rounded-full bg-primary-500" />
                     <Text variant="bodyMedium" as="span" className="text-foreground-600">
                       Secure multi-tenant data isolation
                     </Text>
@@ -296,10 +298,10 @@ export default function LoginPage() {
 
           {/* Login Form - Right Side */}
           <section className="max-w-xl">
-            <Card className="shadow-2xl border-0">
+            <Card className="border-0 shadow-2xl">
               <CardBody className="p-8">
-                <header className="text-center mb-6">
-                  <Text variant="headerMedium" as="h3" className="text-foreground mb-2">
+                <header className="mb-6 text-center">
+                  <Text variant="headerMedium" as="h3" className="mb-2 text-foreground">
                     Sign In
                   </Text>
                   <Text variant="bodyBase" as="p" className="text-foreground-600">
@@ -352,12 +354,12 @@ export default function LoginPage() {
                 </form>
 
                 {/* Registration Link */}
-                <div className="text-center mt-6">
+                <div className="mt-6 text-center">
                   <Text variant="bodySmall" as="p" className="text-foreground-600">
                     Don't have an account?{' '}
                     <Link
                       href={ROUTE_PATHS.REGISTER}
-                      className="text-secondary-500 hover:text-primary-700 font-medium"
+                      className="font-medium text-secondary-500 hover:text-primary-700"
                     >
                       Register your company
                     </Link>
@@ -365,12 +367,12 @@ export default function LoginPage() {
                 </div>
 
                 {/* Demo credentials */}
-                <aside className="mt-6 p-4 bg-default-50 rounded-medium">
-                  <Text variant="bodySmall" className="font-medium mb-3">
+                <aside className="p-4 mt-6 bg-default-50 rounded-medium">
+                  <Text variant="bodySmall" className="mb-3 font-medium">
                     Demo Accounts:
                   </Text>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div>
                         <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
                           Branch Manager:
@@ -383,13 +385,13 @@ export default function LoginPage() {
                         size="sm"
                         variant="light"
                         color="primary"
-                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        className="h-auto min-h-0 px-2 py-1 text-xs"
                         onPress={() => handleDemoLogin('manager.a@company001.com', 'manager123')}
                       >
                         Use
                       </Button>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div>
                         <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
                           Inventory Clerk:
@@ -402,13 +404,13 @@ export default function LoginPage() {
                         size="sm"
                         variant="light"
                         color="primary"
-                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        className="h-auto min-h-0 px-2 py-1 text-xs"
                         onPress={() => handleDemoLogin('clerk.a@company001.com', 'clerk123')}
                       >
                         Use
                       </Button>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div>
                         <Text variant="bodyXSmall" color="muted" as="p" className="font-medium">
                           Admin:
@@ -421,7 +423,7 @@ export default function LoginPage() {
                         size="sm"
                         variant="light"
                         color="primary"
-                        className="text-xs px-2 py-1 h-auto min-h-0"
+                        className="h-auto min-h-0 px-2 py-1 text-xs"
                         onPress={() => handleDemoLogin('admin@test.com', 'Admin@123')}
                       >
                         Use
