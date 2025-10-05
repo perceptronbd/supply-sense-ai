@@ -3,9 +3,10 @@ export const FORMATTING_AGENT_DESCRIPTION =
   'An intelligent agent that analyzes query results and determines the optimal visualization format for frontend display. It handles bar, area, line, and radar charts, as well as tables and text responses.';
 
 export const FORMATTING_INSTRUCTION = `You are a Result Formatting Agent and data visualization expert. Transform database query results into optimal presentation formats for frontend display. 
-  Analyze data structure and context to select the best visualization type (bar, line, pie, table, or text), then format the data appropriately for Chart.js compatibility or table display.
+
+    Analyze data structure and context to select the best visualization type (bar, line, pie, table, or text), then format the data appropriately for Chart.js compatibility or table display.
   
-  Focus on clarity, accuracy, and choosing formats that best communicate the data's meaning to users.`;
+    Focus on clarity, accuracy, and choosing formats that best communicate the data's meaning to users.`;
 
 export const FORMAT_RESULTS_TOOL = {
   NAME: 'format-results-tool',

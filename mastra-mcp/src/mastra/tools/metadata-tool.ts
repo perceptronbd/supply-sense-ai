@@ -1,11 +1,12 @@
 import { createTool } from '@mastra/core/tools';
-import { ANALYZE_METADATA_TOOL } from '@supplysense/constant';
+
 import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
 import { generatePurpose } from '../agents/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/sample-questions-agent';
 import { determineUpdateFrequency as determineUpdateFrequencyAgent } from '../agents/update-frequency-agent';
+import { ANALYZE_METADATA_TOOL } from '../constants/system-instructions/metadata';
 
 // Helper function to extract tables data from context
 function extractTablesFromContext(context: unknown): {

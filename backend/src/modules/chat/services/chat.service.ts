@@ -20,6 +20,15 @@ interface IProcessUserMessage {
   userContext: Partial<QueryContext>;
 }
 
+type IToolResult = {
+  result: {
+    result: {
+      'analytical-sub-workflow'?: IChatFormattedResult;
+      'conversational-response'?: IChatFormattedResult;
+    };
+  };
+};
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -103,16 +112,52 @@ export class ChatService {
       );
 
       this.logger.log('AI Response:', JSON.parse(JSON.stringify(aiResponse)));
+
       this.logger.log('AI Response: ', aiResponse.text);
-      // @ts-ignore
-      this.logger.log('AI Tool Results: ', aiResponse.toolResults[0].payload.result);
 
       const totalPromptTokens = aiResponse.totalUsage.inputTokens;
       const totalCompletionTokens = aiResponse.totalUsage.outputTokens;
+      // ✅ EXTRACT THE ACTUAL WORKFLOW RESULT
+      let workflowResult: IChatFormattedResult;
 
-      const parsedResult = JSON.parse(aiResponse.text || '{}');
+      // Check if workflow tool was called
+      if (aiResponse.toolResults && aiResponse.toolResults.length > 0) {
+        const workflowToolResult = aiResponse.toolResults.find(
+          (tr) => tr.payload.toolName === 'chatWorkflow'
+        );
 
-      const result = parsedResult as IChatFormattedResult;
+        if (workflowToolResult) {
+          // Extract the nested result from workflow
+          // @ts-ignore
+          const rawResult = workflowToolResult.payload.result.result;
+
+          // Get the final output based on which branch executed
+          if (rawResult.result['conversational-response']) {
+            // Conversational branch
+            workflowResult = rawResult.result['conversational-response'];
+          } else if (rawResult.result['analytical-sub-workflow']) {
+            // Analytical branch
+            workflowResult = rawResult.result['analytical-sub-workflow'];
+          } else {
+            // Fallback: try to find the last step result
+            const lastStepKey = Object.keys(rawResult.result).pop();
+            workflowResult = rawResult.result[lastStepKey];
+          }
+        }
+      }
+
+      // If no workflow was called, use agent's direct response
+      if (!workflowResult) {
+        workflowResult = {
+          visualizationType: 'text',
+          formattedData: null,
+          summary: aiResponse.text,
+        };
+      }
+
+      this.logger.log('✅ Extracted workflow result:', workflowResult);
+
+      const result = workflowResult;
 
       //Calculate and record token usage for billing
       if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
@@ -123,7 +168,7 @@ export class ChatService {
           modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
           metadata: {
             question: message,
-            answer: result.response,
+            answer: result.summary,
             structuredData: JSON.stringify(result),
           },
         });
@@ -131,8 +176,9 @@ export class ChatService {
 
       await this.messageService.createMessage({
         sessionId,
-        content: result.response,
+        content: result.summary,
         type: MessageType.ASSISTANT,
+        structuredData: result,
       });
 
       // Generate and update session title based on the conversation
@@ -140,11 +186,11 @@ export class ChatService {
         sessionId,
         userId,
         message,
-        result.response
+        result.summary
       );
 
       return {
-        message: result.response,
+        message: result.summary,
         type: 'data',
         data: result,
         sessionId,

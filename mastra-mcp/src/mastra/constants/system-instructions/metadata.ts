@@ -45,3 +45,9 @@ export const METADATA_AGENT_INSTRUCTIONS = `
     Use the analyzeTableMetadataTool to examine the complete table structure and generate metadata that accurately reflects the actual data model.
     Provide detailed reasoning for all classifications based on the specific columns and patterns you observe.
   ` as const;
+
+export const ANALYZE_METADATA_TOOL = {
+  NAME: 'analyze-table-metadata',
+  DESCRIPTION:
+    'Analyze database table schema and generate intelligent metadata including friendly labels, purpose, update frequency, data sensitivity, and sample questions',
+} as const;

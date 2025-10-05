@@ -20,6 +20,7 @@ import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/
  */
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
+import { withRetry } from '@supplysense/utils/server';
 
 @Injectable()
 export class TableMetadataAgentService {
@@ -92,58 +93,62 @@ export class TableMetadataAgentService {
       const { tables } = input;
 
       // Process all tables at once to avoid rate limiting
-      const _results: IMcpTableMetadata[] = [];
+      const results: IMcpTableMetadata[] = [];
 
       // Create a focused prompt for multiple table metadata generation
-      const { systemPrompt: _systemPrompt } = buildMultipleTablesMetadataPrompt();
+      const { systemPrompt } = buildMultipleTablesMetadataPrompt();
 
       this.logger.log(`🔍 Analyzing table metadata for ${tables.length} tables`);
 
-      const _inputData = {
+      const inputData = {
         tables: tables.map(({ tableName, tableSchema }) => ({
           tableName,
           tableSchema,
         })),
       };
-      //TODO: fix token price calculate uncomment all the below code
-      // // Use the specialized agent to generate metadata for all tables at once with retry logic
-      // this.logger.debug('Starting table metadata generation with retry logic...');
-      // const response = await withRetry(
-      //   async () => {
-      //     this.logger.debug('Attempting to generate table metadata...');
-      //     return await this.metadataAgent?.generate(
-      //       [
-      //         {
-      //           role: 'system',
-      //           content: systemPrompt,
-      //         },
-      //         {
-      //           role: 'user',
-      //           content: JSON.stringify(inputData, null, 2),
-      //         },
-      //       ],
-      //       {
-      //         toolChoice: {
-      //           type: 'tool',
-      //           toolName: 'supplySense_analyzeTableMetadataTool',
-      //         },
-      //       }
-      //     );
-      //   },
-      //   3, // maxRetries
-      //   5000 // 5 second delay, longer for MCP timeout
-      // );
 
-      // this.logger.log('✅ Table metadata generated successfully for all tables', {
-      //   usage: response.usage,
-      // });
+      // Use the specialized agent to generate metadata for all tables at once with retry logic
+      this.logger.debug('Starting table metadata generation with retry logic...');
+      const response = await withRetry(
+        async () => {
+          this.logger.debug('Attempting to generate table metadata...');
+          return await this.metadataAgent?.generate(
+            [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: JSON.stringify(inputData, null, 2),
+              },
+            ],
+            {
+              toolChoice: {
+                type: 'tool',
+                toolName: 'supplySense_analyzeTableMetadataTool',
+              },
+            }
+          );
+        },
+        3, // maxRetries
+        5000 // 5 second delay, longer for MCP timeout
+      );
 
-      // this.logger.debug('Response text:', response.text);
-      // // Parse the response to extract structured metadata for all tables
-      // const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
-      // results.push(...parsedResults);
+      this.logger.log('✅ Table metadata generated successfully for all tables', {
+        usage: response.usage,
+      });
 
-      // return { result: results, usage: response.usage, question: systemPrompt };
+      this.logger.debug('Response text:', response.text);
+      // Parse the response to extract structured metadata for all tables
+      const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
+      results.push(...parsedResults);
+
+      return {
+        result: results,
+        usage: response.usage as MCPTableMetadataAgentRes['usage'],
+        question: systemPrompt,
+      };
     } catch (error) {
       this.logger.error('❌ Failed to generate metadata for tables:', error);
       const fallbackResults = input.tables.map(({ tableName, tableSchema }) =>
