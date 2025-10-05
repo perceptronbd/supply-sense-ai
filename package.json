@@ -118,7 +118,7 @@
     "@azure/core-sse": "^2.3.0",
     "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.2.0",
-    "@heroui/react": "^2.8.4",
+    "@heroui/react": "^2.8.5",
     "@heroui/theme": "^2.4.22",
     "@hookform/resolvers": "^5.2.2",
     "@internationalized/date": "^3.10.0",
