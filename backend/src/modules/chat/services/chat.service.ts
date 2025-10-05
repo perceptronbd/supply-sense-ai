@@ -96,6 +96,7 @@ export class ChatService {
 
       // Create RuntimeContext and set your dynamic values
       const runtimeContext = new RuntimeContext<{ dbConnectionId: string; userQuery: string }>();
+
       runtimeContext.set('dbConnectionId', dbConnectionId);
       runtimeContext.set('userQuery', message);
 

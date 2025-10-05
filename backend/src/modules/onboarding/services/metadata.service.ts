@@ -160,8 +160,8 @@ export class MetadataService {
       if (agentResponse.usage) {
         await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
-          inputTokens: agentResponse.usage.promptTokens,
-          outputTokens: agentResponse.usage.completionTokens,
+          inputTokens: agentResponse.usage.inputTokens,
+          outputTokens: agentResponse.usage.outputTokens,
           isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
           metadata: {
             question: agentResponse.question,
