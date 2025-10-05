@@ -124,8 +124,10 @@ export class ChatService {
 
       // Create RuntimeContext and set your dynamic values
       const runtimeContext = new RuntimeContext<{ dbConnectionId: string; userQuery: string }>();
+
       runtimeContext.set('dbConnectionId', dbConnectionId);
       runtimeContext.set('userQuery', message);
+
       const generateWithRetry = () =>
         agent.generate(
           [
@@ -139,14 +141,6 @@ export class ChatService {
             // toolChoice: {
             //   type: 'tool',
             //   toolName: 'chat_query_processing',
-            // },
-            // onStepFinish: async ( { usage } ) => {
-            //   if ( usage ) {
-            //     this.logger.debug( 'usage', usage );
-            //     // Aggregate tokens from each step
-            //     totalPromptTokens += usage.inputTokens || 0;
-            //     totalCompletionTokens += usage.outputTokens || 0;
-            //   }
             // },
           }
         );
@@ -183,24 +177,6 @@ export class ChatService {
           },
         });
       }
-
-      // Test connection - just get workflows, don't create runs yet
-
-      // const workflows =await mcpClient.getWorkflows();
-      // this.logger.log( 'Workflows:', workflows );
-      // const workflow = await mcpClient.getWorkflow( 'chatWorkflow' );
-      // this.logger.log( 'Workflow:', workflow );
-
-      // const run = await workflow.createRunAsync();
-
-      // const result = await workflow.startAsync( {
-      //   runId: run.runId,
-      //   inputData: {
-      //     dbConnectionId,
-      //     userQuery: message,
-      //   },
-      // } );
-      // this.logger.log( 'Workflow started successfully, result:', result );
 
       await this.messageService.createMessage({
         sessionId,

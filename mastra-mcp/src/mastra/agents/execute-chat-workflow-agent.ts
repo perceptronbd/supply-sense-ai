@@ -42,8 +42,8 @@ export const chatWorkflowAgent = new Agent({
   description:
     'An intelligent gateway that routes user queries: responds directly to simple conversations and invokes the chat workflow tool only for complex analytical tasks.',
   instructions: async ({ runtimeContext }) => {
-    const dbConnectionId = runtimeContext.get('dbConnectionId');
-    const userQuery = runtimeContext.get('userQuery');
+    const dbConnectionId = runtimeContext.get('dbConnectionId' as never);
+    const userQuery = runtimeContext.get('userQuery' as never);
 
     return `You are a supply chain AI assistant.
     
