@@ -1,6 +1,3 @@
-import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { ConnectionsService } from '@/modules/connections/connections.service';
-import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import type {
@@ -11,6 +8,9 @@ import type {
   ITableSchemaInput,
 } from '@supplysense/types';
 import { withDbConnection } from '@supplysense/utils/server';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
+import { ConnectionsService } from '@/modules/connections/connections.service';
+import { TableMetadataAgentService } from '@/modules/mcp-client/services/table-metadata-agent.service';
 import { GET_TABLES_QUERY } from '../constant/table-schema';
 import type { BatchSaveMetadataDto, CaptureMetadataDto } from '../dto/metadata.dto';
 import type { DbCredentials } from '../types/db-connection.type';
@@ -160,9 +160,8 @@ export class MetadataService {
       if (agentResponse.usage) {
         await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
-          inputTokens: agentResponse.usage.promptTokens,
-          outputTokens: agentResponse.usage.completionTokens,
-          isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
+          inputTokens: agentResponse.usage.inputTokens,
+          outputTokens: agentResponse.usage.outputTokens,
           metadata: {
             question: agentResponse.question,
             answer: JSON.stringify(agentResponse.result),

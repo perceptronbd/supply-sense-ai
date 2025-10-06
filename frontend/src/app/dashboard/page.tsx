@@ -1,9 +1,9 @@
 'use client';
 
-import { Text } from '@/components/ui/Text';
-import type { RootState } from '@/store/store';
 import { Card, CardBody } from '@heroui/react';
 import { useSelector } from 'react-redux';
+import { Text } from '@/components/ui/Text';
+import type { RootState } from '@/store/store';
 
 export default function DashboardPage() {
   const { user } = useSelector((state: RootState) => state.auth);

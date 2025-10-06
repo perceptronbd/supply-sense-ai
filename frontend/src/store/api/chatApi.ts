@@ -1,7 +1,7 @@
-import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
-import type { RootState } from '@/store/store';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { IChatFormattedResult } from '@supplysense/types';
+import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
+import type { RootState } from '@/store/store';
 import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 

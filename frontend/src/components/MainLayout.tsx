@@ -1,14 +1,14 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Icons } from '@/lib/icons/Icons';
 import { useAppDispatch } from '@/store/hooks';
 import { setToggleValue } from '@/store/slices/commonSlice';
 import type { RootState } from '@/store/store';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import Sidebar from './Sidebar';
 import LogoIcon from './icons/LogoIcon';
+import Sidebar from './Sidebar';
 import { Text } from './ui/Text';
 
 interface MainLayoutProps {

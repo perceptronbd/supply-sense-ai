@@ -4,14 +4,14 @@ import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from 
 import { ReactNode } from 'react';
 import { tableData } from './TableData';
 
-export default function PricingTable() {
-  const ValueCell = ({ value }: { value: ReactNode | string }) => {
-    if (typeof value === 'string') {
-      return <span>{value}</span>;
-    }
-    return <div className="flex justify-center items-center">{value}</div>;
-  };
+const ValueCell = ({ value }: { value: ReactNode | string }) => {
+  if (typeof value === 'string') {
+    return <span>{value}</span>;
+  }
+  return <div className="flex justify-center items-center">{value}</div>;
+};
 
+export default function PricingTable() {
   return (
     <Table
       aria-label="Pricing Table"

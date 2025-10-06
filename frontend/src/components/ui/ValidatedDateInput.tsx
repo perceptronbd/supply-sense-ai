@@ -71,8 +71,8 @@ export function ValidatedDateInput({
   return (
     <DateInput
       name={name}
-      value={value as any}
-      defaultValue={getDateValue(defaultValue?.toString()) as any}
+      value={value ?? undefined}
+      defaultValue={getDateValue(defaultValue?.toString()) ?? undefined}
       onChange={handleValueChange}
       onBlur={handleBlur}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}

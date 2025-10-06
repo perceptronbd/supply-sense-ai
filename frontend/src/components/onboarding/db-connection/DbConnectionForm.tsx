@@ -1,14 +1,14 @@
 'use client';
 
+import { Button, Card, Switch, Textarea } from '@heroui/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { handleAsyncOperation } from '@supplysense/utils';
+import { Controller, useForm } from 'react-hook-form';
 import type { IDbConnectPayload } from '@/components/onboarding/types/db-connection';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useDbConnectMutation } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { Button, Card, Switch, Textarea } from '@heroui/react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { handleAsyncOperation } from '@supplysense/utils';
-import { Controller, useForm } from 'react-hook-form';
 import { useCheckHasCredential } from './hooks/useCheckHasCredential';
 import { useGetRenderInput } from './hooks/useGetRenderInput';
 import { type DbConnectionFormData, dbConnectionSchema, defaultDbConnectionValues } from './schema';

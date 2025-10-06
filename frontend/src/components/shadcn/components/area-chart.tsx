@@ -17,7 +17,6 @@ interface AnimatedHighlightedAreaChartProps {
   xAxisKey: string;
   height?: number | string;
   className?: string;
-  xAxisFormatter?: (value: string) => string;
 }
 
 export function AnimatedHighlightedAreaChart({
@@ -26,9 +25,15 @@ export function AnimatedHighlightedAreaChart({
   height = 300,
   className = '',
 }: AnimatedHighlightedAreaChartProps) {
+  const uniqueId = React.useId();
   const [xAxis, setXAxis] = React.useState<number | null>(null);
-  console.log('🚀 > xAxis:', xAxis);
   const dataKeys = Object.keys(config);
+  const maskGradientId = `${uniqueId}-mask-gradient`;
+  const maskId = `${uniqueId}-mask`;
+  const createGradientId = React.useCallback(
+    (key: string) => `${uniqueId}-grad-${key}`,
+    [uniqueId]
+  );
 
   // Validate data structure for area chart
   if (!data || data.length === 0) {
@@ -73,7 +78,6 @@ export function AnimatedHighlightedAreaChart({
             accessibilityLayer
             data={data}
             onMouseMove={(e) => {
-              console.log('🚀 > e:', e);
               setXAxis((e.activeCoordinate as { x: number; y: number })?.x);
             }}
             onMouseLeave={() => setXAxis(null)}
@@ -84,7 +88,7 @@ export function AnimatedHighlightedAreaChart({
 
             <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
             <defs>
-              <linearGradient id="animated-highlighted-mask-grad" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id={maskGradientId} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="transparent" />
                 <stop offset="50%" stopColor="white" />
                 <stop offset="100%" stopColor="transparent" />
@@ -92,7 +96,7 @@ export function AnimatedHighlightedAreaChart({
               {dataKeys.map((key) => (
                 <linearGradient
                   key={`gradient-${key}`}
-                  id={`animated-highlighted-grad-${key}`}
+                  id={createGradientId(key)}
                   x1="0"
                   y1="0"
                   x2="0"
@@ -103,13 +107,13 @@ export function AnimatedHighlightedAreaChart({
                 </linearGradient>
               ))}
               {xAxis && (
-                <mask id="animated-highlighted-mask">
+                <mask id={maskId}>
                   <rect
                     x={xAxis - ANIMATION_CONFIG.glowWidth / 2}
                     y={0}
                     width={ANIMATION_CONFIG.glowWidth}
                     height="100%"
-                    fill="url(#animated-highlighted-mask-grad)"
+                    fill={`url(#${maskGradientId})`}
                   />
                 </mask>
               )}
@@ -119,12 +123,12 @@ export function AnimatedHighlightedAreaChart({
                 key={key}
                 dataKey={key}
                 type="natural"
-                fill={`url(#animated-highlighted-grad-${key})`}
+                fill={`url(#${createGradientId(key)})`}
                 fillOpacity={0.4}
                 stroke={`var(--color-${key})`}
                 stackId="a"
                 strokeWidth={0.8}
-                mask="url(#animated-highlighted-mask)"
+                mask={xAxis ? `url(#${maskId})` : undefined}
                 activeDot={{
                   r: 4,
                   fill: `var(--color-${key})`,

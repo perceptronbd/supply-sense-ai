@@ -1,6 +1,6 @@
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { ApiResponse, transformApiResponse } from '@/lib/utils/api-response';
 import type { RootState } from '@/store/store';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { config } from '../../config/env';
 import { TAG_TYPES } from './tagTypes';
 

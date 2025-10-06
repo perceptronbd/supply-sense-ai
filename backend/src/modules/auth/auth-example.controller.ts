@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { AuthenticatedUser } from './decorators/current-user.decorator';
+import { AuthenticatedUser, CurrentUser } from './decorators/current-user.decorator';
 import { RequirePermissions } from './decorators/permissions.decorator';
 import { CompanyIsolationGuard } from './guards/company-isolation.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';

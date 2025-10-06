@@ -44,7 +44,7 @@ function getStatusMessage(status: number): string {
   }
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Handles diverse error payload shapes from external APIs.
 export function extractErrorMessage(error: unknown): string {
   if (typeof error === 'string') {
     return error;

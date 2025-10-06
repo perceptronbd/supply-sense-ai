@@ -3,6 +3,8 @@
 import { Accordion, AccordionItem } from '@heroui/react';
 import SectionWrapper from '../ui/SectionWrapper';
 
+const SECTION_ID = 'qna';
+
 const QnASection = () => {
   const accordionData = [
     {
@@ -55,7 +57,7 @@ const QnASection = () => {
     },
   ];
   return (
-    <SectionWrapper id="qna" className="mx auto">
+    <SectionWrapper id={SECTION_ID} className="mx auto">
       <p className="text-content1-foreground text-xs text-center mb-2">
         Frequently asked questions
       </p>

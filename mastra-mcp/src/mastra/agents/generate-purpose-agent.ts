@@ -1,7 +1,6 @@
-import type { ITableSchemaInput } from '@supplysense/types';
-
 import { Agent } from '@mastra/core/agent';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
+import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,

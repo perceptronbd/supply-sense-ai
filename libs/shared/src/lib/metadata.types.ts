@@ -34,7 +34,7 @@ export interface IMcpTableMetadata {
 
 export interface MCPTableMetadataAgentRes {
   result: IMcpTableMetadata[];
-  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  usage?: { inputTokens: number; outputTokens: number; totalTokens: number };
   question?: string;
 }
 
