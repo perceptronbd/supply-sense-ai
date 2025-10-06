@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
-import { chatWorkflowAgent } from './agents/chat-workflow-agent';
+import { chatAgent } from './agents/chat-agent';
 import { formattingAgent } from './agents/formatting-agent';
 import { generatePurposeAgent } from './agents/generate-purpose-agent';
 import { queryAnalysisAgent } from './agents/query-analysis-agent';
@@ -11,7 +11,7 @@ import { sampleQuestionsAgent } from './agents/sample-questions-agent';
 import { sqlGenerationAgent } from './agents/sql-generation-agent';
 import { updateFrequencyAgent } from './agents/update-frequency-agent';
 import { mastraLogger } from './logger';
-import { chatWorkflow } from './workflows/chat-workflow';
+import { queryPostgreSQLdbWorkflow } from './workflows/query-postgreSQL-db-workflow';
 import { tableMetadataWorkflow } from './workflows/table-metadata-workflow';
 
 const storageDir = path.resolve(process.cwd(), 'storage');
@@ -29,11 +29,11 @@ export const mastra = new Mastra({
     sampleQuestionsAgent,
     sqlGenerationAgent,
     updateFrequencyAgent,
-    chatWorkflowAgent,
+    chatAgent,
   },
   workflows: {
     tableMetadataWorkflow,
-    chatWorkflow,
+    queryPostgreSQLdbWorkflow,
   },
   observability: {
     default: {

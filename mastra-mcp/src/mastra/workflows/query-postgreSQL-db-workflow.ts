@@ -115,7 +115,7 @@ const formatResultsStep = createStep({
 });
 
 // Main workflow with conditional branching
-export const chatWorkflow = createWorkflow({
+export const queryPostgreSQLdbWorkflow = createWorkflow({
   id: 'chat-query-processing',
   description: 'AI-powered query processing with smart classification',
   inputSchema: z.object({

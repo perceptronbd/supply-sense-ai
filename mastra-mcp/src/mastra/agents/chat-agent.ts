@@ -3,11 +3,11 @@ import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Memory } from '@mastra/memory';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
-import { chatWorkflow } from '../workflows/chat-workflow';
+import { queryPostgreSQLdbWorkflow } from '../workflows/query-postgreSQL-db-workflow';
 
 const openrouter = new GetOpenRouter();
 
-export const chatWorkflowAgent = new Agent({
+export const chatAgent = new Agent({
   name: 'Chat Workflow Agent',
   description:
     'An intelligent gateway that routes user queries: responds directly to simple conversations and invokes the chat workflow tool only for complex analytical tasks.',
@@ -25,10 +25,13 @@ export const chatWorkflowAgent = new Agent({
 # Guidelines:
 - For greetings (hi, hello), casual chat, or simple questions you can answer from conversation history: respond directly
 - For analytical queries, data requests, or questions requiring database access: use the chatWorkflow tool with the database connection ID and user query
+- If the user query is unrelated to data analysis or databases, respond directly
+- Always confirm the database connection ID is provided when invoking the chatWorkflow tool
+- Pass all the database query related context to the chatWorkflow tool without asking for permission or clarification
 - Always be helpful and natural in your responses
 
 # Current Context:
-- Database Connection ID: ${dbConnectionId || 'cf91e1a7-9a95-41ff-8764-df894e54b554'}
+- Database Connection ID: ${dbConnectionId}
 
 Remember: Only use the chatWorkflow tool when the user needs data analysis or database queries. For everything else, just chat naturally!
 `;
@@ -56,6 +59,6 @@ Remember: Only use the chatWorkflow tool when the user needs data analysis or da
   }),
   model: openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
   workflows: {
-    chatWorkflow,
+    queryPostgreSQLdbWorkflow,
   },
 });
