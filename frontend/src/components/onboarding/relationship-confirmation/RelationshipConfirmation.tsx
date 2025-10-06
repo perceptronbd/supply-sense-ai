@@ -1,4 +1,7 @@
 'use client';
+import { handleAsyncOperation } from '@supplysense/utils';
+// Import necessary React hooks and components
+import { useCallback, useMemo, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -9,9 +12,6 @@ import {
   useUpsertTableRelationshipsMutation,
 } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { handleAsyncOperation } from '@supplysense/utils';
-// Import necessary React hooks and components
-import { useCallback, useMemo, useState, useTransition } from 'react';
 import Summary from '../Summary';
 import type {
   IRelationshipTables,
@@ -19,6 +19,7 @@ import type {
 } from '../types/table-relationship';
 import MemoizedRelationshipCard from './MemoizedRelationshipCard';
 import RelationshipCardSkeleton from './RelationshipCardSkeleton';
+
 const RelationshipConfirmation = () => {
   // Get the current company ID from custom hook
   const { companyId } = useGetCompanyId();

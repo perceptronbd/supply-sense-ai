@@ -1,10 +1,10 @@
 ﻿'use client';
+import { useCallback, useMemo } from 'react';
 import { ChatInterface, SessionManager } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { useSessionManager } from '@/hooks/useSessionManager';
-import { useCallback, useMemo } from 'react';
 
 export default function ChatPage() {
   // Database connection management

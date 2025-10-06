@@ -1,9 +1,11 @@
 'use client';
 
 import { Card, CardBody } from '@heroui/react';
+import React from 'react';
 import { CartesianGrid, DotProps, Line, LineChart, XAxis } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
 import { CustomTooltipContent } from './custom-tooltip-content';
+
 const CustomizedDot = ({
   cx,
   cy,
@@ -49,6 +51,8 @@ export function DottedMultiLineChart({
   dashedLines = [],
 }: LineChartProps) {
   const dataKeys = Object.keys(config);
+  const uniqueId = React.useId();
+  const glowFilterId = `${uniqueId}-rainbow-line-glow`;
 
   const defaultLineProps = {
     type: 'bump' as const,
@@ -63,7 +67,7 @@ export function DottedMultiLineChart({
       return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
     },
     strokeWidth: 2,
-    filter: 'url(#rainbow-line-glow)',
+    filter: `url(#${glowFilterId})`,
   };
 
   return (
@@ -101,7 +105,7 @@ export function DottedMultiLineChart({
               />
             ))}
             <defs>
-              <filter id="rainbow-line-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="10" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>

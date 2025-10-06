@@ -1,5 +1,10 @@
 'use client';
 
+import { Avatar, Button, Chip } from '@heroui/react';
+import { CHAT_PERMISSIONS, USER_PERMISSIONS } from '@supplysense/types';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -7,11 +12,6 @@ import { Icons } from '@/lib/icons/Icons';
 import { logout } from '@/store/slices/authSlice';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
-import { Avatar, Button, Chip } from '@heroui/react';
-import { CHAT_PERMISSIONS, USER_PERMISSIONS } from '@supplysense/types';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Text } from './ui/Text';
 
 interface SidebarProps {

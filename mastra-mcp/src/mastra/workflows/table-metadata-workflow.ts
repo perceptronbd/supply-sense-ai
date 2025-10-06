@@ -72,7 +72,9 @@ const generateSampleQuestionsStep = createStep({
         businessContext: businessContext || `Database table analysis for ${tableName}`,
       });
       console.log(`✅ Generated ${questions.length} sample questions`);
-      questions.forEach((q, i) => console.log(`  ${i + 1}. ${q}`));
+      questions.forEach((q, i) => {
+        console.log(`  ${i + 1}. ${q}`);
+      });
       return {
         tableName,
         purpose,

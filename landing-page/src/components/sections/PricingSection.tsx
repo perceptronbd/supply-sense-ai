@@ -3,9 +3,11 @@ import PricingTable from '../ui/PricingTable';
 import ProgressBar from '../ui/ProgressBar';
 import SectionWrapper from '../ui/SectionWrapper';
 
+const SECTION_ID = 'pricing';
+
 const PricingSection = () => {
   return (
-    <SectionWrapper size="medium" id="pricing" className="">
+    <SectionWrapper size="medium" id={SECTION_ID} className="">
       {/* heading section */}
       <div className="mb-16">
         <h1 className="max-w-2xl pt-12 font-brand leading-snug text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto mb-6">

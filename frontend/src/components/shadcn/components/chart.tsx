@@ -1,4 +1,3 @@
-// @ts-ignore
 'use client';
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
@@ -74,7 +73,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Recharts requires injecting dynamic CSS variables for theming.
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
@@ -99,13 +98,11 @@ const ChartTooltip = RechartsPrimitive.Tooltip;
 
 function ChartTooltipContent({
   active,
-  //@ts-ignore
   payload,
   className,
   indicator = 'dot',
   hideLabel = false,
   hideIndicator = false,
-  //@ts-ignore
   label,
   labelFormatter,
   labelClassName,
@@ -115,17 +112,17 @@ function ChartTooltipContent({
   labelKey,
 }: {
   active?: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: Recharts payload typing does not expose a stable shape.
   payload?: Array<any>;
   className?: string;
   indicator?: 'line' | 'dot' | 'dashed';
   hideLabel?: boolean;
   hideIndicator?: boolean;
   label?: React.ReactNode;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: Recharts payload typing does not expose a stable shape.
   labelFormatter?: (label: any, payload: Array<any>) => React.ReactNode;
   labelClassName?: string;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation
+  // biome-ignore lint/suspicious/noExplicitAny: Formatter signature mirrors Recharts callback contracts.
   formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode;
   color?: string;
   nameKey?: string;
@@ -174,8 +171,8 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {/* biome-ignore lint/suspicious: <explanation> */}
-        {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation> */}
+        {/* biome-ignore lint/suspicious: Payload iteration relies on Recharts dynamic structures. */}
+        {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tooltip rendering handles multiple indicator modes. */}
         {payload.map((item: any, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
@@ -247,21 +244,29 @@ function ChartTooltipContent({
 
 const ChartLegend = RechartsPrimitive.Legend;
 
+type LegendPayloadItem = {
+  dataKey?: string;
+  color?: string;
+  value?: string;
+  payload?: Record<string, unknown>;
+};
+
+interface ChartLegendContentProps extends React.ComponentProps<'div'> {
+  hideIcon?: boolean;
+  payload?: LegendPayloadItem[];
+  verticalAlign?: 'top' | 'bottom' | 'middle';
+  nameKey?: string;
+}
+
 function ChartLegendContent({
   className,
   hideIcon = false,
   payload,
   verticalAlign = 'bottom',
   nameKey,
-}: React.ComponentProps<'div'> &
-  //@ts-ignore
-  Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
-    hideIcon?: boolean;
-    nameKey?: string;
-  }) {
+}: ChartLegendContentProps) {
   const { config } = useChart();
 
-  //@ts-ignore
   if (!payload?.length) {
     return null;
   }
@@ -274,7 +279,7 @@ function ChartLegendContent({
         className
       )}
     >
-      {/* biome-ignore lint/suspicious: <explanation> */}
+      {/* biome-ignore lint/suspicious: Legend rendering iterates over dynamic Recharts payload entries. */}
       {(payload as any[]).map((item: any) => {
         const key = `${nameKey || item.dataKey || 'value'}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);

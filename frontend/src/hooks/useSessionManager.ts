@@ -1,5 +1,5 @@
-import { useCreateSessionMutation } from '@/store/api/chatApi';
 import { useCallback, useState } from 'react';
+import { useCreateSessionMutation } from '@/store/api/chatApi';
 
 export interface UseSessionManagerReturn {
   activeSessionId: string | undefined;

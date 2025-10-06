@@ -1,6 +1,6 @@
+import type { HtmlHTMLAttributes } from 'react';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-import type { HtmlHTMLAttributes } from 'react';
 
 interface IProps extends HtmlHTMLAttributes<HTMLDivElement> {
   logoIconClassName?: string;

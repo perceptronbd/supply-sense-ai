@@ -193,8 +193,9 @@ const Navbar = () => {
 
         {/* Backdrop overlay for mobile */}
         {isMobileMenuOpen && (
-          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-          <div
+          <button
+            type="button"
+            aria-label="Close mobile navigation overlay"
             className="fixed inset-0 bg-black/20 backdrop-blur-sm lg:hidden z-[-1]"
             onClick={() => setIsMobileMenuOpen(false)}
           />

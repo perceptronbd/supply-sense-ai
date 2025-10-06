@@ -13,14 +13,14 @@ interface TableMetadataInput {
   businessContext?: string;
 }
 
-import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 /**
  * Specialized service for generating table metadata using MCP tools
  * This service focuses specifically on table analysis and metadata generation
  */
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { withRetry } from '@supplysense/utils/server';
+import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 
 @Injectable()
 export class TableMetadataAgentService {

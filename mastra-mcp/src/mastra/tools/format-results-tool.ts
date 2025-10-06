@@ -3,8 +3,8 @@ import type { ChartData } from 'recharts/types/state/chartDataSlice';
 import { z } from 'zod';
 import { formattingAgent } from '../agents/formatting-agent';
 import {
-  FORMATTING_SYSTEM_PROMPT,
   FORMAT_RESULTS_TOOL,
+  FORMATTING_SYSTEM_PROMPT,
 } from '../constants/system-instructions/result-formatting';
 
 // Union type for different data formats

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Socket, io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { TestHelpers, type TestUser } from '../../support/test-helpers';
 
 describe('Chat WebSocket Gateway (E2E)', () => {

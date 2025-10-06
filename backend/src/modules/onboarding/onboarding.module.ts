@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@supplysense/prisma';
+import { CommonModule } from '../common/common.module';
 import { ConnectionsModule } from '../connections/connections.module';
 import { McpClientModule } from '../mcp-client/mcp-client.module';
-
-import { CommonModule } from '../common/common.module';
 import { OnboardingController } from './onboarding.controller';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';

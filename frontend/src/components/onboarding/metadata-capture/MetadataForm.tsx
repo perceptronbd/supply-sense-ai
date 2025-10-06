@@ -1,13 +1,13 @@
-import { Text } from '@/components/ui/Text';
-import { Icons } from '@/lib/icons/Icons';
-import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { Input, Radio, RadioGroup, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TMetadataUpdateFrequency } from '@supplysense/constant';
 import { type ComponentPropsWithRef, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Text } from '@/components/ui/Text';
+import { Icons } from '@/lib/icons/Icons';
+import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import type { IGeneratedMetadata } from '../types';
-import { type TMetadataFormData, metadataFormSchema } from './schema';
+import { metadataFormSchema, type TMetadataFormData } from './schema';
 
 const UPDATE_FREQUENCY_OPTIONS: Array<{ value: TMetadataUpdateFrequency; label: string }> = [
   { value: 'real-time', label: 'Real-time' },

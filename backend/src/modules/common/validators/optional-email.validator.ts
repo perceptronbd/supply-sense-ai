@@ -1,11 +1,11 @@
 import {
+  isEmail,
+  registerDecorator,
   ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  registerDecorator,
 } from 'class-validator';
-import { isEmail } from 'class-validator';
 
 @ValidatorConstraint({ async: false })
 export class IsOptionalEmailConstraint implements ValidatorConstraintInterface {

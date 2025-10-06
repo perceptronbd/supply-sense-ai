@@ -1,7 +1,7 @@
-import type { IGeneratedMetadata } from '@/components/onboarding/types';
-import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import persistReducer from 'redux-persist/es/persistReducer';
 import storage from 'redux-persist/lib/storage';
+import type { IGeneratedMetadata } from '@/components/onboarding/types';
 
 const WHITE_LISTED_FIELDS = [
   'currentSteps',
