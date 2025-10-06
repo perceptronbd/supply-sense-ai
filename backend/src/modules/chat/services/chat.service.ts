@@ -84,7 +84,7 @@ export class ChatService {
 
       await this.ensureDbConnectionExists(dbConnectionId, companyId);
 
-      const agent = await mcpClient.getAgent('chatWorkflowAgent');
+      const agent = await mcpClient.getAgent('chatAgent');
       this.logger.log('sessionId:', sessionId);
       this.logger.log('userId:', userId);
       this.logger.log('Agent:', agent);
