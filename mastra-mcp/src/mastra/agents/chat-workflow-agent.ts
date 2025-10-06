@@ -7,17 +7,16 @@ import { chatWorkflow } from '../workflows/chat-workflow';
 
 const openrouter = new GetOpenRouter();
 
+type ChatWorkflowAgentInput = RuntimeContext<{ dbConnectionId: string; userQuery: string }>;
+
 export const chatWorkflowAgent = new Agent({
   name: 'Chat Workflow Agent',
   description:
     'An intelligent gateway that routes user queries: responds directly to simple conversations and invokes the chat workflow tool only for complex analytical tasks.',
   instructions: async ({ runtimeContext }) => {
-    const dbConnectionId = (
-      runtimeContext as RuntimeContext<{ dbConnectionId: string; userQuery: string }>
-    ).get('dbConnectionId');
-    const userQuery = (
-      runtimeContext as RuntimeContext<{ dbConnectionId: string; userQuery: string }>
-    ).get('userQuery');
+    const context = runtimeContext as ChatWorkflowAgentInput;
+    const dbConnectionId = context.get('dbConnectionId');
+    const userQuery = context.get('userQuery');
 
     const logger = mastra.getLogger();
 

@@ -5,7 +5,7 @@ import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useCaptureMetadataMutation, useGetTablesQuery } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { Select, SelectItem } from '@heroui/react';
+import { Chip, Select, SelectItem } from '@heroui/react';
 import type { SharedSelection } from '@heroui/react';
 import { handleAsyncOperation } from '@supplysense/utils';
 import { useState } from 'react';
@@ -142,14 +142,20 @@ const TableDiscoverySelection = () => {
           </Select>
           <div className="flex w-full flex-wrap gap-2 mt-2">
             {selectedTables.map(({ tableName, displayName }) => (
-              <button
+              <Chip
                 key={tableName}
-                type="button"
-                className="flex items-center justify-center text-sm  gap-x-2 bg-default-400 rounded-md px-3 py-1"
-                onClick={() => handleRemove(tableName)}
+                variant="flat"
+                color="default"
+                size="md"
+                radius="sm"
+                classNames={{
+                  base: 'text-white bg-default-400',
+                }}
+                endContent={<Icons.X className="size-4 text-white" strokeWidth="3" />}
+                onClose={() => handleRemove(tableName)}
               >
-                {displayName} <Icons.X className="size-4" />
-              </button>
+                {displayName}
+              </Chip>
             ))}
           </div>
         </div>

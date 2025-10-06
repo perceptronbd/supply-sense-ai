@@ -70,7 +70,7 @@ const MetadataAccordion = () => {
       </div>
       <div className="space-y-4 h-[calc(100vh-200px)] overflow-y-auto no-scrollbar pb-20 bottom-fade">
         {generatedMetadata.map((metadata) => (
-          <Accordion selectionMode="multiple" fullWidth key={metadata.tableName}>
+          <Accordion selectionMode="multiple" fullWidth key={metadata.tableName} variant="splitted">
             <AccordionItem
               key="1"
               aria-label={`Metadata for ${metadata.friendlyLabel}`}
@@ -90,7 +90,9 @@ const MetadataAccordion = () => {
                   {metadata.friendlyLabel}
                 </Text>
               }
-              className="bg-default-300 w-full px-4 rounded-lg"
+              classNames={{
+                base: 'bg-default-300 w-full px-4',
+              }}
             >
               <MetadataForm {...metadata} />
             </AccordionItem>
