@@ -35,10 +35,9 @@ Remember: Only use the chatWorkflow tool when the user needs data analysis or da
   },
   memory: new Memory({
     options: {
-      lastMessages: 20, // Increased from 10 for better context
+      lastMessages: 5,
       workingMemory: {
         enabled: true,
-        scope: 'resource', // Persist user context across all their sessions
         template: `# User Context & Preferences
                       - **User ID**:
                       - **Database Connections Used**:
@@ -51,7 +50,7 @@ Remember: Only use the chatWorkflow tool when the user needs data analysis or da
                     `,
       },
       threads: {
-        generateTitle: true, // Auto-generate meaningful titles for chat sessions
+        generateTitle: true,
       },
     },
   }),
