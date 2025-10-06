@@ -11,6 +11,7 @@ export const ROUTE_PATHS = {
   // Auth routes (redirect authenticated users)
   LOGIN: '/login',
   REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
 
   // Dashboard
   DASHBOARD: '/dashboard',
@@ -49,7 +50,10 @@ export type ProtectedRoutePath =
   | (typeof ROUTE_PATHS)['USERS']
   | (typeof ROUTE_PATHS)['ROLES'];
 
-export type AuthRoutePath = (typeof ROUTE_PATHS)['LOGIN'] | (typeof ROUTE_PATHS)['REGISTER'];
+export type AuthRoutePath =
+  | (typeof ROUTE_PATHS)['LOGIN']
+  | (typeof ROUTE_PATHS)['REGISTER']
+  | (typeof ROUTE_PATHS)['FORGOT_PASSWORD'];
 export type PublicRoutePath = (typeof ROUTE_PATHS)['ROOT'];
 
 // Route configuration with access levels
@@ -83,6 +87,13 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     redirectIfAuthenticated: true,
     title: 'Register - SupplySense',
     description: 'Register your company with SupplySense',
+  },
+  FORGOT_PASSWORD: {
+    path: ROUTE_PATHS.FORGOT_PASSWORD,
+    requiresAuth: false,
+    redirectIfAuthenticated: true,
+    title: 'Forgot Password - SupplySense',
+    description: 'Reset your password',
   },
   DASHBOARD: {
     path: ROUTE_PATHS.DASHBOARD,
