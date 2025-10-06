@@ -40,15 +40,15 @@ Remember: Only use the chatWorkflow tool when the user needs data analysis or da
         enabled: true,
         scope: 'resource', // Persist user context across all their sessions
         template: `# User Context & Preferences
-- **User ID**:
-- **Database Connections Used**:
-- **Common Query Patterns**:
-- **Preferred Response Format**:
-- **Previous Analysis Types**:
-- **Business Context**:
-- **Important Notes**:
-- **Follow-up Questions**:
-`,
+                      - **User ID**:
+                      - **Database Connections Used**:
+                      - **Common Query Patterns**:
+                      - **Preferred Response Format**:
+                      - **Previous Analysis Types**:
+                      - **Business Context**:
+                      - **Important Notes**:
+                      - **Follow-up Questions**:
+                    `,
       },
       threads: {
         generateTitle: true, // Auto-generate meaningful titles for chat sessions
