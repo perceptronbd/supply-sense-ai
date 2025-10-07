@@ -1,6 +1,5 @@
-import { LoginFormSection } from '../ui/auth/LoginFormSection';
-import { LoginWelcomeSection } from '../ui/auth/LoginWelcomeSection';
-
+import { AuthWelcomeSection } from '../ui/auth/AuthWelcomeSection';
+import { LoginForm } from '../ui/auth/LoginForm';
 interface LoginLayoutProps {
   formData: {
     email: string;
@@ -23,8 +22,9 @@ export const LoginLayout = ({
 }: LoginLayoutProps) => {
   return (
     <main className="grid w-full min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
-      <LoginWelcomeSection />
-      <LoginFormSection
+      <AuthWelcomeSection variant="login" />
+
+      <LoginForm
         formData={formData}
         fieldErrors={fieldErrors}
         wasSubmitted={wasSubmitted}

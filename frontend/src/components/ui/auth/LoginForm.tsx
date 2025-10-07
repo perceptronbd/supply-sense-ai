@@ -5,7 +5,7 @@ import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
 import Link from 'next/link';
 
-interface LoginFormSectionProps {
+interface LoginFormProps {
   formData: LoginFormData;
   fieldErrors: Record<string, string[]>;
   wasSubmitted: boolean;
@@ -14,14 +14,14 @@ interface LoginFormSectionProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
-export const LoginFormSection = ({
+export const LoginForm = ({
   formData,
   fieldErrors,
   wasSubmitted,
   isLoading,
   onFieldChange,
   onSubmit,
-}: LoginFormSectionProps) => {
+}: LoginFormProps) => {
   return (
     <section className="flex min-h-screen items-center justify-center bg-content2 px-8 py-12 lg:px-20">
       <div className="w-full max-w-md mx-auto space-y-8">
@@ -43,6 +43,7 @@ export const LoginFormSection = ({
               type="email"
               label="Email"
               placeholder="Email address"
+              color="primary"
               isRequired
               variant="flat"
               labelPlacement="inside"
@@ -53,9 +54,6 @@ export const LoginFormSection = ({
               onValueChange={onFieldChange}
               autoComplete="email"
               autoFocus
-              //   classNames={{
-              //     label: 'text-primary font-medium text-sm',
-              //   }}
             />
 
             <ValidatedInput
@@ -63,6 +61,7 @@ export const LoginFormSection = ({
               type="password"
               label="Password"
               placeholder="Enter your password"
+              color="primary"
               isRequired
               variant="flat"
               labelPlacement="inside"
@@ -72,9 +71,6 @@ export const LoginFormSection = ({
               defaultValue={formData.password}
               onValueChange={onFieldChange}
               autoComplete="current-password"
-              //   classNames={{
-              //     label: 'text-primary font-medium text-sm',
-              //   }}
             />
           </div>
 
@@ -95,7 +91,7 @@ export const LoginFormSection = ({
             color="primary"
             className="w-full font-semibold"
             isLoading={isLoading}
-            size="lg"
+            size="md"
             disabled={isLoading}
           >
             {isLoading ? 'Signing in...' : 'Submit'}
