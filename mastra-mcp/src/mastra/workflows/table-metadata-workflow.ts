@@ -4,9 +4,9 @@ import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
 
-import { generatePurpose } from '../agents/generate-purpose-agent';
-import { generateSampleQuestions } from '../agents/sample-questions-agent';
-import { determineUpdateFrequency } from '../agents/update-frequency-agent';
+import { generatePurpose } from '../agents/onboarding/generate-purpose-agent';
+import { generateSampleQuestions } from '../agents/onboarding/sample-questions-agent';
+import { determineUpdateFrequency } from '../agents/onboarding/update-frequency-agent';
 
 // Shared schemas (DRY)
 const UpdateFrequencyZ = z.enum(['real-time', 'daily', 'weekly', 'monthly', 'rarely']);

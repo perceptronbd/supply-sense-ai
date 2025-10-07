@@ -3,7 +3,7 @@ import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Memory } from '@mastra/memory';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
-import { queryPostgreSQLdbWorkflow } from '../workflows/query-postgreSQL-db-workflow';
+import { queryPostgreSQLdbWorkflow } from '../../workflows/query-postgreSQL-db-workflow';
 
 const openrouter = new GetOpenRouter();
 

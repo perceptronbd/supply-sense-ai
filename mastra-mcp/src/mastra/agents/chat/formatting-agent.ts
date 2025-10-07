@@ -6,7 +6,7 @@ import {
   FORMATTING_AGENT_DESCRIPTION,
   FORMATTING_AGENT_NAME,
   FORMATTING_INSTRUCTION,
-} from '../constants/system-instructions/result-formatting';
+} from '../../constants/system-instructions/result-formatting';
 
 const openrouter = new GetOpenRouter();
 

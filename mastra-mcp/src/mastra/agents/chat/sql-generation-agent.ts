@@ -6,7 +6,7 @@ import {
   SQL_GENERATION_AGENT_DESCRIPTION,
   SQL_GENERATION_AGENT_NAME,
   SQL_GENERATION_INSTRUCTION,
-} from '../constants/system-instructions/sql-generation';
+} from '../../constants/system-instructions/sql-generation';
 
 const openrouter = new GetOpenRouter();
 

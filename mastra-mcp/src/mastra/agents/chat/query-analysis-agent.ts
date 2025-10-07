@@ -6,7 +6,7 @@ import {
   QUERY_ANALYSIS_AGENT_DESCRIPTION,
   QUERY_ANALYSIS_AGENT_NAME,
   QUERY_ANALYSIS_INSTRUCTION,
-} from '../constants/system-instructions/query-analysis';
+} from '../../constants/system-instructions/query-analysis';
 
 const openrouter = new GetOpenRouter();
 

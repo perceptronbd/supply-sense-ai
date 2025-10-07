@@ -4,12 +4,12 @@ import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import { createRuntimeContext } from '@supplysense/utils/server';
-import { mastra } from '..';
+import { mastra } from '../..';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
   PURPOSE_GENERATION_AGENT_NAME,
   PURPOSE_GENERATION_INSTRUCTION,
-} from '../constants/system-instructions/purpose-generation';
+} from '../../constants/system-instructions/purpose-generation';
 
 const openrouter = new GetOpenRouter();
 

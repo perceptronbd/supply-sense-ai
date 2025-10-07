@@ -8,12 +8,12 @@ import {
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import { createRuntimeContext } from '@supplysense/utils/server';
-import { mastra } from '..';
+import { mastra } from '../..';
 import {
   UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   UPDATE_FREQUENCY_AGENT_NAME,
   UPDATE_FREQUENCY_INSTRUCTION,
-} from '../constants/system-instructions/update-frequency';
+} from '../../constants/system-instructions/update-frequency';
 
 const openrouter = new GetOpenRouter();
 
