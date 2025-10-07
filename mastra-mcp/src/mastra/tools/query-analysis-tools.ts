@@ -1,11 +1,9 @@
 import { createTool } from '@mastra/core/tools';
 import { PrismaClient } from '@supplysense/prisma-client';
+import { createRuntimeContext } from '@supplysense/utils/server';
 import { z } from 'zod';
-import { queryAnalysisAgent } from '../agents/query-analysis-agent';
-import {
-  QUERY_ANALYSIS_SYSTEM_PROMPT,
-  QUERY_ANALYSIS_TOOL,
-} from '../constants/system-instructions/query-analysis';
+import { mastra } from '..';
+import { QUERY_ANALYSIS_TOOL } from '../constants/system-instructions/query-analysis';
 
 const inputSchema = z.object({
   dbConnectionId: z.string(),
@@ -108,25 +106,20 @@ export const queryAnalysisTool = createTool({
     // console.log('businessContext', businessContext);
     // console.log('SchemaCache', SchemaCache);
     const normalizedSchemaCache = normalizeSchemaCache(SchemaCache);
-    // call the query analysis agent and pass the business context and schema cache to the system prompt and user query to the user prompt
+    // Build runtime context and call the agent without explicit system prompt
+    const agent = mastra.getAgent('queryAnalysisAgent');
+    const agentRuntimeContext = createRuntimeContext({
+      businessContext,
+      schemaCache: normalizedSchemaCache,
+      userQuery,
+    });
 
-    const agentResponse = await queryAnalysisAgent.generate(
-      [
-        {
-          role: 'system',
-          content: QUERY_ANALYSIS_SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: ` Available context:
-            - Business Context: ${businessContext ?? 'Not provided'}
-            - Schema Cache: ${JSON.stringify(normalizedSchemaCache, null, 2)}
-            - User Query: ${userQuery}`,
-        },
-      ],
-      { abortSignal }
-    );
+    const messages = userQuery ? [{ role: 'user', content: `User Query: ${userQuery}` }] : [];
 
+    const agentResponse = await agent.generate(messages, {
+      abortSignal,
+      runtimeContext: agentRuntimeContext,
+    });
     const result = {
       queryAnalysis: agentResponse.text.trim(),
     };

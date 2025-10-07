@@ -14,7 +14,6 @@ function extractTablesFromContext(context: unknown): {
     tableName: string;
     tableSchema: ITableSchemaInput;
   }>;
-  businessContext?: string;
 } {
   // Handle direct context
   if (
@@ -45,7 +44,6 @@ function extractTablesFromContext(context: unknown): {
         const parsedData = JSON.parse(jsonMatch[0]);
         return {
           tables: parsedData.tables || [],
-          businessContext: parsedData.businessContext,
         };
       } catch {
         // JSON parsing failed, fall through to error
@@ -89,6 +87,7 @@ const inputSchema = z.object({
       })
     )
     .describe('Array of tables to analyze'),
+  businessContext: z.string().optional().describe('Business context for the tables'),
 });
 
 export const analyzeTableMetadataTool = createTool({
@@ -105,7 +104,7 @@ export const analyzeTableMetadataTool = createTool({
     })
   ),
   execute: async ({ context }) => {
-    const { tables, businessContext } = extractTablesFromContext(context);
+    const { tables } = extractTablesFromContext(context);
 
     if (!tables || !Array.isArray(tables) || tables.length === 0) {
       throw new Error('Missing required tables array in context');
@@ -127,7 +126,7 @@ export const analyzeTableMetadataTool = createTool({
         const purpose = await generatePurpose({
           tableName,
           tableSchema,
-          businessContext: businessContext || `Database table analysis for ${tableName}`,
+          businessContext: context.businessContext || `Database table analysis for ${tableName}`,
         });
 
         // Execute remaining AI agents in parallel
@@ -135,13 +134,13 @@ export const analyzeTableMetadataTool = createTool({
           determineUpdateFrequencyAgent({
             tableName,
             tableSchema,
-            businessContext: businessContext || `Database table analysis for ${tableName}`,
+            businessContext: context.businessContext || `Database table analysis for ${tableName}`,
           }),
           generateSampleQuestions({
             tableName,
             tableSchema,
             purpose: purpose,
-            businessContext: businessContext || `Database table analysis for ${tableName}`,
+            businessContext: context.businessContext || `Database table analysis for ${tableName}`,
           }),
         ]);
 

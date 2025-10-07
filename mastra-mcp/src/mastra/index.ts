@@ -9,6 +9,7 @@ import { generatePurposeAgent } from './agents/generate-purpose-agent';
 import { queryAnalysisAgent } from './agents/query-analysis-agent';
 import { sampleQuestionsAgent } from './agents/sample-questions-agent';
 import { sqlGenerationAgent } from './agents/sql-generation-agent';
+import { tableMetadataAgent } from './agents/table-metadata-agent';
 import { updateFrequencyAgent } from './agents/update-frequency-agent';
 import { mastraLogger } from './logger';
 import { queryPostgreSQLdbWorkflow } from './workflows/query-postgreSQL-db-workflow';
@@ -29,6 +30,7 @@ export const mastra = new Mastra({
     sampleQuestionsAgent,
     sqlGenerationAgent,
     updateFrequencyAgent,
+    tableMetadataAgent,
     chatAgent,
   },
   workflows: {

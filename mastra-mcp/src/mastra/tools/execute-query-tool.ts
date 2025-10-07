@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core';
 import { PrismaClient } from '@supplysense/prisma-client';
 import {
+  createRuntimeContext,
   DbCredentials,
   decryptPassword,
   withDbConnection,
@@ -8,11 +9,8 @@ import {
 } from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
-import { sqlGenerationAgent } from '../agents/sql-generation-agent';
-import {
-  EXECUTE_QUERY_TOOL,
-  SQL_GENERATION_QUERY_SYSTEM_PROMPT,
-} from '../constants/system-instructions/sql-generation';
+import { mastra } from '..';
+import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
 
 // Removed formatQueryResults import
 
@@ -109,36 +107,14 @@ export const executeQueryTool = createTool({
     };
 
     // Generate SQL query using the SQL generation agent with retry logic
-    const agentResponse = await withRetry(
-      () =>
-        sqlGenerationAgent.generate([
-          {
-            role: 'system',
-            content: SQL_GENERATION_QUERY_SYSTEM_PROMPT,
-          },
-          {
-            role: 'user',
-            content: ` Available context:
-                - Business Context: ${businessContext}
-                - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
-                - Query Analysis: ${input.context.queryAnalysis}
+    const agent = mastra.getAgent('sqlGenerationAgent');
+    const runtimeContext = createRuntimeContext({
+      businessContext,
+      parsedSchema,
+      queryAnalysis: input.context.queryAnalysis,
+    });
 
-                 EXACT TABLE NAMES (use these exactly): ${Object.keys(parsedSchema.tables).join(', ')}
-                 CRITICAL QUOTING RULES:
-                   - Table names: Use exact case and quote if mixed case: ${Object.keys(
-                     parsedSchema.tables
-                   )
-                     .map((name) => (/[A-Z]/.test(name) ? `"${name}"` : name))
-                     .join(', ')}
-                   - Column quoting rules:
-                   - ${generateColumnQuotingGuidance(parsedSchema)}
-                
-                Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
-          },
-        ]),
-      3, // max retries
-      1000 // initial delay in ms
-    );
+    const agentResponse = await withRetry(() => agent.generate([], { runtimeContext }), 3, 1000);
 
     let sqlQuery = agentResponse.text
       .trim()
