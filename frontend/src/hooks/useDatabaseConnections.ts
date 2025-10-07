@@ -1,6 +1,6 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useGetDatabaseConnectionsQuery } from '@/store/api/dbConnectionApi';
-import { useCallback, useEffect, useState } from 'react';
 
 interface DatabaseConnection {
   id: string;

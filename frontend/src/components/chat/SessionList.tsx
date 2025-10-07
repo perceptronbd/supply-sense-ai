@@ -1,13 +1,13 @@
 'use client';
 
+import { Button, Drawer, DrawerBody, DrawerContent } from '@heroui/react';
+import { useState } from 'react';
 import { Loading, PlusIcon } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useAppDispatch } from '@/store/hooks';
 import { setToggleValue } from '@/store/slices/commonSlice';
-import { Button, Drawer, DrawerBody, DrawerContent } from '@heroui/react';
-import { useState } from 'react';
 import type { ChatSession } from './types';
 
 interface SessionListProps {
@@ -128,35 +128,31 @@ export const SessionListMobile = ({
   onOpenChange,
 }: Readonly<SessionListProps>) => {
   return (
-    <>
-      <Drawer
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        backdrop="transparent"
-        hideCloseButton
-        aria-label="Session List"
-        radius="none"
-        classNames={{
-          body: 'p-0',
-        }}
-      >
-        <DrawerContent>
-          {() => (
-            <>
-              <DrawerBody>
-                <SessionList
-                  sessions={sessions}
-                  activeSessionId={activeSessionId}
-                  onSessionSelect={onSessionSelect}
-                  onNewSession={onNewSession}
-                  isLoading={isLoading}
-                  isMobile={true}
-                />
-              </DrawerBody>
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
-    </>
+    <Drawer
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      backdrop="transparent"
+      hideCloseButton
+      aria-label="Session List"
+      radius="none"
+      classNames={{
+        body: 'p-0',
+      }}
+    >
+      <DrawerContent>
+        {() => (
+          <DrawerBody>
+            <SessionList
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              onSessionSelect={onSessionSelect}
+              onNewSession={onNewSession}
+              isLoading={isLoading}
+              isMobile={true}
+            />
+          </DrawerBody>
+        )}
+      </DrawerContent>
+    </Drawer>
   );
 };

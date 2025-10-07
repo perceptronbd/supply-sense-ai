@@ -1,8 +1,11 @@
 'use client';
 import SectionWrapper from '../ui/SectionWrapper';
+
+const SECTION_ID = 'use-cases';
+
 const UseCaseSection = () => {
   return (
-    <SectionWrapper id="use-cases" className="py-16">
+    <SectionWrapper id={SECTION_ID} className="py-16">
       {/* Header */}
       <h1 className="max-w-2xl pt-12 font-brand leading-snug text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto">
         What You Can Ask

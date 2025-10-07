@@ -12,6 +12,13 @@ import {
 import { ReactNode, useState } from 'react';
 import { tableData } from './TableData';
 
+const ValueCell = ({ value }: { value: ReactNode | string }) => {
+  if (typeof value === 'string') {
+    return <span className="flex-1 text-center">{value}</span>;
+  }
+  return <div className="flex flex-1 justify-center items-center">{value}</div>;
+};
+
 const PricingMobileTables = () => {
   const [view1, setView1] = useState(false);
   const [view2, setView2] = useState(false);
@@ -20,13 +27,6 @@ const PricingMobileTables = () => {
   const visibleRows1 = view1 ? tableData : tableData.slice(0, 4);
   const visibleRows2 = view2 ? tableData : tableData.slice(0, 4);
   const visibleRows3 = view3 ? tableData : tableData.slice(0, 4);
-
-  const ValueCell = ({ value }: { value: ReactNode | string }) => {
-    if (typeof value === 'string') {
-      return <span className="flex-1 text-center">{value}</span>;
-    }
-    return <div className="flex-1 flex justify-center items-center">{value}</div>;
-  };
 
   return (
     <>

@@ -1,4 +1,6 @@
 'use client';
+import { Accordion, AccordionItem } from '@heroui/react';
+import { handleAsyncOperation } from '@supplysense/utils';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -6,8 +8,6 @@ import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useSaveMetadataMutation } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { Accordion, AccordionItem } from '@heroui/react';
-import { handleAsyncOperation } from '@supplysense/utils';
 import type { IBatchSaveMetadataPayload } from '../types';
 import MetadataForm from './MetadataForm';
 

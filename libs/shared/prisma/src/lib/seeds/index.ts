@@ -6,6 +6,7 @@ import { seedPermissions } from './permission.seed';
 import { seedRoles } from './role.seed';
 import { seedSubscriptionPlans } from './subscriptionPlan.seed';
 import { seedUsers } from './user.seed';
+
 config();
 const prisma = new PrismaClient();
 

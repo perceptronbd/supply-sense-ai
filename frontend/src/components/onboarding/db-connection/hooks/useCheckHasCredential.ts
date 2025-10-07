@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import type { UseFormWatch } from 'react-hook-form';
 import type { DbConnectionFormData } from '../schema';
 
-export function useCheckHasCredential({
-  watch,
-}: {
-  watch: UseFormWatch<DbConnectionFormData>;
-}) {
+export function useCheckHasCredential({ watch }: { watch: UseFormWatch<DbConnectionFormData> }) {
   const [error, setError] = useState('');
 
   // Watch specific fields

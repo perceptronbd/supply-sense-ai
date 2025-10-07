@@ -1,8 +1,8 @@
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { markSessionProcessed, triggerSessionRefresh } from '@/store/slices/chatSlice';
 import type { RootState } from '@/store/store';
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 /**
  * Custom hook to handle session title updates when first AI response is received

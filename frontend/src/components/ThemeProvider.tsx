@@ -1,9 +1,9 @@
 'use client';
 
-import { initializeTheme } from '@/store/slices/themeSlice';
-import type { RootState } from '@/store/store';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { initializeTheme } from '@/store/slices/themeSlice';
+import type { RootState } from '@/store/store';
 
 interface ThemeProviderProps {
   children: React.ReactNode;

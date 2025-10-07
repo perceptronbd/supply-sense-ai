@@ -1,6 +1,6 @@
-import { useGetSessionMessagesQuery } from '@/store/api/chatApi';
-import type { ChatMessage } from '@/store/api/chatApi';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ChatMessage } from '@/store/api/chatApi';
+import { useGetSessionMessagesQuery } from '@/store/api/chatApi';
 
 export interface UseMessageManagerReturn {
   messages: ChatMessage[];

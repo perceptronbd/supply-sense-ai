@@ -1,6 +1,7 @@
 import { Text } from '@/components/ui/Text';
 import { cn } from '@/lib/utils';
 import { Circle } from '.';
+
 interface IProps {
   currentStep: number;
 }
