@@ -3,9 +3,9 @@ import { createTool } from '@mastra/core/tools';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
-import { generatePurpose } from '../agents/generate-purpose-agent';
-import { generateSampleQuestions } from '../agents/sample-questions-agent';
-import { determineUpdateFrequency as determineUpdateFrequencyAgent } from '../agents/update-frequency-agent';
+import { generatePurpose } from '../agents/onboarding/generate-purpose-agent';
+import { generateSampleQuestions } from '../agents/onboarding/sample-questions-agent';
+import { determineUpdateFrequency as determineUpdateFrequencyAgent } from '../agents/onboarding/update-frequency-agent';
 import { ANALYZE_METADATA_TOOL } from '../constants/system-instructions/metadata';
 
 // Helper function to extract tables data from context

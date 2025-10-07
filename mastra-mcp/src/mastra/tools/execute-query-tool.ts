@@ -9,7 +9,7 @@ import {
 } from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
-import { mastra } from '..';
+import { postgreSQLGenerationAgent } from '../agents/chat/postgresql-generation-agent';
 import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
 
 // Removed formatQueryResults import
@@ -57,11 +57,11 @@ export const executeQueryTool = createTool({
   description: EXECUTE_QUERY_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async (input): Promise<z.infer<typeof outputSchema>> => {
+  execute: async ({ context: input }): Promise<z.infer<typeof outputSchema>> => {
     // Get db context from db connection table
     const dbConnection = await prisma.dbConnection.findUnique({
       where: {
-        id: input.context.dbConnectionId,
+        id: input.dbConnectionId,
       },
       include: {
         SchemaCache: true,
@@ -107,14 +107,17 @@ export const executeQueryTool = createTool({
     };
 
     // Generate SQL query using the SQL generation agent with retry logic
-    const agent = mastra.getAgent('sqlGenerationAgent');
     const runtimeContext = createRuntimeContext({
       businessContext,
       parsedSchema,
-      queryAnalysis: input.context.queryAnalysis,
+      queryAnalysis: input.queryAnalysis,
     });
 
-    const agentResponse = await withRetry(() => agent.generate([], { runtimeContext }), 3, 1000);
+    const agentResponse = await withRetry(
+      () => postgreSQLGenerationAgent.generate([], { runtimeContext }),
+      3,
+      1000
+    );
 
     let sqlQuery = agentResponse.text
       .trim()
@@ -160,7 +163,7 @@ export const executeQueryTool = createTool({
 });
 
 // Helper function to generate column quoting guidance from schema
-function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
+function _generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
   const guidance: string[] = [];
 
   for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {

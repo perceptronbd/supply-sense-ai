@@ -4,12 +4,11 @@ import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import { createRuntimeContext } from '@supplysense/utils/server';
-import { mastra } from '..';
 import {
   SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
-} from '../constants/system-instructions/sample-questions';
+} from '../../constants/system-instructions/sample-questions';
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -72,7 +71,7 @@ export async function generateSampleQuestions({
   }
   try {
     const timestamp = new Date().toISOString();
-    const agent = mastra.getAgent('sampleQuestionsAgent');
+
     const runtimeContext = createRuntimeContext({
       tableName,
       tableSchema,
@@ -81,7 +80,7 @@ export async function generateSampleQuestions({
       timestamp,
     });
 
-    const response = await agent.generate(
+    const response = await sampleQuestionsAgent.generate(
       [
         {
           role: 'user',

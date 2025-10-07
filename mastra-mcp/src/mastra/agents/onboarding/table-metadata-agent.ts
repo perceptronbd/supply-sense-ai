@@ -7,8 +7,8 @@ import {
   TABLE_METADATA_AGENT_DESCRIPTION,
   TABLE_METADATA_AGENT_INSTRUCTIONS,
   TABLE_METADATA_AGENT_NAME,
-} from '../constants/system-instructions/metadata';
-import { tableMetadataWorkflow } from '../workflows/table-metadata-workflow';
+} from '../../constants/system-instructions/metadata';
+import { tableMetadataWorkflow } from '../../workflows/table-metadata-workflow';
 
 const openrouter = new GetOpenRouter();
 

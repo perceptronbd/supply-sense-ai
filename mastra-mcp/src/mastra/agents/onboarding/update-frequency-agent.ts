@@ -8,12 +8,11 @@ import {
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
 import { createRuntimeContext } from '@supplysense/utils/server';
-import { mastra } from '..';
 import {
   UPDATE_FREQUENCY_AGENT_DESCRIPTION,
   UPDATE_FREQUENCY_AGENT_NAME,
   UPDATE_FREQUENCY_INSTRUCTION,
-} from '../constants/system-instructions/update-frequency';
+} from '../../constants/system-instructions/update-frequency';
 
 const openrouter = new GetOpenRouter();
 
@@ -68,7 +67,6 @@ export async function determineUpdateFrequency({
   }
 
   try {
-    const agent = mastra.getAgent('updateFrequencyAgent');
     const runtimeContext = createRuntimeContext({
       tableName,
       tableSchema,
@@ -76,7 +74,7 @@ export async function determineUpdateFrequency({
       businessContext,
     });
 
-    const response = await agent.generate(
+    const response = await updateFrequencyAgent.generate(
       [
         {
           role: 'user',

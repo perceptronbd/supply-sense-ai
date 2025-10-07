@@ -1,8 +1,9 @@
+import { MessageListInput } from '@mastra/core/dist/agent/message-list';
 import { createTool } from '@mastra/core/tools';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { createRuntimeContext } from '@supplysense/utils/server';
 import { z } from 'zod';
-import { mastra } from '..';
+import { queryAnalysisAgent } from '../agents/chat/query-analysis-agent';
 import { QUERY_ANALYSIS_TOOL } from '../constants/system-instructions/query-analysis';
 
 const inputSchema = z.object({
@@ -107,16 +108,17 @@ export const queryAnalysisTool = createTool({
     // console.log('SchemaCache', SchemaCache);
     const normalizedSchemaCache = normalizeSchemaCache(SchemaCache);
     // Build runtime context and call the agent without explicit system prompt
-    const agent = mastra.getAgent('queryAnalysisAgent');
     const agentRuntimeContext = createRuntimeContext({
       businessContext,
       schemaCache: normalizedSchemaCache,
       userQuery,
     });
 
-    const messages = userQuery ? [{ role: 'user', content: `User Query: ${userQuery}` }] : [];
+    const messages = userQuery
+      ? ([{ role: 'user', content: `User Query: ${userQuery}` }] as MessageListInput)
+      : [];
 
-    const agentResponse = await agent.generate(messages, {
+    const agentResponse = await queryAnalysisAgent.generate(messages, {
       abortSignal,
       runtimeContext: agentRuntimeContext,
     });
