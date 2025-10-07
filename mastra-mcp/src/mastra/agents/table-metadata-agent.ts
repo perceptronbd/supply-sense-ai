@@ -8,7 +8,7 @@ import {
   TABLE_METADATA_AGENT_INSTRUCTIONS,
   TABLE_METADATA_AGENT_NAME,
 } from '../constants/system-instructions/metadata';
-import { analyzeTableMetadataTool } from '../tools';
+import { tableMetadataWorkflow } from '../workflows/table-metadata-workflow';
 
 const openrouter = new GetOpenRouter();
 
@@ -35,5 +35,5 @@ export const tableMetadataAgent = new Agent({
         ${TABLE_METADATA_AGENT_INSTRUCTIONS}`;
   },
   model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
-  tools: { analyzeTableMetadataTool },
+  workflows: { tableMetadataWorkflow },
 });

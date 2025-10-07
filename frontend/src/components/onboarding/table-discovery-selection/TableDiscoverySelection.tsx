@@ -1,14 +1,14 @@
 'use client';
+import type { SharedSelection } from '@heroui/react';
+import { Chip, Select, SelectItem } from '@heroui/react';
+import { handleAsyncOperation } from '@supplysense/utils';
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useCaptureMetadataMutation, useGetTablesQuery } from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { Chip, Select, SelectItem } from '@heroui/react';
-import type { SharedSelection } from '@heroui/react';
-import { handleAsyncOperation } from '@supplysense/utils';
-import { useState } from 'react';
 import Summary from '../Summary';
 import type { ICaptureMetadataPayload } from '../types';
 import type { ITableDiscoverySelection } from '../types/table-discovery-selection';

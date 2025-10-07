@@ -4,7 +4,6 @@ import path from 'node:path';
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
 import { chatAgent } from './agents/chat-agent';
-import { chatWorkflowAgent } from './agents/chat-workflow-agent';
 import { formattingAgent } from './agents/formatting-agent';
 import { generatePurposeAgent } from './agents/generate-purpose-agent';
 import { queryAnalysisAgent } from './agents/query-analysis-agent';
@@ -31,7 +30,6 @@ export const mastra = new Mastra({
     sampleQuestionsAgent,
     sqlGenerationAgent,
     updateFrequencyAgent,
-    chatWorkflowAgent,
     tableMetadataAgent,
     chatAgent,
   },
