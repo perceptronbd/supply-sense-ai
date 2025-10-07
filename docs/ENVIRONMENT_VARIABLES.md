@@ -43,7 +43,7 @@ NEXT_PUBLIC_API_URL="http://localhost:3004"
 
 ## Mastra MCP Server (.env)
 
-Copy `mastra-mcp-server/.env.example` to `mastra-mcp-server/.env` and configure:
+Copy `mastra-mcp/.env.example` to `mastra-mcp/.env` and configure:
 
 ```bash
 # Gemini API Key (required for the AI agent)
@@ -51,9 +51,9 @@ GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-api-key-here
 
 # Server Configuration
 NODE_ENV=development
-PORT=3333
-MCP_PORT=3002
-MCP_HOST=localhost
+PORT=3005
+MCP_PORT=3005
+MCP_HOST=0.0.0.0
 ```
 
 ## Backend E2E Tests (.env)

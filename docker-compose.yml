@@ -3,15 +3,18 @@ services:
   mcp-server:
     build:
       context: .
-      dockerfile: ./mastra-mcp-server/Dockerfile
+      dockerfile: ./mastra-mcp/Dockerfile
     container_name: supply-chain-mcp-server
     restart: unless-stopped
     env_file:
-      - ./mastra-mcp-server/.env
+      - ./mastra-mcp/.env
     environment:
       NODE_ENV: production
       MCP_PORT: 3005
       MCP_HOST: 0.0.0.0
+      PORT: 3005
+    volumes:
+      - ./mastra-mcp/storage:/app/storage
     ports:
       - '3005:3005'
     networks:

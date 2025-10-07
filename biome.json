@@ -127,7 +127,7 @@
       }
     },
     {
-      "includes": ["**/backend/**/*.ts", "**/mastra-mcp-server/**/*.ts"],
+      "includes": ["**/backend/**/*.ts", "**/mastra-mcp/**/*.ts"],
       "linter": {
         "rules": {
           "correctness": {

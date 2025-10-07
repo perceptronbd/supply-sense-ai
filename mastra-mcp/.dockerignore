@@ -1,6 +1,8 @@
 node_modules
 .mastra
 dist
+storage
+memory.db*
 .git
 .env
 *.log

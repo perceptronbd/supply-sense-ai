@@ -121,7 +121,7 @@ If you prefer manual configuration, create and edit each service's environment f
 # Create environment files from templates for each service
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
-cp mastra-mcp-server/.env.example mastra-mcp-server/.env
+cp mastra-mcp/.env.example mastra-mcp/.env
 ```
 
 Then configure each service's environment file with your specific settings:
@@ -157,10 +157,10 @@ nano frontend/.env.local
 NEXT_PUBLIC_API_URL="http://your-vps-ip:3004"  # Replace with your VPS IP
 ```
 
-#### MCP Server Configuration (`mastra-mcp-server/.env`)
+#### MCP Server Configuration (`mastra-mcp/.env`)
 ```bash
 # Edit MCP server environment file
-nano mastra-mcp-server/.env
+nano mastra-mcp/.env
 ```
 
 **Required Configuration:**
@@ -211,7 +211,7 @@ This project uses a **centralized Prisma client generation strategy** to optimiz
 1. Install dependencies (pnpm install)
 2. Copy shared libraries (libs/)
 3. Generate Prisma client once (npx prisma generate --schema=libs/shared/prisma/schema.prisma)
-4. Copy service-specific code (backend/, mastra-mcp-server/)
+4. Copy service-specific code (backend/, mastra-mcp/)
 5. Build individual services (pnpm run backend:build, pnpm run mcp-server:build)
 ```
 

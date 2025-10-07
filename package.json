@@ -6,7 +6,7 @@
     "prepare": "husky",
     "all:serve": "concurrently \"pnpm run mastra:serve\" \"pnpm run backend:serve\" \"pnpm run frontend:serve\"",
     "all:start": "concurrently \"pnpm run backend:start\" \"pnpm run frontend:start\" \"pnpm run landing:start\"",
-    "build:all": "npx nx run-many -t build --projects=backend,frontend,mastra-mcp-server --parallel=3",
+    "build:all": "npx nx run-many -t build --projects=backend,frontend,mastra-mcp --parallel=3",
     "mastra:serve": "npx nx serve mastra-mcp",
     "mastra:build": "npx nx run mastra-mcp:build",
     "backend:serve": "npx nx serve backend",
