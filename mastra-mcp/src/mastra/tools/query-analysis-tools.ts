@@ -1,8 +1,8 @@
+import { MessageListInput } from '@mastra/core/dist/agent/message-list';
 import { createTool } from '@mastra/core/tools';
 import { PrismaClient } from '@supplysense/prisma-client';
 import { createRuntimeContext } from '@supplysense/utils/server';
 import { z } from 'zod';
-import { mastra } from '..';
 import { QUERY_ANALYSIS_TOOL } from '../constants/system-instructions/query-analysis';
 
 const inputSchema = z.object({
@@ -52,7 +52,7 @@ export const queryAnalysisTool = createTool({
   inputSchema,
   outputSchema,
   execute: async (
-    { context, runtimeContext },
+    { context, runtimeContext, mastra },
     { abortSignal }: { abortSignal?: AbortSignal } = {}
   ): Promise<QueryAnalysisOutput> => {
     if (abortSignal?.aborted) {
@@ -114,7 +114,9 @@ export const queryAnalysisTool = createTool({
       userQuery,
     });
 
-    const messages = userQuery ? [{ role: 'user', content: `User Query: ${userQuery}` }] : [];
+    const messages = userQuery
+      ? ([{ role: 'user', content: `User Query: ${userQuery}` }] as MessageListInput)
+      : [];
 
     const agentResponse = await agent.generate(messages, {
       abortSignal,

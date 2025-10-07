@@ -9,7 +9,6 @@ import {
 } from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
-import { mastra } from '..';
 import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
 
 // Removed formatQueryResults import
@@ -57,11 +56,11 @@ export const executeQueryTool = createTool({
   description: EXECUTE_QUERY_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async (input): Promise<z.infer<typeof outputSchema>> => {
+  execute: async ({ context: input, mastra }): Promise<z.infer<typeof outputSchema>> => {
     // Get db context from db connection table
     const dbConnection = await prisma.dbConnection.findUnique({
       where: {
-        id: input.context.dbConnectionId,
+        id: input.dbConnectionId,
       },
       include: {
         SchemaCache: true,
@@ -111,7 +110,7 @@ export const executeQueryTool = createTool({
     const runtimeContext = createRuntimeContext({
       businessContext,
       parsedSchema,
-      queryAnalysis: input.context.queryAnalysis,
+      queryAnalysis: input.queryAnalysis,
     });
 
     const agentResponse = await withRetry(() => agent.generate([], { runtimeContext }), 3, 1000);
