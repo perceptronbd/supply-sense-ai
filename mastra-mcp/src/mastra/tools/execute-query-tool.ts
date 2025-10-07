@@ -9,6 +9,7 @@ import {
 } from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
+import { postgreSQLGenerationAgent } from '../agents/chat/postgresql-generation-agent';
 import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
 
 // Removed formatQueryResults import
@@ -56,7 +57,7 @@ export const executeQueryTool = createTool({
   description: EXECUTE_QUERY_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async ({ context: input, mastra }): Promise<z.infer<typeof outputSchema>> => {
+  execute: async ({ context: input }): Promise<z.infer<typeof outputSchema>> => {
     // Get db context from db connection table
     const dbConnection = await prisma.dbConnection.findUnique({
       where: {
@@ -106,14 +107,17 @@ export const executeQueryTool = createTool({
     };
 
     // Generate SQL query using the SQL generation agent with retry logic
-    const agent = mastra.getAgent('postgreSQLGenerationAgent');
     const runtimeContext = createRuntimeContext({
       businessContext,
       parsedSchema,
       queryAnalysis: input.queryAnalysis,
     });
 
-    const agentResponse = await withRetry(() => agent.generate([], { runtimeContext }), 3, 1000);
+    const agentResponse = await withRetry(
+      () => postgreSQLGenerationAgent.generate([], { runtimeContext }),
+      3,
+      1000
+    );
 
     let sqlQuery = agentResponse.text
       .trim()

@@ -1,10 +1,10 @@
 import { createTool } from '@mastra/core';
-import { MastraUnion } from '@mastra/core/dist/action';
 import { MessageListInput } from '@mastra/core/dist/agent/message-list';
 import { Logger } from '@nestjs/common';
 import { createRuntimeContext } from '@supplysense/utils/server';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
 import { z } from 'zod';
+import { formattingAgent } from '../agents/chat/formatting-agent';
 import { FORMAT_RESULTS_TOOL } from '../constants/system-instructions/result-formatting';
 
 // Union type for different data formats
@@ -40,15 +40,12 @@ const outputSchema = z.object({
 export async function formatQueryResults(
   queryResults: Record<string, unknown>[],
   sqlQuery: string,
-  mastra: MastraUnion,
   userQuery?: string
 ) {
   const logger = new Logger('formatQueryResults');
   logger.debug(' queryResults:', queryResults);
   logger.debug(' sqlQuery:', sqlQuery);
   logger.debug(' userQuery:', userQuery);
-
-  const formattingAgent = mastra.getAgent('formattingAgent');
 
   const runtimeContext = createRuntimeContext({
     queryResults,
@@ -101,10 +98,10 @@ export const formatResultsTool = createTool({
   description: FORMAT_RESULTS_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async ({ context: input, mastra }): Promise<FormattedResults> => {
+  execute: async ({ context: input }): Promise<FormattedResults> => {
     const { queryResults, sqlQuery } = input;
 
     // Call the extracted formatting function
-    return await formatQueryResults(queryResults, sqlQuery, mastra);
+    return await formatQueryResults(queryResults, sqlQuery);
   },
 });
