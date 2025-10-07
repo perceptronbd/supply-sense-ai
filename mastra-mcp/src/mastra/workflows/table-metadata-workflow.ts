@@ -1,15 +1,14 @@
-
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
 import { z } from 'zod';
-
 import { generatePurpose } from '../agents/onboarding/generate-purpose-agent';
 import { generateSampleQuestions } from '../agents/onboarding/sample-questions-agent';
 import { determineUpdateFrequency } from '../agents/onboarding/update-frequency-agent';
 
 // Shared schemas (DRY)
 const UpdateFrequencyZ = z.enum(['real-time', 'daily', 'weekly', 'monthly', 'rarely']);
+type UpdateFrequency = z.infer<typeof UpdateFrequencyZ>;
 
 const TableSchemaZ = z
   .object({
@@ -54,17 +53,21 @@ const ItemBaseZ = z.object({
 const ItemsBaseZ = z.array(ItemBaseZ);
 
 // Step A: Normalize input and add friendly label
+const PrepareTablesInputSchema = z.object({
+  tables: z.array(TableInputZ).describe('Array of tables to analyze'),
+  businessContext: BusinessContextZ,
+});
+
+const PrepareTablesOutputSchema = z.object({
+  items: ItemsBaseZ,
+  businessContext: BusinessContextZ,
+});
+
 const prepareTablesStep = createStep({
   id: 'prepare-tables',
   description: 'Normalize input tables and compute friendly labels',
-  inputSchema: z.object({
-    tables: z.array(TableInputZ).describe('Array of tables to analyze'),
-    businessContext: BusinessContextZ,
-  }),
-  outputSchema: z.object({
-    items: ItemsBaseZ,
-    businessContext: BusinessContextZ,
-  }),
+  inputSchema: PrepareTablesInputSchema,
+  outputSchema: PrepareTablesOutputSchema,
   execute: async (context) => {
     const { tables, businessContext } = context.inputData as {
       tables: Array<{ tableName: string; tableSchema: ITableSchemaInput }>;
@@ -147,16 +150,18 @@ const determineUpdateFrequenciesStep = createStep({
       tableSchema: ITableSchemaInput;
       friendlyLabel: string;
       purpose: string;
-      updateFrequency: 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely';
+      updateFrequency: UpdateFrequency;
     }>;
 
     for (const item of items) {
-      const updateFrequency = await determineUpdateFrequency({
-        tableName: item.tableName,
-        tableSchema: item.tableSchema,
-        businessContext: businessContext || `Database table analysis for ${item.tableName}`,
-      });
-      out.push({ ...item, updateFrequency: updateFrequency as any });
+      const updateFrequency = UpdateFrequencyZ.parse(
+        await determineUpdateFrequency({
+          tableName: item.tableName,
+          tableSchema: item.tableSchema,
+          businessContext: businessContext || `Database table analysis for ${item.tableName}`,
+        })
+      );
+      out.push({ ...item, updateFrequency });
     }
 
     return { items: out, businessContext };
@@ -164,6 +169,16 @@ const determineUpdateFrequenciesStep = createStep({
 });
 
 // Step D: Generate sample questions per table
+const GenerateQuestionsOutputSchema = z.array(
+  z.object({
+    tableName: z.string(),
+    friendlyLabel: z.string(),
+    purpose: z.string(),
+    updateFrequency: UpdateFrequencyZ,
+    sampleQuestions: z.array(z.string()),
+  })
+);
+
 const generateQuestionsStep = createStep({
   id: 'generate-questions-batch',
   description: 'Generate sample questions per table',
@@ -171,15 +186,7 @@ const generateQuestionsStep = createStep({
     items: z.array(ItemBaseZ.extend({ purpose: z.string(), updateFrequency: UpdateFrequencyZ })),
     businessContext: BusinessContextZ,
   }),
-  outputSchema: z.array(
-    z.object({
-      tableName: z.string(),
-      friendlyLabel: z.string(),
-      purpose: z.string(),
-      updateFrequency: UpdateFrequencyZ,
-      sampleQuestions: z.array(z.string()),
-    })
-  ),
+  outputSchema: GenerateQuestionsOutputSchema,
   execute: async (context) => {
     const { items, businessContext } = context.inputData as {
       items: Array<{
@@ -196,7 +203,7 @@ const generateQuestionsStep = createStep({
       tableName: string;
       friendlyLabel: string;
       purpose: string;
-      updateFrequency: 'real-time' | 'daily' | 'weekly' | 'monthly' | 'rarely';
+      updateFrequency: UpdateFrequency;
       sampleQuestions: string[];
     }>;
 
@@ -218,15 +225,15 @@ const generateQuestionsStep = createStep({
 
     return out;
   },
-})
+});
 
 // Create the table metadata workflow
 export const tableMetadataWorkflow = createWorkflow({
   id: 'table-metadata-generation',
   description:
     'Workflow to analyze table metadata for multiple tables, mirroring analyzeTableMetadataTool output',
-  inputSchema: prepareTablesStep.inputSchema!,
-  outputSchema: generateQuestionsStep.outputSchema!,
+  inputSchema: PrepareTablesInputSchema,
+  outputSchema: GenerateQuestionsOutputSchema,
 })
   .then(prepareTablesStep)
   .then(generatePurposesStep)

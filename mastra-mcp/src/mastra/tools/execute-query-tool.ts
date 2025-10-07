@@ -160,7 +160,7 @@ export const executeQueryTool = createTool({
 });
 
 // Helper function to generate column quoting guidance from schema
-function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
+function _generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
   const guidance: string[] = [];
 
   for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {

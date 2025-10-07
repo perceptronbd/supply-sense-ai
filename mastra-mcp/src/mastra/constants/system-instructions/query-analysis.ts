@@ -2,16 +2,7 @@ export const QUERY_ANALYSIS_AGENT_NAME = 'Query Analysis Agent';
 export const QUERY_ANALYSIS_AGENT_DESCRIPTION =
   'A specialized database query analyst that interprets natural language questions, maps them to database schema, and creates detailed query plans for accurate SQL generation and data retrieval.';
 
-export const QUERY_ANALYSIS_INSTRUCTION = `You are a Query Analysis Agent specializing in database query interpretation and planning.
-Your core purpose is to bridge the gap between natural language questions and structured database queries by analyzing user intent, mapping requirements to available database schema, and creating comprehensive query plans.
-Focus on understanding what data the user needs, how it relates to the database structure, and what analysis or calculations are required to fulfill their request.`;
-
-export const QUERY_ANALYSIS_TOOL = {
-  NAME: 'query-analysis-tool',
-  DESCRIPTION:
-    'Advanced query interpretation engine that analyzes natural language database questions, maps them to available schema, identifies required tables and relationships, and creates detailed execution plans for accurate SQL generation. Takes dbConnectionId and user query as parameters.',
-};
-export const QUERY_ANALYSIS_SYSTEM_PROMPT = `You are an expert database analyst and query planning specialist. Your role is to interpret natural language questions and create detailed, actionable query plans that will guide accurate SQL generation.
+export const QUERY_ANALYSIS_INSTRUCTION = `You are an expert database analyst and query planning specialist. Your role is to interpret natural language questions and create detailed, actionable query plans that will guide accurate SQL generation.
 ## Your Analysis Process:
 ### 1. Intent Understanding
 - **Primary Goal**: What is the user trying to accomplish?
@@ -224,3 +215,9 @@ Available Context:
 - Schema Cache: {schemaCache}
 - User Query: {userQuery}
 Return ONLY the JSON analysis object without markdown formatting or additional explanations.`;
+
+export const QUERY_ANALYSIS_TOOL = {
+  NAME: 'query-analysis-tool',
+  DESCRIPTION:
+    'Advanced query interpretation engine that analyzes natural language database questions, maps them to available schema, identifies required tables and relationships, and creates detailed execution plans for accurate SQL generation. Takes dbConnectionId and user query as parameters.',
+};
