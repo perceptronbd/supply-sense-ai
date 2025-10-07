@@ -24,7 +24,6 @@ export const queryAnalysisAgent = new Agent({
     const schemaCache = context.get('schemaCache');
 
     return `
-    ##Instructions
     ${QUERY_ANALYSIS_INSTRUCTION}
 
     ##Current Context

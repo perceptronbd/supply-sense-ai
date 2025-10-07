@@ -16,7 +16,7 @@ type RuntimeContextData = RuntimeContext<{
   queryAnalysis: string;
 }>;
 
-export const sqlGenerationAgent = new Agent({
+export const postgreSQLGenerationAgent = new Agent({
   name: SQL_GENERATION_AGENT_NAME,
   description: SQL_GENERATION_AGENT_DESCRIPTION,
   instructions: async ({ runtimeContext }) => {
@@ -26,7 +26,6 @@ export const sqlGenerationAgent = new Agent({
     const queryAnalysis = context.get('queryAnalysis') as string;
 
     return `
-    ##Instructions
     ${SQL_GENERATION_INSTRUCTION}
 
     ##Current Context

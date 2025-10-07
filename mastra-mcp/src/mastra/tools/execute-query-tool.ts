@@ -106,7 +106,7 @@ export const executeQueryTool = createTool({
     };
 
     // Generate SQL query using the SQL generation agent with retry logic
-    const agent = mastra.getAgent('sqlGenerationAgent');
+    const agent = mastra.getAgent('postgreSQLGenerationAgent');
     const runtimeContext = createRuntimeContext({
       businessContext,
       parsedSchema,

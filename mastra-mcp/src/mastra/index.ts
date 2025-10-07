@@ -5,8 +5,8 @@ import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
 import { chatAgent } from './agents/chat/chat-agent';
 import { formattingAgent } from './agents/chat/formatting-agent';
+import { postgreSQLGenerationAgent } from './agents/chat/postgresql-generation-agent';
 import { queryAnalysisAgent } from './agents/chat/query-analysis-agent';
-import { sqlGenerationAgent } from './agents/chat/sql-generation-agent';
 import { generatePurposeAgent } from './agents/onboarding/generate-purpose-agent';
 import { sampleQuestionsAgent } from './agents/onboarding/sample-questions-agent';
 import { tableMetadataAgent } from './agents/onboarding/table-metadata-agent';
@@ -28,7 +28,7 @@ export const mastra = new Mastra({
     generatePurposeAgent,
     queryAnalysisAgent,
     sampleQuestionsAgent,
-    sqlGenerationAgent,
+    postgreSQLGenerationAgent,
     updateFrequencyAgent,
     tableMetadataAgent,
     chatAgent,

@@ -24,7 +24,6 @@ export const formattingAgent = new Agent({
     const sqlQuery = context.get('sqlQuery') as string;
 
     return `
-    ##Instructions
     ${FORMATTING_INSTRUCTION}
     
     ##Current Context
