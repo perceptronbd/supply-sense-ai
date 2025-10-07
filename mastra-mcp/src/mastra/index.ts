@@ -20,6 +20,9 @@ mkdirSync(storageDir, { recursive: true });
 const memoryDbPath = path.join(storageDir, 'memory.db');
 
 export const mastra = new Mastra({
+  bundler: {
+    externals: ['ai', '@mastra/core', 'openai', 'zod'],
+  },
   storage: new LibSQLStore({
     url: `file:${memoryDbPath}`,
   }),

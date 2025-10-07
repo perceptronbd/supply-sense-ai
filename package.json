@@ -8,7 +8,7 @@
     "all:start": "concurrently \"pnpm run backend:start\" \"pnpm run frontend:start\" \"pnpm run landing:start\"",
     "build:all": "npx nx run-many -t build --projects=backend,frontend,mastra-mcp-server --parallel=3",
     "mastra:serve": "npx nx serve mastra-mcp",
-    "mastra:build": "cd mastra-mcp && mastra build",
+    "mastra:build": "npx nx run mastra-mcp:build",
     "backend:serve": "npx nx serve backend",
     "backend:build": "npx nx build backend",
     "backend:start": "node dist/backend/main.js",
