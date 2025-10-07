@@ -21,7 +21,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'INTERNAL_ERROR';
-    let details: Record<string, unknown> | string[] | undefined = undefined;
+    let details: Record<string, unknown> | string[] | undefined;
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();

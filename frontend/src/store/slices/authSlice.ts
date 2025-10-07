@@ -1,7 +1,7 @@
-﻿import { getUserFromToken, isTokenExpired } from '@/lib/jwt';
-import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
+﻿import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import { getUserFromToken, isTokenExpired } from '@/lib/jwt';
 
 interface User {
   id: string;

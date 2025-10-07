@@ -1,11 +1,11 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import { Text } from '@/components/ui/Text';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
-import { useSendQueryMutation } from '@/store/api/chatApi';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
-import { useCallback, useMemo } from 'react';
+import { useSendQueryMutation } from '@/store/api/chatApi';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 import type { ChatInterfaceProps } from './types';
@@ -84,7 +84,16 @@ export function ChatInterface({
         removeTempMessage(tempId);
       }
     },
-    [sessionId, dbConnectionId, handleCreateSession, addErrorMessage, refetchMessages, sendQuery]
+    [
+      sessionId,
+      dbConnectionId,
+      handleCreateSession,
+      addErrorMessage,
+      refetchMessages,
+      sendQuery,
+      addTempMessage,
+      removeTempMessage,
+    ]
   );
 
   // Handle suggestion clicks by sending them as messages

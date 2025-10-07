@@ -1,9 +1,9 @@
-import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { Agent } from '@mastra/core/agent';
-import { BadRequestException, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
+import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { McpClientService } from './mcp-client.service';
 
 export interface GenerateDescriptionInput {
@@ -206,8 +206,8 @@ export class TableDescriptionAgentService {
       if (response.usage) {
         await this.tokenAndCredit.tokenPriceCalculate({
           companyId,
-          inputTokens: response.usage.promptTokens,
-          outputTokens: response.usage.completionTokens,
+          inputTokens: response.usage.inputTokens,
+          outputTokens: response.usage.outputTokens,
           isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
           metadata: {
             question: systemPrompt,

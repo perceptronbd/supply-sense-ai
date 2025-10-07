@@ -1,21 +1,22 @@
 'use client';
 
-import { UserIcon } from '@/components/icons';
-import { LogoIcon } from '@/components/icons/LogoIcon';
-import { DrawingLogo } from '@/components/ui/DrawingLogo';
-import { Text } from '@/components/ui/Text';
-import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { Avatar, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
 import { format } from 'date-fns';
+import { UserIcon } from '@/components/icons';
+import { LogoIcon } from '@/components/icons/LogoIcon';
+import { DrawingLogo } from '@/components/ui/DrawingLogo';
+import { Text } from '@/components/ui/Text';
+import type { ChatMessageResponse } from '@/store/api/chatApi';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
 import { CHART_TYPES_VALUES, type TChartType } from '@supplysense/constant';
 import { RenderChart } from './RenderChart';
 import { RenderTable } from './RenderTable';
+
 interface MessageBubbleProps {
   message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;

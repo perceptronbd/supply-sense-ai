@@ -6,7 +6,10 @@ import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
 interface ValidatedDateInputProps
-  extends Omit<DateInputProps, 'isInvalid' | 'errorMessage' | 'onChange' | 'defaultValue'> {
+  extends Omit<
+    DateInputProps,
+    'isInvalid' | 'errorMessage' | 'onChange' | 'defaultValue' | 'validate'
+  > {
   name: string;
   wasSubmitted: boolean;
   errors?: string[];
@@ -68,8 +71,8 @@ export function ValidatedDateInput({
   return (
     <DateInput
       name={name}
-      value={value}
-      defaultValue={getDateValue(defaultValue?.toString())}
+      value={value ?? undefined}
+      defaultValue={getDateValue(defaultValue?.toString()) ?? undefined}
       onChange={handleValueChange}
       onBlur={handleBlur}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}

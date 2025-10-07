@@ -1,6 +1,6 @@
-import type { RootState } from '@/store/store';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import type { RootState } from '@/store/store';
 
 /**
  * Custom hook to handle session list refresh when triggered by Redux state

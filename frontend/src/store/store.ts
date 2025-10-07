@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE, persistStore } from 'redux-persist';
+import { FLUSH, PAUSE, PERSIST, PURGE, persistStore, REGISTER, REHYDRATE } from 'redux-persist';
 import { authApi } from './api/authApi';
 import { baseApi } from './api/baseApi';
 import { chatApi } from './api/chatApi';

@@ -1,10 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect, useId, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import type { RootState } from '@/store/store';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -15,6 +15,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const loadingLogoId = useId();
 
   useEffect(() => {
     setIsMounted(true);
@@ -34,13 +35,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   if (!isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <DrawingLogo
-          size={60}
-          variant="primary"
-          speed="fast"
-          showFill={true}
-          id="auth-guard-mount"
-        />
+        <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} id={loadingLogoId} />
       </div>
     );
   }

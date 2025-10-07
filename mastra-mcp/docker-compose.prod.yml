@@ -1,0 +1,10 @@
+services:
+  mastra-mcp-prod:
+    build:
+      context: ..
+      dockerfile: mastra-mcp/Dockerfile.prod
+    ports:
+      - "4111:4111"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped

@@ -1,18 +1,17 @@
 'use client';
 
-import { BrandLogo } from '@/components/ui/BrandLogo';
-import { ROUTE_PATHS } from '@/config/routes';
-import { useNavigation } from '@/hooks/useNavigation';
-import { usePermissions } from '@/hooks/usePermissions';
-import { Icons } from '@/lib/icons/Icons';
-import { logout } from '@/store/slices/authSlice';
-import { toggleTheme } from '@/store/slices/themeSlice';
-import type { RootState } from '@/store/store';
 import { Avatar, Button, Chip } from '@heroui/react';
 import { CHAT_PERMISSIONS, USER_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { ROUTE_PATHS } from '@/config/routes';
+import { useNavigation } from '@/hooks/useNavigation';
+import { Icons } from '@/lib/icons/Icons';
+import { logout } from '@/store/slices/authSlice';
+import { toggleTheme } from '@/store/slices/themeSlice';
+import type { RootState } from '@/store/store';
 import { Text } from './ui/Text';
 
 interface SidebarProps {
@@ -23,7 +22,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   const router = useRouter();
   const { isActive } = useNavigation();
-  const { hasPermission } = usePermissions();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { theme: _ } = useSelector((state: RootState) => state.theme);
@@ -134,7 +132,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             </ul>
           </nav>
           {/* User info and logout */}
-          <footer className="p-4 border-t rounded-b-xl border-divider flex-shrink-0">
+          <footer className="flex-shrink-0 p-4 border-t rounded-b-xl border-divider">
             <div className="flex items-center gap-x-4">
               {/* <Image
                 src={'/avatar.png'}

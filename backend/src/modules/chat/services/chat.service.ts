@@ -1,17 +1,12 @@
-import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { Agent } from '@mastra/core/agent';
+import { RuntimeContext } from '@mastra/core/runtime-context';
+import type { MastraModelOutput } from '@mastra/core/stream';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import type { IChatFormattedResult } from '@supplysense/types';
-import { withRetry } from '@supplysense/utils/server';
+import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { MessageType } from '../dto/chat.dto';
-import { initializeChatAgent, initializeSummaryAgent } from '../helpers/agent.helper';
-import {
-  generateChatAgentUserPrompt,
-  generateSummaryAgentSystemPrompt,
-} from '../helpers/prompt.helper';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
@@ -25,11 +20,22 @@ interface IProcessUserMessage {
   userContext: Partial<QueryContext>;
 }
 
+type AgentGenerateResult = Awaited<ReturnType<MastraModelOutput['getFullOutput']>>;
+
+type AgentToolResultPayload = AgentGenerateResult['toolResults'][number]['payload'];
+
+const VALID_VISUALIZATION_TYPES = new Set<IChatFormattedResult['visualizationType']>([
+  'table',
+  'bar',
+  'line',
+  'area',
+  'radar',
+  'text',
+]);
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
-  private chatAgent: Agent | null = null;
-  private summaryAgent: Agent | null = null;
 
   constructor(
     @Inject(SessionService) private readonly sessionService: SessionService,
@@ -42,83 +48,6 @@ export class ChatService {
     private readonly tokenAndCredit: TokenAndCredit
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
-  }
-
-  /**
-   * Initialize the chat agent if it hasn't been initialized yet
-   * This agent is responsible for processing user queries and interacting with database tools
-   */
-  private async initializeChatAgent(): Promise<void> {
-    // Check if agent is already initialized to avoid redundant initialization
-    if (this.chatAgent) {
-      return;
-    }
-
-    try {
-      // Use the helper function to initialize the chat agent
-      this.chatAgent = await initializeChatAgent(this.mcpClientService);
-    } catch (error) {
-      this.logger.error('Failed to initialize chat agent:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Initialize the summary agent if it hasn't been initialized yet
-   * This agent is responsible for summarizing conversation history
-   */
-  private async initializeSummaryAgent(): Promise<void> {
-    // Check if agent is already initialized to avoid redundant initialization
-    if (this.summaryAgent) {
-      return;
-    }
-
-    try {
-      // Use the helper function to initialize the summary agent
-      this.summaryAgent = await initializeSummaryAgent();
-    } catch (error) {
-      this.logger.error('Failed to initialize summary agent:', error);
-      throw error;
-    }
-  }
-
-  //   Generate a summary of the conversation history
-  async generateConversationSummary(conversationHistory: string[]): Promise<string> {
-    try {
-      // Ensure the summary agent is initialized
-      await this.initializeSummaryAgent();
-      if (!this.summaryAgent) {
-        throw new Error('Summary agent not initialized');
-      }
-
-      // Format the conversation history for processing
-      const formattedHistory = conversationHistory
-        .map((msg, index) => `Message ${index + 1}: ${msg}`)
-        .join('\n');
-
-      // Generate summary using the summary agent with a system prompt
-      const agentResponse = await this.summaryAgent.generate(
-        [
-          {
-            role: 'system',
-            content: generateSummaryAgentSystemPrompt(formattedHistory),
-          },
-          {
-            role: 'user',
-            content: formattedHistory,
-          },
-        ],
-        {}
-      );
-
-      // Extract the summary text or provide a fallback
-      const summary = agentResponse.text || 'No summary available.';
-      this.logger.debug('Conversation summary generated successfully', summary);
-      return summary;
-    } catch (error) {
-      this.logger.error('Failed to generate conversation summary:', error);
-      return 'Failed to generate conversation summary.';
-    }
   }
 
   /**
@@ -135,23 +64,16 @@ export class ChatService {
   }: IProcessUserMessage): Promise<AIChatResponse> {
     try {
       // Check if the user has sufficient credits to continue with the chat
-      // If not, this will throw an error
       await this.tokenAndCredit.canContinueForChat(companyId);
 
       // Ensure the chat agent is initialized before processing
-      await this.initializeChatAgent();
-      if (!this.chatAgent) {
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
+      if (!mcpClient) {
         throw new Error('Chat agent not initialized');
       }
 
-      // Log the incoming message for debugging purposes
-      this.logger.log(
-        `Processing user message: "${message}" for user ${userId} in session ${sessionId}`
-      );
-
       // Update the last activity timestamp for the session
       await this.sessionService.updateLastActivity(sessionId);
-      this.logger.log('Session activity updated');
 
       // Save the user's message to the database
       await this.messageService.createMessage({
@@ -160,91 +82,44 @@ export class ChatService {
         type: MessageType.USER,
       });
 
-      // Retrieve recent session history for context (last 10 messages)
-      const sessionHistory = await this.messageService.getSessionMessages(sessionId, 10);
-      this.logger.log(`Retrieved ${sessionHistory.length} session history messages`);
+      await this.ensureDbConnectionExists(dbConnectionId, companyId);
 
-      // Verify that the database connection exists
-      const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
-        where: { id: dbConnectionId },
-      });
+      const agent = await mcpClient.getAgent('chatAgent');
+      this.logger.log('sessionId:', sessionId);
+      this.logger.log('userId:', userId);
+      this.logger.log('Agent:', agent);
 
-      // If the database connection doesn't exist, throw an error
-      if (!dbConnectionExist) {
-        this.logger.error(`Database connection not found: ${dbConnectionId}`);
-        throw new BadRequestException(`Database connection not found: ${dbConnectionId}`);
-      }
+      const runtimeContext = this.createRuntimeContext(dbConnectionId);
 
-      // Generate a summary of the conversation history to provide context
-      const summarizeConversationHistory = await this.generateConversationSummary(
-        sessionHistory.map((msg) => msg.content)
-      );
-
-      let totalPromptTokens = 0;
-      let totalCompletionTokens = 0;
-
-      const generateWithRetry = () =>
-        this.chatAgent.generate(
-          [
-            {
-              role: 'user',
-              content: generateChatAgentUserPrompt(
-                dbConnectionId,
-                userId,
-                summarizeConversationHistory,
-                message
-              ),
-            },
-          ],
+      const aiResponse = (await agent.generate(
+        [
           {
-            toolChoice: {
-              type: 'tool',
-              toolName: 'supplySense_run_chatWorkflow',
-            },
-            onStepFinish: async ({ usage }) => {
-              if (usage) {
-                this.logger.debug('usage', usage);
-                // Aggregate tokens from each step
-                totalPromptTokens += usage.promptTokens || 0;
-                totalCompletionTokens += usage.completionTokens || 0;
-              }
-            },
-          }
-        );
-
-      const aiResponse = await withRetry(
-        generateWithRetry,
-        3, // maxRetries
-        1000 // initial delay in ms (will be doubled each retry)
-      );
-
-      this.logger.debug('AI response generated successfully after retries');
-      const parsedResult = JSON.parse(aiResponse.toolResults[0].result.content?.[0].text || '{}');
-      const result = parsedResult.result as IChatFormattedResult;
-      this.logger.log('result:', result);
-
-      // Calculate and record token usage for billing
-      if (totalPromptTokens > 0 || totalCompletionTokens > 0) {
-        this.logger.debug('Total tokens used:', totalPromptTokens, totalCompletionTokens);
-
-        await this.tokenAndCredit.tokenPriceCalculate({
-          companyId,
-          inputTokens: totalPromptTokens,
-          outputTokens: totalCompletionTokens,
-          modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
-          metadata: {
-            question: message,
-            answer: result.summary,
-            structuredData: JSON.stringify(result),
+            role: 'user',
+            content: message,
           },
-        });
-      }
+        ],
+
+        {
+          runId: sessionId,
+          threadId: sessionId,
+          resourceId: userId,
+          runtimeContext,
+        }
+      )) as AgentGenerateResult;
+      const workflowResult = this.extractWorkflowResult(aiResponse);
+
+      await this.recordTokenUsage({
+        usage: aiResponse.totalUsage,
+        companyId,
+        message,
+        result: workflowResult,
+      });
 
       await this.messageService.createMessage({
         sessionId,
-        content: result.summary,
+        content: workflowResult.summary,
         type: MessageType.ASSISTANT,
-        structuredData: result,
+        structuredData: workflowResult,
       });
 
       // Generate and update session title based on the conversation
@@ -252,19 +127,18 @@ export class ChatService {
         sessionId,
         userId,
         message,
-        result.summary
+        workflowResult.summary
       );
 
       return {
-        message: result.summary,
+        message: workflowResult.summary,
         type: 'data',
-        data: result,
+        data: workflowResult,
         sessionId,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error('Failed to process user message:', error);
-      this.logger.error('Error stack:', error.stack);
 
       // Create error message in the database
       await this.messageService.createMessage({
@@ -303,5 +177,138 @@ export class ChatService {
 
   async getSessionMessages(sessionId: string, limit?: number, offset?: number) {
     return this.messageService.getSessionMessages(sessionId, limit, offset);
+  }
+
+  private async ensureDbConnectionExists(dbConnectionId: string, companyId: string): Promise<void> {
+    const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
+      where: { id: dbConnectionId },
+    });
+
+    if (!dbConnectionExist) {
+      throw new BadRequestException(
+        `Database connection not found for company ${companyId}: ${dbConnectionId}`
+      );
+    }
+  }
+
+  private createRuntimeContext(dbConnectionId: string) {
+    const runtimeContext = new RuntimeContext<{ dbConnectionId: string }>();
+    runtimeContext.set('dbConnectionId', dbConnectionId);
+    return runtimeContext;
+  }
+
+  private extractWorkflowResult(aiResponse: AgentGenerateResult): IChatFormattedResult {
+    const defaultResult: IChatFormattedResult = {
+      visualizationType: 'text',
+      formattedData: null,
+      summary: aiResponse.text,
+    };
+
+    const workflowToolPayload = this.getWorkflowToolPayload(aiResponse);
+    const nestedResults = this.getWorkflowNestedResults(workflowToolPayload);
+
+    if (!nestedResults) {
+      return defaultResult;
+    }
+
+    const conversational = nestedResults['conversational-response'];
+    if (this.isChatFormattedResult(conversational)) {
+      return conversational;
+    }
+
+    const analytical = nestedResults['analytical-sub-workflow'];
+    if (this.isChatFormattedResult(analytical)) {
+      return analytical;
+    }
+
+    const reversedEntries = [...Object.entries(nestedResults)].reverse();
+    for (const [, value] of reversedEntries) {
+      if (this.isChatFormattedResult(value)) {
+        return value;
+      }
+    }
+
+    return defaultResult;
+  }
+
+  private getWorkflowToolPayload(
+    aiResponse: AgentGenerateResult
+  ): AgentToolResultPayload | undefined {
+    return aiResponse.toolResults.find(
+      (toolResult) => toolResult.payload.toolName === 'chatWorkflow'
+    )?.payload;
+  }
+
+  private getWorkflowNestedResults(
+    payload: AgentToolResultPayload | undefined
+  ): Record<string, unknown> | undefined {
+    if (!payload) {
+      return undefined;
+    }
+
+    const { result } = payload;
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      return undefined;
+    }
+
+    if ('result' in result) {
+      const nestedResult = (result as { result?: unknown }).result;
+      if (nestedResult && typeof nestedResult === 'object' && !Array.isArray(nestedResult)) {
+        return nestedResult as Record<string, unknown>;
+      }
+    }
+
+    return undefined;
+  }
+
+  private isChatFormattedResult(value: unknown): value is IChatFormattedResult {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false;
+    }
+
+    const candidate = value as Partial<IChatFormattedResult>;
+
+    const { visualizationType, formattedData, summary } = candidate;
+
+    if (!visualizationType || !VALID_VISUALIZATION_TYPES.has(visualizationType)) {
+      return false;
+    }
+
+    if (formattedData !== null && !Array.isArray(formattedData)) {
+      return false;
+    }
+
+    return typeof summary === 'string';
+  }
+
+  private async recordTokenUsage({
+    usage,
+    companyId,
+    message,
+    result,
+  }: {
+    usage?: AgentGenerateResult['totalUsage'];
+    companyId: string;
+    message: string;
+    result: IChatFormattedResult;
+  }): Promise<void> {
+    const totalPromptTokens = usage?.inputTokens ?? 0;
+    const totalCompletionTokens = usage?.outputTokens ?? 0;
+
+    if (totalPromptTokens === 0 && totalCompletionTokens === 0) {
+      return;
+    }
+
+    await this.tokenAndCredit.tokenPriceCalculate({
+      companyId,
+      inputTokens: totalPromptTokens,
+      outputTokens: totalCompletionTokens,
+      modelUsed: AI_MODEL_NAMES.GPT_4_NANO,
+      metadata: {
+        question: message,
+        answer: result.summary,
+        structuredData: JSON.stringify(result),
+      },
+    });
   }
 }

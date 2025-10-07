@@ -2,13 +2,13 @@
 
 import type { IGeneratedMetadata } from '@/components/onboarding/types/capture-metadata';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
-import { useAppDispatch, useAppSelector } from '.';
 import {
   setCurrentSteps,
   setDbConnectionId,
   setGeneratedMetadata,
   updateMetadataItem,
 } from '../slices/onboardingSlice';
+import { useAppDispatch, useAppSelector } from '.';
 
 export const useOnboardingStore = () => {
   const dispatch = useAppDispatch();

@@ -8,8 +8,6 @@ import { TokenAndCredit } from '../common/services/tokenAndCredit.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
-import { DatabaseSchemaService } from './services/database-schema.service';
-import { DynamicSQLService } from './services/dynamic-sql.service';
 import { MessageService } from './services/message.service';
 import { SessionService } from './services/session.service';
 
@@ -25,15 +23,7 @@ import { SessionService } from './services/session.service';
     }),
   ],
   controllers: [ChatController],
-  providers: [
-    ChatGateway,
-    MessageService,
-    SessionService,
-    DynamicSQLService,
-    DatabaseSchemaService,
-    ChatService,
-    TokenAndCredit,
-  ],
+  providers: [ChatGateway, MessageService, SessionService, ChatService, TokenAndCredit],
   exports: [ChatService, MessageService, SessionService],
 })
 export class ChatModule {}

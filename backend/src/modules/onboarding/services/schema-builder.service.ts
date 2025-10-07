@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-
-import { ConnectionsService } from '@/modules/connections/connections.service';
-import { ColumnExampleAgentService } from '@/modules/mcp-client/services/column-example-agent.service';
 import { PrismaService } from '@supplysense/prisma';
 import { SchemaCache } from '@supplysense/prisma-client';
 import { withDbConnection } from '@supplysense/utils/server';
+import type { PoolClient } from 'pg';
+import { ConnectionsService } from '@/modules/connections/connections.service';
+import { ColumnExampleAgentService } from '@/modules/mcp-client/services/column-example-agent.service';
 
 interface ColumnInfo {
   type: string;
@@ -21,13 +21,26 @@ interface TableSchema {
     refTable: string;
     refColumn: string;
   }>;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  sampleData?: Array<Record<string, any>>;
+  sampleData?: Array<Record<string, string | number | boolean | null>>;
 }
 
 interface CompleteSchema {
   tables: Record<string, TableSchema>;
   businessContext?: string;
+}
+
+interface TableMetadataRecord {
+  tableName: string;
+  friendlyLabel: string;
+  purpose: string;
+}
+
+interface TableRelationRecord {
+  tableName: string;
+  columnName: string;
+  refTable: string;
+  refColumn: string;
+  isConfirmed: boolean;
 }
 
 @Injectable()
@@ -79,112 +92,14 @@ export class SchemaBuilderService {
 
       // Process each table that has metadata
       if (dbConnection.TableMetadata && Array.isArray(dbConnection.TableMetadata)) {
-        // 3. Connect to Customer DB and query columns for each table
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
         await withDbConnection(connectionDetails, async (client) => {
           for (const tableMetadata of dbConnection.TableMetadata) {
-            this.logger.debug(`Processing table ${tableMetadata.tableName}`);
-
-            // For each table, get its columns
-            const columnsResult = await client.query(
-              `
-              SELECT column_name, data_type
-              FROM information_schema.columns
-              WHERE table_name=$1
-              ORDER BY ordinal_position
-            `,
-              [tableMetadata.tableName]
-            );
-
-            // Build columns object with enhanced structure
-            const columns: Record<string, ColumnInfo> = {};
-
-            // Get 5 sample rows from the table
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-            let sampleData: Array<Record<string, any>> = [];
-            try {
-              const sampleResult = await client.query(
-                `SELECT * FROM "${tableMetadata.tableName}" LIMIT 5`
-              );
-
-              sampleData = sampleResult.rows;
-            } catch (error) {
-              this.logger.warn(
-                `Could not fetch sample data for table ${tableMetadata.tableName}: ${error.message}`
-              );
-            }
-
-            // Prepare column data for example generation with sample data
-            const columnInputs = columnsResult.rows.map((row) => ({
-              tableName: tableMetadata.tableName,
-              columnName: row.column_name,
-              dataType: row.data_type,
-              sampleData: sampleData, // Pass the actual sample data
-            }));
-
-            // Generate column examples using the agent
-            let columnExamples: Record<string, string> = {};
-            let columnDescriptions: Record<string, string> = {};
-
-            try {
-              const exampleResults =
-                await this.columnExampleAgent.generateColumnExamples(columnInputs);
-
-              columnExamples = exampleResults.reduce(
-                (acc, result) => {
-                  acc[result.columnName] = result.exampleValue;
-                  return acc;
-                },
-                {} as Record<string, string>
-              );
-
-              // Extract descriptions from the agent results if available
-              columnDescriptions = exampleResults.reduce(
-                (acc, result) => {
-                  // Use the description from agent if available, otherwise generate a basic one
-                  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                  acc[result.columnName] = (result as any).description;
-                  return acc;
-                },
-                {} as Record<string, string>
-              );
-            } catch (error) {
-              this.logger.warn(
-                `Could not generate column examples for table ${tableMetadata.tableName}: ${error.message}`
-              );
-            }
-
-            // Build the enhanced columns structure
-            for (const row of columnsResult.rows) {
-              const columnName = row.column_name;
-              const dataType = row.data_type;
-
-              columns[columnName] = {
-                type: this.mapDataTypeToSimpleType(dataType),
-                description: columnDescriptions[columnName],
-                example: columnExamples[columnName],
-              };
-            }
-
-            // Get relationships for this table
-            const relationships = dbConnection.TableRelations
-              ? dbConnection.TableRelations.filter(
-                  (relation) =>
-                    relation.tableName === tableMetadata.tableName && relation.isConfirmed
-                ).map((relation) => ({
-                  column: relation.columnName,
-                  refTable: relation.refTable,
-                  refColumn: relation.refColumn,
-                }))
-              : [];
-
-            // Add table to schema
-            schema.tables[tableMetadata.tableName] = {
-              label: tableMetadata.friendlyLabel,
-              purpose: tableMetadata.purpose,
-              columns,
-              relationships,
-            };
+            await this.processTableMetadata({
+              client,
+              tableMetadata: tableMetadata as TableMetadataRecord,
+              tableRelations: (dbConnection.TableRelations ?? []) as TableRelationRecord[],
+              schema,
+            });
           }
         });
       }
@@ -237,6 +152,173 @@ export class SchemaBuilderService {
       this.logger.error(`Error getting schema: ${error.message}`, error.stack);
       throw error;
     }
+  }
+
+  private async processTableMetadata({
+    client,
+    tableMetadata,
+    tableRelations,
+    schema,
+  }: {
+    client: PoolClient;
+    tableMetadata: TableMetadataRecord;
+    tableRelations: TableRelationRecord[];
+    schema: CompleteSchema;
+  }): Promise<void> {
+    this.logger.debug(`Processing table ${tableMetadata.tableName}`);
+
+    const columnsResult = await client.query(
+      `
+        SELECT column_name, data_type
+        FROM information_schema.columns
+        WHERE table_name=$1
+        ORDER BY ordinal_position
+      `,
+      [tableMetadata.tableName]
+    );
+
+    const sampleData = await this.fetchSampleData(client, tableMetadata.tableName);
+    const sanitizedSampleData = this.sanitizeSampleData(sampleData);
+
+    const columnInputs = columnsResult.rows.map((row) => ({
+      tableName: tableMetadata.tableName,
+      columnName: row.column_name,
+      dataType: row.data_type,
+      sampleData: sanitizedSampleData,
+    }));
+
+    const { columnExamples, columnDescriptions } = await this.generateColumnInsights(
+      tableMetadata.tableName,
+      columnInputs
+    );
+
+    const columns: Record<string, ColumnInfo> = {};
+    for (const row of columnsResult.rows) {
+      const columnName = row.column_name;
+      const dataType = row.data_type;
+
+      columns[columnName] = {
+        type: this.mapDataTypeToSimpleType(dataType),
+        description:
+          columnDescriptions[columnName] ??
+          this.generateDefaultColumnDescription(columnName, dataType),
+        example: columnExamples[columnName],
+      };
+    }
+
+    const relationships = this.buildRelationships(tableMetadata.tableName, tableRelations);
+
+    schema.tables[tableMetadata.tableName] = {
+      label: tableMetadata.friendlyLabel,
+      purpose: tableMetadata.purpose,
+      columns,
+      relationships,
+      sampleData: sanitizedSampleData.length > 0 ? sanitizedSampleData : undefined,
+    };
+  }
+
+  private async fetchSampleData(
+    client: PoolClient,
+    tableName: string
+  ): Promise<Array<Record<string, unknown>>> {
+    try {
+      const sampleResult = await client.query(`SELECT * FROM "${tableName}" LIMIT 5`);
+      return sampleResult.rows;
+    } catch (error) {
+      this.logger.warn(
+        `Could not fetch sample data for table ${tableName}: ${(error as Error).message}`
+      );
+      return [];
+    }
+  }
+
+  private async generateColumnInsights(
+    tableName: string,
+    columnInputs: Array<{
+      tableName: string;
+      columnName: string;
+      dataType: string;
+      sampleData: Array<Record<string, string | number | boolean | null>>;
+    }>
+  ): Promise<{
+    columnExamples: Record<string, string>;
+    columnDescriptions: Record<string, string>;
+  }> {
+    try {
+      const exampleResults = await this.columnExampleAgent.generateColumnExamples(columnInputs);
+
+      return exampleResults.reduce(
+        (acc, result) => {
+          acc.columnExamples[result.columnName] = result.exampleValue;
+          if (result.description) {
+            acc.columnDescriptions[result.columnName] = result.description;
+          }
+          return acc;
+        },
+        { columnExamples: {}, columnDescriptions: {} } as {
+          columnExamples: Record<string, string>;
+          columnDescriptions: Record<string, string>;
+        }
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Could not generate column examples for table ${tableName}: ${(error as Error).message}`
+      );
+      return { columnExamples: {}, columnDescriptions: {} };
+    }
+  }
+
+  private buildRelationships(
+    tableName: string,
+    tableRelations: TableRelationRecord[]
+  ): TableSchema['relationships'] {
+    return tableRelations
+      .filter((relation) => relation.tableName === tableName && relation.isConfirmed)
+      .map((relation) => ({
+        column: relation.columnName,
+        refTable: relation.refTable,
+        refColumn: relation.refColumn,
+      }));
+  }
+
+  private sanitizeSampleData(
+    rows: Array<Record<string, unknown>>
+  ): Array<Record<string, string | number | boolean | null>> {
+    return rows.map((row) => {
+      return Object.entries(row).reduce<Record<string, string | number | boolean | null>>(
+        (acc, [key, value]) => {
+          acc[key] = this.normalizeSampleValue(value);
+          return acc;
+        },
+        {}
+      );
+    });
+  }
+
+  private normalizeSampleValue(value: unknown): string | number | boolean | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return value;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return JSON.stringify(value);
+  }
+
+  private generateDefaultColumnDescription(columnName: string, dataType: string): string {
+    const friendlyName = columnName
+      .replace(/[_-]/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return `${friendlyName} (${dataType}) column`;
   }
 
   /**

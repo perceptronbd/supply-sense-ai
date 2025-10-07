@@ -1,8 +1,8 @@
 'use client';
 
-import { Bar, BarChart, XAxis } from 'recharts';
-
 import { Card, CardBody } from '@heroui/react';
+import React from 'react';
+import { Bar, BarChart, XAxis } from 'recharts';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
 import { ChartContainer, ChartTooltip } from './chart';
 import { CustomTooltipContent } from './custom-tooltip-content';
@@ -28,20 +28,20 @@ export const HatchedBarMultipleChart = ({
   config,
   xAxisKey,
 }: HatchedBarMultipleChartProps) => {
+  const uniqueId = React.useId();
+  const backgroundPatternId = `${uniqueId}-background-dots`;
+  const createPatternId = React.useCallback(
+    (key: string) => `${uniqueId}-pattern-${key}`,
+    [uniqueId]
+  );
   return (
     <Card>
       <CardBody>
         <ChartContainer config={config}>
           <BarChart accessibilityLayer data={data}>
-            <rect
-              x="0"
-              y="0"
-              width="100%"
-              height="85%"
-              fill="url(#default-multiple-pattern-dots)"
-            />
+            <rect x="0" y="0" width="100%" height="85%" fill={`url(#${backgroundPatternId})`} />
             <defs>
-              <DottedBackgroundPattern />
+              <DottedBackgroundPattern id={backgroundPatternId} />
             </defs>
             <XAxis
               dataKey={xAxisKey}
@@ -56,7 +56,13 @@ export const HatchedBarMultipleChart = ({
                 key={dataKey}
                 dataKey={dataKey}
                 fill={color}
-                shape={<CustomHatchedBar isHatched={true} dataKey={dataKey} />}
+                shape={
+                  <CustomHatchedBar
+                    isHatched={true}
+                    dataKey={dataKey}
+                    patternId={createPatternId(dataKey)}
+                  />
+                }
                 radius={4}
               />
             ))}
@@ -70,6 +76,7 @@ export const HatchedBarMultipleChart = ({
 interface CustomHatchedBarProps extends React.SVGProps<SVGRectElement> {
   dataKey: string;
   isHatched?: boolean;
+  patternId: string;
 }
 
 const CustomHatchedBar = ({
@@ -80,6 +87,7 @@ const CustomHatchedBar = ({
   height,
   dataKey,
   isHatched = true,
+  patternId,
 }: CustomHatchedBarProps) => {
   return (
     <>
@@ -90,12 +98,12 @@ const CustomHatchedBar = ({
         width={width}
         height={height}
         stroke="none"
-        fill={isHatched ? `url(#hatched-bar-pattern-${dataKey})` : fill}
+        fill={isHatched ? `url(#${patternId})` : fill}
       />
       <defs>
         <pattern
           key={dataKey}
-          id={`hatched-bar-pattern-${dataKey}`}
+          id={patternId}
           x="0"
           y="0"
           width="5"
@@ -110,16 +118,9 @@ const CustomHatchedBar = ({
     </>
   );
 };
-const DottedBackgroundPattern = () => {
+const DottedBackgroundPattern = ({ id }: { id: string }) => {
   return (
-    <pattern
-      id="default-multiple-pattern-dots"
-      x="0"
-      y="0"
-      width="10"
-      height="10"
-      patternUnits="userSpaceOnUse"
-    >
+    <pattern id={id} x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
       <circle className="dark:text-muted/40 text-muted" cx="2" cy="2" r="1" fill="currentColor" />
     </pattern>
   );

@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
+import { cn } from '@/lib/utils';
 
 interface RenderTableProps {
   data: Record<string, string>[];
@@ -14,9 +14,8 @@ export const RenderTable = ({ data, className }: RenderTableProps) => {
     return <div>No data available</div>;
   }
 
-  const { id, ...restKeys } = data[0];
-  // Extract column keys from the first data object
-  const columnKeys = Object.keys(restKeys);
+  // Extract column keys from the first data object (excluding id)
+  const columnKeys = Object.keys(data[0]).filter((key) => key !== 'id');
 
   // Create column labels by capitalizing the keys
   const columns = columnKeys.map((key) => ({

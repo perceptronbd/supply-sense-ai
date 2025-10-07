@@ -2,16 +2,16 @@
  * Custom hooks for route management and navigation
  */
 
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback } from 'react';
 import {
-  ROUTE_PATHS,
-  type RoutePath,
   getRouteConfig,
   isAuthRoute,
   isProtectedRoute,
   isPublicRoute,
+  ROUTE_PATHS,
+  type RoutePath,
 } from '@/config/routes';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback } from 'react';
 
 /**
  * Hook for route information and navigation utilities
