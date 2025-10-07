@@ -1,7 +1,10 @@
 import { Agent } from '@mastra/core/agent';
+import type { RuntimeContext } from '@mastra/core/runtime-context';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
+import { createRuntimeContext } from '@supplysense/utils/server';
+import { mastra } from '..';
 import {
   PURPOSE_GENERATION_AGENT_DESCRIPTION,
   PURPOSE_GENERATION_AGENT_NAME,
@@ -10,10 +13,31 @@ import {
 
 const openrouter = new GetOpenRouter();
 
+type RuntimeContextData = RuntimeContext<{
+  tableName: string;
+  tableSchema: ITableSchemaInput;
+  businessContext?: string;
+}>;
+
 export const generatePurposeAgent = new Agent({
   name: PURPOSE_GENERATION_AGENT_NAME,
   description: PURPOSE_GENERATION_AGENT_DESCRIPTION,
-  instructions: PURPOSE_GENERATION_INSTRUCTION,
+  instructions: async ({ runtimeContext }) => {
+    const context = runtimeContext as RuntimeContextData;
+    const tableName = context.get('tableName') as string;
+    const tableSchema = context.get('tableSchema') as ITableSchemaInput;
+    const businessContext = context.get('businessContext') as string | undefined;
+
+    return `
+    ##Instructions
+    ${PURPOSE_GENERATION_INSTRUCTION}
+
+    ##Current Context
+    - Table: ${tableName}
+    - Schema: ${JSON.stringify(tableSchema)}
+    - Business Context: ${businessContext ?? 'Not provided'}
+    `;
+  },
   model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
@@ -35,16 +59,22 @@ export async function generatePurpose({
   }
 
   try {
-    const prompt = `Table: ${tableName}\nSchema: ${JSON.stringify(tableSchema, null, 2)}\n${
-      businessContext ? `Business Context: ${businessContext}` : ''
-    }\nGenerate a business purpose for this table.`;
+    const agent = mastra.getAgent('generatePurposeAgent');
+    const runtimeContext = createRuntimeContext({
+      tableName,
+      tableSchema,
+      businessContext,
+    });
 
-    const response = await generatePurposeAgent.generate([
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ]);
+    const response = await agent.generate(
+      [
+        {
+          role: 'user',
+          content: `Generate a concise business purpose for table ${tableName}`,
+        },
+      ],
+      { runtimeContext }
+    );
 
     let purpose = response.text.trim();
     // Remove leading and trailing '**' if present
