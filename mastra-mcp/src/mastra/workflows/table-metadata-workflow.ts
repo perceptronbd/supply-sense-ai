@@ -1,4 +1,3 @@
-
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { generateFriendlyLabel } from '@supplysense/utils';
@@ -218,7 +217,7 @@ const generateQuestionsStep = createStep({
 
     return out;
   },
-})
+});
 
 // Create the table metadata workflow
 export const tableMetadataWorkflow = createWorkflow({
