@@ -96,7 +96,7 @@ export class TableMetadataAgentService {
       );
 
       this.logger.log('✅ Table metadata generated successfully for all tables', {
-        usage: response.usage,
+        totalUsage: response.totalUsage,
       });
 
       this.logger.debug('Response text:', response.text);
@@ -106,7 +106,7 @@ export class TableMetadataAgentService {
 
       return {
         result: results,
-        usage: response.usage as MCPTableMetadataAgentRes['usage'],
+        usage: response.totalUsage as MCPTableMetadataAgentRes['usage'],
         question: systemPrompt,
       };
     } catch (error) {
