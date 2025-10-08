@@ -1,10 +1,12 @@
 import ContactForm from '../ui/ContactForm';
 import SectionWrapper from '../ui/SectionWrapper';
 
+const SECTION_ID = 'contact';
+
 const ContactSection = () => {
   return (
     <SectionWrapper
-      id="contact"
+      id={SECTION_ID}
       size="medium"
       className="xl:flex justify-between gap-10 space-y-10 items-center"
     >

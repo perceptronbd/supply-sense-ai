@@ -4,16 +4,19 @@ const SectionWrapper = ({
   children,
   className,
   size = 'default',
-  id = useId(),
+  id,
 }: {
   children: ReactNode;
   className?: string;
   size?: 'default' | 'medium' | 'large' | 'full';
   id?: string;
 }) => {
+  const generatedId = useId();
+  const resolvedId = id ?? generatedId;
+
   return (
     <section
-      id={id}
+      id={resolvedId}
       className={`mx-auto py-16 ${
         size === 'default' && 'max-w-3xl px-4 lg:px-0'
       } ${size === 'medium' && 'px-8 max-w-6xl'} ${

@@ -1,11 +1,11 @@
 'use client';
 
+import { useDisclosure } from '@heroui/react';
+import { Fragment } from 'react';
 import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setToggleValue } from '@/store/slices/commonSlice';
-import { useDisclosure } from '@heroui/react';
-import { Fragment } from 'react';
 import { SessionList, SessionListMobile } from './SessionList';
 
 interface SessionManagerProps {

@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core';
-import { EXECUTE_QUERY_TOOL, SQL_GENERATION_QUERY_SYSTEM_PROMPT } from '@supplysense/constant';
 import { PrismaClient } from '@supplysense/prisma-client';
 import {
+  createRuntimeContext,
   DbCredentials,
   decryptPassword,
   withDbConnection,
@@ -9,7 +9,8 @@ import {
 } from '@supplysense/utils/server';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
-import { sqlGenerationAgent } from '../agents/sql-generation-agent';
+import { postgreSQLGenerationAgent } from '../agents/chat/postgresql-generation-agent';
+import { EXECUTE_QUERY_TOOL } from '../constants/system-instructions/sql-generation';
 
 // Removed formatQueryResults import
 
@@ -56,11 +57,11 @@ export const executeQueryTool = createTool({
   description: EXECUTE_QUERY_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async (input): Promise<z.infer<typeof outputSchema>> => {
+  execute: async ({ context: input }): Promise<z.infer<typeof outputSchema>> => {
     // Get db context from db connection table
     const dbConnection = await prisma.dbConnection.findUnique({
       where: {
-        id: input.context.dbConnectionId,
+        id: input.dbConnectionId,
       },
       include: {
         SchemaCache: true,
@@ -106,35 +107,16 @@ export const executeQueryTool = createTool({
     };
 
     // Generate SQL query using the SQL generation agent with retry logic
-    const agentResponse = await withRetry(
-      () =>
-        sqlGenerationAgent.generate([
-          {
-            role: 'system',
-            content: SQL_GENERATION_QUERY_SYSTEM_PROMPT,
-          },
-          {
-            role: 'user',
-            content: ` Available context:
-                - Business Context: ${businessContext}
-                - Schema Cache: ${JSON.stringify(parsedSchema, null, 2)}
-                - Query Analysis: ${input.context.queryAnalysis}
+    const runtimeContext = createRuntimeContext({
+      businessContext,
+      parsedSchema,
+      queryAnalysis: input.queryAnalysis,
+    });
 
-                 EXACT TABLE NAMES (use these exactly): ${Object.keys(parsedSchema.tables).join(', ')}
-                 CRITICAL QUOTING RULES:
-                   - Table names: Use exact case and quote if mixed case: ${Object.keys(
-                     parsedSchema.tables
-                   )
-                     .map((name) => (/[A-Z]/.test(name) ? `"${name}"` : name))
-                     .join(', ')}
-                   - Column quoting rules:
-                   - ${generateColumnQuotingGuidance(parsedSchema)}
-                
-                Based on this analysis and the provided schema, generate the appropriate SQL query: ${input.context.queryAnalysis}`,
-          },
-        ]),
-      3, // max retries
-      1000 // initial delay in ms
+    const agentResponse = await withRetry(
+      () => postgreSQLGenerationAgent.generate([], { runtimeContext }),
+      3,
+      1000
     );
 
     let sqlQuery = agentResponse.text
@@ -181,7 +163,7 @@ export const executeQueryTool = createTool({
 });
 
 // Helper function to generate column quoting guidance from schema
-function generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
+function _generateColumnQuotingGuidance(parsedSchema: ParsedSchema): string {
   const guidance: string[] = [];
 
   for (const [tableName, tableInfo] of Object.entries(parsedSchema.tables)) {

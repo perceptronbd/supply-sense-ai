@@ -10,7 +10,7 @@ export const testMetadataTool = createTool({
   outputSchema: z.object({
     answer: z.string(),
   }),
-  //@ts-ignore
+  //@ts-expect-error
   async execute({ context }) {
     // Accept both direct and nested question property
     let question = context?.question;

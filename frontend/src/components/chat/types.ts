@@ -1,5 +1,6 @@
 ﻿// Re-export types from the API
 export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
+
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 
 export interface ChatInputProps {

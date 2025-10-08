@@ -1,5 +1,5 @@
 import { Agent } from '@mastra/core/agent';
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { GetOpenRouter } from '@supplysense/utils';
 import { withRetry } from '@supplysense/utils/server';
@@ -18,6 +18,7 @@ interface ColumnExampleResult {
   columnName: string;
   exampleValue: string;
   formattedColumnName: string; // e.g., "status (e.g., 'completed')"
+  description?: string;
 }
 
 /**

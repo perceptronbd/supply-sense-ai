@@ -141,7 +141,7 @@ npx nx e2e frontend-e2e             # Run E2E tests
 pnpm run frontend:build              # From root
 ```
 
-### Working with MCP Server ([mastra-mcp-server/](mdc:mastra-mcp-server))
+### Working with MCP Server ([mastra-mcp/](mdc:mastra-mcp))
 ```bash
 # Start MCP server (for AI agent functionality)
 pnpm run mcp-server:serve            # From root directory

@@ -1,4 +1,5 @@
-import type { SVGProps } from 'react';
+import { type SVGProps, useId } from 'react';
+
 type IconType = SVGProps<SVGSVGElement>;
 
 export const Icons = {
@@ -42,7 +43,7 @@ export const Icons = {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width="1.5"
+      stroke-width={props.strokeWidth || '1.5'}
       stroke="currentColor"
     >
       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -177,57 +178,63 @@ export const Icons = {
       />
     </svg>
   ),
-  CheckCircle: (props: IconType) => (
-    <svg
-      {...props}
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g clipPath="url(#clip0_8026_828)">
-        <circle cx="10.0001" cy="10.0003" r="8.33333" stroke="#17C964" strokeWidth="1.5" />
-        <path
-          d="M7.08325 10.417L8.74992 12.0837L12.9166 7.91699"
-          stroke="#17C964"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_8026_828">
-          <rect width="20" height="20" fill="currrent" />
-        </clipPath>
-      </defs>
-    </svg>
-  ),
-  CrossCircle: (props: IconType) => (
-    <svg
-      {...props}
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g clipPath="url(#clip0_8026_907)">
-        <circle cx="10.0001" cy="10.0003" r="8.33333" stroke="#F31260" strokeWidth="1.5" />
-        <path
-          d="M12.0834 7.91701L7.91675 12.0837M7.91673 7.91699L12.0834 12.0836"
-          stroke="#F31260"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_8026_907">
-          <rect width="20" height="20" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  ),
+  CheckCircle: (props: IconType) => {
+    const clipPathId = `${useId()}-clip`;
+    return (
+      <svg
+        {...props}
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g clipPath={`url(#${clipPathId})`}>
+          <circle cx="10.0001" cy="10.0003" r="8.33333" stroke="#17C964" strokeWidth="1.5" />
+          <path
+            d="M7.08325 10.417L8.74992 12.0837L12.9166 7.91699"
+            stroke="#17C964"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={clipPathId}>
+            <rect width="20" height="20" fill="currrent" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  },
+  CrossCircle: (props: IconType) => {
+    const clipPathId = `${useId()}-clip`;
+    return (
+      <svg
+        {...props}
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g clipPath={`url(#${clipPathId})`}>
+          <circle cx="10.0001" cy="10.0003" r="8.33333" stroke="#F31260" strokeWidth="1.5" />
+          <path
+            d="M12.0834 7.91701L7.91675 12.0837M7.91673 7.91699L12.0834 12.0836"
+            stroke="#F31260"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={clipPathId}>
+            <rect width="20" height="20" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  },
   NotSure: (props: IconType) => (
     <svg
       {...props}
@@ -243,34 +250,37 @@ export const Icons = {
       />
     </svg>
   ),
-  InfoCircle: (props: IconType) => (
-    <svg
-      {...props}
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g clipPath="url(#clip0_8203_1505)">
-        <circle cx="9.99996" cy="10.0003" r="8.33333" stroke="#F5A524" strokeWidth="1.5" />
-        <path d="M10 14.167V9.16699" stroke="#F5A524" strokeWidth="1.5" strokeLinecap="round" />
-        <ellipse
-          cx="0.833333"
-          cy="0.833333"
-          rx="0.833333"
-          ry="0.833333"
-          transform="matrix(1 0 0 -1 9.16663 7.5)"
-          fill="#F5A524"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_8203_1505">
-          <rect width="20" height="20" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  ),
+  InfoCircle: (props: IconType) => {
+    const clipPathId = `${useId()}-clip`;
+    return (
+      <svg
+        {...props}
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g clipPath={`url(#${clipPathId})`}>
+          <circle cx="9.99996" cy="10.0003" r="8.33333" stroke="#F5A524" strokeWidth="1.5" />
+          <path d="M10 14.167V9.16699" stroke="#F5A524" strokeWidth="1.5" strokeLinecap="round" />
+          <ellipse
+            cx="0.833333"
+            cy="0.833333"
+            rx="0.833333"
+            ry="0.833333"
+            transform="matrix(1 0 0 -1 9.16663 7.5)"
+            fill="#F5A524"
+          />
+        </g>
+        <defs>
+          <clipPath id={clipPathId}>
+            <rect width="20" height="20" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  },
   Edit: (props: IconType) => (
     <svg
       {...props}

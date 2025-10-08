@@ -72,7 +72,7 @@ NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL"
 EOF
 
 # Create MCP server .env
-cat > mastra-mcp-server/.env << EOF
+cat > mastra-mcp/.env << EOF
 OPENROUTER_API_KEY=$OPENROUTER_KEY
 
 # Server Configuration
@@ -90,7 +90,7 @@ echo ""
 echo "📁 Created files:"
 echo "  - backend/.env"
 echo "  - frontend/.env.local"
-echo "  - mastra-mcp-server/.env"
+echo "  - mastra-mcp/.env"
 echo ""
 echo "🔧 Configuration Summary:"
 echo "  Database URL: $DATABASE_URL"

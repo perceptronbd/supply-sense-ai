@@ -1,27 +1,69 @@
-FROM node:20-alpine
-
-RUN npm install -g pnpm@latest
+# Multi-stage build for Mastra MCP server
+FROM node:20-alpine AS base
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json pnpm-lock.yaml ./
+# Install pnpm globally for workspace commands
+RUN npm install -g pnpm
 
-# Copy workspace configuration
-COPY nx.json ./
-COPY tsconfig.base.json ./
-
-# Copy the mastra-mcp project
-COPY mastra-mcp/src ./src
-COPY mastra-mcp/tsconfig.app.json ./
-COPY mastra-mcp/project.json ./
-
-# Copy Docker-specific tsconfig
-COPY mastra-mcp/tsconfig.docker.json ./tsconfig.json
-
-# Install dependencies
+# Install workspace dependencies
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml* ./
+COPY nx.json tsconfig.base.json ./
 RUN pnpm install --frozen-lockfile
 
-EXPOSE 4111
+# Build the Mastra MCP project
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json pnpm-lock.yaml* ./
+COPY nx.json tsconfig.base.json ./
+COPY libs ./libs
+COPY mastra-mcp ./mastra-mcp
 
-CMD ["pnpm", "exec", "mastra", "dev"]
+# Ensure Prisma client is generated for shared usage
+RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
+
+# Build the Mastra MCP bundle using Nx target
+RUN pnpm exec nx run mastra-mcp:build
+
+# Install production dependencies for the build output
+FROM base AS prod-deps
+WORKDIR /app
+COPY --from=builder /app/mastra-mcp/.mastra/output/package.json ./package.json
+COPY --from=builder /app/mastra-mcp/.mastra/output/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# Runtime image
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Install tini for proper signal handling
+RUN apk add --no-cache tini
+
+ENV NODE_ENV=production
+ENV PORT=3005
+ENV MCP_PORT=3005
+ENV MCP_HOST=0.0.0.0
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 mastra
+
+# Copy application build output and dependencies
+COPY --from=builder --chown=mastra:nodejs /app/mastra-mcp/.mastra/output ./
+COPY --from=prod-deps --chown=mastra:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=mastra:nodejs /app/libs/shared/prisma/generated ./libs/shared/prisma/generated
+
+# Ensure storage directory exists with correct permissions
+RUN mkdir -p storage && chown -R mastra:nodejs /app
+
+USER mastra
+
+EXPOSE 3005
+
+# Use tini to manage signals when running the Mastra MCP server
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "--import=./instrumentation.mjs", "--import=@opentelemetry/instrumentation/hook.mjs", "./index.mjs"]

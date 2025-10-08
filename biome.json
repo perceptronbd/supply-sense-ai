@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.5/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,23 +7,24 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/coverage/**",
-      "**/.nx/**",
-      "**/tmp/**",
-      "**/.next/**",
-      "**/build/**",
-      "**/*.d.ts",
-      "**/migrations/**/*.sql",
-      "jest.config.ts",
-      "jest.preset.js",
-      "cypress.config.ts",
-      "webpack.config.js",
-      "next.config.js",
-      "postcss.config.js",
-      "**/.mastra/**"
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/coverage",
+      "!**/.nx",
+      "!**/tmp",
+      "!**/.next",
+      "!**/build",
+      "!**/*.d.ts",
+      "!**/migrations/**/*.sql",
+      "!**/jest.config.ts",
+      "!**/jest.preset.js",
+      "!**/cypress.config.ts",
+      "!**/webpack.config.js",
+      "!**/next.config.js",
+      "!**/postcss.config.js",
+      "!**/.mastra"
     ]
   },
   "formatter": {
@@ -32,8 +33,12 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
@@ -48,7 +53,8 @@
         "useExhaustiveDependencies": "warn",
         "noUnusedImports": "error",
         "noUnusedPrivateClassMembers": "warn",
-        "useJsxKeyInIterable": "off"
+        "useJsxKeyInIterable": "off",
+        "useValidTypeof": "error"
       },
       "style": {
         "noNonNullAssertion": "warn",
@@ -61,8 +67,7 @@
         "noEmptyBlock": "warn",
         "noFallthroughSwitchClause": "error",
         "noImplicitAnyLet": "error",
-        "noUnsafeDeclarationMerging": "error",
-        "useValidTypeof": "error"
+        "noUnsafeDeclarationMerging": "error"
       },
       "a11y": {
         "noSvgWithoutTitle": "off"
@@ -88,7 +93,7 @@
   },
   "overrides": [
     {
-      "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.e2e-spec.ts", "**/test-helpers.ts"],
+      "includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.e2e-spec.ts", "**/test-helpers.ts"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -102,12 +107,18 @@
       }
     },
     {
-      "include": ["frontend/**/*.tsx", "frontend/**/*.css"],
+      "includes": [
+        "**/frontend/**/*.tsx",
+        "**/frontend/**/*.css",
+        "**/landing-page/**/*.tsx",
+        "**/landing-page/**/*.css"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
             "noEmptyBlock": "off",
-            "noDuplicateFontNames": "off"
+            "noDuplicateFontNames": "off",
+            "noUnknownAtRules": "off"
           },
           "a11y": {
             "noSvgWithoutTitle": "off"
@@ -116,7 +127,7 @@
       }
     },
     {
-      "include": ["backend/**/*.ts", "mastra-mcp-server/**/*.ts"],
+      "includes": ["**/backend/**/*.ts", "**/mastra-mcp/**/*.ts"],
       "linter": {
         "rules": {
           "correctness": {
@@ -126,7 +137,7 @@
       }
     },
     {
-      "include": ["**/prisma/**"],
+      "includes": ["**/prisma/**"],
       "linter": {
         "enabled": false
       },

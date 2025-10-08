@@ -43,6 +43,9 @@ docs/
 .tmp/
 .nx/
 **/.nx/
+**/.mastra/
+mastra-mcp/storage/
+mastra-mcp/memory.db*
 
 # Logs
 *.log

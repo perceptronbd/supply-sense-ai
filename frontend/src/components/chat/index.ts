@@ -1,9 +1,9 @@
-export { ChatInterface } from './ChatInterface';
 export { ChatInput } from './ChatInput';
+export { ChatInterface } from './ChatInterface';
+export { LoadingMessage, MessageBubble } from './MessageBubble';
 export { MessageList } from './MessageList';
-export { MessageBubble, LoadingMessage } from './MessageBubble';
-export { SessionManager } from './SessionManager';
-export { SessionList } from './SessionList';
 export { RenderChart } from './RenderChart';
 export { RenderTable } from './RenderTable';
+export { SessionList } from './SessionList';
+export { SessionManager } from './SessionManager';
 export * from './types';

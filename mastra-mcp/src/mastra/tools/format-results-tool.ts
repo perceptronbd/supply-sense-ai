@@ -1,8 +1,11 @@
 import { createTool } from '@mastra/core';
-import { FORMATTING_SYSTEM_PROMPT, FORMAT_RESULTS_TOOL } from '@supplysense/constant';
+import { MessageListInput } from '@mastra/core/dist/agent/message-list';
+import { Logger } from '@nestjs/common';
+import { createRuntimeContext } from '@supplysense/utils/server';
 import type { ChartData } from 'recharts/types/state/chartDataSlice';
 import { z } from 'zod';
-import { formattingAgent } from '../agents/formatting-agent';
+import { formattingAgent } from '../agents/chat/formatting-agent';
+import { FORMAT_RESULTS_TOOL } from '../constants/system-instructions/result-formatting';
 
 // Union type for different data formats
 // Support flexible array of objects for table data, preserving original query structure
@@ -39,26 +42,22 @@ export async function formatQueryResults(
   sqlQuery: string,
   userQuery?: string
 ) {
-  console.log(' formatQueryResult input => queryResults:', queryResults);
-  console.log(' formatQueryResult input => sqlQuery:', sqlQuery);
-  console.log(' formatQueryResult input => userQuery:', userQuery);
+  const logger = new Logger('formatQueryResults');
+  logger.debug(' queryResults:', queryResults);
+  logger.debug(' sqlQuery:', sqlQuery);
+  logger.debug(' userQuery:', userQuery);
+
+  const runtimeContext = createRuntimeContext({
+    queryResults,
+    sqlQuery,
+  });
 
   // Analyze the query results to determine visualization format
-  const agentResponse = await formattingAgent.generate([
-    {
-      role: 'system',
-      content: FORMATTING_SYSTEM_PROMPT,
-    },
-    {
-      role: 'user',
-      content: `
-      Query Results: ${JSON.stringify(queryResults, null, 2)}
-      SQL Query: ${sqlQuery}
-      ${userQuery ? `User Query: ${userQuery}` : ''}
+  const messages = userQuery
+    ? ([{ role: 'user', content: `User Query: ${userQuery}` }] as MessageListInput)
+    : [];
 
-      Analyze this data and determine the best visualization format: ${JSON.stringify(queryResults, null, 2)}`,
-    },
-  ]);
+  const agentResponse = await formattingAgent.generate(messages, { runtimeContext });
 
   let result: FormattedResults;
   try {
@@ -99,10 +98,10 @@ export const formatResultsTool = createTool({
   description: FORMAT_RESULTS_TOOL.DESCRIPTION,
   inputSchema,
   outputSchema,
-  execute: async (input): Promise<FormattedResults> => {
-    const { queryResults, sqlQuery, userQuery } = input.context;
+  execute: async ({ context: input }): Promise<FormattedResults> => {
+    const { queryResults, sqlQuery } = input;
 
     // Call the extracted formatting function
-    return await formatQueryResults(queryResults, sqlQuery, userQuery);
+    return await formatQueryResults(queryResults, sqlQuery);
   },
 });

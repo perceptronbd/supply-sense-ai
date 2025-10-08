@@ -64,8 +64,9 @@ body {
 }
 
 .card-blur-effect-3 {
-  box-shadow: -4px -4px 48px 4px rgba(138, 138, 140, 0.08), 4px 4px 48px 4px
-    rgba(138, 138, 140, 0.08);
+  box-shadow:
+    -4px -4px 48px 4px rgba(138, 138, 140, 0.08),
+    4px 4px 48px 4px rgba(138, 138, 140, 0.08);
 }
 
 .tilted-cylinder-glow {

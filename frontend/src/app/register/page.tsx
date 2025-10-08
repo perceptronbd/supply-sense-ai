@@ -1,5 +1,8 @@
 'use client';
 
+import { addToast } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { RegistrationLayout } from '@/components/pages/RegistrationLayout';
 import { ROUTE_PATHS } from '@/config/routes';
 import { type RegistrationFormData, registrationSchema } from '@/lib/schemas/registration.schema';
@@ -7,9 +10,6 @@ import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useRegisterMutation } from '@/store/api/authApi';
 import { useAppDispatch } from '@/store/hooks';
 import { setRegistrationCredentials } from '@/store/slices/authSlice';
-import { addToast } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegistrationFormData>({
@@ -72,6 +72,7 @@ export default function RegisterPage() {
     try {
       // Remove confirmPassword from the request data
       const { confirmPassword, ...registrationData } = formData;
+      void confirmPassword;
 
       const result = await register(registrationData).unwrap();
       console.log('🚀 > handleSubmit > result:', result);

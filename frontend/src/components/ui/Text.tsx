@@ -1,6 +1,6 @@
-﻿import { cn } from '@/lib/utils/cn';
-import { type VariantProps, cva } from 'class-variance-authority';
+﻿import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
+import { cn } from '@/lib/utils/cn';
 
 const textVariants = cva('', {
   variants: {

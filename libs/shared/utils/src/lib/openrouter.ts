@@ -8,13 +8,13 @@ export class GetOpenRouter {
   private readonly openrouter: any;
 
   constructor() {
-    // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+    // biome-ignore lint/complexity/useLiteralKeys: process.env enforces bracket access via TypeScript index signature
     if (!process.env['OPENROUTER_API_KEY']) {
       throw new Error('OPENROUTER_API_KEY is not defined in the environment variables.');
     }
 
     this.openrouter = createOpenRouter({
-      // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+      // biome-ignore lint/complexity/useLiteralKeys: process.env enforces bracket access via TypeScript index signature
       apiKey: process.env['OPENROUTER_API_KEY'],
     });
   }

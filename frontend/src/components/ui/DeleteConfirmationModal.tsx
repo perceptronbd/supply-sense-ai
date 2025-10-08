@@ -1,7 +1,7 @@
 'use client';
 
-import { Text } from '@/components/ui/Text';
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { Text } from '@/components/ui/Text';
 
 interface DeleteConfirmationModalProps {
   readonly isOpen: boolean;

@@ -1,12 +1,14 @@
 import { Agent } from '@mastra/core/agent';
+import type { RuntimeContext } from '@mastra/core/runtime-context';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import type { ITableSchemaInput } from '@supplysense/types';
 import { GetOpenRouter } from '@supplysense/utils';
+import { createRuntimeContext } from '@supplysense/utils/server';
 import {
   SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
   SAMPLE_QUESTIONS_AGENT_NAME,
   SAMPLE_QUESTIONS_INSTRUCTION,
-} from '../constants/system-instructions/sample-questions';
+} from '../../constants/system-instructions/sample-questions';
 
 export interface GenerateQuestionsInput {
   tableName: string;
@@ -17,10 +19,37 @@ export interface GenerateQuestionsInput {
 
 const openrouter = new GetOpenRouter();
 
+type RuntimeContextData = RuntimeContext<{
+  tableName: string;
+  tableSchema: ITableSchemaInput;
+  purpose: string;
+  businessContext?: string;
+  timestamp: string;
+}>;
+
 export const sampleQuestionsAgent = new Agent({
   name: SAMPLE_QUESTIONS_AGENT_NAME,
   description: SAMPLE_QUESTIONS_AGENT_DESCRIPTION,
-  instructions: SAMPLE_QUESTIONS_INSTRUCTION,
+  instructions: async ({ runtimeContext }) => {
+    const ctx = runtimeContext as RuntimeContextData;
+    const tableName = ctx.get('tableName') as string;
+    const tableSchema = ctx.get('tableSchema') as ITableSchemaInput;
+    const purpose = ctx.get('purpose') as string;
+    const businessContext = ctx.get('businessContext') as string | undefined;
+    const timestamp = ctx.get('timestamp') as string;
+
+    return `
+    ##Instructions
+    ${SAMPLE_QUESTIONS_INSTRUCTION}
+
+    ##Current Context
+    - Table: ${tableName}
+    - Purpose: ${purpose}
+    - Columns: ${JSON.stringify(tableSchema?.columns ?? [])}
+    - Business Context: ${businessContext ?? 'Not provided'}
+    - Timestamp: ${timestamp}
+    `;
+  },
   model: openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
 });
 
@@ -41,41 +70,25 @@ export async function generateSampleQuestions({
     throw new Error('Invalid tableSchema: columns array is required');
   }
   try {
-    // Add timestamp to ensure unique prompt each time
     const timestamp = new Date().toISOString();
 
-    // Enhanced prompting with variability directive and specific column analysis
-    const prompt = `Table: ${tableName}
-Purpose: ${purpose}
-Columns: ${tableSchema.columns
-      .map(
-        (c) =>
-          `${c.columnName} (${c.dataType}${c.isPrimaryKey ? ', PK' : ''}${
-            c.isForeignKey ? ', FK' : ''
-          })`
-      )
-      .join('\n  - ')}
-${businessContext ? `Business Context: ${businessContext}` : ''}
+    const runtimeContext = createRuntimeContext({
+      tableName,
+      tableSchema,
+      purpose,
+      businessContext,
+      timestamp,
+    });
 
-CRITICAL INSTRUCTIONS:
-1. Analyze the SPECIFIC column names and data types in this table
-2. Generate questions that are UNIQUE to this table's structure and purpose
-3. DO NOT use generic questions that could apply to any table
-4. Focus on the actual column names (${tableSchema.columns.map((c) => c.columnName).join(', ')})
-5. Consider the relationships between columns and their business meaning
-6. Each question should be tailored to THIS specific table's data and cannot be used for other tables
-7. Avoid generic patterns like "What are the trends in [table]" - instead ask about specific columns and their relationships
-
-Generate 6-8 highly specific, contextually relevant questions that users might ask about THIS PARTICULAR table's data.
-Questions should reference actual column names and be based on the table's unique structure and purpose.
-Current timestamp for uniqueness: ${timestamp}`;
-
-    const response = await sampleQuestionsAgent.generate([
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ]);
+    const response = await sampleQuestionsAgent.generate(
+      [
+        {
+          role: 'user',
+          content: `Generate 6-8 highly specific sample questions for table ${tableName}`,
+        },
+      ],
+      { runtimeContext }
+    );
     const questions = response.text
       .split('\n')
       .map((line: string) => line.trim())

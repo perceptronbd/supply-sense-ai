@@ -1,11 +1,10 @@
-import { Agent } from '@mastra/core/agent';
 import type {
   IMcpTableMetadata,
   ITableSchemaInput,
   MCPTableMetadataAgentRes,
   TUpdateFrequency,
 } from '@supplysense/types';
-import { GetOpenRouter, generateFriendlyLabel } from '@supplysense/utils';
+import { generateFriendlyLabel } from '@supplysense/utils';
 import { McpClientService } from './mcp-client.service'; // Keep this import
 
 interface TableMetadataInput {
@@ -13,137 +12,103 @@ interface TableMetadataInput {
   businessContext?: string;
 }
 
-import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 /**
  * Specialized service for generating table metadata using MCP tools
  * This service focuses specifically on table analysis and metadata generation
  */
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { AI_MODEL_NAMES } from '@supplysense/constant';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { withRetry } from '@supplysense/utils/server';
+import { buildMultipleTablesMetadataPrompt } from '@/modules/onboarding/helpers/build-metadata-prompt';
 
 @Injectable()
 export class TableMetadataAgentService {
   private readonly logger = new Logger(TableMetadataAgentService.name);
-  private metadataAgent: Agent | null = null;
-  private readonly openrouter = new GetOpenRouter();
   constructor(
     @Inject(forwardRef(() => McpClientService))
     private readonly mcpClientService: McpClientService
   ) {}
 
   /**
-   * Initialize the table metadata agent with specific tools for table analysis
-   */
-  private async initializeMetadataAgent(): Promise<void> {
-    if (this.metadataAgent) {
-      return; // Already initialized
-    }
-
-    try {
-      const mcpClient = this.mcpClientService.getMcpClient();
-      if (!mcpClient || !this.mcpClientService.isClientConnected()) {
-        throw new Error('MCP client not available or not connected');
-      }
-
-      // Get all available tools from MCP server
-      const tools = await mcpClient.getTools();
-
-      this.metadataAgent = new Agent({
-        name: 'TableMetadataAgent',
-        description:
-          'AI agent specialized in analyzing database table schemas and generating metadata',
-        instructions: [
-          'You are an expert data analyst. Your task is to analyze the following database tables and generate structured metadata for each one.',
-          '',
-          'CRITICAL INSTRUCTIONS FOR UNIQUE RESPONSES:',
-          '1. Each table MUST have a completely different and unique response',
-          '2. Analyze the SPECIFIC column names, data types, and relationships for each table',
-          '3. DO NOT use generic templates or similar patterns across tables',
-          "4. The friendlyLabel should reflect the table's actual purpose based on its columns",
-          '5. The purpose should be specific to what THIS table does based on its schema structure',
-          '6. Sample questions MUST reference actual column names from each specific table',
-          '7. Consider foreign key relationships and primary keys when generating purpose and questions',
-          '8. Each table should have completely different sample questions that cannot be applied to other tables',
-          '9. Avoid generic phrases like "manage data" or "store information" - be specific about WHAT data and WHY',
-          '',
-        ].join('\n'),
-        model: this.openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
-        tools,
-      });
-
-      this.logger.log('✅ Table metadata agent initialized successfully');
-    } catch (error) {
-      this.logger.error('❌ Failed to initialize table metadata agent:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Generate table metadata using the specialized agent for multiple tables
    */
   async generateTableMetadata(input: TableMetadataInput): Promise<MCPTableMetadataAgentRes> {
     try {
-      await this.initializeMetadataAgent();
-
-      if (!this.metadataAgent) {
-        throw new Error('Table metadata agent not initialized');
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
+      if (!mcpClient) {
+        throw new Error('Chat agent not initialized');
       }
 
       const { tables } = input;
 
       // Process all tables at once to avoid rate limiting
-      const _results: IMcpTableMetadata[] = [];
+      const results: IMcpTableMetadata[] = [];
 
       // Create a focused prompt for multiple table metadata generation
-      const { systemPrompt: _systemPrompt } = buildMultipleTablesMetadataPrompt();
+      const { systemPrompt } = buildMultipleTablesMetadataPrompt();
 
       this.logger.log(`🔍 Analyzing table metadata for ${tables.length} tables`);
 
-      const _inputData = {
+      const inputData = {
         tables: tables.map(({ tableName, tableSchema }) => ({
           tableName,
           tableSchema,
         })),
       };
-      //TODO: fix token price calculate uncomment all the below code
-      // // Use the specialized agent to generate metadata for all tables at once with retry logic
-      // this.logger.debug('Starting table metadata generation with retry logic...');
-      // const response = await withRetry(
-      //   async () => {
-      //     this.logger.debug('Attempting to generate table metadata...');
-      //     return await this.metadataAgent?.generate(
-      //       [
-      //         {
-      //           role: 'system',
-      //           content: systemPrompt,
-      //         },
-      //         {
-      //           role: 'user',
-      //           content: JSON.stringify(inputData, null, 2),
-      //         },
-      //       ],
-      //       {
-      //         toolChoice: {
-      //           type: 'tool',
-      //           toolName: 'supplySense_analyzeTableMetadataTool',
-      //         },
-      //       }
-      //     );
-      //   },
-      //   3, // maxRetries
-      //   5000 // 5 second delay, longer for MCP timeout
-      // );
 
-      // this.logger.log('✅ Table metadata generated successfully for all tables', {
-      //   usage: response.usage,
-      // });
+      const agent = await mcpClient.getAgent('tableMetadataAgent');
 
-      // this.logger.debug('Response text:', response.text);
-      // // Parse the response to extract structured metadata for all tables
-      // const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
-      // results.push(...parsedResults);
+      if (!agent) {
+        throw new Error('Table metadata agent not initialized');
+      }
 
-      // return { result: results, usage: response.usage, question: systemPrompt };
+      const runtimeContext = new RuntimeContext<TableMetadataInput>();
+
+      runtimeContext.set('tables', tables);
+      runtimeContext.set('businessContext', input.businessContext);
+
+      const tools = await this.mcpClientService.getTools();
+      this.logger.debug('Tools:', tools);
+
+      // Use the specialized agent to generate metadata for all tables at once with retry logic
+      this.logger.debug('Starting table metadata generation with retry logic...');
+      const response = await withRetry(
+        async () => {
+          this.logger.debug('Attempting to generate table metadata...');
+          return await agent.generate(
+            [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: JSON.stringify(inputData, null, 2),
+              },
+            ],
+            {
+              runtimeContext,
+            }
+          );
+        },
+        3, // maxRetries
+        5000 // 5 second delay, longer for MCP timeout
+      );
+
+      this.logger.log('✅ Table metadata generated successfully for all tables', {
+        totalUsage: response.totalUsage,
+      });
+
+      this.logger.debug('Response text:', response.text);
+      // Parse the response to extract structured metadata for all tables
+      const parsedResults = this.parseMultipleTablesResponse(response.text, tables);
+      results.push(...parsedResults);
+
+      return {
+        result: results,
+        usage: response.totalUsage as MCPTableMetadataAgentRes['usage'],
+        question: systemPrompt,
+      };
     } catch (error) {
       this.logger.error('❌ Failed to generate metadata for tables:', error);
       const fallbackResults = input.tables.map(({ tableName, tableSchema }) =>

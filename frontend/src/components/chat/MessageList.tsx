@@ -1,8 +1,8 @@
 'use client';
-import { Text } from '@/components/ui/Text';
-import type { RootState } from '@/store/store';
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { Text } from '@/components/ui/Text';
+import type { RootState } from '@/store/store';
 import { LoadingMessage, MessageBubble } from './MessageBubble';
 import type { MessageListProps } from './types';
 
