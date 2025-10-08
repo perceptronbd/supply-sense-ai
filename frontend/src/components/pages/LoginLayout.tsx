@@ -1,5 +1,6 @@
 import { AuthWelcomeSection } from '../ui/auth/AuthWelcomeSection';
 import { LoginForm } from '../ui/auth/LoginForm';
+
 interface LoginLayoutProps {
   formData: {
     email: string;

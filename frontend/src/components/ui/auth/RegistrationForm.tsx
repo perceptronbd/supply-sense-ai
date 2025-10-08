@@ -1,10 +1,10 @@
+import { Card, CardBody } from '@heroui/react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
 import { registrationFieldSchemas } from '@/lib/schemas/registration.schema';
-import { Card, CardBody } from '@heroui/react';
-import Link from 'next/link';
 
 interface RegistrationFormProps {
   fieldErrors: Record<string, string[]>;

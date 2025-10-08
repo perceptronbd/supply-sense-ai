@@ -10,7 +10,6 @@ import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useRegisterMutation } from '@/store/api/authApi';
 import { useAppDispatch } from '@/store/hooks';
 import { setRegistrationCredentials } from '@/store/slices/authSlice';
-
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegistrationFormData>({
     companyName: '',

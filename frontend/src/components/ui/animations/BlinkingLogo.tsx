@@ -1,5 +1,5 @@
 'use client';
-import { Transition, motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion, Transition, useMotionValue, useSpring } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
 interface BlinkingLogoProps {
