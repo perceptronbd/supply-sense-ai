@@ -1,3 +1,4 @@
+import { Card, CardBody } from '@heroui/react';
 import { AuthWelcomeSection } from '../ui/auth/AuthWelcomeSection';
 import { LoginForm } from '../ui/auth/LoginForm';
 
@@ -25,14 +26,21 @@ export const LoginLayout = ({
     <main className="grid w-full min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
       <AuthWelcomeSection variant="login" />
 
-      <LoginForm
-        formData={formData}
-        fieldErrors={fieldErrors}
-        wasSubmitted={wasSubmitted}
-        isLoading={isLoading}
-        onFieldChange={onFieldChange}
-        onSubmit={onSubmit}
-      />
+      {/* Right panel */}
+      <section className="flex items-center justify-center p-4 overflow-y-auto">
+        <Card radius="sm" className="w-full h-full bg-default-300">
+          <CardBody className="p-8 flex items-center justify-center">
+            <LoginForm
+              formData={formData}
+              fieldErrors={fieldErrors}
+              wasSubmitted={wasSubmitted}
+              isLoading={isLoading}
+              onFieldChange={onFieldChange}
+              onSubmit={onSubmit}
+            />
+          </CardBody>
+        </Card>
+      </section>
     </main>
   );
 };
