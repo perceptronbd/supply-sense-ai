@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import DrawingLogo from '../ui/DrawingLogo';
+import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { Text } from '../ui/Text';
 
 const OnboardingFinishing = () => {
@@ -14,7 +14,7 @@ const OnboardingFinishing = () => {
 
   return (
     <div className="grid place-content-center h-full">
-      <DrawingLogo size={100} variant={'primary'} speed="fast" showFill={true} />
+      <BlinkingLogo size={100} />
       <Text variant="headerSmall" color="primary" weight={'bold'} className="mt-5 xl:mt-12 ">
         SupplySense
         <Text as={'span'} variant={'headerSmall'} weight={'bold'} color="default" className="ml-2">
