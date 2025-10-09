@@ -3,7 +3,6 @@ import { McpClientModule } from '@modules/mcp-client/mcp-client.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from '@supplysense/prisma';
 import { TokenAndCredit } from '../common/services/tokenAndCredit.service';
 import { ChatController } from './chat.controller';
@@ -18,15 +17,6 @@ import { SessionService } from './services/session.service';
     PrismaModule,
     AuthModule,
     McpClientModule,
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          name: 'query',
-          ttl: 60000, // 1 minute
-          limit: 5, // 5 requests per minute
-        },
-      ],
-    }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '24h' },

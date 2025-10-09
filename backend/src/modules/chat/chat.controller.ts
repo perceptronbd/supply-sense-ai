@@ -16,10 +16,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
-import { UserThrottlerGuard } from '../auth/guards/user-throttler.guard';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
+import { SlidingLogRateLimitGuard } from './guards/sliding-log-rate-limit.guard';
 import { ChatService } from './services/chat.service';
 
 @ApiTags('chat')
@@ -106,9 +105,8 @@ export class ChatController {
   }
 
   @Post('query')
-  @UseGuards(JwtAuthGuard, PermissionsGuard, UserThrottlerGuard)
-  @Throttle({ query: { ttl: 60000, limit: 5 } }) // 5 request per minute for this route
-  // @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, SlidingLogRateLimitGuard)
+  // Removed: @Throttle({ query: { ttl: 60000, limit: 5 } })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })
   @ApiResponse({ status: 200, description: 'AI response generated successfully' })
