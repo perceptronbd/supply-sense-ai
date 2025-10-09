@@ -2,9 +2,8 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { McpClientModule } from '@modules/mcp-client/mcp-client.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from '@supplysense/prisma';
 import { TokenAndCredit } from '../common/services/tokenAndCredit.service';
 import { ChatController } from './chat.controller';
@@ -34,17 +33,7 @@ import { SessionService } from './services/session.service';
     }),
   ],
   controllers: [ChatController],
-  providers: [
-    ChatGateway,
-    MessageService,
-    SessionService,
-    ChatService,
-    TokenAndCredit,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  providers: [ChatGateway, MessageService, SessionService, ChatService, TokenAndCredit],
   exports: [ChatService, MessageService, SessionService],
 })
 export class ChatModule {}
