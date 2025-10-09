@@ -69,15 +69,21 @@ export function ChatInterface({
       });
       try {
         // Send message via API
-        await sendQuery({
+        sendQuery({
           sessionId: currentSessionId,
           query: content,
           dbConnectionId: dbConnectionId,
-        }).unwrap();
-
-        // Refetch messages to get the complete conversation from database
-        refetchMessages();
-        removeTempMessage(tempId);
+        })
+          .unwrap()
+          .then(() => {
+            removeTempMessage(tempId);
+            refetchMessages();
+          })
+          .catch((error) => {
+            console.error('Failed to send message:', error);
+            addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
+            removeTempMessage(tempId);
+          });
       } catch (error) {
         console.error('Failed to send message:', error);
         addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');

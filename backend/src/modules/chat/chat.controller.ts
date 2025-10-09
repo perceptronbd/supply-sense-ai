@@ -1,4 +1,4 @@
-﻿import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import {
@@ -16,7 +16,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
+import { UserThrottlerGuard } from '../auth/guards/user-throttler.guard';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
 import { ChatService } from './services/chat.service';
 
@@ -104,11 +106,13 @@ export class ChatController {
   }
 
   @Post('query')
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, UserThrottlerGuard)
+  @Throttle({ query: { ttl: 60000, limit: 5 } }) // 5 request per minute for this route
   // @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })
   @ApiResponse({ status: 200, description: 'AI response generated successfully' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
   async sendMessage(
     @Body() queryDto: ChatQueryDto,
     @CurrentUser() user: AuthenticatedUser,
