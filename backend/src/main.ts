@@ -6,21 +6,30 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
-import { GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
+import { CorsService, GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for frontend - read from environment variables
-  const frontendUrls = process.env.FRONTEND_URLS?.split(',') || [
-    'http://localhost:3001',
-    'http://localhost:3003',
-  ];
+  // Get CorsService instance to access allowed origins
+  const corsService = app.get(CorsService);
 
   app.enableCors({
-    origin: frontendUrls,
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (corsService.isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control'],
     credentials: true,
   });
 
