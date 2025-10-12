@@ -96,6 +96,9 @@ const MetadataForm = (props: IProps) => {
             isRequired
             isInvalid={!!errors.friendlyLabel}
             errorMessage={errors.friendlyLabel?.message}
+            classNames={{
+              input: ' focus:outline-none focus:ring-0',
+            }}
           />
         )}
       />
@@ -114,6 +117,9 @@ const MetadataForm = (props: IProps) => {
             size="sm"
             isInvalid={!!errors.purpose}
             errorMessage={errors.purpose?.message}
+            classNames={{
+              input: ' focus:outline-none focus:ring-0',
+            }}
           />
         )}
       />
@@ -157,6 +163,9 @@ const MetadataForm = (props: IProps) => {
             isRequired
             isInvalid={!!errors.dataSensitivity}
             errorMessage={errors.dataSensitivity?.message}
+            classNames={{
+              input: ' focus:outline-none focus:ring-0',
+            }}
           />
         )}
       />
@@ -171,6 +180,9 @@ const MetadataForm = (props: IProps) => {
           onChange={(e) => setNewQuestion(e.target.value)}
           onKeyDown={handleKeyPress}
           className="flex-1"
+          classNames={{
+            input: ' focus:outline-none focus:ring-0',
+          }}
         />
 
         {errors.sampleQuestions && (
@@ -182,7 +194,7 @@ const MetadataForm = (props: IProps) => {
             <button
               key={question}
               type="button"
-              className="flex items-center justify-center text-sm text-left gap-x-2 bg-default-400 rounded-md px-3 py-1 hover:bg-default-500 transition-colors"
+              className="flex items-center justify-center text-sm text-left gap-x-2 bg-default-400 rounded-xl px-3 py-1 hover:bg-default-500 transition-colors"
               onClick={() => handleRemoveQuestion(question)}
             >
               {question} <Icons.X className="size-4" />

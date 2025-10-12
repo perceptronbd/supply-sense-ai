@@ -1,6 +1,6 @@
 import { Text } from '@/components/ui/Text';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import LogoSupplySense from '../ui/LogoSupplySense';
+import { LogoWithName } from '../ui/LogoWithName';
 
 interface IProps {
   header: string;
@@ -21,7 +21,7 @@ const Summary = ({
   return (
     <div className="lg:mt-[13%] max-lg:mb-10">
       <div className="flex items-center justify-between">
-        <LogoSupplySense />
+        <LogoWithName />
         <span className="font-semibold text-xl lg:hidden">{currentStep} of 4</span>
       </div>
       <Text variant="headerMedium" color="secondary" weight={'bold'} className="mt-5 xl:mt-12 ">

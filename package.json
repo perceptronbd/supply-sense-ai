@@ -167,6 +167,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "framer-motion": "^12.23.22",
     "html-react-parser": "^5.2.6",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
