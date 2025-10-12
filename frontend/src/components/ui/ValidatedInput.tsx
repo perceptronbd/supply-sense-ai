@@ -64,6 +64,9 @@ export function ValidatedInput({
       onValueChange={handleValueChange}
       onBlur={handleBlur}
       isInvalid={Boolean(hasErrors && shouldRenderErrors)}
+      classNames={{
+        input: ' focus:outline-none focus:ring-0',
+      }}
       errorMessage={shouldRenderErrors && hasErrors ? fieldErrors.join(', ') : ''}
       {...props}
     />
