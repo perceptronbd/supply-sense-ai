@@ -39,9 +39,9 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   // Navigation items with permission checks
   const navigation = [
     {
-      name: 'AI Chat',
+      name: 'New Chat',
       href: ROUTE_PATHS.CHAT,
-      icon: <Icons.Message className="w-5 h-5" />,
+      icon: <Icons.EditV2 className="w-5 h-5" />,
       permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
     {
