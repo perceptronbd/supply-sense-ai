@@ -46,7 +46,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
     <div className="flex p-2 h-screen  text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
+      <div className="flex overflow-hidden flex-col flex-1 rounded-sm lg:ml-0">
         {/* Top bar for mobile */}
         <header className="flex justify-between items-center px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
