@@ -1,5 +1,6 @@
 import { Button, type ButtonProps } from '@/components/ui/Button';
 import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
 
 export const ACTION_BUTTON_VARIANTS = [
   'yes',
@@ -30,10 +31,12 @@ type TVariantColors =
   | 'secondary'
   | 'danger'
   | undefined;
+
 type TButtonConfig = Record<
   TActionButtonVariants,
   { style: TVariantStyles; color: TVariantColors; icon: React.ReactNode }
 >;
+
 interface IProps extends ButtonProps {
   variants: TActionButtonVariants;
 }
@@ -72,15 +75,23 @@ const ActionButton = ({ variants, ...props }: IProps) => {
     },
   };
 
+  // Disable conditions
+  const isDisabled = variants === 'confirmed' || variants === 'uncertain';
+
   return (
     <Button
-      className="capitalize  text-lg items-center inline-flex"
+      disabled={isDisabled}
+      className={cn(
+        'capitalize text-lg items-center inline-flex',
+        isDisabled && 'cursor-not-allowed opacity-70'
+      )}
       variant={buttonConfig[variants].style}
       color={buttonConfig[variants].color}
       size="sm"
       {...props}
     >
-      <span className="">{buttonConfig[variants].icon}</span> {variants.split('-').join(' ')}
+      <span>{buttonConfig[variants].icon}</span>
+      {variants.split('-').join(' ')}
     </Button>
   );
 };
