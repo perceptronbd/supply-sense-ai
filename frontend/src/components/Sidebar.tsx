@@ -5,42 +5,158 @@ import { CHAT_PERMISSIONS, USER_PERMISSIONS } from '@supplysense/types';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-// import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ROUTE_PATHS } from '@/config/routes';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
+import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
 import { logout } from '@/store/slices/authSlice';
-import { toggleTheme } from '@/store/slices/themeSlice';
 import type { RootState } from '@/store/store';
+import { LogoWithName } from './ui/LogoWithName';
 import { Text } from './ui/Text';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedSessionId?: string;
+  onSessionSelect?: (sessionId: string) => void;
+  onSessionCreate?: (sessionId: string) => void;
+  dbConnectionId?: string;
 }
 
-export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
+export default function Sidebar({
+  isOpen,
+  onClose,
+  selectedSessionId,
+  onSessionSelect,
+  onSessionCreate,
+  dbConnectionId,
+}: Readonly<SidebarProps>) {
   const router = useRouter();
   const { isActive } = useNavigation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { theme: _ } = useSelector((state: RootState) => state.theme);
   const [showLogout, setShowLogout] = useState(false);
+
+  // Fetch sessions
+  const {
+    data: sessions = [],
+    isLoading: isLoadingSessions,
+    refetch: refetchSessions,
+  } = useGetSessionsQuery({});
+
+  // Create session mutation
+  const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
+
+  // Handle session refresh when triggered by Redux state
+  useSessionRefresh(refetchSessions);
+
   const handleLogout = () => {
     dispatch(logout());
     router.push(ROUTE_PATHS.LOGIN);
   };
 
-  const _handleThemeToggle = () => {
-    dispatch(toggleTheme());
+  // Handle new chat button click
+  const handleNewChat = async () => {
+    if (!dbConnectionId) {
+      router.push(ROUTE_PATHS.CHAT);
+      onClose();
+      return;
+    }
+
+    try {
+      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
+      const newSession = await createSession({
+        title: sessionTitle,
+        description: 'New chat session',
+        dbConnectionId,
+      }).unwrap();
+
+      onSessionCreate?.(newSession.id);
+      onClose();
+    } catch (error) {
+      console.error('Failed to create new session:', error);
+    }
   };
+
+  // Extract the session content logic into a variable
+  const sessionContent = (() => {
+    if (isLoadingSessions || isCreatingSession) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+
+    if (sessions.length === 0) {
+      return (
+        <Text variant="bodyXSmall" className="text-default-500 px-3 py-4 text-center" as="p">
+          No chats yet
+        </Text>
+      );
+    }
+
+    return (
+      <ul className="space-y-1">
+        {sessions.map((session) => (
+          <li key={session.id}>
+            <button
+              type="button"
+              onClick={() => {
+                onSessionSelect?.(session.id);
+                onClose();
+              }}
+              className="w-full flex flex-col px-3 py-2 text-left text-small font-medium group"
+            >
+              <Text
+                variant="bodySmall"
+                weight="medium"
+                className={cn(
+                  'truncate mb-1',
+                  session.id === selectedSessionId
+                    ? 'text-primary-primary text-primary-300'
+                    : 'text-default-500 group-hover:text-default-foreground'
+                )}
+                as="p"
+              >
+                {session.title}
+              </Text>
+              <Text
+                variant="bodyXSmall"
+                className={cn(
+                  session.id === selectedSessionId
+                    ? 'text-primary-300/50'
+                    : 'text-default-500 group-hover:text-default-foreground/70'
+                )}
+                as="p"
+              >
+                {new Date(session.createdAt)
+                  .toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })
+                  .toLowerCase()}{' '}
+                {new Date(session.createdAt).toLocaleDateString('en-US', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  year: '2-digit',
+                })}
+              </Text>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  })();
 
   // Navigation items with permission checks
   const navigation = [
     {
       name: 'New Chat',
-      href: ROUTE_PATHS.CHAT,
+      onClick: handleNewChat,
       icon: <Icons.EditV2 className="w-5 h-5" />,
       permission: CHAT_PERMISSIONS.SEND_MESSAGE,
     },
@@ -68,115 +184,58 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           onClick={onClose}
           onKeyDown={(e) => e.key === 'Escape' && onClose()}
           tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
+
       {/* Sidebar */}
       <aside
-        className={`
-        fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:inset-0 bg-black
-      `}
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out w-[280px]',
+          'lg:translate-x-0 lg:static lg:inset-0 bg-black',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <header className="flex items-center justify-between h-16 px-6 border-b rounded-t-xl border-divider">
-            <span>
-              <svg
-                width="203"
-                height="32"
-                viewBox="0 0 203 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M22.922 0C27.9356 1.02351e-07 32 4.06437 32 9.07801V22.922C32 27.9356 27.9356 32 22.922 32H9.07801C4.06437 32 1.02364e-07 27.9356 0 22.922V9.07801C1.02364e-07 4.06437 4.06437 1.02351e-07 9.07801 0H22.922ZM12.906 7.5461C12.3698 7.5461 11.9351 7.98076 11.9351 8.51695C11.9351 9.05496 11.4975 9.49045 10.9596 9.48792L8.30131 9.4754C6.29718 9.46598 4.66744 11.088 4.66744 13.0922V16.9737C4.66744 21.1049 8.08613 24.4539 12.2173 24.4539H19.7827C23.9139 24.4539 27.3326 21.1049 27.3326 16.9737V13.0922C27.3326 11.088 25.7029 9.46598 23.6988 9.4754L21.0404 9.48792C20.5025 9.49045 20.0649 9.05495 20.0649 8.51695C20.0649 7.98076 19.6303 7.5461 19.0941 7.5461H18.666C17.8934 7.54612 17.2671 8.17244 17.2671 8.94503V9.25432C17.2671 9.91113 17.8046 10.4409 18.4613 10.4315L18.7787 10.427C19.2609 10.4201 19.6556 10.8092 19.6556 11.2914C19.6556 11.7689 20.0426 12.1559 20.5201 12.1559H22.1292C23.4954 12.1559 24.6029 13.2635 24.6029 14.6297V16.922C24.6029 19.5542 22.4692 21.688 19.837 21.6881H12.1631C9.53092 21.6881 7.39706 19.5542 7.39705 16.922V14.6297C7.39705 13.2635 8.50459 12.1559 9.87079 12.1559H11.4801C11.9575 12.1559 12.3445 11.7689 12.3445 11.2914C12.3445 10.8091 12.7392 10.4201 13.2214 10.427L13.5387 10.4315C14.1954 10.4409 14.7329 9.91113 14.7329 9.25432V8.94503C14.7329 8.17243 14.1066 7.5461 13.334 7.5461H12.906ZM14.5257 19.5745C14.5252 19.5745 14.5248 19.5749 14.5248 19.5754C14.5248 20.2016 15.0325 20.7092 15.6587 20.7092H16.4548C17.081 20.7092 17.5887 20.2016 17.5887 19.5754C17.5886 19.5749 17.5882 19.5745 17.5878 19.5745H14.5257ZM11.9299 13.7872C10.6764 13.7872 9.66035 14.7779 9.66035 16C9.66035 17.2221 10.6764 18.2128 11.9299 18.2128C13.1833 18.2128 14.1994 17.2221 14.1994 16C14.1994 14.7779 13.1833 13.7872 11.9299 13.7872ZM20.1001 13.7872C18.8467 13.7872 17.8306 14.7779 17.8306 16C17.8306 17.2221 18.8467 18.2128 20.1001 18.2128C21.3535 18.2128 22.3696 17.2221 22.3696 16C22.3696 14.7779 21.3535 13.7872 20.1001 13.7872Z"
-                  fill="#E84A2E"
-                />
-                <path d="M194.369 10.2497L194.251 10.2485V10.2412H194.369V10.2497Z" fill="white" />
-                <path
-                  d="M159.45 24.3678V7.61328H162.289L170.061 19.4229V7.61328H172.9V24.3678H170.061L162.289 12.5582V24.3678H159.45Z"
-                  fill="white"
-                />
-                <path
-                  d="M145.837 24.3678V7.61328H156.658V10.2428H148.641V14.3733H155.262V17.0028H148.641V21.7382H156.658V24.3678H145.837Z"
-                  fill="white"
-                />
-                <path
-                  d="M136.745 24.7157C135.519 24.7157 134.414 24.5024 133.429 24.0758C132.451 23.6492 131.645 23.0403 131.009 22.2491C130.38 21.4501 129.981 20.5038 129.81 19.4101L132.719 18.968C132.967 19.9608 133.475 20.7288 134.243 21.2717C135.019 21.8147 135.911 22.0862 136.919 22.0862C137.517 22.0862 138.079 21.9931 138.607 21.8069C139.134 21.6208 139.561 21.3493 139.886 20.9925C140.22 20.6357 140.387 20.1974 140.387 19.6777C140.387 19.445 140.348 19.2317 140.27 19.0378C140.193 18.8361 140.076 18.6577 139.921 18.5026C139.774 18.3474 139.58 18.2078 139.34 18.0837C139.107 17.9519 138.835 17.8394 138.525 17.7463L134.197 16.4664C133.824 16.3578 133.421 16.2143 132.987 16.0359C132.56 15.8498 132.153 15.5977 131.765 15.2797C131.385 14.9539 131.071 14.5428 130.823 14.0463C130.582 13.5422 130.462 12.9216 130.462 12.1847C130.462 11.1066 130.733 10.2029 131.276 9.47377C131.827 8.73688 132.564 8.18615 133.487 7.82159C134.418 7.45702 135.449 7.27862 136.582 7.28638C137.73 7.29413 138.754 7.49193 139.654 7.87976C140.554 8.25984 141.306 8.81445 141.911 9.54358C142.516 10.2727 142.943 11.1531 143.191 12.1847L140.177 12.7083C140.053 12.1188 139.813 11.6185 139.456 11.2074C139.107 10.7885 138.676 10.4705 138.164 10.2533C137.66 10.0361 137.121 9.91978 136.547 9.90427C135.989 9.89651 135.469 9.98183 134.988 10.1602C134.515 10.3309 134.131 10.5791 133.836 10.9049C133.549 11.2307 133.406 11.6107 133.406 12.0451C133.406 12.4562 133.53 12.7936 133.778 13.0574C134.026 13.3133 134.332 13.5189 134.697 13.674C135.069 13.8214 135.446 13.9455 135.826 14.0463L138.828 14.8841C139.239 14.9927 139.7 15.14 140.212 15.3262C140.724 15.5124 141.217 15.7722 141.69 16.1058C142.163 16.4393 142.551 16.8775 142.853 17.4205C143.164 17.9635 143.319 18.6538 143.319 19.4916C143.319 20.3603 143.137 21.1243 142.772 21.7837C142.415 22.4352 141.93 22.9782 141.318 23.4126C140.705 23.847 140.003 24.1727 139.212 24.3899C138.428 24.6071 137.606 24.7157 136.745 24.7157Z"
-                  fill="white"
-                />
-                <path
-                  d="M116.663 24.3678V17.5031L110.962 7.61328H114.231L118.082 14.2918L121.922 7.61328H125.192L119.502 17.5031V24.3678H116.663Z"
-                  fill="white"
-                />
-                <path
-                  d="M102.733 24.3678V7.61328H105.537V21.7382H112.937V24.3678H102.733Z"
-                  fill="white"
-                />
-                <path
-                  d="M87.6381 24.3678V7.61328H94.5611C94.724 7.61328 94.9334 7.62104 95.1894 7.63655C95.4454 7.64431 95.6819 7.66758 95.8991 7.70636C96.8687 7.85374 97.6677 8.17564 98.296 8.67207C98.9321 9.1685 99.4014 9.79679 99.7039 10.557C100.014 11.3094 100.169 12.1471 100.169 13.0701C100.169 13.9854 100.014 14.8231 99.7039 15.5833C99.3936 16.3357 98.9204 16.9601 98.2844 17.4565C97.6561 17.953 96.861 18.2749 95.8991 18.4223C95.6819 18.4533 95.4415 18.4766 95.1777 18.4921C94.9218 18.5076 94.7162 18.5153 94.5611 18.5153H90.4422V24.3678H87.6381ZM90.4422 15.8974H94.4447C94.5999 15.8974 94.7744 15.8897 94.9683 15.8742C95.1622 15.8587 95.3406 15.8276 95.5035 15.7811C95.9689 15.6647 96.3335 15.4592 96.5973 15.1644C96.8687 14.8697 97.0588 14.5361 97.1674 14.1638C97.2837 13.7915 97.3419 13.4269 97.3419 13.0701C97.3419 12.7133 97.2837 12.3488 97.1674 11.9764C97.0588 11.5964 96.8687 11.2589 96.5973 10.9642C96.3335 10.6694 95.9689 10.4639 95.5035 10.3475C95.3406 10.301 95.1622 10.2738 94.9683 10.2661C94.7744 10.2506 94.5999 10.2428 94.4447 10.2428H90.4422V15.8974Z"
-                  fill="white"
-                />
-                <path
-                  d="M72.7757 24.3678V7.61328H79.6987C79.8616 7.61328 80.071 7.62104 80.327 7.63655C80.583 7.64431 80.8196 7.66758 81.0368 7.70636C82.0064 7.85374 82.8053 8.17564 83.4336 8.67207C84.0697 9.1685 84.539 9.79679 84.8415 10.557C85.1518 11.3094 85.3069 12.1471 85.3069 13.0701C85.3069 13.9854 85.1518 14.8231 84.8415 15.5833C84.5312 16.3357 84.0581 16.9601 83.422 17.4565C82.7937 17.953 81.9986 18.2749 81.0368 18.4223C80.8196 18.4533 80.5791 18.4766 80.3154 18.4921C80.0594 18.5076 79.8538 18.5153 79.6987 18.5153H75.5798V24.3678H72.7757ZM75.5798 15.8974H79.5824C79.7375 15.8974 79.912 15.8897 80.1059 15.8742C80.2999 15.8587 80.4783 15.8276 80.6412 15.7811C81.1066 15.6647 81.4712 15.4592 81.7349 15.1644C82.0064 14.8697 82.1964 14.5361 82.305 14.1638C82.4214 13.7915 82.4795 13.4269 82.4795 13.0701C82.4795 12.7133 82.4214 12.3488 82.305 11.9764C82.1964 11.5964 82.0064 11.2589 81.7349 10.9642C81.4712 10.6694 81.1066 10.4639 80.6412 10.3475C80.4783 10.301 80.2999 10.2738 80.1059 10.2661C79.912 10.2506 79.7375 10.2428 79.5824 10.2428H75.5798V15.8974Z"
-                  fill="white"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M47.2345 9.94416L47.2508 9.94641L52.4417 9.99831L56.0271 10.0342V18.1419C56.0271 19.4683 56.3102 20.624 56.8765 21.6091C57.4505 22.5943 58.2417 23.3583 59.2501 23.9012C60.2662 24.4442 61.4414 24.7157 62.7756 24.7157C64.1097 24.7157 65.281 24.4442 66.2894 23.9012C67.3056 23.3583 68.0968 22.5943 68.663 21.6091C69.237 20.624 69.5241 19.4683 69.5241 18.1419V7.61215H66.685V18.0721C66.685 18.6926 66.5803 19.2511 66.3709 19.7475C66.1614 20.244 65.8744 20.6667 65.5099 21.0157C65.1453 21.3571 64.7264 21.6208 64.2533 21.8069C63.7878 21.9853 63.2953 22.0746 62.7756 22.0746C62.2714 22.0746 61.7827 21.9853 61.3095 21.8069C60.8363 21.6285 60.4175 21.3687 60.0529 21.0274C59.6883 20.6783 59.3975 20.2556 59.1803 19.7592C58.9708 19.2627 58.8661 18.7003 58.8661 18.0721V10.0625L58.8698 10.0626V7.39621L47.2345 7.28223V7.30016C47.2072 7.29868 47.1799 7.29738 47.1525 7.29613C47.1173 7.29459 47.0821 7.29317 47.0467 7.29199C46.9559 7.28885 46.8642 7.28696 46.7718 7.28637C45.6393 7.27862 44.6076 7.45704 43.6768 7.82158C42.7537 8.18613 42.0168 8.73691 41.466 9.47374C40.9231 10.2029 40.6516 11.1066 40.6516 12.1847C40.6516 12.9216 40.7718 13.5422 41.0123 14.0463C41.2605 14.5428 41.5746 14.9539 41.9547 15.2797C42.3426 15.5977 42.7498 15.8498 43.1764 16.0359C43.6108 16.2143 44.0142 16.3579 44.3865 16.4665L48.7149 17.7463C49.0251 17.8394 49.2966 17.9518 49.5293 18.0837C49.7698 18.2078 49.9637 18.3475 50.1111 18.5026C50.2662 18.6577 50.3826 18.8361 50.4601 19.0378C50.5377 19.2317 50.5765 19.445 50.5765 19.6777C50.5765 20.1974 50.4097 20.6357 50.0762 20.9925C49.7504 21.3493 49.3238 21.6208 48.7963 21.8069C48.2688 21.9931 47.7065 22.0862 47.1092 22.0862C46.1008 22.0862 45.2088 21.8147 44.433 21.2717C43.6651 20.7288 43.1571 19.9609 42.9088 18.968L40 19.4101C40.1706 20.5038 40.5701 21.4502 41.1984 22.2491C41.8345 23.0402 42.6412 23.6492 43.6186 24.0757C44.6037 24.5024 45.7091 24.7157 46.9347 24.7157C47.7957 24.7157 48.6179 24.6071 49.4013 24.3899C50.1925 24.1727 50.8945 23.847 51.5073 23.4126C52.1201 22.9782 52.6049 22.4352 52.9617 21.7837C53.3263 21.1244 53.5086 20.3603 53.5086 19.4916C53.5086 18.6538 53.3535 17.9635 53.0432 17.4205C52.7407 16.8776 52.3528 16.4393 51.8797 16.1058C51.4065 15.7722 50.9139 15.5124 50.402 15.3262C49.89 15.1401 49.4285 14.9927 49.0174 14.8841L46.0155 14.0463C45.6354 13.9455 45.2592 13.8214 44.8868 13.674C44.5223 13.5189 44.2159 13.3133 43.9677 13.0574C43.7194 12.7936 43.5953 12.4562 43.5953 12.0451C43.5953 11.6108 43.7388 11.2306 44.0258 10.9049C44.3206 10.5791 44.7045 10.3309 45.1777 10.1602C45.6586 9.98185 46.1784 9.89652 46.7368 9.90427C46.9057 9.90883 47.0716 9.92214 47.2345 9.94416Z"
-                  fill="white"
-                />
-                <path
-                  d="M182.861 10.1347L182.878 10.1369L188.013 10.1881L191.447 10.2224V24.368H202.268V21.7384H194.251V17.003H200.871V14.3734H194.251V10.2503V10.243H194.369H202.268V7.61348H193.776L182.861 7.50684V7.52453L182.821 7.52252L182.78 7.52057L182.741 7.51885L182.676 7.51648C182.586 7.5134 182.495 7.51151 182.404 7.51092C181.283 7.50329 180.263 7.6794 179.342 8.03927C178.428 8.39914 177.699 8.94287 177.154 9.6703C176.617 10.3901 176.349 11.2822 176.349 12.3466C176.349 13.074 176.468 13.6866 176.706 14.1843C176.951 14.6744 177.262 15.0803 177.638 15.4018C178.022 15.7158 178.425 15.9647 178.847 16.1484C179.276 16.3246 179.676 16.4662 180.044 16.5734L184.326 17.8369C184.633 17.9288 184.902 18.0398 185.132 18.1699C185.37 18.2924 185.562 18.4303 185.707 18.5835C185.861 18.7366 185.976 18.9127 186.053 19.1118C186.129 19.3033 186.168 19.5138 186.168 19.7436C186.168 20.2566 186.003 20.6893 185.673 21.0415C185.351 21.3938 184.928 21.6617 184.407 21.8456C183.885 22.0293 183.328 22.1212 182.737 22.1212C181.74 22.1212 180.857 21.8532 180.09 21.3171C179.33 20.7812 178.828 20.0231 178.582 19.043L175.704 19.4794C175.873 20.5591 176.268 21.4933 176.89 22.282C177.519 23.063 178.317 23.6642 179.284 24.0853C180.259 24.5064 181.352 24.717 182.565 24.717C183.417 24.717 184.23 24.6098 185.005 24.3954C185.788 24.1811 186.482 23.8594 187.089 23.4306C187.695 23.0018 188.175 22.4658 188.528 21.8226C188.888 21.1717 189.069 20.4174 189.069 19.5598C189.069 18.7328 188.915 18.0513 188.608 17.5153C188.309 16.9793 187.925 16.5466 187.457 16.2173C186.989 15.8881 186.502 15.6316 185.995 15.4478C185.489 15.264 185.032 15.1185 184.625 15.0113L181.655 14.1843C181.279 14.0848 180.907 13.9623 180.539 13.8168C180.178 13.6636 179.875 13.4607 179.629 13.208C179.384 12.9476 179.261 12.6146 179.261 12.2087C179.261 11.7799 179.403 11.4047 179.687 11.0831C179.979 10.7614 180.359 10.5164 180.827 10.348C181.302 10.1719 181.817 10.0876 182.369 10.0953C182.536 10.0998 182.7 10.113 182.861 10.1347Z"
-                  fill="white"
-                />
-              </svg>
-            </span>
-            {/* Theme toggle icon button */}
-            {/* <div className="flex items-center gap-2">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="text-foreground hover:bg-content2"
-                onPress={handleThemeToggle}
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1 transition-colors lg:hidden rounded-medium hover:bg-content2 text-foreground"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div> */}
+          {/* Header with Logo */}
+          <header className="flex items-center justify-between h-16 px-6">
+            <LogoWithName width={203} height={32} />
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              className="lg:hidden text-white"
+              onPress={onClose}
+              aria-label="Close sidebar"
+            >
+              <Icons.ToggleSession className="w-5 h-5" />
+            </Button>
           </header>
+
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <ul className="space-y-2">
+          <nav className="px-4 py-6">
+            <ul className="space-y-1">
               {navigation.map((item) => (
                 <li key={item.name}>
                   <button
                     type="button"
                     onClick={() => {
-                      router.push(item.href);
-                      onClose();
+                      if (item.onClick) {
+                        item.onClick();
+                      } else if (item.href) {
+                        router.push(item.href);
+                        onClose();
+                      }
                     }}
-                    className={`
-                      w-full flex items-center px-3 py-2 text-left text-small font-medium group
-                      
-                    `}
+                    className="w-full flex items-center px-3 py-2 text-left font-medium group"
                   >
                     <span
                       className={cn(
                         'mr-3',
-                        isActive(item.href)
-                          ? 'text-primary-primary text-primary-300'
-                          : ' text-default-500 group-hover:text-default-foreground'
+                        // Always show New Chat as primary, for others use conditional styling
+                        item.name === 'New Chat' || (item.href && isActive(item.href))
+                          ? 'text-primary-500'
+                          : 'text-default-500 group-hover:text-default-foreground'
                       )}
                     >
                       {item.icon}
@@ -184,12 +243,12 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                     <Text
                       variant="bodySmall"
                       weight="medium"
-                      // color={isActive(item.href) ? 'primary' : 'danger'}
                       className={cn(
                         'truncate',
-                        isActive(item.href)
+                        // Always show New Chat as primary, for others use conditional styling
+                        item.name === 'New Chat' || (item.href && isActive(item.href))
                           ? 'text-primary-primary text-primary-300'
-                          : ' text-default-500 group-hover:text-default-foreground'
+                          : 'text-default-500 group-hover:text-default-foreground'
                       )}
                       as="p"
                     >
@@ -200,18 +259,23 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
               ))}
             </ul>
           </nav>
-          {/*  */}
+
+          {/* Chats Section - Restructured for fixed header and scrollable content */}
+          <section className="flex-1 flex flex-col min-h-0">
+            {/* Fixed Chats Title */}
+            <div className="flex-shrink-0 px-4 py-3">
+              <Text variant="bodySmall" weight="medium" className="text-default-500" as="h2">
+                Chats
+              </Text>
+            </div>
+
+            {/* Scrollable Chat Content */}
+            <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-2">{sessionContent}</div>
+          </section>
 
           {/* User info and logout */}
           <footer className="flex-shrink-0 p-4 border-t rounded-b-xl border-divider">
             <div className="flex items-center gap-x-4">
-              {/* <Image
-                src={'/avatar.png'}
-                alt="User Avatar"
-                width={56}
-                height={56}
-                className="object-cover size-full"
-              /> */}
               <Avatar icon={<Icons.At />} />
               <div className="">
                 <Text

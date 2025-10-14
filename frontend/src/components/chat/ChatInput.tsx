@@ -76,30 +76,40 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
           />
         </div>
 
-        {/* Dropdown and Send Button Row */}
+        {/* Dropdowns and Send Button Row */}
         <div className="flex gap-2 items-center justify-between px-3 pb-3 pt-1">
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                variant="flat"
-                radius="md"
-                startContent={<Icons.Connection className="w-4 h-4" />}
-                endContent={<Icons.Down className="w-4 h-4" />}
-                size="sm"
+          <div className="flex gap-2 items-center">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="flat"
+                  radius="md"
+                  startContent={<Icons.Connection className="w-4 h-4" />}
+                  endContent={<Icons.Down className="w-4 h-4" />}
+                  size="sm"
+                >
+                  {selectedConnection}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Connection options"
+                onAction={(key) => setSelectedConnection(key as string)}
               >
-                {selectedConnection}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="Connection options"
-              onAction={(key) => setSelectedConnection(key as string)}
+                {connections.map((connection) => (
+                  <DropdownItem key={connection}>{connection}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+
+            {/* <Button
+              variant="flat"
+              radius="md"
+              startContent={<Icons.Plus className="w-4 h-4" />}
+              size="sm"
             >
-              {connections.map((connection) => (
-                <DropdownItem key={connection}>{connection}</DropdownItem>
-              ))}
-            </DropdownMenu>
-            ;
-          </Dropdown>
+              Mode
+            </Button> */}
+          </div>
 
           <Button
             type="submit"
