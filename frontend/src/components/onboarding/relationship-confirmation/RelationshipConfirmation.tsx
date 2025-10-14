@@ -1,7 +1,7 @@
 'use client';
 import { handleAsyncOperation } from '@supplysense/utils';
 // Import necessary React hooks and components
-import { useCallback, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
@@ -108,7 +108,7 @@ const RelationshipConfirmation = () => {
         refTable: item.refTable,
         refColumn: item.refColumn,
         description: item.description,
-        isConfirmed: true,
+        isConfirmed: item.isConfirmed,
       })),
     };
 
@@ -126,6 +126,22 @@ const RelationshipConfirmation = () => {
       }
     );
   }, [relationTables, companyId, dbConnectionId, upsertTableRelationships, setOnboardingStep]);
+
+  // Update the selected relationships when the table relationships data changes
+  useEffect(() => {
+    if (relationTables.length === 0) {
+      setRelationTables(
+        tableRelationships.data.map((item) => ({
+          tableName: item.tableName,
+          columnName: item.columnName,
+          refTable: item.refTable,
+          refColumn: item.refColumn,
+          description: item.description,
+          isConfirmed: true,
+        }))
+      );
+    }
+  }, [tableRelationships.data, relationTables.length]);
 
   return (
     <>
@@ -146,10 +162,9 @@ const RelationshipConfirmation = () => {
           </div>
           <Button
             variant={'light'}
-            color={'default'}
-            className={cn('text-default-500 mb-3 lg:w-fit', {
+            color={'primary'}
+            className={cn('mb-3 lg:w-fit', {
               'opacity-50 cursor-not-allowed': isLoading,
-              'text-primary': relationTables.length > 0,
             })}
             isLoading={isUpserting}
             onPress={handleConfirmRelationships}

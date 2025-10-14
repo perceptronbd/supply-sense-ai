@@ -2,19 +2,19 @@
 
 import './global.css';
 
+import AuthProvider from '@/components/AuthProvider';
+import MainLayout from '@/components/MainLayout';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import WithoutSidebar from '@/components/WithoutSidebar';
+import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
+import { cn } from '@/lib/utils';
+import { persistor, store } from '@/store/store';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import { Manrope, Montserrat } from 'next/font/google';
 import localFont from 'next/font/local';
 import { usePathname } from 'next/navigation';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import AuthProvider from '@/components/AuthProvider';
-import MainLayout from '@/components/MainLayout';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
-import WithoutSidebar from '@/components/WithoutSidebar';
-import { cn } from '@/lib/utils';
-import { persistor, store } from '@/store/store';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -36,7 +36,11 @@ const clashDisplay = localFont({
   ],
   variable: '--font-clash-display',
 });
-export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  readonly children: React.ReactNode;
+}) {
   const pathName = usePathname();
   const componentsWithoutSidebars = ['/onboarding'];
   const isWithoutSidebar = componentsWithoutSidebars.includes(pathName);
@@ -69,8 +73,8 @@ export default function RootLayout({ children }: { readonly children: React.Reac
         <Provider store={store}>
           <PersistGate
             loading={
-              <main className="flex items-center justify-center min-h-screen bg-background">
-                <SSRSafeDrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
+              <main className="flex items-center justify-center min-h-screen bg-black">
+                <SSRSafeDrawingLogo />
               </main>
             }
             persistor={persistor}
