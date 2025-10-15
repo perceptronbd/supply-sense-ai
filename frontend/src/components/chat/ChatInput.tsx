@@ -11,7 +11,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Icons } from '@/lib/icons/Icons';
 import type { ChatInputProps } from './types';
 
-export function ChatInput({ onSendMessage, isLoading = false, disabled = false }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  isLoading = false,
+  disabled = false,
+}: Readonly<ChatInputProps>) {
   const [message, setMessage] = useState('');
   const [selectedConnection, setSelectedConnection] = useState('Select Connection');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -47,7 +51,7 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
   const connections = ['Connection 1', 'Connection 2', 'Connection 3'];
 
   return (
-    <section className="pb-7 px-10 w-full fixed lg:absolute bottom-0 z-30">
+    <section className="pb-7 px-10 w-full z-30">
       <form
         onSubmit={handleSubmit}
         className="relative rounded-xl border bg-content1 border-divider shadow-small"

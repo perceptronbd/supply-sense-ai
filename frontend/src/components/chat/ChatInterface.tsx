@@ -8,6 +8,7 @@ import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { useSendQueryMutation } from '@/store/api/chatApi';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
 export function ChatInterface({
@@ -148,6 +149,8 @@ export function ChatInterface({
         isLoading={isSendingMessage}
         disabled={isLoadingMessages}
       />
+
+      <SampleQuestions />
     </section>
   );
 }

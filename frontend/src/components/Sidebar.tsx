@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
 import { logout } from '@/store/slices/authSlice';
 import type { RootState } from '@/store/store';
+import { ChatSessionList } from './ChatSessionList';
 import { LogoWithName } from './ui/LogoWithName';
 import { Text } from './ui/Text';
 
@@ -38,6 +39,7 @@ export default function Sidebar({
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const [showLogout, setShowLogout] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   // Fetch sessions
   const {
@@ -80,78 +82,6 @@ export default function Sidebar({
     }
   };
 
-  // Extract the session content logic into a variable
-  const sessionContent = (() => {
-    if (isLoadingSessions || isCreatingSession) {
-      return (
-        <div className="flex items-center justify-center py-8">
-          <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin" />
-        </div>
-      );
-    }
-
-    if (sessions.length === 0) {
-      return (
-        <Text variant="bodyXSmall" className="text-default-500 px-3 py-4 text-center" as="p">
-          No chats yet
-        </Text>
-      );
-    }
-
-    return (
-      <ul className="space-y-1">
-        {sessions.map((session) => (
-          <li key={session.id}>
-            <button
-              type="button"
-              onClick={() => {
-                onSessionSelect?.(session.id);
-                onClose();
-              }}
-              className="w-full flex flex-col px-3 py-2 text-left text-small font-medium group"
-            >
-              <Text
-                variant="bodySmall"
-                weight="medium"
-                className={cn(
-                  'truncate mb-1',
-                  session.id === selectedSessionId
-                    ? 'text-primary-primary text-primary-300'
-                    : 'text-default-500 group-hover:text-default-foreground'
-                )}
-                as="p"
-              >
-                {session.title}
-              </Text>
-              <Text
-                variant="bodyXSmall"
-                className={cn(
-                  session.id === selectedSessionId
-                    ? 'text-primary-300/50'
-                    : 'text-default-500 group-hover:text-default-foreground/70'
-                )}
-                as="p"
-              >
-                {new Date(session.createdAt)
-                  .toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  })
-                  .toLowerCase()}{' '}
-                {new Date(session.createdAt).toLocaleDateString('en-US', {
-                  month: '2-digit',
-                  day: '2-digit',
-                  year: '2-digit',
-                })}
-              </Text>
-            </button>
-          </li>
-        ))}
-      </ul>
-    );
-  })();
-
   // Navigation items with permission checks
   const navigation = [
     {
@@ -191,129 +121,139 @@ export default function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out w-[280px]',
+          'fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out',
+          expanded ? 'md:w-[280px] w-full' : 'w-[80px]',
           'lg:translate-x-0 lg:static lg:inset-0 bg-black',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header with Logo */}
-          <header className="flex items-center justify-between h-16 px-6">
-            <LogoWithName width={203} height={32} />
+          {/* Header with Logo and Toggle */}
+          <header className="flex items-center h-16 px-6 gap-4">
+            {expanded && <LogoWithName width={203} height={32} />}
+            <div className="flex-1" />
+
+            {/* Desktop ToggleSession button */}
             <Button
               isIconOnly
               size="sm"
-              variant="light"
-              className="lg:hidden text-white"
-              onPress={onClose}
-              aria-label="Close sidebar"
+              variant="ghost"
+              className="hidden lg:flex border-none transition-colors hover:bg-transparent"
+              aria-label="Toggle sessions list"
+              onPress={() => setExpanded(!expanded)}
             >
-              <Icons.ToggleSession className="w-5 h-5" />
+              <Icons.ToggleSession className="w-6 h-6" />
             </Button>
           </header>
 
           {/* Navigation */}
-          <nav className="px-4 py-6">
-            <ul className="space-y-1">
-              {navigation.map((item) => (
-                <li key={item.name}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (item.onClick) {
-                        item.onClick();
-                      } else if (item.href) {
-                        router.push(item.href);
-                        onClose();
-                      }
-                    }}
-                    className="w-full flex items-center px-3 py-2 text-left font-medium group"
+          {expanded && (
+            <nav className="px-4 py-6">
+              <ul className="space-y-1">
+                {navigation.map((item) => (
+                  <li key={item.name}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.onClick) {
+                          item.onClick();
+                        } else if (item.href) {
+                          router.push(item.href);
+                          onClose();
+                        }
+                      }}
+                      className="w-full flex items-center px-3 py-2 text-left font-medium group"
+                    >
+                      <span
+                        className={cn(
+                          'mr-3',
+                          item.name === 'New Chat' || (item.href && isActive(item.href))
+                            ? 'text-primary-500'
+                            : 'text-default-500 group-hover:text-default-foreground'
+                        )}
+                      >
+                        {item.icon}
+                      </span>
+                      <Text
+                        variant="bodySmall"
+                        weight="medium"
+                        className={cn(
+                          'truncate',
+                          item.name === 'New Chat' || (item.href && isActive(item.href))
+                            ? 'text-primary-primary text-primary-300'
+                            : 'text-default-500 group-hover:text-default-foreground'
+                        )}
+                        as="p"
+                      >
+                        {item.name}
+                      </Text>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
+          {/* Chats Section */}
+          {expanded && (
+            <ChatSessionList
+              sessions={sessions}
+              selectedSessionId={selectedSessionId}
+              isLoading={isLoadingSessions || isCreatingSession}
+              onSessionSelect={(id) => {
+                onSessionSelect?.(id);
+                onClose();
+              }}
+            />
+          )}
+
+          {/* Footer */}
+          {expanded && (
+            <footer className="flex-shrink-0 p-4 border-t rounded-b-xl border-divider">
+              <div className="flex items-center gap-x-4">
+                <Avatar icon={<Icons.At />} />
+                <div className="">
+                  <Text
+                    variant="bodySmall"
+                    weight="medium"
+                    color="default"
+                    className="truncate"
+                    as="p"
                   >
-                    <span
-                      className={cn(
-                        'mr-3',
-                        // Always show New Chat as primary, for others use conditional styling
-                        item.name === 'New Chat' || (item.href && isActive(item.href))
-                          ? 'text-primary-500'
-                          : 'text-default-500 group-hover:text-default-foreground'
-                      )}
-                    >
-                      {item.icon}
-                    </span>
-                    <Text
-                      variant="bodySmall"
-                      weight="medium"
-                      className={cn(
-                        'truncate',
-                        // Always show New Chat as primary, for others use conditional styling
-                        item.name === 'New Chat' || (item.href && isActive(item.href))
-                          ? 'text-primary-primary text-primary-300'
-                          : 'text-default-500 group-hover:text-default-foreground'
-                      )}
-                      as="p"
-                    >
-                      {item.name}
-                    </Text>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Chats Section - Restructured for fixed header and scrollable content */}
-          <section className="flex-1 flex flex-col min-h-0">
-            {/* Fixed Chats Title */}
-            <div className="flex-shrink-0 px-4 py-3">
-              <Text variant="bodySmall" weight="medium" className="text-default-500" as="h2">
-                Chats
-              </Text>
-            </div>
-
-            {/* Scrollable Chat Content */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-2">{sessionContent}</div>
-          </section>
-
-          {/* User info and logout */}
-          <footer className="flex-shrink-0 p-4 border-t rounded-b-xl border-divider">
-            <div className="flex items-center gap-x-4">
-              <Avatar icon={<Icons.At />} />
-              <div className="">
-                <Text
-                  variant="bodySmall"
-                  weight="medium"
-                  color="default"
-                  className="truncate"
-                  as="p"
-                >
-                  {user?.firstName} {user?.lastName}
-                </Text>
-                <Text variant="bodyXSmall" color="muted" className="truncate max-w-28" as="p">
-                  {user?.email}
-                </Text>
-                <Chip
-                  classNames={{
-                    base: 'text-primary-300',
-                  }}
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                >
-                  {user?.roles && user.roles.length > 0
-                    ? user.roles.join(', ').replace(/_/g, ' ')
-                    : 'No role assigned'}
-                </Chip>
+                    {user?.firstName} {user?.lastName}
+                  </Text>
+                  <Text variant="bodyXSmall" color="muted" className="truncate max-w-28" as="p">
+                    {user?.email}
+                  </Text>
+                  <Chip
+                    classNames={{
+                      base: 'text-primary-300',
+                    }}
+                    color="primary"
+                    variant="flat"
+                    size="sm"
+                  >
+                    {user?.roles && user.roles.length > 0
+                      ? user.roles.join(', ').replace(/_/g, ' ')
+                      : 'No role assigned'}
+                  </Chip>
+                </div>
+                <button type="button" onClick={() => setShowLogout((prev) => !prev)}>
+                  <Icons.Down className="text-white" />
+                </button>
               </div>
-              <button type="button" onClick={() => setShowLogout((prev) => !prev)}>
-                <Icons.Down className="text-white" />
-              </button>
-            </div>
-            {/* Logout button */}
-            {showLogout && (
-              <Button variant="flat" color="danger" className="w-full mt-4" onPress={handleLogout}>
-                Logout
-              </Button>
-            )}
-          </footer>
+              {showLogout && (
+                <Button
+                  variant="flat"
+                  color="danger"
+                  className="w-full mt-4"
+                  onPress={handleLogout}
+                >
+                  Logout
+                </Button>
+              )}
+            </footer>
+          )}
         </div>
       </aside>
     </>

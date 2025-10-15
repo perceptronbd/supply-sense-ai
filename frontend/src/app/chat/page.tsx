@@ -114,14 +114,14 @@ export default function ChatPage() {
       </div>
 
       {/* Session Manager Sidebar - only show when database connection is available */}
-      {selectedDbConnectionId && (
+      {/* {selectedDbConnectionId && (
         <SessionManager
           selectedSessionId={activeSessionId}
           dbConnectionId={selectedDbConnectionId}
           onSessionSelect={handleSessionSelect}
           onSessionCreate={handleSessionCreate}
         />
-      )}
+      )} */}
     </main>
   );
 }
