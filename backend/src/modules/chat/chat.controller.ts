@@ -18,7 +18,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
-import { SlidingLogRateLimitGuard } from './guards/sliding-log-rate-limit.guard';
+import { MultiWindowRateLimitGuard } from './guards/multi-window-rate-limiting.guard';
 import { ChatService } from './services/chat.service';
 
 @ApiTags('chat')
@@ -105,7 +105,7 @@ export class ChatController {
   }
 
   @Post('query')
-  @UseGuards(JwtAuthGuard, PermissionsGuard, SlidingLogRateLimitGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, MultiWindowRateLimitGuard)
   // Removed: @Throttle({ query: { ttl: 60000, limit: 5 } })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send a message to the AI assistant' })

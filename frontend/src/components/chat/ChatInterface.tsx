@@ -81,7 +81,7 @@ export function ChatInterface({
                 currentSessionId,
                 'Rate limit exceeded. Please wait before sending more messages.'
               );
-            } else {
+            } else if (res?.error) {
               addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
             }
             removeTempMessage(tempId);
