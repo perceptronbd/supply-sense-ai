@@ -75,11 +75,14 @@ export function ChatInterface({
           dbConnectionId: dbConnectionId,
         })
           .then((response) => {
-            const res = response as { error?: { data?: { statusCode?: number } } };
+            const res = response as {
+              error?: { data?: { statusCode?: number; message?: string } };
+            };
             if (res?.error?.data?.statusCode === 429) {
               addErrorMessage(
                 currentSessionId,
-                'Rate limit exceeded. Please wait before sending more messages.'
+                res.error.data?.message ||
+                  'Rate limit exceeded. Please wait before sending more messages.'
               );
             } else if (res?.error) {
               addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
