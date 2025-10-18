@@ -10,8 +10,9 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-import { useCreateSessionMutation, useGetSessionsQuery } from '@/store/api/chatApi';
+import { useGetSessionsQuery } from '@/store/api/chatApi';
 import { logout } from '@/store/slices/authSlice';
+import { setSessionId } from '@/store/slices/chatSlice';
 import type { RootState } from '@/store/store';
 import { ChatSessionList } from './ChatSessionList';
 import { LogoWithName } from './ui/LogoWithName';
@@ -20,20 +21,9 @@ import { Text } from './ui/Text';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedSessionId?: string;
-  onSessionSelect?: (sessionId: string) => void;
-  onSessionCreate?: (sessionId: string) => void;
-  dbConnectionId?: string;
 }
 
-export default function Sidebar({
-  isOpen,
-  onClose,
-  selectedSessionId,
-  onSessionSelect,
-  onSessionCreate,
-  dbConnectionId,
-}: Readonly<SidebarProps>) {
+export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   const router = useRouter();
   const { isActive } = useNavigation();
   const dispatch = useDispatch();
@@ -48,9 +38,6 @@ export default function Sidebar({
     refetch: refetchSessions,
   } = useGetSessionsQuery({});
 
-  // Create session mutation
-  const [createSession, { isLoading: isCreatingSession }] = useCreateSessionMutation();
-
   // Handle session refresh when triggered by Redux state
   useSessionRefresh(refetchSessions);
 
@@ -61,25 +48,9 @@ export default function Sidebar({
 
   // Handle new chat button click
   const handleNewChat = async () => {
-    if (!dbConnectionId) {
-      router.push(ROUTE_PATHS.CHAT);
-      onClose();
-      return;
-    }
-
-    try {
-      const sessionTitle = `Chat ${new Date().toLocaleString()}`;
-      const newSession = await createSession({
-        title: sessionTitle,
-        description: 'New chat session',
-        dbConnectionId,
-      }).unwrap();
-
-      onSessionCreate?.(newSession.id);
-      onClose();
-    } catch (error) {
-      console.error('Failed to create new session:', error);
-    }
+    dispatch(setSessionId(''));
+    router.push(ROUTE_PATHS.CHAT);
+    onClose();
   };
 
   // Navigation items with permission checks
@@ -195,17 +166,7 @@ export default function Sidebar({
           )}
 
           {/* Chats Section */}
-          {expanded && (
-            <ChatSessionList
-              sessions={sessions}
-              selectedSessionId={selectedSessionId}
-              isLoading={isLoadingSessions || isCreatingSession}
-              onSessionSelect={(id) => {
-                onSessionSelect?.(id);
-                onClose();
-              }}
-            />
-          )}
+          {expanded && <ChatSessionList sessions={sessions} isLoading={isLoadingSessions} />}
 
           {/* Footer */}
           {expanded && (

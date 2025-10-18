@@ -1,4 +1,6 @@
 import { cn } from '@/lib/utils';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setSessionId } from '@/store/slices/chatSlice';
 import { Text } from './ui/Text';
 
 interface Session {
@@ -9,17 +11,17 @@ interface Session {
 
 interface ChatSessionListProps {
   sessions: Session[];
-  selectedSessionId?: string;
   isLoading: boolean;
-  onSessionSelect: (sessionId: string) => void;
 }
 
-export function ChatSessionList({
-  sessions,
-  selectedSessionId,
-  isLoading,
-  onSessionSelect,
-}: Readonly<ChatSessionListProps>) {
+export function ChatSessionList({ sessions, isLoading }: Readonly<ChatSessionListProps>) {
+  const dispatch = useAppDispatch();
+  const { sessionId } = useAppSelector((state) => state.chat);
+
+  const handleSessionSelect = (sessionId: string) => {
+    dispatch(setSessionId(sessionId));
+  };
+
   const sessionContent = (() => {
     if (isLoading) {
       return (
@@ -43,7 +45,7 @@ export function ChatSessionList({
           <li key={session.id}>
             <button
               type="button"
-              onClick={() => onSessionSelect(session.id)}
+              onClick={() => handleSessionSelect(session.id)}
               className="w-full flex flex-col px-3 py-2 text-left text-small font-medium group"
             >
               <Text
@@ -51,7 +53,7 @@ export function ChatSessionList({
                 weight="medium"
                 className={cn(
                   'truncate mb-1',
-                  session.id === selectedSessionId
+                  session.id === sessionId
                     ? 'text-primary-primary text-primary-300'
                     : 'text-default-500 group-hover:text-default-foreground'
                 )}
@@ -62,7 +64,7 @@ export function ChatSessionList({
               <Text
                 variant="bodyXSmall"
                 className={cn(
-                  session.id === selectedSessionId
+                  session.id === sessionId
                     ? 'text-primary-300/50'
                     : 'text-default-500 group-hover:text-default-foreground/70'
                 )}

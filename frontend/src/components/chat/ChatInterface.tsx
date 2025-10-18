@@ -6,17 +6,19 @@ import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { useSendQueryMutation } from '@/store/api/chatApi';
+import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
 export function ChatInterface({
-  sessionId,
   dbConnectionId,
   className,
   handleCreateSession,
 }: Readonly<ChatInterfaceProps>) {
+  const { sessionId } = useAppSelector((state) => state.chat);
+
   const {
     messages,
     isLoadingMessages,
@@ -42,7 +44,7 @@ export function ChatInterface({
       // Ensure we have a session before sending message
       if (!currentSessionId) {
         try {
-          currentSessionId = await handleCreateSession();
+          currentSessionId = (await handleCreateSession()) || '';
           if (!currentSessionId) {
             addErrorMessage('', 'Failed to create session. Please try again.');
             return;
@@ -150,7 +152,7 @@ export function ChatInterface({
         disabled={isLoadingMessages}
       />
 
-      <SampleQuestions />
+      {messages.length === 0 && <SampleQuestions />}
     </section>
   );
 }

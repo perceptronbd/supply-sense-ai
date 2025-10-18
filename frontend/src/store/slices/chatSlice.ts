@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ChatState {
+  sessionId: string;
   sessionRefreshTrigger: number;
   processedSessions: string[];
 }
@@ -8,6 +9,7 @@ interface ChatState {
 const initialState: ChatState = {
   sessionRefreshTrigger: 0,
   processedSessions: [],
+  sessionId: '',
 };
 
 const chatSlice = createSlice({
@@ -25,9 +27,12 @@ const chatSlice = createSlice({
     clearProcessedSessions: (state) => {
       state.processedSessions = [];
     },
+    setSessionId: (state, action: PayloadAction<string>) => {
+      state.sessionId = action.payload;
+    },
   },
 });
 
-export const { triggerSessionRefresh, markSessionProcessed, clearProcessedSessions } =
+export const { triggerSessionRefresh, markSessionProcessed, clearProcessedSessions, setSessionId } =
   chatSlice.actions;
 export default chatSlice.reducer;

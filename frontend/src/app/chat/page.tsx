@@ -1,39 +1,32 @@
 ﻿'use client';
 import { useCallback, useMemo } from 'react';
-import { ChatInterface, SessionManager } from '@/components/chat';
+import { ChatInterface } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { useSessionManager } from '@/hooks/useSessionManager';
+import { useAppDispatch } from '@/store/hooks';
+import { setSessionId } from '@/store/slices/chatSlice';
 
 export default function ChatPage() {
+  const dispatch = useAppDispatch();
   // Database connection management
   const { databaseConnections, selectedDbConnectionId, isLoadingConnections, connectionsError } =
     useDatabaseConnections();
 
   // Session management
-  const { activeSessionId, isCreatingSession, createNewSession, selectSession } =
+  const { activeSessionId, isCreatingSession, createNewSession } =
     useSessionManager(selectedDbConnectionId);
 
   // Memoized handlers to prevent unnecessary re-renders
   const handleCreateSession = useCallback(async () => {
     if (activeSessionId) return activeSessionId;
-    return await createNewSession();
-  }, [activeSessionId, createNewSession]);
-
-  const handleSessionSelect = useCallback(
-    (sessionId: string) => {
-      selectSession(sessionId);
-    },
-    [selectSession]
-  );
-
-  const handleSessionCreate = useCallback(
-    (sessionId: string) => {
-      selectSession(sessionId);
-    },
-    [selectSession]
-  );
+    const newSessionId = await createNewSession();
+    if (newSessionId) {
+      dispatch(setSessionId(newSessionId));
+    }
+    return newSessionId;
+  }, [activeSessionId, createNewSession, dispatch]);
 
   // Memoized error and loading states for better performance
   const errorState = useMemo(() => {
@@ -106,22 +99,11 @@ export default function ChatPage() {
         {/* Main chat interface container */}
         <section className="flex flex-1 w-full h-full">
           <ChatInterface
-            sessionId={activeSessionId}
             dbConnectionId={selectedDbConnectionId}
             handleCreateSession={handleCreateSession}
           />
         </section>
       </div>
-
-      {/* Session Manager Sidebar - only show when database connection is available */}
-      {/* {selectedDbConnectionId && (
-        <SessionManager
-          selectedSessionId={activeSessionId}
-          dbConnectionId={selectedDbConnectionId}
-          onSessionSelect={handleSessionSelect}
-          onSessionCreate={handleSessionCreate}
-        />
-      )} */}
     </main>
   );
 }

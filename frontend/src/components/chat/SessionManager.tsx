@@ -20,7 +20,7 @@ export function SessionManager({
   dbConnectionId,
   onSessionSelect,
   onSessionCreate,
-}: SessionManagerProps) {
+}: Readonly<SessionManagerProps>) {
   // Fetch sessions
   const {
     data: sessions = [],

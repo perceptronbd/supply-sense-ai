@@ -16,7 +16,6 @@ export interface MessageListProps {
 }
 
 export interface ChatInterfaceProps {
-  sessionId?: string;
   dbConnectionId?: string;
   className?: string;
   handleCreateSession: () => Promise<string | undefined>;
