@@ -1,4 +1,4 @@
-﻿import { AuthModule } from '@modules/auth/auth.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { McpClientModule } from '@modules/mcp-client/mcp-client.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';

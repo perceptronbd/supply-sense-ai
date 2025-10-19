@@ -69,15 +69,30 @@ export function ChatInterface({
       });
       try {
         // Send message via API
-        await sendQuery({
+        sendQuery({
           sessionId: currentSessionId,
           query: content,
           dbConnectionId: dbConnectionId,
-        }).unwrap();
-
-        // Refetch messages to get the complete conversation from database
-        refetchMessages();
-        removeTempMessage(tempId);
+        })
+          .then((response) => {
+            const res = response as {
+              error?: { data?: { statusCode?: number; message?: string } };
+            };
+            if (res?.error?.data?.statusCode === 429) {
+              addErrorMessage(
+                currentSessionId,
+                res.error.data?.message ||
+                  'Rate limit exceeded. Please wait before sending more messages.'
+              );
+            } else if (res?.error) {
+              addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
+            }
+            removeTempMessage(tempId);
+          })
+          .finally(() => {
+            removeTempMessage(tempId);
+            refetchMessages();
+          });
       } catch (error) {
         console.error('Failed to send message:', error);
         addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
