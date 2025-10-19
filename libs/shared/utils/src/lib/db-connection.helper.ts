@@ -197,7 +197,7 @@ export function createPool(credentials: DbCredentials): Pool {
     ssl: credentials.sslEnabled ? { rejectUnauthorized: false } : false,
     max: 10, // Maximum number of connections
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 30000,
   };
 
   return new Pool(poolConfig);
