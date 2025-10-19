@@ -56,49 +56,78 @@ export interface DetermineUpdateFrequencyInput {
   businessContext?: string;
 }
 
-export async function determineUpdateFrequency({
-  tableName,
-  tableSchema,
-  purpose,
-  businessContext,
-}: DetermineUpdateFrequencyInput): Promise<TMetadataUpdateFrequency> {
-  if (!tableName || !tableSchema) {
-    throw new Error('Missing required tableName or tableSchema');
+export interface BatchDetermineUpdateFrequencyInput {
+  tables: Array<{
+    tableName: string;
+    tableSchema: ITableSchemaInput;
+    purpose?: string;
+    businessContext?: string;
+  }>;
+}
+
+export async function determineUpdateFrequency(
+  input: DetermineUpdateFrequencyInput | BatchDetermineUpdateFrequencyInput
+): Promise<TMetadataUpdateFrequency | TMetadataUpdateFrequency[]> {
+  // Handle single table input (backward compatibility)
+  if ('tableName' in input) {
+    const { tableName, tableSchema, purpose, businessContext } = input;
+
+    if (!tableName || !tableSchema) {
+      throw new Error('Missing required tableName or tableSchema');
+    }
+
+    try {
+      const runtimeContext = createRuntimeContext({
+        tableName,
+        tableSchema,
+        purpose,
+        businessContext,
+      });
+
+      const response = await updateFrequencyAgent.generate(
+        [
+          {
+            role: 'user',
+            content: `Determine the optimal update frequency for table ${tableName}`,
+          },
+        ],
+        { runtimeContext }
+      );
+
+      const frequency = response.text as TMetadataUpdateFrequency;
+
+      console.debug(`Received frequency response for ${tableName}: ${frequency}`, {
+        usage: response.usage,
+      });
+
+      // Validate the response
+      return METADATA_UPDATE_FREQUENCIES.includes(frequency) ? frequency : 'daily';
+    } catch (error) {
+      console.error(`❌ Error determining update frequency for table ${tableName}:`, error);
+      return 'daily';
+    }
   }
 
-  try {
-    const runtimeContext = createRuntimeContext({
-      tableName,
-      tableSchema,
-      purpose,
-      businessContext,
-    });
+  // Handle batch processing
+  const { tables } = input;
 
-    const response = await updateFrequencyAgent.generate(
-      [
-        {
-          role: 'user',
-          content: `Determine the optimal update frequency for table ${tableName}`,
-        },
-      ],
-      { runtimeContext }
+  try {
+    // Process all tables in parallel
+    const results = await Promise.all(
+      tables.map((table) =>
+        determineUpdateFrequency({
+          tableName: table.tableName,
+          tableSchema: table.tableSchema,
+          purpose: table.purpose,
+          businessContext: table.businessContext,
+        })
+      )
     );
 
-    const frequency = response.text as TMetadataUpdateFrequency;
-
-    console.debug(`Received frequency response: ${frequency}`, {
-      usage: response.usage,
-    });
-
-    console.info(`Determined update frequency for ${tableName}: ${frequency}`);
-    // Validate the response
-    if (METADATA_UPDATE_FREQUENCIES.includes(frequency)) {
-      return frequency;
-    }
-    return 'daily';
+    return results as TMetadataUpdateFrequency[];
   } catch (error) {
-    console.error(`❌ Error determining update frequency for table ${tableName}:`, error);
-    // Fallback to daily on error
-    return 'daily';
+    console.error('❌ Error in batch update frequency determination:', error);
+    // Return default frequencies for all tables in case of error
+    return tables.map(() => 'daily' as TMetadataUpdateFrequency);
   }
 }

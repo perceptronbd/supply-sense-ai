@@ -87,7 +87,7 @@ const DbConnectionForm = () => {
 
   return (
     <div className="place-items-end max-lg:mt-5 max-lg:pb-12">
-      <Card className="!p-5 w-full xl:w-4/5 bg-default-300">
+      <Card className="!p-5 w-full xl:w-4/5 bg-default-300" radius="sm">
         <Text variant={'titleLarge'} weight={'bold'}>
           Database Connection
         </Text>
@@ -166,6 +166,9 @@ const DbConnectionForm = () => {
                 placeholder="Provide a brief detail of the kind of business this database is used for."
                 isInvalid={!!errors.aboutYourBusiness}
                 errorMessage={errors.aboutYourBusiness?.message}
+                classNames={{
+                  input: ' focus:outline-none focus:ring-0',
+                }}
               />
             )}
           />

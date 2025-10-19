@@ -48,50 +48,88 @@ export interface GeneratePurposeInput {
   businessContext?: string;
 }
 
-export async function generatePurpose({
-  tableName,
-  tableSchema,
-  businessContext,
-}: GeneratePurposeInput): Promise<string> {
-  if (!tableName || !tableSchema) {
-    throw new Error('Missing required tableName or tableSchema');
-  }
+export interface BatchGeneratePurposeInput {
+  tables: Array<{
+    tableName: string;
+    tableSchema: ITableSchemaInput;
+    businessContext?: string;
+  }>;
+}
 
-  try {
-    const runtimeContext = createRuntimeContext({
-      tableName,
-      tableSchema,
-      businessContext,
-    });
+export async function generatePurpose(
+  input: GeneratePurposeInput | BatchGeneratePurposeInput
+): Promise<string | string[]> {
+  // Handle single table input (backward compatibility)
+  if ('tableName' in input) {
+    const { tableName, tableSchema, businessContext } = input;
 
-    const response = await generatePurposeAgent.generate(
-      [
-        {
-          role: 'user',
-          content: `Generate a concise business purpose for table ${tableName}`,
-        },
-      ],
-      { runtimeContext }
-    );
-
-    let purpose = response.text.trim();
-    // Remove leading and trailing '**' if present
-    purpose = purpose.replace(/^\*\*\s*/, '').replace(/\s*\*\*$/, '');
-    return purpose;
-  } catch (error) {
-    console.error(`❌ Error generating purpose for table ${tableName}:`, error);
-
-    // Check for specific OpenRouter payment error
-    if (
-      error.message?.includes('Payment Required') ||
-      error.message?.includes('Insufficient credits')
-    ) {
-      console.warn(`💳 OpenRouter payment required. Using fallback purpose for table ${tableName}`);
+    if (!tableName || !tableSchema) {
+      throw new Error('Missing required tableName or tableSchema');
     }
 
-    // Return a fallback purpose instead of throwing
-    const fallbackPurpose = `This table stores ${tableName.toLowerCase()} related data for business operations and analysis.`;
-    console.warn(`Using fallback purpose: ${fallbackPurpose}`);
-    return fallbackPurpose;
+    try {
+      const runtimeContext = createRuntimeContext({
+        tableName,
+        tableSchema,
+        businessContext,
+      });
+
+      const response = await generatePurposeAgent.generate(
+        [
+          {
+            role: 'user',
+            content: `Generate a concise business purpose for table ${tableName}`,
+          },
+        ],
+        { runtimeContext }
+      );
+
+      let purpose = response.text.trim();
+      // Remove leading and trailing '**' if present
+      purpose = purpose.replace(/^\*\*\s*/, '').replace(/\s*\*\*$/, '');
+      return purpose;
+    } catch (error) {
+      console.error(`❌ Error generating purpose for table ${tableName}:`, error);
+
+      // Check for specific OpenRouter payment error
+      if (
+        error.message?.includes('Payment Required') ||
+        error.message?.includes('Insufficient credits')
+      ) {
+        console.warn(
+          `💳 OpenRouter payment required. Using fallback purpose for table ${tableName}`
+        );
+      }
+
+      // Return a fallback purpose instead of throwing
+      const fallbackPurpose = `This table stores ${tableName.toLowerCase()} related data for business operations and analysis.`;
+      console.warn(`Using fallback purpose: ${fallbackPurpose}`);
+      return fallbackPurpose;
+    }
+  }
+
+  // Handle batch processing
+  const { tables } = input;
+
+  try {
+    // Process all tables in parallel
+    const results = await Promise.all(
+      tables.map((table) =>
+        generatePurpose({
+          tableName: table.tableName,
+          tableSchema: table.tableSchema,
+          businessContext: table.businessContext,
+        })
+      )
+    );
+
+    return results as string[];
+  } catch (error) {
+    console.error('❌ Error in batch purpose generation:', error);
+    // Return fallback purposes for all tables in case of error
+    return tables.map(
+      (table) =>
+        `This table stores ${table.tableName.toLowerCase()} related data for business operations and analysis.`
+    );
   }
 }

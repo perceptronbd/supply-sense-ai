@@ -66,6 +66,9 @@ export const useGetRenderInput = ({ control, errors }: IUseGetRenderInputProps) 
             type={type}
             isInvalid={isInvalid(name)}
             errorMessage={getError(name)}
+            classNames={{
+              input: ' focus:outline-none focus:ring-0',
+            }}
           />
         )}
       />

@@ -1,109 +1,76 @@
-interface SSRSafeDrawingLogoProps {
-  size?: number;
-  className?: string;
-  variant?: 'primary' | 'secondary' | 'mono';
-  speed?: 'slow' | 'normal' | 'fast';
-  showFill?: boolean;
-}
-
-const colorMap = {
-  primary: { stroke: 'stroke-primary', fill: 'fill-primary' },
-  secondary: { stroke: 'stroke-secondary', fill: 'fill-secondary' },
-  mono: { stroke: 'stroke-foreground', fill: 'fill-foreground' },
-};
-
-const speedMap = {
-  slow: 6,
-  normal: 4,
-  fast: 2,
-};
-
-export function SSRSafeDrawingLogo({
-  size = 80,
-  className = '',
-  variant = 'primary',
-  speed = 'normal',
-  showFill = true,
-}: SSRSafeDrawingLogoProps) {
-  const colors = colorMap[variant];
-  const duration = speedMap[speed];
-
-  // Use a single stable animation name for all instances
-  const animationId = 'supply-chain-ai-drawing-animation';
-
+export const SSRSafeDrawingLogo = () => {
   return (
-    <div className={`inline-flex items-center justify-center ${className}`}>
+    <div>
       <svg
-        width={size}
-        height={size}
-        viewBox="0 0 161 157"
+        width="204"
+        height="169"
+        viewBox="0 0 204 169"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           <style>
             {`
-              @keyframes ${animationId} {
-                /* Phase 1: Draw in (0-25%) */
-                0% {
-                  stroke-dashoffset: 1000;
-                  fill-opacity: 0;
-                }
-                25% {
-                  stroke-dashoffset: 0;
-                  fill-opacity: 0;
-                }
-                
-                /* Phase 2: Fill in (25-50%) */
-                ${showFill ? '50%' : '25%'} {
-                  stroke-dashoffset: 0;
-                  fill-opacity: ${showFill ? '0.8' : '0'};
-                }
-                
-                /* Phase 3: Draw out (50-75%) */
-                75% {
-                  stroke-dashoffset: -1000;
-                  fill-opacity: ${showFill ? '0.8' : '0'};
-                }
-                
-                /* Phase 4: Fill out (75-100%) */
-                100% {
-                  stroke-dashoffset: -1000;
-                  fill-opacity: 0;
-                }
+            @keyframes rotateLeftEye {
+              0% {
+                transform: rotate(0deg);
+                transform-origin: 66px 93px;
               }
-              
-              .drawing-path-${animationId} {
-                stroke-dasharray: 1000;
-                stroke-dashoffset: 1000;
-                animation: ${animationId} ${duration}s ease-in-out infinite;
-                stroke-width: 2;
-                fill-opacity: 0;
-                stroke-linecap: round;
-                stroke-linejoin: round;
+              100% {
+                transform: rotate(360deg);
+                transform-origin: 66px 93px;
               }
-              
-              .drawing-path-${animationId}:nth-child(2) {
-                animation-delay: ${duration * 0.1}s;
+            }
+            
+            @keyframes rotateRightEye {
+              0% {
+                transform: rotate(0deg);
+                transform-origin: 138px 93px;
               }
-            `}
+              100% {
+                transform: rotate(360deg);
+                transform-origin: 138px 93px;
+              }
+            }
+            
+            .left-eye-group {
+              animation: rotateLeftEye 3s linear infinite;
+            }
+            
+            .right-eye-group {
+              animation: rotateRightEye 3s linear infinite;
+            }
+            
+            .eye-spinner {
+              fill: none;
+              stroke: #26262A;
+              stroke-width: 4px;
+              stroke-linecap: round;
+              /* creates a gap for a spinner arc; tuned for r≈12 */
+              stroke-dasharray: 30 60;
+            }
+          `}
           </style>
         </defs>
 
-        {/* First path */}
+        <rect width="204" height="169" rx="70" fill="#E84A2E" />
+
+        {/* Head outline - static */}
         <path
-          className={`drawing-path-${animationId} ${colors.stroke} ${colors.fill}`}
-          d="M116.56 49.189c24.522 0 44.401 19.91 44.402 44.47.001 24.562-19.878 44.474-44.399 44.475h-.114c-3.022 0-5.374 5.154-5.374 8.181 0 5.625-4.552 10.185-10.168 10.185s-10.168-4.56-10.168-10.185c0-5.625 4.552-10.184 10.168-10.184 2.016-.001 4.171-1.392 4.171-3.412v-8.496c.001-3.292 2.665-5.962 5.952-5.962h5.532c13.564 0 24.56-11.014 24.56-24.6-.001-13.586-10.997-24.6-24.561-24.6l-59.56.002a5.957 5.957 0 0 1-5.953-5.961v-7.95A5.957 5.957 0 0 1 57 49.192l59.56-.002Z"
+          d="M78.374 18C85.1826 18 90.7021 23.5195 90.7021 30.3281V33.0537C90.7019 38.8418 85.9653 43.5105 80.1777 43.4277L77.3818 43.3877C73.132 43.3269 69.6543 46.7556 69.6543 51.0059C69.6541 55.2132 66.2434 58.6238 62.0361 58.624H47.8545C35.8149 58.6241 26.0547 68.3842 26.0547 80.4238V100.625C26.0548 123.821 44.8594 142.626 68.0557 142.626H135.682C158.878 142.626 177.682 123.821 177.682 100.625V80.4238C177.682 68.3842 167.921 58.624 155.882 58.624H141.701C137.494 58.624 134.083 55.2133 134.083 51.0059C134.083 46.7558 130.605 43.3271 126.355 43.3877L123.559 43.4277C117.771 43.5105 113.034 38.8418 113.034 33.0537V30.3281C113.034 23.5196 118.554 18.0002 125.362 18H129.135C133.86 18.0001 137.69 21.8305 137.69 26.5557C137.69 31.2968 141.546 35.1346 146.287 35.1123L169.714 35.002C187.375 34.9189 201.736 49.2134 201.736 66.875V101.081C201.736 137.487 171.609 167 135.203 167H68.5332C32.1272 167 2.00002 137.487 2 101.081V66.875C2 49.2134 16.362 34.9189 34.0234 35.002L57.4492 35.1123C62.1903 35.1346 66.0459 31.2968 66.0459 26.5557C66.0462 21.8305 69.8773 18 74.6025 18H78.374Z"
+          fill="#26262A"
         />
 
-        {/* Second path */}
-        <path
-          className={`drawing-path-${animationId} ${colors.stroke} ${colors.fill}`}
-          d="M64.202.5C69.818.5 74.37 5.06 74.37 10.685c0 5.624-4.552 10.184-10.168 10.184-2.973 0-7.357 2.108-7.357 5.085v3.592a4.735 4.735 0 0 1-4.731 4.739h-6.752c-13.564 0-24.56 11.015-24.56 24.601 0 13.586 10.997 24.599 24.561 24.599l59.56-.002a5.957 5.957 0 0 1 5.952 5.962l.001 7.949a5.958 5.958 0 0 1-5.953 5.962l-59.56.001c-24.521.001-44.4-19.91-44.401-44.47 0-24.562 19.878-44.474 44.4-44.475h5.565c1.83 0 3.107-1.895 3.107-3.727C54.034 5.06 58.587.5 64.202.5Z"
-        />
+        {/* Left eye - rotating */}
+        <g className="left-eye-group">
+          <circle className="eye-spinner" cx="66" cy="93" r="12" />
+        </g>
+
+        {/* Right eye - rotating */}
+        <g className="right-eye-group">
+          <circle className="eye-spinner" cx="138" cy="93" r="12" />
+        </g>
       </svg>
     </div>
   );
-}
-
-export default SSRSafeDrawingLogo;
+};

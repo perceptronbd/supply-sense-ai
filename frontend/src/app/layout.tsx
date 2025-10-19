@@ -69,8 +69,8 @@ export default function RootLayout({ children }: { readonly children: React.Reac
         <Provider store={store}>
           <PersistGate
             loading={
-              <main className="flex items-center justify-center min-h-screen bg-background">
-                <SSRSafeDrawingLogo size={60} variant="primary" speed="fast" showFill={true} />
+              <main className="flex items-center justify-center min-h-screen bg-black">
+                <SSRSafeDrawingLogo />
               </main>
             }
             persistor={persistor}

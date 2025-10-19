@@ -93,7 +93,11 @@ const generatePurposesStep = createStep({
     businessContext: BusinessContextZ,
   }),
   outputSchema: z.object({
-    items: z.array(ItemBaseZ.extend({ purpose: z.string() })),
+    items: z.array(
+      ItemBaseZ.extend({
+        purpose: z.union([z.string(), z.array(z.string())]),
+      })
+    ),
     businessContext: BusinessContextZ,
   }),
   execute: async (context) => {
@@ -102,21 +106,22 @@ const generatePurposesStep = createStep({
       businessContext?: string;
     };
 
-    const out = [] as Array<{
-      tableName: string;
-      tableSchema: ITableSchemaInput;
-      friendlyLabel: string;
-      purpose: string;
-    }>;
+    // Process all tables in a single batch
+    const purposes = await Promise.all(
+      items.map(({ tableName, tableSchema }) =>
+        generatePurpose({
+          tableName,
+          tableSchema,
+          businessContext: businessContext || `Database table analysis for ${tableName}`,
+        })
+      )
+    );
 
-    for (const { tableName, tableSchema, friendlyLabel } of items) {
-      const purpose = await generatePurpose({
-        tableName,
-        tableSchema,
-        businessContext: businessContext || `Database table analysis for ${tableName}`,
-      });
-      out.push({ tableName, tableSchema, friendlyLabel, purpose });
-    }
+    // Combine results
+    const out = items.map((item, index) => ({
+      ...item,
+      purpose: purposes[index],
+    }));
 
     return { items: out, businessContext };
   },
@@ -127,7 +132,11 @@ const determineUpdateFrequenciesStep = createStep({
   id: 'determine-update-frequencies',
   description: 'Determine update frequency per table',
   inputSchema: z.object({
-    items: z.array(ItemBaseZ.extend({ purpose: z.string() })),
+    items: z.array(
+      ItemBaseZ.extend({
+        purpose: z.union([z.string(), z.array(z.string())]),
+      })
+    ),
     businessContext: BusinessContextZ,
   }),
   outputSchema: z.object({
@@ -145,24 +154,23 @@ const determineUpdateFrequenciesStep = createStep({
       businessContext?: string;
     };
 
-    const out = [] as Array<{
-      tableName: string;
-      tableSchema: ITableSchemaInput;
-      friendlyLabel: string;
-      purpose: string;
-      updateFrequency: UpdateFrequency;
-    }>;
-
-    for (const item of items) {
-      const updateFrequency = UpdateFrequencyZ.parse(
-        await determineUpdateFrequency({
+    // Process all update frequencies in a single batch
+    const updateFrequencies = await Promise.all(
+      items.map((item) =>
+        determineUpdateFrequency({
           tableName: item.tableName,
           tableSchema: item.tableSchema,
+          purpose: item.purpose,
           businessContext: businessContext || `Database table analysis for ${item.tableName}`,
         })
-      );
-      out.push({ ...item, updateFrequency });
-    }
+      )
+    );
+
+    // Combine results
+    const out = items.map((item, index) => ({
+      ...item,
+      updateFrequency: UpdateFrequencyZ.parse(updateFrequencies[index]),
+    }));
 
     return { items: out, businessContext };
   },

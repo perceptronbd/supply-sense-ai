@@ -32,12 +32,6 @@ export interface IMcpTableMetadata {
   sampleQuestions: string[];
 }
 
-export interface MCPTableMetadataAgentRes {
-  result: IMcpTableMetadata[];
-  usage?: { inputTokens: number; outputTokens: number; totalTokens: number };
-  question?: string;
-}
-
 export interface ITableMetadataRecord {
   id: string;
   tableName: string;

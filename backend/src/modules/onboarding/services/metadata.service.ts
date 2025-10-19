@@ -52,7 +52,11 @@ export class MetadataService {
   }
 
   private async captureMetadataForConnection(
-    connection: DbCredentials & { dbConnectionId: string; title?: string },
+    connection: DbCredentials & {
+      dbConnectionId: string;
+      title?: string;
+      businessContext?: string;
+    },
     tables: Array<{ tableName: string }>,
     companyId: string
   ) {
@@ -73,7 +77,11 @@ export class MetadataService {
         }
 
         // Send all tables at once to generateTableMetadata
-        const metadataResults = await this.generateTableMetadata(tablesWithSchemas, companyId);
+        const metadataResults = await this.generateTableMetadata(
+          tablesWithSchemas,
+          companyId,
+          connection.businessContext
+        );
 
         return {
           dbConnectionId: connection.dbConnectionId,
@@ -151,25 +159,18 @@ export class MetadataService {
         this.logger.error('Insufficient credit for generating descriptions');
         throw new BadRequestException('Insufficient credit');
       }
+      this.logger.log('Generating metadata for tables', {
+        tablesWithSchemas,
+        companyId,
+        businessContext,
+      });
       // Use the dedicated table metadata agent service to process all tables at once
       const agentResponse = await this.tableMetadataAgent.generateTableMetadata({
         tables: tablesWithSchemas,
         businessContext,
       });
 
-      if (agentResponse.usage) {
-        await this.tokenAndCredit.tokenPriceCalculate({
-          companyId,
-          inputTokens: agentResponse.usage.inputTokens,
-          outputTokens: agentResponse.usage.outputTokens,
-          metadata: {
-            question: agentResponse.question,
-            answer: JSON.stringify(agentResponse.result),
-          },
-        });
-      }
-
-      return agentResponse.result.map((response) => ({
+      return agentResponse.map((response) => ({
         tableName: response.tableName,
         friendlyLabel: response.friendlyLabel,
         purpose: response.purpose,

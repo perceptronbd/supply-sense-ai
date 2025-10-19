@@ -6,12 +6,14 @@ interface BlinkingLogoProps {
   floating?: boolean;
   animated?: boolean;
   color?: 'black' | 'blue-gray';
+  size?: number;
 }
 
 export default function BlinkingLogo({
   floating = true,
   animated = true,
   color = 'blue-gray',
+  size = 204,
 }: BlinkingLogoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -100,6 +102,9 @@ export default function BlinkingLogo({
 
   const fillColor = colorMap[color];
 
+  // Calculate height maintaining aspect ratio (169/204)
+  const height = (size * 169) / 204;
+
   return (
     <motion.div
       ref={containerRef}
@@ -108,8 +113,8 @@ export default function BlinkingLogo({
       transition={floatingTransition}
     >
       <motion.svg
-        width="204"
-        height="169"
+        width={size}
+        height={height}
         viewBox="0 0 204 169"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
