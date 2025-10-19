@@ -90,7 +90,6 @@ export async function determineUpdateFrequency({
       usage: response.usage,
     });
 
-    console.info(`Determined update frequency for ${tableName}: ${frequency}`);
     // Validate the response
     if (METADATA_UPDATE_FREQUENCIES.includes(frequency)) {
       return frequency;
