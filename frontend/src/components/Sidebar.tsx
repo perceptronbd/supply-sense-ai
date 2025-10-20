@@ -63,16 +63,18 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
     },
     {
       name: 'Connections',
-      href: '#',
+      href: '/connections',
       icon: <Icons.Connection className="w-5 h-5" />,
       permission: USER_PERMISSIONS.READ,
     },
-    {
-      name: 'Workflow Automation',
-      href: '#',
-      icon: <Icons.Workflow className="w-5 h-5" />,
-      permission: USER_PERMISSIONS.READ,
-    },
+
+    /** Add workflow automation when the feature is ready */
+    // {
+    //   name: 'Workflow Automation',
+    //   href: '#',
+    //   icon: <Icons.Workflow className="w-5 h-5" />,
+    //   permission: USER_PERMISSIONS.READ,
+    // },
   ];
 
   return (
