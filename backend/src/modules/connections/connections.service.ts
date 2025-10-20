@@ -136,7 +136,7 @@ export class ConnectionsService {
   async getCompanyConnection(
     companyId: string,
     dbConnectionId: string
-  ): Promise<DbCredentials & { dbConnectionId: string; title?: string }> {
+  ): Promise<DbCredentials & { dbConnectionId: string; title?: string; businessContext?: string }> {
     const connection = await this.prisma.dbConnection.findFirst({
       where: { companyId, id: dbConnectionId },
     });
@@ -153,6 +153,7 @@ export class ConnectionsService {
       sslEnabled: connection.sslEnabled,
       dbConnectionId: connection.id,
       title: connection.title,
+      businessContext: connection.businessContext,
     };
   }
 
@@ -162,7 +163,7 @@ export class ConnectionsService {
    */
   async getDbConnections(
     companyId: string
-  ): Promise<Array<DbCredentials & { id: string; title?: string }>> {
+  ): Promise<Array<DbCredentials & { id: string; title?: string; businessContext?: string }>> {
     try {
       const connections = await this.prisma.dbConnection.findMany({
         where: { companyId },
@@ -175,6 +176,7 @@ export class ConnectionsService {
           encryptedPassword: true,
           sslEnabled: true,
           title: true,
+          businessContext: true,
         },
       });
 
@@ -183,6 +185,7 @@ export class ConnectionsService {
         ...connection,
         dbConnectionId: connection.id,
         title: connection.title,
+        businessContext: connection.businessContext,
         password: decryptPassword(connection.encryptedPassword, this.encryptionKey),
       }));
     } catch (error) {
