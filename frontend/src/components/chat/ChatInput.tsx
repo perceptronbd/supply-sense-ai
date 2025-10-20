@@ -9,6 +9,8 @@ import {
 } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
 import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
+import { useAppSelector } from '@/store/hooks';
 import type { ChatInputProps } from './types';
 
 export function ChatInput({
@@ -19,6 +21,7 @@ export function ChatInput({
   const [message, setMessage] = useState('');
   const [selectedConnection, setSelectedConnection] = useState('Select Connection');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { sessionId } = useAppSelector((state) => state.chat);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +54,9 @@ export function ChatInput({
   const connections = ['Connection 1', 'Connection 2', 'Connection 3'];
 
   return (
-    <section className="pb-7 px-10 w-full z-30">
+    <section
+      className={cn('pb-7 px-10 w-full  z-30', sessionId ? 'fixed lg:absolute bottom-0' : '')}
+    >
       <form
         onSubmit={handleSubmit}
         className="relative rounded-xl border bg-content1 border-divider shadow-small"

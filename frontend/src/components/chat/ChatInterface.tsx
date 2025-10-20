@@ -152,7 +152,7 @@ export function ChatInterface({
         disabled={isLoadingMessages}
       />
 
-      {messages.length === 0 && <SampleQuestions />}
+      {!sessionId && <SampleQuestions />}
     </section>
   );
 }

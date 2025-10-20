@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Text } from '@/components/ui/Text';
+import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { LoadingMessage, MessageBubble } from './MessageBubble';
 import type { MessageListProps } from './types';
@@ -13,12 +14,16 @@ export function MessageList({
 }: Readonly<MessageListProps>) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { sessionId } = useAppSelector((state) => state.chat);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages and isLoading dependencies are needed for auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  if (messages.length === 0 && !isLoading) {
+  console.log('messages', messages.length);
+
+  if (!sessionId) {
     return (
       <section
         className="md:flex justify-center items-center overflow-y-auto size-full max-md:mt-5"
