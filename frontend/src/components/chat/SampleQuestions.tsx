@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Spinner } from '@heroui/react';
+import { useMemo } from 'react';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
@@ -9,6 +10,7 @@ import { useGetSampleQuestionsQuery } from '@/store/api/onboardingApi';
 interface SampleQuestionsProps {
   dbConnectionId: string;
   className?: string;
+  onQuestionClick?: (question: string) => void;
 }
 
 // Function to get random elements from an array
@@ -19,13 +21,19 @@ const getRandomElements = <T,>(array: T[], count: number): T[] => {
   return shuffled.slice(0, count);
 };
 
-export function SampleQuestions({ dbConnectionId, className }: Readonly<SampleQuestionsProps>) {
+export function SampleQuestions({
+  dbConnectionId,
+  className,
+  onQuestionClick,
+}: Readonly<SampleQuestionsProps>) {
   const { data, isLoading, isError } = useGetSampleQuestionsQuery(dbConnectionId, {
     skip: !dbConnectionId,
   });
 
-  const questions = getRandomElements(data?.data || [], 5);
-  console.log(questions.length);
+  // Get 5 random questions
+  const questions = useMemo(() => {
+    return getRandomElements(data?.data || [], 5);
+  }, [data?.data]);
 
   return (
     <section
@@ -75,6 +83,7 @@ export function SampleQuestions({ dbConnectionId, className }: Readonly<SampleQu
                   "
                 />
               }
+              onPress={() => onQuestionClick?.(text)}
             >
               <Text
                 as="span"

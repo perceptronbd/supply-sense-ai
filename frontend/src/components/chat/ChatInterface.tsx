@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Text } from '@/components/ui/Text';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
@@ -18,6 +18,7 @@ export function ChatInterface({
   handleCreateSession,
 }: Readonly<ChatInterfaceProps>) {
   const { sessionId } = useAppSelector((state) => state.chat);
+  const [message, setMessage] = useState('');
 
   const {
     messages,
@@ -99,13 +100,10 @@ export function ChatInterface({
     ]
   );
 
-  // Handle suggestion clicks by sending them as messages
-  const handleSuggestionClick = useCallback(
-    (suggestion: string) => {
-      handleSendMessage(suggestion);
-    },
-    [handleSendMessage]
-  );
+  // Handle suggestion clicks by setting the message in the chat input
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    setMessage(suggestion);
+  }, []);
 
   // Memoized error state for better performance
   const errorState = useMemo(() => {
@@ -147,12 +145,19 @@ export function ChatInterface({
 
       {/* Chat input with send message handling */}
       <ChatInput
+        message={message}
+        setMessage={setMessage}
         onSendMessage={handleSendMessage}
         isLoading={isSendingMessage}
         disabled={isLoadingMessages}
       />
 
-      {!sessionId && <SampleQuestions dbConnectionId={dbConnectionId as string} />}
+      {!sessionId && (
+        <SampleQuestions
+          dbConnectionId={dbConnectionId as string}
+          onQuestionClick={handleSuggestionClick}
+        />
+      )}
     </section>
   );
 }

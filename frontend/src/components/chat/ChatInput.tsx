@@ -17,8 +17,9 @@ export function ChatInput({
   onSendMessage,
   isLoading = false,
   disabled = false,
+  message,
+  setMessage,
 }: Readonly<ChatInputProps>) {
-  const [message, setMessage] = useState('');
   const [selectedConnection, setSelectedConnection] = useState('Select Connection');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { sessionId } = useAppSelector((state) => state.chat);
