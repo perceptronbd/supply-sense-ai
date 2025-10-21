@@ -75,7 +75,19 @@ export default function RegisterPage() {
 
       const result = await register(registrationData).unwrap();
       console.log('🚀 > handleSubmit > result:', result);
-      dispatch(setRegistrationCredentials({ company: result.company }));
+      dispatch(
+        setRegistrationCredentials({
+          company: result.company,
+          user: {
+            roles: [],
+            permissions: [],
+            branchId: '',
+            isActive: true,
+            companyId: result.company.id,
+            ...result.user,
+          },
+        })
+      );
 
       addToast({
         title: 'Registration Successful',

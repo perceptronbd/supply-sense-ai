@@ -58,6 +58,12 @@ export class UserResponseDto {
   isSuperAdmin: boolean;
 
   @ApiProperty({
+    description: 'Whether the user has completed onboarding',
+    example: false,
+  })
+  isCompleteOnboarding: boolean;
+
+  @ApiProperty({
     description: 'Whether the user account is active',
     example: true,
   })

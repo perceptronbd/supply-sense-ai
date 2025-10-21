@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from '@supplysense/utils/server';
@@ -139,9 +139,27 @@ export class OnboardingService {
   async upsertTableRelationships(data: {
     companyId: string;
     dbConnectionId: string;
+    userId: string;
     relationships: TableRelationshipDto[];
   }) {
     try {
+      // Input validation
+      if (!data.userId) {
+        throw new BadRequestException('User ID is required');
+      }
+      if (!data.companyId) {
+        throw new BadRequestException('Company ID is required');
+      }
+      if (!data.dbConnectionId) {
+        throw new BadRequestException('Database connection ID is required');
+      }
+      if (
+        !data.relationships ||
+        !Array.isArray(data.relationships) ||
+        data.relationships.length === 0
+      ) {
+        throw new BadRequestException('At least one table relationship is required');
+      }
       // Find the company's database connection
       const connection = await this.connectionsService.getCompanyConnection(
         data.companyId,
@@ -149,6 +167,46 @@ export class OnboardingService {
       );
       if (!connection) {
         throw new Error('Database connection not found');
+      }
+
+      // Find the user associated with the company
+      const user = await this.prisma.user.findFirst({
+        // Search for the user with the given ID and company ID
+        where: {
+          id: data.userId,
+          companyId: data.companyId,
+        },
+      });
+
+      // If user is not found, throw an error
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Update the user's isCompleteOnboarding field to true
+      try {
+        this.logger.debug('Updating user onboarding status:', { userId: data.userId });
+        const updatedUser = await this.prisma.user.update({
+          where: {
+            id: data.userId,
+          },
+          data: {
+            isCompleteOnboarding: true,
+          },
+          select: {
+            id: true,
+            isCompleteOnboarding: true,
+            email: true,
+          },
+        });
+        this.logger.debug('User onboarding status updated successfully:', updatedUser);
+      } catch (updateError) {
+        this.logger.error('Failed to update user onboarding status:', {
+          error: updateError,
+          userId: data.userId,
+          timestamp: new Date().toISOString(),
+        });
+        throw new Error(`Failed to update user onboarding status: ${updateError.message}`);
       }
 
       // For each relationship, create or update in the database
@@ -188,7 +246,7 @@ export class OnboardingService {
         message: `Successfully saved ${results.length} table relationships and updated schema cache`,
       };
     } catch (error) {
-      console.error('Failed to save table relationships:', error);
+      this.logger.error('Failed to save table relationships:', error);
       throw new Error(`Failed to save table relationships: ${error.message}`);
     }
   }

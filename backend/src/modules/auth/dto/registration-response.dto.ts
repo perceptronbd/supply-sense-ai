@@ -32,6 +32,7 @@ export class RegistrationResponseDto {
     firstName: string;
     lastName: string;
     isSuperAdmin: boolean;
+    isCompleteOnboarding: boolean;
   };
 
   @ApiProperty({

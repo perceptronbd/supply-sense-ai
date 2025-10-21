@@ -3,7 +3,7 @@ import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import { getUserFromToken, isTokenExpired } from '@/lib/jwt';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   firstName: string;
@@ -62,10 +62,21 @@ const authSlice = createSlice({
       }
     },
     // Action specifically for handling registration success with company data
-    setRegistrationCredentials: (state, action: PayloadAction<{ company: Company }>) => {
-      const { company } = action.payload;
+    setRegistrationCredentials: (
+      state,
+      action: PayloadAction<{
+        company: Company;
+        user: User | null;
+      }>
+    ) => {
+      const { company, user } = action.payload;
 
       state.company = company;
+      state.user = user;
+    },
+    clearRegistrationCredentials: (state) => {
+      state.company = null;
+      state.user = null;
     },
     logout: (state) => {
       state.user = null;
@@ -104,6 +115,12 @@ const authSlice = createSlice({
 
 const persistedAuthReducer = persistReducer(persistConfig, authSlice.reducer);
 
-export const { setCredentials, setRegistrationCredentials, logout, setLoading, validateToken } =
-  authSlice.actions;
+export const {
+  setCredentials,
+  setRegistrationCredentials,
+  logout,
+  setLoading,
+  validateToken,
+  clearRegistrationCredentials,
+} = authSlice.actions;
 export default persistedAuthReducer;

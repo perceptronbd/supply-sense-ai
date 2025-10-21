@@ -22,8 +22,7 @@ import RelationshipCardSkeleton from './RelationshipCardSkeleton';
 
 const RelationshipConfirmation = () => {
   // Get the current company ID from custom hook
-  const { companyId } = useGetCompanyId();
-
+  const { companyId, userId } = useGetCompanyId();
   // Get the current database connection ID and onboarding step from store
   const { dbConnectionId, currentStep, setOnboardingStep } = useOnboardingStore();
 
@@ -114,7 +113,7 @@ const RelationshipConfirmation = () => {
 
     await handleAsyncOperation(
       async () => {
-        const result = await upsertTableRelationships(payload).unwrap();
+        const result = await upsertTableRelationships({ userId, payload }).unwrap();
         return result;
       },
       {

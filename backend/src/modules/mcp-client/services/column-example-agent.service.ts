@@ -104,7 +104,7 @@ export class ColumnExampleAgentService {
           '  "description": "From sample data: represents most common status value; other observed values: pending, inactive"',
           '}',
         ].join('\n'),
-        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
+        model: this.openrouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
         tools,
       });
 

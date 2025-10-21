@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
+import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 
 interface LoginFormProps {
   formData: LoginFormData;
@@ -22,6 +23,7 @@ export const LoginForm = ({
   onFieldChange,
   onSubmit,
 }: LoginFormProps) => {
+  const { userId } = useGetCompanyId();
   return (
     <section className="w-full max-w-md mx-auto space-y-8">
       {/* Header */}
@@ -113,6 +115,14 @@ export const LoginForm = ({
         >
           Register your company
         </Link>
+        {userId && (
+          <Link
+            href={ROUTE_PATHS.ONBOARDING}
+            className="text-secondary hover:text-primary inline-flex items-center justify-center w-full underline transition-colors"
+          >
+            Complete onboarding
+          </Link>
+        )}
       </footer>
     </section>
   );
