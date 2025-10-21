@@ -152,7 +152,7 @@ export function ChatInterface({
         disabled={isLoadingMessages}
       />
 
-      {!sessionId && <SampleQuestions />}
+      {!sessionId && <SampleQuestions dbConnectionId={dbConnectionId as string} />}
     </section>
   );
 }

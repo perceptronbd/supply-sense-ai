@@ -1,77 +1,91 @@
-import { Button } from '@heroui/react';
+'use client';
+
+import { Button, Spinner } from '@heroui/react';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-
-interface SampleQuestion {
-  id: string;
-  text: string;
-}
+import { useGetSampleQuestionsQuery } from '@/store/api/onboardingApi';
 
 interface SampleQuestionsProps {
-  questions?: SampleQuestion[];
+  dbConnectionId: string;
   className?: string;
 }
 
-const defaultQuestions: SampleQuestion[] = [
-  {
-    id: '1',
-    text: 'What are the items waiting to be received that are high in demand and low in stock?',
-  },
-  {
-    id: '2',
-    text: 'What are the items waiting to be received that are high in demand and low in stock?',
-  },
-  {
-    id: '3',
-    text: 'List low stock item with high risk.',
-  },
-  {
-    id: '4',
-    text: 'List out all the suppliers with low performance and poor delivery.',
-  },
-];
+// Function to get random elements from an array
+const getRandomElements = <T,>(array: T[], count: number): T[] => {
+  if (!array || array.length <= count) return array || [];
 
-export function SampleQuestions({
-  questions = defaultQuestions,
-  className,
-}: Readonly<SampleQuestionsProps>) {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
+
+export function SampleQuestions({ dbConnectionId, className }: Readonly<SampleQuestionsProps>) {
+  const { data, isLoading, isError } = useGetSampleQuestionsQuery(dbConnectionId, {
+    skip: !dbConnectionId,
+  });
+
+  const questions = getRandomElements(data?.data || [], 5);
+  console.log(questions.length);
+
   return (
-    <section className={cn('w-full px-10 pb-6', className)} aria-label="Sample questions">
+    <section
+      className={cn('w-full px-4 pb-4 sm:px-6 sm:pb-5 lg:px-10 lg:pb-6', className)}
+      aria-label="Sample questions"
+    >
       <Text variant="bodyBase" color="muted">
         Sample Questions:
       </Text>
 
-      <div className="flex flex-col gap-2 items-start mt-3">
-        {questions.map((question) => (
-          <Button
-            key={question.id}
-            variant="flat"
-            radius="md"
-            size="md"
-            className={cn('!w-auto max-w-full group transition-colors duration-200')}
-            endContent={
-              <Icons.ChevronRight
-                className="
-                w-4 h-4
-                opacity-0
-                transition-opacity duration-200
-                group-data-[hover=true]:opacity-100
-                group-data-[hover=true]:text-secondary
-              "
-              />
-            }
-          >
-            <Text
-              as="span"
-              variant="bodyBase"
-              color="muted"
-              className="transition-colors duration-200 group-data-[hover=true]:text-secondary"
-            >
-              {question.text}
+      <div className="flex flex-col gap-2 items-start mt-2 sm:mt-2.5 lg:mt-3">
+        {isLoading && (
+          <div className="flex items-center gap-2">
+            <Spinner size="sm" />
+            <Text variant="bodyBase" color="muted">
+              Loading sample questions...
             </Text>
-          </Button>
-        ))}
+          </div>
+        )}
+
+        {isError && (
+          <Text variant="bodyBase" color="muted">
+            Failed to load sample questions.
+          </Text>
+        )}
+
+        {!isLoading &&
+          !isError &&
+          questions.map((text) => (
+            <Button
+              key={text}
+              variant="flat"
+              radius="md"
+              size="md"
+              className={cn(
+                '!w-auto max-w-full group transition-colors duration-200',
+                'h-auto !min-h-10 py-2'
+              )}
+              endContent={
+                <Icons.ChevronRight
+                  className="
+                    w-4 h-4 flex-shrink-0
+                    opacity-0
+                    transition-opacity duration-200
+                    group-data-[hover=true]:opacity-100
+                    group-data-[hover=true]:text-secondary
+                  "
+                />
+              }
+            >
+              <Text
+                as="span"
+                variant="bodyBase"
+                color="muted"
+                className="transition-colors duration-200 group-data-[hover=true]:text-secondary text-left whitespace-normal break-words"
+              >
+                {text}
+              </Text>
+            </Button>
+          ))}
       </div>
     </section>
   );

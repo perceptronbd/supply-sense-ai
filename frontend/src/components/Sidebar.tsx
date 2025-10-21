@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
     },
     {
       name: 'Connections',
-      href: '/connections',
+      href: ROUTE_PATHS.CONNECTIONS,
       icon: <Icons.Connection className="w-5 h-5" />,
       permission: USER_PERMISSIONS.READ,
     },
@@ -140,20 +140,23 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                       <span
                         className={cn(
                           'mr-3',
-                          item.name === 'New Chat' || (item.href && isActive(item.href))
+                          (item.name === 'New Chat' && isActive(ROUTE_PATHS.CHAT)) ||
+                            (item.href && isActive(item.href))
                             ? 'text-primary-500'
                             : 'text-default-500 group-hover:text-default-foreground'
                         )}
                       >
                         {item.icon}
                       </span>
+
                       <Text
                         variant="bodySmall"
                         weight="medium"
                         className={cn(
                           'truncate',
-                          item.name === 'New Chat' || (item.href && isActive(item.href))
-                            ? 'text-primary-primary text-primary-300'
+                          (item.name === 'New Chat' && isActive(ROUTE_PATHS.CHAT)) ||
+                            (item.href && isActive(item.href))
+                            ? 'text-primary-300'
                             : 'text-default-500 group-hover:text-default-foreground'
                         )}
                         as="p"

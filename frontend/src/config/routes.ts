@@ -18,6 +18,7 @@ export const ROUTE_PATHS = {
 
   // Protected routes (require authentication)
   CHAT: '/chat',
+  CONNECTIONS: '/connections',
   PURCHASE_REQUESTS: '/purchase-requests',
   PURCHASE_ORDERS: '/purchase-orders',
   GOODS_RECEIPTS: '/goods-receipts',
