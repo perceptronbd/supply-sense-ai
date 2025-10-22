@@ -5,11 +5,8 @@ import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { useSessionManager } from '@/hooks/useSessionManager';
-import { useAppDispatch } from '@/store/hooks';
-import { setSessionId } from '@/store/slices/chatSlice';
 
 export default function ChatPage() {
-  const dispatch = useAppDispatch();
   // Database connection management
   const { databaseConnections, selectedDbConnectionId, isLoadingConnections, connectionsError } =
     useDatabaseConnections();
@@ -22,11 +19,8 @@ export default function ChatPage() {
   const handleCreateSession = useCallback(async () => {
     if (activeSessionId) return activeSessionId;
     const newSessionId = await createNewSession();
-    if (newSessionId) {
-      dispatch(setSessionId(newSessionId));
-    }
     return newSessionId;
-  }, [activeSessionId, createNewSession, dispatch]);
+  }, [activeSessionId, createNewSession]);
 
   // Memoized error and loading states for better performance
   const errorState = useMemo(() => {
