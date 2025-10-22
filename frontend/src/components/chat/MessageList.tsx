@@ -26,7 +26,7 @@ export function MessageList({
   if (!sessionId) {
     return (
       <section
-        className="md:flex justify-center items-center overflow-y-auto size-full max-md:mt-5"
+        className="md:flex justify-center items-center mt-8 md:mt-12"
         aria-label="Chat welcome message"
       >
         <div className="px-8 w-full text-center">

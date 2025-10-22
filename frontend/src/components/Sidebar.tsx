@@ -117,7 +117,19 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             >
               <Icons.ToggleSession className="w-6 h-6" />
             </Button>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              className="flex lg:hidden border-none transition-colors hover:bg-transparent"
+              aria-label="Toggle sessions list"
+              onPress={() => onClose()}
+            >
+              <Icons.ToggleSession className="w-6 h-6" />
+            </Button>
           </header>
+
+          {/* chat list e click korle sidebar close hobe */}
 
           {/* Navigation */}
           {expanded && (
@@ -171,7 +183,9 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           )}
 
           {/* Chats Section */}
-          {expanded && <ChatSessionList sessions={sessions} isLoading={isLoadingSessions} />}
+          {expanded && (
+            <ChatSessionList onClose={onClose} sessions={sessions} isLoading={isLoadingSessions} />
+          )}
 
           {/* Footer */}
           {expanded && (

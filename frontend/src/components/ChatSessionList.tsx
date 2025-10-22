@@ -12,9 +12,10 @@ interface Session {
 interface ChatSessionListProps {
   sessions: Session[];
   isLoading: boolean;
+  onClose: () => void;
 }
 
-export function ChatSessionList({ sessions, isLoading }: Readonly<ChatSessionListProps>) {
+export function ChatSessionList({ sessions, isLoading, onClose }: Readonly<ChatSessionListProps>) {
   const dispatch = useAppDispatch();
   const { sessionId } = useAppSelector((state) => state.chat);
 
@@ -45,7 +46,10 @@ export function ChatSessionList({ sessions, isLoading }: Readonly<ChatSessionLis
           <li key={session.id}>
             <button
               type="button"
-              onClick={() => handleSessionSelect(session.id)}
+              onClick={() => {
+                handleSessionSelect(session.id);
+                onClose();
+              }}
               className="w-full flex flex-col px-3 py-2 text-left text-small font-medium group"
             >
               <Text
