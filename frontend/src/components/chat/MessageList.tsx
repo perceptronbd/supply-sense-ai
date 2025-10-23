@@ -21,8 +21,6 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  console.log('messages', messages.length);
-
   if (!sessionId) {
     return (
       <section
@@ -51,7 +49,11 @@ export function MessageList({
   }
 
   return (
-    <section className="overflow-y-auto p-5 mb-20" role="log" aria-label="Chat messages">
+    <section
+      className="overflow-y-auto p-5 mb-20  w-full h-full"
+      role="log"
+      aria-label="Chat messages"
+    >
       <div className="mx-auto max-w-4xl">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />

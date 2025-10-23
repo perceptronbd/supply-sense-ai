@@ -133,7 +133,7 @@ export function ChatInterface({
 
   return (
     <section
-      className={`flex flex-col size-full max-h-[calc(100vh-40px)] overflow-y-auto  relative ${className}`}
+      className={`flex flex-col items-center justify-center size-full max-h-[calc(100vh-40px)] relative ${className}`}
       aria-label="Chat interface"
     >
       {/* Message list with loading and suggestion handling */}

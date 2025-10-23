@@ -37,7 +37,7 @@ export function SampleQuestions({
 
   return (
     <section
-      className={cn('w-full px-4 pb-4 sm:px-6 sm:pb-5 lg:px-10 lg:pb-6', className)}
+      className={cn('w-full px-10 pb-4 sm:pb-5 lg:pb-6', className)}
       aria-label="Sample questions"
     >
       <Text variant="bodyBase" color="muted">
