@@ -1,9 +1,9 @@
-import { Agent } from '@mastra/core/agent';
+import type { MastraClient } from '@mastra/client-js';
+import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { AI_MODEL_NAMES } from '@supplysense/constant';
-import { GetOpenRouter } from '@supplysense/utils';
-import { withRetry } from '@supplysense/utils/server';
-import { McpClientService } from './mcp-client.service';
+import { createRuntimeContext } from '@supplysense/utils/server';
+
+type Agent = Awaited<ReturnType<MastraClient['getAgent']>>;
 
 interface ColumnExampleInput {
   tableName: string;
@@ -29,7 +29,6 @@ interface ColumnExampleResult {
 export class ColumnExampleAgentService {
   private readonly logger = new Logger(ColumnExampleAgentService.name);
   private exampleAgent: Agent | null = null;
-  private readonly openrouter = new GetOpenRouter();
 
   constructor(
     @Inject(forwardRef(() => McpClientService))
@@ -45,68 +44,13 @@ export class ColumnExampleAgentService {
     }
 
     try {
-      const mcpClient = this.mcpClientService.getMcpClient();
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
 
-      if (!mcpClient || !this.mcpClientService.isClientConnected()) {
+      if (!mcpClient) {
         throw new Error('MCP client not available or not connected');
       }
 
-      // Get all available tools from MCP server
-      const tools = await mcpClient.getTools();
-
-      this.exampleAgent = new Agent({
-        name: 'ColumnExampleAgent',
-        description:
-          'AI agent specialized in generating realistic example values for database columns',
-        instructions: [
-          'You are an expert database analyst specializing in generating realistic, context-aware example values for database columns.',
-          '',
-          'PRIMARY OBJECTIVE: Generate the most realistic examples possible by leveraging actual data patterns and semantic understanding.',
-          '',
-          'DATA UTILIZATION HIERARCHY:',
-          '1. **SAMPLE DATA FIRST**: Always prioritize actual sample data when available',
-          '   - Select representative values that demonstrate common patterns',
-          '   - For varied data, choose the most typical or frequently occurring value',
-          '   - Preserve formatting, casing, and structural patterns observed in samples',
-          '',
-          '2. **COLUMN SEMANTICS**: When samples are unavailable, infer from:',
-          '   - Column name semantics (e.g., "email", "status", "created_at")',
-          '   - Data type constraints (VARCHAR length, numeric ranges, date formats)',
-          '   - Table context and relationships',
-          '',
-          '3. **SPECIAL CASES**:',
-          '   - Enum columns: Use provided enum values or infer dominant values from samples',
-          '   - Foreign keys: Generate values that match referenced table patterns',
-          '   - Boolean/flag columns: Use appropriate true/false representations',
-          '   - Date/time columns: Use recent, realistic timestamps',
-          '',
-          'VALUE GENERATION PRINCIPLES:',
-          '• **Realism over randomness**: Prefer plausible values that reflect real usage',
-          '• **Consistency**: Maintain patterns across related columns',
-          '• **Brevity**: Keep examples concise but meaningful',
-          '• **Format preservation**: Maintain observed formatting conventions',
-          '',
-          'OUTPUT REQUIREMENTS:',
-          'Return a JSON array with objects containing:',
-          '- **columnName**: Original column name',
-          '- **exampleValue**: Realistic example (prioritize actual sample data)',
-          '- **formattedColumnName**: Display format "columnName (e.g., \'example\')"',
-          '- **description**: Brief explanation of why this example was chosen, including:',
-          '  * Source of example (e.g., "from sample data", "inferred from pattern")',
-          '  * Pattern observed (e.g., "email format", "sequential IDs", "status workflow")',
-          '  * Any notable constraints or characteristics',
-          '',
-          'EXAMPLE OUTPUT:',
-          '{',
-          '  "columnName": "user_status",',
-          '  "exampleValue": "active",',
-          '  "formattedColumnName": "user_status (e.g., \'active\')",',
-          '  "description": "From sample data: represents most common status value; other observed values: pending, inactive"',
-          '}',
-        ].join('\n'),
-        model: this.openrouter.getModel(AI_MODEL_NAMES.GPT_4_NANO),
-        tools,
-      });
+      this.exampleAgent = mcpClient.getAgent('columnExampleAgent');
 
       this.logger.log('✅ Column example agent initialized successfully');
     } catch (error) {
@@ -128,24 +72,26 @@ export class ColumnExampleAgentService {
 
       this.logger.log(`🔍 Generating examples for ${inputs.length} columns`);
 
-      const prompt = this.buildExamplePrompt(inputs);
+      const runtimeContext = createRuntimeContext<{ inputs: ColumnExampleInput[] }>({
+        inputs,
+      });
 
       this.logger.debug('Prompt for generate examples for column:', prompt);
 
       // Use the specialized agent to generate examples with retry logic
-      const response = await withRetry(
-        async () => {
-          return await this.exampleAgent?.generate([
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ]);
-        },
-        3, // maxRetries
-        2000 // 2 second delay
-      );
+      const response = await this.exampleAgent.generate(
+        [
+          {
+            role: 'user',
+            content:
+              'Generate realistic example values for the following database columns using the provided sample data in the runtime context',
+          },
+        ],
 
+        {
+          runtimeContext,
+        }
+      );
       this.logger.log('✅ Column examples generated successfully', {
         usage: response.usage,
       });
@@ -160,24 +106,6 @@ export class ColumnExampleAgentService {
       // Fallback to basic example generation
       return this.generateFallbackExamples(inputs);
     }
-  }
-
-  /**
-   * Build the prompt for generating column examples
-   */
-  private buildExamplePrompt(inputs: ColumnExampleInput[]): string {
-    const columnsData = inputs.map((input) => ({
-      tableName: input.tableName,
-      columnName: input.columnName,
-      dataType: input.dataType,
-      isEnum: input.isEnum || false,
-      enumValues: input.enumValues || [],
-      sampleData: input.sampleData || [],
-    }));
-
-    return `Generate realistic example values for the following database columns using the provided sample data:
-
-${JSON.stringify(columnsData, null, 2)}`;
   }
 
   /**

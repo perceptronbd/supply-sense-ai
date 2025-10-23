@@ -7,6 +7,7 @@ import { chatAgent } from './agents/chat/chat-agent';
 import { formattingAgent } from './agents/chat/formatting-agent';
 import { postgreSQLGenerationAgent } from './agents/chat/postgresql-generation-agent';
 import { queryAnalysisAgent } from './agents/chat/query-analysis-agent';
+import { columnExampleAgent } from './agents/onboarding/column-example-agent';
 import { generatePurposeAgent } from './agents/onboarding/generate-purpose-agent';
 import { sampleQuestionsAgent } from './agents/onboarding/sample-questions-agent';
 import { updateFrequencyAgent } from './agents/onboarding/update-frequency-agent';
@@ -33,6 +34,7 @@ export const mastra = new Mastra({
     postgreSQLGenerationAgent,
     updateFrequencyAgent,
     chatAgent,
+    columnExampleAgent,
   },
   workflows: {
     tableMetadataWorkflow,
