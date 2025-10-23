@@ -58,12 +58,13 @@ export const onboardingApi = baseApi.injectEndpoints({
 
     upsertTableRelationships: builder.mutation<
       TRelationshipTablesResponse,
-      IUpsertTableRelationshipsPayload
+      { userId: string; payload: IUpsertTableRelationshipsPayload }
     >({
-      query: (body) => ({
+      query: ({ userId, payload }) => ({
         url: '/onboarding/table-relationships',
         method: 'POST',
-        body,
+        body: payload,
+        params: { userId },
       }),
     }),
   }),

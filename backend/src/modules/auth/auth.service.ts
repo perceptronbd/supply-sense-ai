@@ -27,6 +27,7 @@ interface UserWithRelations {
   password: string;
   isActive: boolean;
   isSuperAdmin: boolean;
+  isCompleteOnboarding: boolean;
   companyId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -72,8 +73,12 @@ export class AuthService {
     password: string
   ): Promise<{ access_token: string; user: UserResponseDto }> {
     const user = await this.validateUser(email, password);
+    console.log('🚀 > AuthService > user:', user);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (!user.isCompleteOnboarding) {
+      throw new UnauthorizedException('Please complete onboarding process before logging in');
     }
 
     const payload: JwtPayload = {
@@ -251,6 +256,7 @@ export class AuthService {
         firstName: result.user.firstName || '',
         lastName: result.user.lastName || '',
         isSuperAdmin: result.user.isSuperAdmin,
+        isCompleteOnboarding: result.user.isCompleteOnboarding,
       },
       access_token,
     };
@@ -372,6 +378,7 @@ export class AuthService {
       permissions: Array.from(permissionSet),
       isSuperAdmin: userWithRelations.isSuperAdmin,
       isActive: userWithRelations.isActive,
+      isCompleteOnboarding: userWithRelations.isCompleteOnboarding,
     };
   }
 

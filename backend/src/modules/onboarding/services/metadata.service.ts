@@ -37,18 +37,24 @@ export class MetadataService {
     if (!connection) {
       throw new Error('Specified database connection not found');
     }
+    try {
+      const generatedMetadata = await this.captureMetadataForConnection(
+        connection,
+        dto.tables,
+        dto.companyId
+      );
 
-    const generatedMetadata = await this.captureMetadataForConnection(
-      connection,
-      dto.tables,
-      dto.companyId
-    );
+      return {
+        success: true,
+        message: 'Metadata captured and saved successfully',
+        metadata: generatedMetadata,
+      };
+    } catch (error) {
+      this.logger.error('Error capturing metadata:', error);
 
-    return {
-      success: true,
-      message: 'Metadata captured and saved successfully',
-      metadata: generatedMetadata,
-    };
+      await this.cleanupOnError(dto.companyId, dto.dbConnectionId);
+      throw error;
+    }
   }
 
   private async captureMetadataForConnection(
@@ -243,6 +249,31 @@ export class MetadataService {
     } catch (error) {
       this.logger.error('Error saving table metadata:', error);
       throw new Error(`Failed to save metadata: ${error.message || 'Unknown error'}`);
+    }
+  }
+  /**
+   * Cleanup method to delete company and database connection on error
+   * @param companyId - The ID of the company to delete
+   * @param dbConnectionId - The ID of the database connection to delete
+   */
+  private async cleanupOnError(companyId: string, dbConnectionId: string): Promise<void> {
+    try {
+      this.logger.log(
+        `Starting cleanup for failed operation. Company ID: ${companyId}, DB Connection ID: ${dbConnectionId}`
+      );
+
+      // Delete the database connection if it exists
+      await this.prisma.dbConnection.deleteMany({
+        where: {
+          id: dbConnectionId,
+          companyId: companyId,
+        },
+      });
+      this.logger.log(`Deleted database connection: ${dbConnectionId}`);
+    } catch (cleanupError) {
+      this.logger.error('Error during cleanup after metadata generation failure:', cleanupError);
+      // Re-throw with additional context
+      throw new Error(`Failed to clean up resources after error: ${cleanupError.message}`);
     }
   }
 }
