@@ -1,3 +1,4 @@
+import { ApiResponse } from '@supplysense/types';
 import type {
   IBatchSaveMetadataPayload,
   ICaptureMetadataPayload,
@@ -9,7 +10,6 @@ import type {
   TGetTablesResponse,
   TRelationshipTablesResponse,
 } from '@/components/onboarding/types';
-
 import { baseApi } from './baseApi';
 
 export const onboardingApi = baseApi.injectEndpoints({
@@ -56,6 +56,13 @@ export const onboardingApi = baseApi.injectEndpoints({
       }),
     }),
 
+    getSampleQuestions: builder.query<ApiResponse<string[]>, string>({
+      query: (dbConnectionId) => ({
+        url: `/table-metadata/sample-questions/${dbConnectionId}`,
+        method: 'GET',
+      }),
+    }),
+
     upsertTableRelationships: builder.mutation<
       TRelationshipTablesResponse,
       { userId: string; payload: IUpsertTableRelationshipsPayload }
@@ -78,4 +85,5 @@ export const {
   useSaveMetadataMutation,
   useGetTableRelationshipsQuery,
   useUpsertTableRelationshipsMutation,
+  useGetSampleQuestionsQuery,
 } = onboardingApi;

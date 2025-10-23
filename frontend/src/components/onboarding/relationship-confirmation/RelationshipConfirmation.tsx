@@ -153,16 +153,16 @@ const RelationshipConfirmation = () => {
       />
 
       {/* Right side: relationship confirmation form */}
-      <section className="flex flex-col gap-y-5 w-full lg:w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] overflow-y-auto no-scrollbar bottom-fade ">
-        <div className="flex gap-4 items-center justify-between ">
-          <div className="inline-flex lg:items-center gap-x-2 ">
+      <section className="flex flex-col gap-y-5 w-full lg:w-[36rem] ms-auto max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-12rem)] relative">
+        <div className="sticky top-0 z-10 flex gap-4 items-center justify-between">
+          <div className="inline-flex lg:items-center gap-x-2">
             <Icons.Exclamatory className="flex-shrink-0 max-lg:mt-1" />
             <Text color="warning">You can confirm the table relations later.</Text>
           </div>
           <Button
             variant={'light'}
             color={'primary'}
-            className={cn('mb-3 lg:w-fit', {
+            className={cn('lg:w-fit', {
               'opacity-50 cursor-not-allowed': isLoading,
             })}
             isLoading={isUpserting}
@@ -172,35 +172,38 @@ const RelationshipConfirmation = () => {
           </Button>
         </div>
 
-        {/* Show loading spinner or the list of relationship cards */}
-        {isLoading ? (
-          <>
-            <RelationshipCardSkeleton key="skeleton-1" />
-            <RelationshipCardSkeleton key="skeleton-2" />
-          </>
-        ) : (
-          tableRelationships.data.map((table) => {
-            const leftKey = `${table.tableName}.${table.columnName}`;
+        {/* Scrollable content area */}
+        <div className="overflow-y-auto no-scrollbar bottom-fade flex flex-col gap-y-5 pb-4">
+          {/* Show loading spinner or the list of relationship cards */}
+          {isLoading ? (
+            <>
+              <RelationshipCardSkeleton key="skeleton-1" />
+              <RelationshipCardSkeleton key="skeleton-2" />
+            </>
+          ) : (
+            tableRelationships.data.map((table) => {
+              const leftKey = `${table.tableName}.${table.columnName}`;
 
-            // Use Map for O(1) lookup instead of O(n) find
-            const selectedTable = relationTablesMap.get(leftKey);
-            const rightKey = selectedTable
-              ? `${selectedTable.refTable}.${selectedTable.refColumn}`
-              : `${table.refTable}.${table.refColumn}`;
+              // Use Map for O(1) lookup instead of O(n) find
+              const selectedTable = relationTablesMap.get(leftKey);
+              const rightKey = selectedTable
+                ? `${selectedTable.refTable}.${selectedTable.refColumn}`
+                : `${table.refTable}.${table.refColumn}`;
 
-            return (
-              <MemoizedRelationshipCard
-                key={leftKey}
-                table={table}
-                isLoading={isLoading}
-                rightSelectOptions={rightSelectOptions}
-                leftSelectedKey={leftKey}
-                rightSelectedKey={rightKey}
-                onRightSelectChange={handleRightSelectChange}
-              />
-            );
-          })
-        )}
+              return (
+                <MemoizedRelationshipCard
+                  key={leftKey}
+                  table={table}
+                  isLoading={isLoading}
+                  rightSelectOptions={rightSelectOptions}
+                  leftSelectedKey={leftKey}
+                  rightSelectedKey={rightKey}
+                  onRightSelectChange={handleRightSelectChange}
+                />
+              );
+            })
+          )}
+        </div>
       </section>
     </>
   );

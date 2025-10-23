@@ -2,22 +2,31 @@
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Text } from '@/components/ui/Text';
+import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { LoadingMessage, MessageBubble } from './MessageBubble';
 import type { MessageListProps } from './types';
 
-export function MessageList({ messages, isLoading = false, onSuggestionClick }: MessageListProps) {
+export function MessageList({
+  messages,
+  isLoading = false,
+  onSuggestionClick,
+}: Readonly<MessageListProps>) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { sessionId } = useAppSelector((state) => state.chat);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages and isLoading dependencies are needed for auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  if (messages.length === 0 && !isLoading) {
+  console.log('messages', messages.length);
+
+  if (!sessionId) {
     return (
       <section
-        className="md:flex justify-center items-center overflow-y-auto size-full max-md:mt-5"
+        className="md:flex justify-center items-center mt-8 md:mt-12"
         aria-label="Chat welcome message"
       >
         <div className="px-8 w-full text-center">
@@ -35,42 +44,7 @@ export function MessageList({ messages, isLoading = false, onSuggestionClick }: 
             <Text variant="headerMedium" color="default" weight="bold" className="mb-6" as="h2">
               What can I help you with?
             </Text>
-            {/* TODO: enable suggestions later */}
-            {/* <Text variant="bodyLarge" color="muted" as="p">
-              Choose a prompt below or write your own to start chatting with SupplySense AI.
-            </Text> */}
           </header>
-
-          {/* TODO: enable suggestions later */}
-          {/* Suggestion Cards */}
-          {/* <div className="grid grid-cols-1 gap-4 mt-8 md:grid-cols-2 max-w-4xl mx-auto mb-40 md:mb-5">
-            {defaultSuggestions.map((suggestion) => {
-              const IconComponent = suggestion.icon;
-              return (
-                <Card
-                  key={suggestion.title}
-                  isPressable
-                  onPress={() => onSuggestionClick?.(suggestion.title)}
-                  className="border transition-all duration-200 cursor-pointer bg-default-300 hover:bg-content2 border-divider hover:shadow-medium"
-                >
-                  <CardBody className="p-4">
-                    <div className="flex gap-3 items-start ">
-                      <IconComponent className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                      <Text
-                        variant="bodyXSmall"
-                        color="default"
-                        weight="medium"
-                        className="text-left"
-                        as="span"
-                      >
-                        {suggestion.title}
-                      </Text>
-                    </div>
-                  </CardBody>
-                </Card>
-              );
-            })}
-          </div> */}
         </div>
       </section>
     );

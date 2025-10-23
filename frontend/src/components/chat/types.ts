@@ -1,5 +1,4 @@
-﻿// Re-export types from the API
-export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
+﻿export type { ChatMessage, ChatSession } from '@/store/api/chatApi';
 
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 
@@ -7,6 +6,8 @@ export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
+  message: string;
+  setMessage: (message: string) => void;
 }
 
 export interface MessageListProps {
@@ -16,8 +17,13 @@ export interface MessageListProps {
 }
 
 export interface ChatInterfaceProps {
-  sessionId?: string;
   dbConnectionId?: string;
   className?: string;
   handleCreateSession: () => Promise<string | undefined>;
+}
+
+export interface SampleQuestionsProps {
+  dbConnectionId: string;
+  className?: string;
+  onQuestionClick?: (question: string) => void;
 }

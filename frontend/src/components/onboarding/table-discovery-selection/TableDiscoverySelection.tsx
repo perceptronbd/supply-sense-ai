@@ -226,7 +226,7 @@ const TableDiscoverySelection = () => {
                   ))}
                 </SelectSection>
               </Select>
-              <div className="flex w-full flex-wrap gap-2 mt-2 max-h-96 bottom-fade overflow-y-auto no-scrollbar">
+              <div className="flex w-full flex-wrap gap-2 mt-2 max-h-96 overflow-y-auto no-scrollbar">
                 {selectedTables.map(({ tableName, displayName }) => (
                   <Chip
                     key={tableName}

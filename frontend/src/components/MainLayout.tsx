@@ -7,8 +7,8 @@ import { Icons } from '@/lib/icons/Icons';
 import { useAppDispatch } from '@/store/hooks';
 import { setToggleValue } from '@/store/slices/commonSlice';
 import type { RootState } from '@/store/store';
-import LogoIcon from './icons/LogoIcon';
 import Sidebar from './Sidebar';
+import { LogoWithName } from './ui/LogoWithName';
 import { Text } from './ui/Text';
 
 interface MainLayoutProps {
@@ -46,7 +46,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
     <div className="flex p-2 h-screen  text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex overflow-hidden flex-col flex-1 rounded-2xl lg:ml-0">
+      <div className="flex overflow-hidden flex-col flex-1 rounded-sm lg:ml-0">
         {/* Top bar for mobile */}
         <header className="flex justify-between items-center px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
               onClick={() => setSidebarOpen(true)}
               className="p-2 transition-colors rounded-medium text-default-500 hover:text-foreground hover:bg-content2"
             >
-              <Icons.HamburgerList className="size-10" />
+              <Icons.ChevronRight className="size-8 text-default-800" />
             </button>
             <Text
               variant="titleMedium"
@@ -64,7 +64,7 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
               as="h1"
               className="flex items-center gap-2"
             >
-              <LogoIcon size={30} />
+              {/* <LogoIcon size={30} />
               <Text
                 variant="titleMedium"
                 weight="semiBold"
@@ -73,12 +73,13 @@ export default function MainLayout({ children }: Readonly<MainLayoutProps>) {
                 className="uppercase"
               >
                 Supply Sense
-              </Text>
+              </Text> */}
+              <LogoWithName width={203} height={32} />
             </Text>
           </div>
-          <button onClick={handleOpenSidebar} type="button">
+          {/* <button onClick={handleOpenSidebar} type="button">
             <Icons.ToggleSession className="size-8 text-secondary-500" />
-          </button>
+          </button> */}
         </header>
         {/* Main content */}
         <main className="overflow-auto flex-1 bg-content2">{children}</main>

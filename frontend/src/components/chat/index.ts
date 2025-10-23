@@ -4,6 +4,7 @@ export { LoadingMessage, MessageBubble } from './MessageBubble';
 export { MessageList } from './MessageList';
 export { RenderChart } from './RenderChart';
 export { RenderTable } from './RenderTable';
+export { SampleQuestions } from './SampleQuestions';
 export { SessionList } from './SessionList';
 export { SessionManager } from './SessionManager';
 export * from './types';

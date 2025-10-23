@@ -1,12 +1,28 @@
 'use client';
-import { Button, Textarea } from '@heroui/react';
+import {
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Textarea,
+} from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
 import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
+import { useAppSelector } from '@/store/hooks';
 import type { ChatInputProps } from './types';
 
-export function ChatInput({ onSendMessage, isLoading = false, disabled = false }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+export function ChatInput({
+  onSendMessage,
+  isLoading = false,
+  disabled = false,
+  message,
+  setMessage,
+}: Readonly<ChatInputProps>) {
+  const [selectedConnection, setSelectedConnection] = useState('Select Connection');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { sessionId } = useAppSelector((state) => state.chat);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,43 +52,81 @@ export function ChatInput({ onSendMessage, isLoading = false, disabled = false }
     }
   }, [message]);
 
+  const connections = ['Connection 1', 'Connection 2', 'Connection 3'];
+
   return (
-    <section className="pb-7 px-10 w-full fixed lg:absolute bottom-0 z-30">
+    <section
+      className={cn('pb-7 px-10 w-full  z-30', sessionId ? 'fixed lg:absolute bottom-0' : '')}
+    >
       <form
         onSubmit={handleSubmit}
         className="relative rounded-xl border bg-content1 border-divider shadow-small"
         aria-label="Send message form"
       >
-        <div className="flex gap-3 items-center p-1">
-          {/* Text Input */}
-          <div className="flex-1">
-            <Textarea
-              ref={textareaRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask a question or make a request..."
-              minRows={1}
-              maxRows={6}
-              disabled={disabled}
-              aria-label="Message input"
+        {/* Textarea Row */}
+        <div className="p-3 pb-2">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask anything about your data..."
+            minRows={1}
+            maxRows={6}
+            disabled={disabled}
+            aria-label="Message input"
+            variant="flat"
+            classNames={{
+              base: 'w-full',
+              input:
+                'resize-none text-foreground text-medium max-h-96 bg-transparent focus:outline-none focus:ring-0',
+              inputWrapper:
+                'bg-transparent border-none shadow-none p-0 data-[hover=true]:bg-transparent',
+            }}
+          />
+        </div>
+
+        {/* Dropdowns and Send Button Row */}
+        <div className="flex gap-2 items-center justify-between px-3 pb-3 pt-1">
+          <div className="flex gap-2 items-center">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="flat"
+                  radius="md"
+                  startContent={<Icons.Connection className="w-4 h-4" />}
+                  endContent={<Icons.Down className="w-4 h-4" />}
+                  size="sm"
+                >
+                  {selectedConnection}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Connection options"
+                onAction={(key) => setSelectedConnection(key as string)}
+              >
+                {connections.map((connection) => (
+                  <DropdownItem key={connection}>{connection}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+
+            {/* <Button
               variant="flat"
-              classNames={{
-                base: 'w-full',
-                input: 'resize-none text-foreground text-medium max-h-96 bg-transparent p-2',
-                inputWrapper: 'bg-transparent border-none shadow-none p-0',
-              }}
-            />
+              radius="md"
+              startContent={<Icons.Plus className="w-4 h-4" />}
+              size="sm"
+            >
+              Mode
+            </Button> */}
           </div>
 
-          {/* Send Button */}
           <Button
             type="submit"
             color="secondary"
             isIconOnly
             isLoading={isLoading}
             disabled={!message.trim() || disabled}
-            className="mb-1 rounded-full"
             aria-label="Send message"
             size="sm"
             variant="solid"

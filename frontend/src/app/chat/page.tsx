@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useCallback, useMemo } from 'react';
-import { ChatInterface, SessionManager } from '@/components/chat';
+import { ChatInterface } from '@/components/chat';
 import { LoadingOverlay } from '@/components/ui/Loading';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
@@ -12,28 +12,15 @@ export default function ChatPage() {
     useDatabaseConnections();
 
   // Session management
-  const { activeSessionId, isCreatingSession, createNewSession, selectSession } =
+  const { activeSessionId, isCreatingSession, createNewSession } =
     useSessionManager(selectedDbConnectionId);
 
   // Memoized handlers to prevent unnecessary re-renders
   const handleCreateSession = useCallback(async () => {
     if (activeSessionId) return activeSessionId;
-    return await createNewSession();
+    const newSessionId = await createNewSession();
+    return newSessionId;
   }, [activeSessionId, createNewSession]);
-
-  const handleSessionSelect = useCallback(
-    (sessionId: string) => {
-      selectSession(sessionId);
-    },
-    [selectSession]
-  );
-
-  const handleSessionCreate = useCallback(
-    (sessionId: string) => {
-      selectSession(sessionId);
-    },
-    [selectSession]
-  );
 
   // Memoized error and loading states for better performance
   const errorState = useMemo(() => {
@@ -95,7 +82,7 @@ export default function ChatPage() {
   // Main chat interface - only render when we have a database connection
   return (
     <main className="w-full h-full bg-background lg:flex gap-2">
-      <div className="relative h-full text-foreground rounded-2xl bg-content2 flex-1 w-full">
+      <div className="relative h-full text-foreground rounded-xl bg-content2 flex-1 w-full">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
           isVisible={isCreatingSession}
@@ -106,22 +93,11 @@ export default function ChatPage() {
         {/* Main chat interface container */}
         <section className="flex flex-1 w-full h-full">
           <ChatInterface
-            sessionId={activeSessionId}
             dbConnectionId={selectedDbConnectionId}
             handleCreateSession={handleCreateSession}
           />
         </section>
       </div>
-
-      {/* Session Manager Sidebar - only show when database connection is available */}
-      {selectedDbConnectionId && (
-        <SessionManager
-          selectedSessionId={activeSessionId}
-          dbConnectionId={selectedDbConnectionId}
-          onSessionSelect={handleSessionSelect}
-          onSessionCreate={handleSessionCreate}
-        />
-      )}
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { AuthWelcomeSection } from '../ui/auth/AuthWelcomeSection';
 import { RegistrationForm } from '../ui/auth/RegistrationForm';
 
@@ -15,11 +16,35 @@ export function RegistrationLayout({
   isLoading,
   onFieldChange,
   onSubmit,
-}: RegistrationLayoutProps) {
+}: Readonly<RegistrationLayoutProps>) {
+  const [showSplash, setshowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setshowSplash(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2 bg-background">
+      {/* Right side — welcome section */}
+      <AuthWelcomeSection
+        variant="register"
+        className={`
+          ${showSplash ? 'block' : 'hidden'}
+          lg:block lg:order-last
+        `}
+      />
+
       {/* Left side — registration form */}
-      <section className="flex items-center justify-center p-4 overflow-y-auto">
+      <section
+        className={`
+          ${showSplash ? 'hidden' : 'flex'}
+          lg:flex items-center justify-center p-4 overflow-y-auto lg:order-first
+        `}
+      >
         <aside className="w-full">
           <RegistrationForm
             fieldErrors={fieldErrors}
@@ -30,9 +55,6 @@ export function RegistrationLayout({
           />
         </aside>
       </section>
-
-      {/* Right side — welcome section */}
-      <AuthWelcomeSection variant="register" />
     </main>
   );
 }

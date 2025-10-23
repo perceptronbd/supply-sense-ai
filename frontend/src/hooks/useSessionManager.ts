@@ -1,8 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useCreateSessionMutation } from '@/store/api/chatApi';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setSessionId } from '@/store/slices/chatSlice';
 
 export interface UseSessionManagerReturn {
-  activeSessionId: string | undefined;
+  activeSessionId: string;
   isCreatingSession: boolean;
   sessionCreationError: unknown;
   createNewSession: () => Promise<string | undefined>;
@@ -17,13 +19,15 @@ export interface UseSessionManagerReturn {
 export function useSessionManager(
   selectedDbConnectionId: string | undefined
 ): UseSessionManagerReturn {
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
+  const { sessionId } = useAppSelector((state) => state.chat);
   const [createSession, { isLoading: isCreatingSession, error: sessionCreationError }] =
     useCreateSessionMutation();
 
+  const dispatch = useAppDispatch();
+
   const createNewSession = useCallback(async (): Promise<string | undefined> => {
     if (!selectedDbConnectionId || isCreatingSession) {
-      return activeSessionId;
+      return sessionId;
     }
 
     try {
@@ -34,25 +38,28 @@ export function useSessionManager(
         dbConnectionId: selectedDbConnectionId,
       }).unwrap();
 
-      setActiveSessionId(newSession.id);
+      dispatch(setSessionId(newSession.id));
       return newSession.id;
     } catch (error) {
       console.error('Failed to create chat session:', error);
-      setActiveSessionId(undefined);
+      dispatch(setSessionId(''));
       throw error;
     }
-  }, [selectedDbConnectionId, createSession, isCreatingSession, activeSessionId]);
+  }, [selectedDbConnectionId, createSession, isCreatingSession, sessionId, dispatch]);
 
-  const selectSession = useCallback((sessionId: string) => {
-    setActiveSessionId(sessionId);
-  }, []);
+  const selectSession = useCallback(
+    (sessionId: string) => {
+      dispatch(setSessionId(sessionId));
+    },
+    [dispatch]
+  );
 
   const clearSession = useCallback(() => {
-    setActiveSessionId(undefined);
-  }, []);
+    dispatch(setSessionId(''));
+  }, [dispatch]);
 
   return {
-    activeSessionId,
+    activeSessionId: sessionId,
     isCreatingSession,
     sessionCreationError,
     createNewSession,

@@ -1,21 +1,25 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Text } from '@/components/ui/Text';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { useSendQueryMutation } from '@/store/api/chatApi';
+import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
 export function ChatInterface({
-  sessionId,
   dbConnectionId,
   className,
   handleCreateSession,
 }: Readonly<ChatInterfaceProps>) {
+  const { sessionId } = useAppSelector((state) => state.chat);
+  const [message, setMessage] = useState('');
+
   const {
     messages,
     isLoadingMessages,
@@ -41,7 +45,7 @@ export function ChatInterface({
       // Ensure we have a session before sending message
       if (!currentSessionId) {
         try {
-          currentSessionId = await handleCreateSession();
+          currentSessionId = (await handleCreateSession()) || '';
           if (!currentSessionId) {
             addErrorMessage('', 'Failed to create session. Please try again.');
             return;
@@ -111,13 +115,10 @@ export function ChatInterface({
     ]
   );
 
-  // Handle suggestion clicks by sending them as messages
-  const handleSuggestionClick = useCallback(
-    (suggestion: string) => {
-      handleSendMessage(suggestion);
-    },
-    [handleSendMessage]
-  );
+  // Handle suggestion clicks by setting the message in the chat input
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    setMessage(suggestion);
+  }, []);
 
   // Memoized error state for better performance
   const errorState = useMemo(() => {
@@ -159,10 +160,19 @@ export function ChatInterface({
 
       {/* Chat input with send message handling */}
       <ChatInput
+        message={message}
+        setMessage={setMessage}
         onSendMessage={handleSendMessage}
         isLoading={isSendingMessage}
         disabled={isLoadingMessages}
       />
+
+      {!sessionId && (
+        <SampleQuestions
+          dbConnectionId={dbConnectionId as string}
+          onQuestionClick={handleSuggestionClick}
+        />
+      )}
     </section>
   );
 }
