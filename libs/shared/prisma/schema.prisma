@@ -160,6 +160,7 @@ model User {
   avatar       String?
   isActive     Boolean @default(true)
   isSuperAdmin Boolean @default(false) // Company Super Admin flag
+  isCompleteOnboarding Boolean @default(false)
 
   // Company isolation
   companyId String

@@ -80,12 +80,15 @@ export class OnboardingController {
   }
 
   /**
-   * Upsert confirmed table relationships
+   * Upsert confirmed table relationships the last step of onboarding process
    */
   @Post('/table-relationships')
   @HttpCode(HttpStatus.CREATED)
-  async upsertRelationships(@Body() dto: UpsertRelationshipsDto) {
-    return await this.onboardingService.upsertTableRelationships(dto);
+  async upsertRelationships(@Body() dto: UpsertRelationshipsDto, @Query('userId') userId: string) {
+    return await this.onboardingService.upsertTableRelationships({
+      ...dto,
+      userId,
+    });
   }
 
   /**

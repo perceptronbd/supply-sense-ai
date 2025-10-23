@@ -9,7 +9,7 @@ import { LoginLayout } from '@/components/pages/LoginLayout';
 import { ROUTE_PATHS } from '@/config/routes';
 import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useLoginMutation } from '@/store/api/authApi';
-import { setCredentials } from '@/store/slices/authSlice';
+import { clearRegistrationCredentials, setCredentials } from '@/store/slices/authSlice';
 
 // Login form validation schema
 export const loginSchema = z.object({
@@ -126,6 +126,9 @@ export default function LoginPage() {
 
   const handleAuthError = (message: string): string => {
     const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('onboarding')) {
+      return message;
+    }
     if (
       lowerMessage.includes('invalid') ||
       lowerMessage.includes('wrong') ||
@@ -201,6 +204,7 @@ export default function LoginPage() {
         variant: 'flat',
       });
 
+      dispatch(clearRegistrationCredentials());
       dispatch(setCredentials(result));
       router.push(ROUTE_PATHS.ONBOARDING);
     } catch (err: unknown) {

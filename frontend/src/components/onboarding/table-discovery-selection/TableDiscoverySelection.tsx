@@ -1,6 +1,6 @@
 'use client';
 import type { SharedSelection } from '@heroui/react';
-import { Chip, Select, SelectItem, SelectSection } from '@heroui/react';
+import { addToast, Chip, Select, SelectItem, SelectSection } from '@heroui/react';
 import { handleAsyncOperation } from '@supplysense/utils';
 import { useState } from 'react';
 import BlinkingLogo from '@/components/ui/animations/BlinkingLogo';
@@ -155,6 +155,14 @@ const TableDiscoverySelection = () => {
         if (result.data.metadata.generatedMetadata.length > 0) {
           setOnboardingStep(3);
         }
+      },
+      onError(error) {
+        addToast({
+          title: (error as Error)?.message || 'An error occurred',
+          color: 'danger',
+          variant: 'flat',
+        });
+        setOnboardingStep(1);
       },
     });
   };
