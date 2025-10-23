@@ -1,4 +1,5 @@
 import { Card, CardBody } from '@heroui/react';
+import { useEffect, useState } from 'react';
 import { AuthWelcomeSection } from '../ui/auth/AuthWelcomeSection';
 import { LoginForm } from '../ui/auth/LoginForm';
 
@@ -22,12 +23,30 @@ export const LoginLayout = ({
   onFieldChange,
   onSubmit,
 }: LoginLayoutProps) => {
+  const [showSplash, setshowSplash] = useState(true);
+
+  // Set timer to hide splash screen after 1 second
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setshowSplash(false);
+    }, 1000);
+
+    // Clear the timer if the component unmounts
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main className="grid w-full min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
-      <AuthWelcomeSection variant="login" />
+      {/* Left panel (Splash) */}
+      <AuthWelcomeSection variant="login" className={showSplash ? 'block' : 'hidden lg:block'} />
 
-      {/* Right panel */}
-      <section className="flex items-center justify-center p-4 overflow-y-auto">
+      {/* Right panel (Main Content) */}
+      <section
+        className={`
+          ${showSplash ? 'hidden' : 'flex'}
+          lg:flex items-center justify-center p-4 overflow-y-auto
+        `}
+      >
         <Card radius="sm" className="w-full h-full bg-default-300">
           <CardBody className="p-8 flex items-center justify-center">
             <LoginForm

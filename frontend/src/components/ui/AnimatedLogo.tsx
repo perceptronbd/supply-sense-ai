@@ -16,7 +16,7 @@ export function AnimatedLogo({
   className = '',
   variant = 'primary',
   duration = 4, // 4 second total cycle
-}: AnimatedLogoProps) {
+}: Readonly<AnimatedLogoProps>) {
   const colorClass = colorMap[variant];
 
   // Animation timing breakdown:
