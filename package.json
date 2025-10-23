@@ -32,6 +32,7 @@
     "db:start": "docker-compose up -d postgres",
     "db:stop": "docker-compose stop postgres",
     "db:generate": "npx prisma generate --schema=libs/shared/prisma/schema.prisma",
+    "db:migrate": "npx prisma migrate dev --schema=libs/shared/prisma/schema.prisma",
     "db:studio": "npx prisma studio --schema=libs/shared/prisma/schema.prisma",
     "db:seed": "cd libs/shared/prisma && npx tsx src/lib/seeds/index.ts",
     "lint": "biome check .",

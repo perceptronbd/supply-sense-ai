@@ -45,7 +45,7 @@ model Company {
   UsageTracking                UsageTracking[]
   purchaseHistory              PurchaseHistory[]
   UsageRecord                  UsageRecord[]
-
+  apiLogs                      ApiLogs[]
   @@index([name], name: "idx_company_name")
   @@map("companies")
 }
@@ -463,4 +463,19 @@ model ConversationState {
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("conversation_states")
+}
+
+
+
+model ApiLogs {
+  id          String   @id @default(cuid())
+  method      String
+  url         String
+  rateLimitConfig Json
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("api_logs")
 }
