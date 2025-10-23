@@ -20,7 +20,7 @@ export function RegistrationForm({
   isLoading,
   onFieldChange,
   onSubmit,
-}: RegistrationFormProps) {
+}: Readonly<RegistrationFormProps>) {
   return (
     <Card radius="sm" className="h-full bg-default-300">
       <CardBody className="p-8">

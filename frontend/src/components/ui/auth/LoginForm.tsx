@@ -25,7 +25,7 @@ export const LoginForm = ({
   return (
     <section className="w-full max-w-md mx-auto space-y-8">
       {/* Header */}
-      <header className="space-y-3 text-center sm:text-left">
+      <header className="space-y-3 sm:text-left">
         <Text variant="headerMedium" weight="bold" className="text-foreground" as="h2">
           Sign In
         </Text>
