@@ -6,6 +6,7 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -13,80 +14,57 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
+import type { DatabaseConnection } from 'types/db-connection.type';
 import { Text } from '@/components/ui/Text';
+import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { Icons } from '@/lib/icons/Icons';
-
-interface Connection {
-  key: string;
-  name: string;
-  status: 'connected' | 'disconnected';
-  host: string;
-  database: string;
-  user: string;
-}
 
 interface Column {
   key: string;
   label: string;
 }
 
-const connections: Connection[] = [
-  {
-    key: '1',
-    name: 'Outsource Dev',
-    status: 'connected',
-    host: '127.0.0.1:5462',
-    database: 'outsourceddev',
-    user: 'mac-teeranon',
-  },
-  {
-    key: '2',
-    name: 'Qashup Production',
-    status: 'disconnected',
-    host: '127.0.0.1:5462',
-    database: 'outsourceddev',
-    user: 'mac-teeranon',
-  },
-];
-
 const columns: Column[] = [
-  { key: 'name', label: 'NAME' },
+  { key: 'title', label: 'NAME' },
   { key: 'status', label: 'STATUS' },
   { key: 'host', label: 'HOST' },
   { key: 'database', label: 'DATABASE' },
-  { key: 'user', label: 'USER' },
+  { key: 'username', label: 'USER' },
   { key: 'actions', label: 'ACTION' },
 ];
 
 export default function DatabaseConnectionsPage() {
-  const renderCell = (connection: Connection, columnKey: React.Key): React.ReactNode => {
+  const { databaseConnections, isLoadingConnections, connectionsError } = useDatabaseConnections();
+
+  const renderCell = (connection: DatabaseConnection, columnKey: React.Key): React.ReactNode => {
     const key = columnKey as string;
 
     switch (key) {
-      case 'name':
+      case 'title':
         return (
           <Text variant="bodySmall" weight="medium">
-            {connection.name}
+            {connection.title}
           </Text>
         );
 
-      case 'status':
+      case 'status': {
+        const status: 'connected' | 'disconnected' = connection.sslEnabled
+          ? 'connected'
+          : 'disconnected';
+
         return (
-          <Chip
-            color={connection.status === 'connected' ? 'success' : 'danger'}
-            variant="flat"
-            size="sm"
-          >
-            <Text variant="label" color={connection.status === 'connected' ? 'success' : 'danger'}>
-              {connection.status === 'connected' ? 'Connected' : 'Disconnected'}
+          <Chip color={status === 'connected' ? 'success' : 'danger'} variant="flat" size="sm">
+            <Text variant="label" color={status === 'connected' ? 'success' : 'danger'}>
+              {status === 'connected' ? 'Connected' : 'Disconnected'}
             </Text>
           </Chip>
         );
+      }
 
       case 'host':
         return (
           <Text variant="bodySmall" color="default">
-            {connection.host}
+            {connection.host}:{connection.port}
           </Text>
         );
 
@@ -97,10 +75,10 @@ export default function DatabaseConnectionsPage() {
           </Text>
         );
 
-      case 'user':
+      case 'username':
         return (
           <Text variant="bodySmall" color="default">
-            {connection.user}
+            {connection.username}
           </Text>
         );
 
@@ -198,12 +176,30 @@ export default function DatabaseConnectionsPage() {
               </TableColumn>
             )}
           </TableHeader>
+
           <TableBody
-            items={connections}
-            emptyContent={<Text variant="bodySmall">No connections found.</Text>}
+            items={databaseConnections || []}
+            isLoading={isLoadingConnections}
+            loadingContent={
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Text variant="bodySmall" color="secondary">
+                  <Spinner size="sm" />
+                  Loading connections...
+                </Text>
+              </div>
+            }
+            emptyContent={
+              connectionsError ? (
+                <Text variant="bodySmall" color="danger">
+                  Failed to load connections.
+                </Text>
+              ) : (
+                <Text variant="bodySmall">No connections found.</Text>
+              )
+            }
           >
-            {(item: Connection) => (
-              <TableRow key={item.key}>
+            {(item: DatabaseConnection) => (
+              <TableRow key={item.id}>
                 {(columnKey: React.Key) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
               </TableRow>
             )}
