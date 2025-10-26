@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
-import { MoreVertical, RefreshCw, Settings, Trash2 } from 'lucide-react';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 
@@ -111,7 +110,7 @@ export default function DatabaseConnectionsPage() {
             <Dropdown placement="bottom-end">
               <DropdownTrigger>
                 <Button isIconOnly variant="light" size="sm">
-                  <MoreVertical className="w-4 h-4" />
+                  <Icons.EllipsisHorizontal className="w-4 h-4" />
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -121,18 +120,30 @@ export default function DatabaseConnectionsPage() {
                   base: 'text-default-500',
                 }}
               >
-                <DropdownItem key="manage" startContent={<Settings className="w-4 h-4" />}>
-                  <Text variant="bodySmall">Manage</Text>
+                <DropdownItem
+                  key="manage"
+                  className="group"
+                  startContent={<Icons.Settings className="w-4 h-4 group-hover:text-foreground" />}
+                >
+                  <Text variant="bodySmall" color="muted" className="group-hover:text-foreground">
+                    Manage
+                  </Text>
                 </DropdownItem>
-                <DropdownItem key="refresh" startContent={<RefreshCw className="w-4 h-4" />}>
-                  <Text variant="bodySmall">Refresh Schema</Text>
+                <DropdownItem
+                  key="refresh"
+                  className="group"
+                  startContent={<Icons.RefreshCw className="w-4 h-4 group-hover:text-foreground" />}
+                >
+                  <Text variant="bodySmall" color="muted" className="group-hover:text-foreground">
+                    Refresh Schema
+                  </Text>
                 </DropdownItem>
                 <DropdownItem
                   key="remove"
-                  color="danger"
-                  startContent={<Trash2 className="w-4 h-4" />}
+                  className="group"
+                  startContent={<Icons.Trash className="w-4 h-4 group-hover:text-foreground" />}
                 >
-                  <Text variant="bodySmall" color="danger">
+                  <Text variant="bodySmall" color="muted" className="group-hover:text-foreground">
                     Remove
                   </Text>
                 </DropdownItem>
@@ -171,11 +182,10 @@ export default function DatabaseConnectionsPage() {
 
         <Table
           aria-label="Database connections table"
-          radius="lg"
-          shadow="sm"
+          shadow="none"
           classNames={{
             wrapper: 'bg-default-50',
-            th: 'bg-default-100 text-default-500',
+            th: 'bg-default-100 text-default-500 !rounded-lg',
             tr: 'hover:bg-content1 data-[hover=true]:bg-content1 !rounded-lg',
           }}
         >
