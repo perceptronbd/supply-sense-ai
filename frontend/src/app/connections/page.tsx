@@ -14,11 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
+import { useRouter } from 'next/navigation';
 import type { DatabaseConnection } from 'types/db-connection.type';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { Icons } from '@/lib/icons/Icons';
-import { useRouter } from 'next/navigation';
 
 interface Column {
   key: string;
