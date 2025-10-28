@@ -18,6 +18,7 @@ import type { DatabaseConnection } from 'types/db-connection.type';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { Icons } from '@/lib/icons/Icons';
+import { useRouter } from 'next/navigation';
 
 interface Column {
   key: string;
@@ -34,6 +35,7 @@ const columns: Column[] = [
 ];
 
 export default function DatabaseConnectionsPage() {
+  const router = useRouter();
   const { databaseConnections, isLoadingConnections, connectionsError } = useDatabaseConnections();
 
   const renderCell = (connection: DatabaseConnection, columnKey: React.Key): React.ReactNode => {
@@ -101,6 +103,7 @@ export default function DatabaseConnectionsPage() {
                 <DropdownItem
                   key="manage"
                   className="group"
+                  onPress={() => router.push(`/connections/${connection.id}`)}
                   startContent={<Icons.Settings className="w-4 h-4 group-hover:text-foreground" />}
                 >
                   <Text variant="bodySmall" color="muted" className="group-hover:text-foreground">
