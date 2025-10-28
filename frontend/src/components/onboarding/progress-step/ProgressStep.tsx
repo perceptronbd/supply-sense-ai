@@ -2,72 +2,87 @@ import { Text } from '@/components/ui/Text';
 import { cn } from '@/lib/utils';
 import { Circle } from '.';
 
-interface IProps {
+interface IStepClassNames {
+  container?: string;
+  connector?: string;
+  circle?: string;
+  text?: string;
+}
+interface StepProps {
+  label: string;
+  step: number;
   currentStep: number;
+  isLast: boolean;
+  classNames?: IStepClassNames;
 }
 
-const ProgressStep = ({ currentStep }: IProps) => {
-  const isActive = (step: number) => step < currentStep || step === currentStep;
-  const isComplete = (step: number) => step < currentStep;
-  const renderLine = (step: number) => isComplete(step) || isActive(step);
+const Step = ({ label, step, currentStep, isLast, classNames }: StepProps) => {
+  const isActive = step <= currentStep;
+  const isComplete = step < currentStep;
+
   return (
-    <div className="flex items-center gap-x-8 max-lg:hidden">
-      {/* step one */}
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <Circle variant={isActive(1) ? 'active' : 'inactive'} isComplete={isComplete(1)} />
+    <div className={cn('flex items-center flex-col gap-y-2 relative', classNames?.container || '')}>
+      {/* Left connector line - not shown for first step */}
+      {step > 1 && (
         <div
           className={cn(
-            'h-px w-full absolute top-1/2 left-20 z-20 translate-x-0 -translate-y-4',
-            renderLine(1) ? 'bg-primary' : 'bg-default-500'
+            'h-px w-20 absolute top-1/2 left-0 z-10 -translate-x-0.5 -translate-y-4',
+            classNames?.connector || '',
+            isComplete ? 'bg-primary' : 'bg-default-500'
           )}
         />
-        <Text variant={'bodySmall'}>Database Connection</Text>
-      </div>
-      {/* step two */}
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <div
-          className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            renderLine(2) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Circle variant={isActive(2) ? 'active' : 'inactive'} isComplete={isComplete(2)} />
-        <Text variant={'bodySmall'}>Table Discovery & Selection</Text>
-        <div
-          className={cn(
-            'h-px w-full absolute top-1/2 left-14 z-20 translate-x-0 -translate-y-4',
-            renderLine(2) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-      </div>
+      )}
 
-      <div className="flex items-center flex-col gap-y-2 relative">
-        <div
-          className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            renderLine(3) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-        <Circle variant={isActive(3) ? 'active' : 'inactive'} isComplete={isComplete(3)} />
-        <Text variant={'bodySmall'}>Metadata Capture</Text>
-        <div
-          className={cn(
-            'h-px w-full absolute top-1/2 left-20 z-20 translate-x-0 -translate-y-4',
-            renderLine(3) ? 'bg-primary' : 'bg-default-500'
-          )}
-        />
-      </div>
+      <Circle variant={isActive ? 'active' : 'inactive'} isComplete={isComplete} />
 
-      <div className="flex items-center flex-col gap-y-2 relative">
+      <Text variant="bodySmall">{label}</Text>
+
+      {/* Right connector line - not shown for last step */}
+      {!isLast && (
         <div
           className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 translate-x-0 -translate-y-4',
-            renderLine(4) ? 'bg-primary' : 'bg-default-500'
+            'h-px w-full absolute top-1/2 left-1/2 z-20 -translate-y-4',
+            classNames?.connector || '',
+            isActive ? 'bg-primary' : 'bg-default-500'
           )}
         />
-        <Circle variant={isActive(4) ? 'active' : 'inactive'} isComplete={isComplete(4)} />
-        <Text variant={'bodySmall'}>Relationship Confirmation</Text>
-      </div>
+      )}
+    </div>
+  );
+};
+
+interface ProgressStepProps {
+  /**
+   * Array of step labels in order
+   */
+  steps: string[];
+  /**
+   * Current active step (1-based index)
+   */
+  currentStep: number;
+  /**
+   * Additional class name for the container
+   */
+  className?: string;
+  /**
+   * Additional class names for each step
+   */
+  stepClassNames?: IStepClassNames;
+}
+
+const ProgressStep = ({ steps, currentStep, className, stepClassNames }: ProgressStepProps) => {
+  return (
+    <div className={cn('flex items-center gap-x-8', className)}>
+      {steps.map((label, index) => (
+        <Step
+          key={index}
+          label={label}
+          step={index + 1}
+          currentStep={currentStep}
+          isLast={index === steps.length - 1}
+          classNames={stepClassNames}
+        />
+      ))}
     </div>
   );
 };

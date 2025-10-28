@@ -20,6 +20,7 @@ const initialState = {
   currentSteps: {} as Record<string, number>, // Maps companyId to current step
   dbConnectionId: '',
   generatedMetadata: [] as IGeneratedMetadata[],
+  updateCurrentStep: {} as Record<string, number>,
 };
 
 type OnboardingState = keyof typeof initialState;
@@ -53,11 +54,19 @@ const onboardingSlice = createSlice({
         };
       }
     },
+    setUpdateCurrentSteps: (state, action: PayloadAction<Record<string, number>>) => {
+      state.updateCurrentStep = action.payload;
+    },
   },
 });
 
-export const { setCurrentSteps, setDbConnectionId, setGeneratedMetadata, updateMetadataItem } =
-  onboardingSlice.actions;
+export const {
+  setCurrentSteps,
+  setDbConnectionId,
+  setGeneratedMetadata,
+  updateMetadataItem,
+  setUpdateCurrentSteps,
+} = onboardingSlice.actions;
 
 const persistedOnboardingReducer = persistReducer(persistConfig, onboardingSlice.reducer);
 
