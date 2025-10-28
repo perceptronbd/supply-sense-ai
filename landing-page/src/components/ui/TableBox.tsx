@@ -84,7 +84,8 @@ const TableBox = () => {
               variant="flat"
               size="lg"
               classNames={{
-                input: 'placeholder:text-content3 placeholder:text-sm',
+                input:
+                  'placeholder:text-content3 placeholder:text-sm focus:outline-none focus:ring-0',
                 inputWrapper: 'bg-content1 py-5 card-blur-effect-alt',
               }}
             />

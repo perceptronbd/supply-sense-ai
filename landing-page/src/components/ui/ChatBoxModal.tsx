@@ -204,7 +204,8 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   variant="flat"
                   size="lg"
                   classNames={{
-                    input: 'border-none placeholder:text-content4 placeholder:text-sm w-[90%]',
+                    input:
+                      'border-none placeholder:text-content4 placeholder:text-sm w-[90%] focus:outline-none focus:ring-0',
                     inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
                   }}
                 />
