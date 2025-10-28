@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   UsePipes,
@@ -14,11 +15,10 @@ import {
 import { ConnectionsService } from '../connections/connections.service';
 import { SaveDbConnectionDto } from './dto/db-connect.dto';
 import type { BatchSaveMetadataDto, CaptureMetadataDto } from './dto/metadata.dto';
-import { GetSchemaDto } from './dto/schema.dto';
 import type { UpsertRelationshipsDto } from './dto/table-relationship.dto';
+import type { UpdateConnectionsDto } from './dto/update-connections.dto';
 import { MetadataService } from './services/metadata.service';
 import { OnboardingService } from './services/onboarding.service';
-import { SchemaBuilderService } from './services/schema-builder.service';
 
 @Controller('onboarding')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -27,8 +27,6 @@ export class OnboardingController {
     @Inject(OnboardingService)
     private readonly onboardingService: OnboardingService,
     @Inject(MetadataService) private readonly metadataService: MetadataService,
-    @Inject(SchemaBuilderService)
-    private readonly schemaBuilderService: SchemaBuilderService,
     @Inject(ConnectionsService)
     private readonly connectionsService: ConnectionsService
   ) {}
@@ -91,22 +89,21 @@ export class OnboardingController {
     });
   }
 
-  /**
-   * Get the cached schema for a company's database connection
-   * If the cache is expired (24h), it will rebuild the schema
-   */
-  @Get('/:companyId/:dbConnectionId/schema')
+  @Patch('/update-business-context/:dbConnectionId')
   @HttpCode(HttpStatus.OK)
-  async getSchema(@Param() params: GetSchemaDto) {
-    return await this.schemaBuilderService.getSchema(params.companyId, params.dbConnectionId);
-  }
+  async updateBusinessContext(
+    @Param('dbConnectionId') dbConnectionId: string,
+    @Body() dto: UpdateConnectionsDto
+  ) {
+    // Update business context
+    await this.onboardingService.updateBusinessContext(dbConnectionId, dto);
+    // Capture metadata
+    const metadata = await this.metadataService.captureMetadata({
+      companyId: dto.companyId,
+      dbConnectionId,
+      tables: dto.tables,
+    });
 
-  @Get('/:companyId/:dbConnectionId/schema/build')
-  @HttpCode(HttpStatus.OK)
-  async buildSchema(@Param() params: GetSchemaDto) {
-    return await this.schemaBuilderService.buildAndCacheSchema(
-      params.companyId,
-      params.dbConnectionId
-    );
+    return metadata;
   }
 }

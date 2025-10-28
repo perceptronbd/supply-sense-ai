@@ -23,6 +23,18 @@ export class ConnectionsService {
     }
   }
 
+  dbConnectionSelect = {
+    id: true,
+    host: true,
+    port: true,
+    database: true,
+    username: true,
+    encryptedPassword: true,
+    sslEnabled: true,
+    title: true,
+    businessContext: true,
+  };
+
   /**
    * Save database connection with full validation and error handling
    */
@@ -161,23 +173,13 @@ export class ConnectionsService {
    * Retrieve all database connections for a company
    * Decrypts passwords for each connection before returning
    */
-  async getDbConnections(
+  async getDbConnectionsByCompanyId(
     companyId: string
   ): Promise<Array<DbCredentials & { id: string; title?: string; businessContext?: string }>> {
     try {
       const connections = await this.prisma.dbConnection.findMany({
         where: { companyId },
-        select: {
-          id: true,
-          host: true,
-          port: true,
-          database: true,
-          username: true,
-          encryptedPassword: true,
-          sslEnabled: true,
-          title: true,
-          businessContext: true,
-        },
+        select: this.dbConnectionSelect,
       });
 
       // Map and decrypt password for each connection
@@ -192,6 +194,13 @@ export class ConnectionsService {
       console.error('Failed to retrieve database connections:', error);
       throw new Error('Failed to retrieve database connections');
     }
+  }
+
+  async getDbConnection(dbConnectionId: string) {
+    return await this.prisma.dbConnection.findUnique({
+      where: { id: dbConnectionId },
+      select: this.dbConnectionSelect,
+    });
   }
 
   /**

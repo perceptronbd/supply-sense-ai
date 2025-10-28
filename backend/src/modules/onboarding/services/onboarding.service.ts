@@ -5,6 +5,7 @@ import { closeAllConnections, withDbConnection } from '@supplysense/utils/server
 import { ConnectionsService } from '../../connections/connections.service';
 import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
+import type { UpdateConnectionsDto } from '../dto/update-connections.dto';
 import { SchemaBuilderService } from './schema-builder.service';
 
 @Injectable()
@@ -26,7 +27,7 @@ export class OnboardingService {
    */
 
   async getTables(companyId: string, dbConnectionId?: string) {
-    const connections = await this.connectionsService.getDbConnections(companyId);
+    const connections = await this.connectionsService.getDbConnectionsByCompanyId(companyId);
 
     if (connections.length === 0) {
       throw new Error('No database connections found for this company');
@@ -249,6 +250,28 @@ export class OnboardingService {
       this.logger.error('Failed to save table relationships:', error);
       throw new Error(`Failed to save table relationships: ${error.message}`);
     }
+  }
+
+  async updateBusinessContext(dbConnectionId: string, dto: UpdateConnectionsDto) {
+    const dbConnection = await this.connectionsService.getDbConnection(dbConnectionId);
+    if (!dbConnection) {
+      throw new Error('Database connection not found');
+    }
+
+    await this.prisma.dbConnection.update({
+      where: {
+        id: dbConnectionId,
+      },
+      data: {
+        businessContext: dto.businessContext,
+        title: dto.title,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Database connection updated successfully',
+    };
   }
 
   /**
