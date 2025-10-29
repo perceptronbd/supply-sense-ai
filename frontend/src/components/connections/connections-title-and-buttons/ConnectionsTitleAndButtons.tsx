@@ -64,49 +64,52 @@ export const ConnectionsTitleAndButtons = ({
 }: ConnectionsTitleAndButtonsProps) => {
   return (
     <div className="space-y-8">
-      {/* Page Title */}
-      <div>
-        <Text variant="headerSmall" weight="semiBold">
-          {title}
-        </Text>
-        {description && (
-          <Text variant="bodyMedium" color="secondary" className="mt-1">
-            {description}
+      {/* Header with Title and Buttons */}
+      <div className="flex flex-col gap-8 items-center text-center md:flex-row md:items-start md:justify-between md:text-left lg:flex-col lg:gap-8 lg:items-start lg:text-left">
+        {/* Page Title */}
+        <div>
+          <Text variant="headerSmall" weight="semiBold">
+            {title}
           </Text>
-        )}
-      </div>
-
-      {/* Buttons */}
-      {(onPrimaryAction || onSecondaryAction) && (
-        <div className="flex gap-4">
-          {onPrimaryAction && (
-            <Button
-              variant="flat"
-              color="primary"
-              type="submit"
-              onPress={onPrimaryAction}
-              isLoading={isLoadingPrimary || isSubmitting}
-              isDisabled={isDisabled || isSubmitting}
-            >
-              {primaryActionText}
-            </Button>
-          )}
-          {onSecondaryAction && (
-            <Button
-              variant="flat"
-              color="secondary"
-              onPress={onSecondaryAction}
-              endContent={
-                showChevronOnSecondary ? <Icons.ChevronRight className="size-5" /> : undefined
-              }
-              isDisabled={isDisabled || isSubmitting}
-              isLoading={isLoadingSecondary}
-            >
-              {secondaryActionText}
-            </Button>
+          {description && (
+            <Text variant="bodyMedium" color="secondary" className="mt-1">
+              {description}
+            </Text>
           )}
         </div>
-      )}
+
+        {/* Buttons */}
+        {(onPrimaryAction || onSecondaryAction) && (
+          <div className="flex gap-4 md:flex-shrink-0">
+            {onPrimaryAction && (
+              <Button
+                variant="flat"
+                color="primary"
+                type="submit"
+                onPress={onPrimaryAction}
+                isLoading={isLoadingPrimary || isSubmitting}
+                isDisabled={isSubmitting}
+              >
+                {primaryActionText}
+              </Button>
+            )}
+            {onSecondaryAction && (
+              <Button
+                variant="flat"
+                color="secondary"
+                onPress={onSecondaryAction}
+                endContent={
+                  showChevronOnSecondary ? <Icons.ChevronRight className="size-5" /> : undefined
+                }
+                isDisabled={isDisabled || isSubmitting}
+                isLoading={isLoadingSecondary}
+              >
+                {secondaryActionText}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

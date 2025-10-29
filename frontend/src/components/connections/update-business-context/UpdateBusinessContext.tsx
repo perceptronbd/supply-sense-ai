@@ -37,6 +37,7 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
   const [values, setValues] = useState<SharedSelection>(new Set() as SharedSelection);
   // Store selected table objects
   const [selectedTables, setSelectedTables] = useState<ITableDiscoverySelection['tables']>([]);
+  const { generatedMetadata } = useOnboardingStore();
 
   // Form setup
   const {
@@ -187,7 +188,10 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
     );
   };
 
-  const isButtonDisabled = isLoading || isSubmitting || isUpdatingBusinessContext;
+  console.log('generatedMetadata.length', generatedMetadata.length);
+
+  const isButtonDisabled =
+    isLoading || isSubmitting || isUpdatingBusinessContext || generatedMetadata.length === 0;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

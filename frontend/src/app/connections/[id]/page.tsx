@@ -54,7 +54,7 @@ export default function Page({ params }: Readonly<PageProps>) {
           {updateCurrentStep === 3 && <UpdateTableRelationships dbConnectionId={dbConnectionId} />}
 
           {/* Footer Progress Indicator */}
-          <div className=" max-lg:mt-16  lg:fixed bottom-10">
+          <div className=" mt-20 max-lg:mt-16  lg:fixed bottom-10">
             <ProgressStep
               currentStep={updateCurrentStep}
               steps={['Business Context', 'Tables Selection', 'Tables Relations']}
