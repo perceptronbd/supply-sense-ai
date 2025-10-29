@@ -1,7 +1,7 @@
 import MetaDataAccordionList from '@/components/onboarding/metadata-capture/MetaDataAccordionList';
 import { useBatchSaveMetadata } from '@/hooks/useBatchSaveMetadata';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
-import { ConnectionsTitleAndButtons } from '../../connections-title-and-buttons/ConnectionsTitleAndButtons';
+import { ConnectionsTitleAndButtons } from '../connections-title-and-buttons/ConnectionsTitleAndButtons';
 
 interface IProps {
   dbConnectionId: string;

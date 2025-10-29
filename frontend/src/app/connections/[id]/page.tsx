@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import UpdateBusinessContext from '@/components/connections/update-business-context/UpdateBusinessContext';
-import UpdateTableSelections from '@/components/connections/update-business-context/update-table-selections/UpdateTableSelections';
+import UpdateTableRelationships from '@/components/connections/update-table-relationships/UpdateTableRelationships';
+import UpdateTableSelections from '@/components/connections/update-table-selections/UpdateTableSelections';
 import { ProgressStep } from '@/components/onboarding';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { Icons } from '@/lib/icons/Icons';
@@ -50,6 +51,7 @@ export default function Page({ params }: Readonly<PageProps>) {
             <UpdateBusinessContext companyId={companyId} dbConnectionId={dbConnectionId} />
           )}
           {updateCurrentStep === 2 && <UpdateTableSelections dbConnectionId={dbConnectionId} />}
+          {updateCurrentStep === 3 && <UpdateTableRelationships dbConnectionId={dbConnectionId} />}
 
           {/* Footer Progress Indicator */}
           <div className=" max-lg:mt-16  lg:fixed bottom-10">
