@@ -91,11 +91,11 @@ const Banner = () => {
       </div>
 
       {/* Chat Modal */}
-      <ChatBoxModal
+      {/* <ChatBoxModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onOpenChange={setIsModalOpen}
-      />
+      /> */}
     </SectionWrapper>
   );
 };
