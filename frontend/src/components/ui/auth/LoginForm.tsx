@@ -1,6 +1,6 @@
+import { Button } from '@heroui/react';
 import Link from 'next/link';
 import { LoginFormData, loginSchema } from '@/app/login/page';
-import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
@@ -100,7 +100,7 @@ export const LoginForm = ({
           radius="md"
           disabled={isLoading}
         >
-          {isLoading ? 'Signing in...' : 'Submit'}
+          Submit
         </Button>
       </form>
 
