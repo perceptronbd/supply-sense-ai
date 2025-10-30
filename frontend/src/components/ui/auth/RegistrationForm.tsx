@@ -1,6 +1,5 @@
-import { Card, CardBody } from '@heroui/react';
+import { Button, Card, CardBody } from '@heroui/react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
@@ -216,7 +215,7 @@ export function RegistrationForm({
           {/* Submit Button */}
           <footer className="flex justify-center">
             <Button type="submit" size="md" color="primary" isLoading={isLoading} className="w-4/5">
-              {isLoading ? 'Creating Account...' : 'Submit'}
+              Submit{' '}
             </Button>
           </footer>
 
