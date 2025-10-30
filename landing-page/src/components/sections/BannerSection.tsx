@@ -17,6 +17,12 @@ const Banner = () => {
     setMessage('');
   };
 
+  //navigate to login page
+  const handleInputClick = () => {
+    const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
+    window.open(loginUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <SectionWrapper>
       <h1 className="font-brand text-4xl lg:text-6xl font-medium lg:font-bold lg:text-foreground text-secondary text-center mx-auto">
@@ -61,7 +67,8 @@ const Banner = () => {
 
             <form onSubmit={handleSubmit} className="relative">
               <Input
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleInputClick}
+                // onClick={() => setIsModalOpen(true)}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask anything about your business"
