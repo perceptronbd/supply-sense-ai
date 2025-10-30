@@ -7,6 +7,7 @@ interface IStepClassNames {
   connector?: string;
   circle?: string;
   text?: string;
+  lastConnector?: string;
 }
 interface StepProps {
   label: string;
@@ -43,6 +44,7 @@ const Step = ({ label, step, currentStep, isLast, classNames }: StepProps) => {
           className={cn(
             'h-px w-full absolute top-1/2 left-1/2 z-20 -translate-y-4',
             classNames?.connector || '',
+            classNames?.lastConnector || '',
             isActive ? 'bg-primary' : 'bg-default-500'
           )}
         />

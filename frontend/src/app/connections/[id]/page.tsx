@@ -59,7 +59,8 @@ export default function Page({ params }: Readonly<PageProps>) {
               currentStep={updateCurrentStep}
               steps={['Business Context', 'Tables Selection', 'Tables Relations']}
               stepClassNames={{
-                connector: 'first:w-16',
+                connector: 'first:w-16  ',
+                lastConnector: 'left-[65%]',
               }}
               className="justify-center"
             />
