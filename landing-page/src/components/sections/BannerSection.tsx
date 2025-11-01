@@ -97,6 +97,7 @@ const Banner = () => {
         </Card>
       </div>
 
+      {/* NOTE: disabled this feature for now */}
       {/* Chat Modal */}
       {/* <ChatBoxModal
         isOpen={isModalOpen}
