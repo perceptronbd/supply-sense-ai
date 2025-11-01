@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation';
 import type { DatabaseConnection } from 'types/db-connection.type';
 import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { Icons } from '@/lib/icons/Icons';
 import { DatabaseConnectionsMobile } from '../connections/mobileView/DatabaseConnectionsMobile';
 
@@ -35,9 +34,6 @@ const columns = [
 export function DatabaseConnections() {
   const router = useRouter();
   const { databaseConnections, isLoadingConnections, connectionsError } = useDatabaseConnections();
-
-  // track current viewport
-  const isMobile = useIsMobile();
 
   const renderCell = (connection: DatabaseConnection, columnKey: React.Key) => {
     const key = columnKey as string;
@@ -212,13 +208,13 @@ export function DatabaseConnections() {
         </div>
 
         {/* mobile view */}
-        {isMobile && (
+        <section className="md:hidden">
           <DatabaseConnectionsMobile
             databaseConnections={databaseConnections}
             isLoadingConnections={isLoadingConnections}
             connectionsError={connectionsError}
           />
-        )}
+        </section>
       </div>
     </main>
   );
