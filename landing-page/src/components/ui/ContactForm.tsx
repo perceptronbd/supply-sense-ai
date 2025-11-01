@@ -53,7 +53,7 @@ export default function ContactForm() {
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
-                    input: 'placeholder:text-default-500',
+                    input: 'placeholder:text-default-500 focus:outline-none focus:ring-0',
                     label: 'text-primary text-sm',
                   }}
                 />
@@ -86,7 +86,7 @@ export default function ContactForm() {
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
-                    input: 'placeholder:text-default-500',
+                    input: 'placeholder:text-default-500 focus:outline-none focus:ring-0',
                     label: 'text-primary text-sm',
                   }}
                 />
@@ -110,7 +110,7 @@ export default function ContactForm() {
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
-                    input: 'placeholder:text-default-500',
+                    input: 'placeholder:text-default-500 focus:outline-none focus:ring-0',
                     label: 'text-primary text-sm',
                   }}
                 />
@@ -143,7 +143,7 @@ export default function ContactForm() {
                   classNames={{
                     base: 'w-full',
                     inputWrapper: 'bg-default-100 border-2 border-default-200',
-                    input: 'placeholder:text-default-500',
+                    input: 'placeholder:text-default-500 focus:outline-none focus:ring-0',
                     label: 'text-primary text-sm',
                   }}
                 />

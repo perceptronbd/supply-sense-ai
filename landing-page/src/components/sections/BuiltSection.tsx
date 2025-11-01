@@ -16,7 +16,10 @@ const BuiltSection = () => {
 
   return (
     <SectionWrapper size="large">
-      <div className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background">
+      <div
+        ref={ref}
+        className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background"
+      >
         {/* first column - chat box  */}
         <div className="w-full max-w-lg mx-auto">
           {/* First table  */}
