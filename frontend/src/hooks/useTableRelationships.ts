@@ -68,6 +68,9 @@ export const useTableRelationships = ({
   // State to track if an upsert operation is in progress
   const [isUpserting, setIsUpserting] = useState(false);
 
+  // RTK Query mutation hook for upserting table relationships
+  const [upsertTableRelationships] = useUpsertTableRelationshipsMutation();
+
   /**
    * Fetch table relationships for the current company and database connection
    * Uses RTK Query's auto-generated hook for data fetching
@@ -197,10 +200,8 @@ export const useTableRelationships = ({
         setIsUpserting(false);
       }
     },
-    [relationTables, companyId, dbConnectionId, userId]
+    [relationTables, companyId, dbConnectionId, userId, upsertTableRelationships]
   );
-
-  const [upsertTableRelationships] = useUpsertTableRelationshipsMutation();
 
   /**
    * Effect to initialize the relationship state when the table data is loaded

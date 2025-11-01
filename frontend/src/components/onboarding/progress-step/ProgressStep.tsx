@@ -77,7 +77,7 @@ const ProgressStep = ({ steps, currentStep, className, stepClassNames }: Progres
     <div className={cn('flex items-center gap-x-8', className)}>
       {steps.map((label, index) => (
         <Step
-          key={index}
+          key={label}
           label={label}
           step={index + 1}
           currentStep={currentStep}
