@@ -49,7 +49,7 @@ export class ConnectionsController {
     }
 
     // Get connections without sensitive information
-    const connections = await this.connectionsService.getDbConnections(companyId);
+    const connections = await this.connectionsService.getDbConnectionsByCompanyId(companyId);
     // Return connections without password for security
     return connections.map((conn) => ({
       id: conn.id,
