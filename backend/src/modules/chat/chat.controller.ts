@@ -18,15 +18,22 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
+import type { PublicChatMessageDto } from './dto/public-chat.dto';
 import { MultiWindowRateLimitGuard } from './guards/multi-window-rate-limiting.guard';
 import { ChatService } from './services/chat.service';
+import { PublicChatService } from './services/public-chat.service';
+
+export const PUBLIC_COMPANY_ID = '5e5dd669-59de-4d9a-b61c-c8b85718a3fc';
 
 @ApiTags('chat')
 @Controller('chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(@Inject(ChatService) private readonly chatService: ChatService) {
+  constructor(
+    @Inject(ChatService) private readonly chatService: ChatService,
+    @Inject(PublicChatService) private readonly publicChatService: PublicChatService
+  ) {
     this.logger.log('ChatController constructor - explicit injection');
   }
 
@@ -150,5 +157,25 @@ export class ChatController {
       },
       dbConnectionId: '',
     });
+  }
+
+  @Post('public/message')
+  @ApiOperation({ summary: 'Send a public chat message (no authentication required)' })
+  @ApiResponse({ status: 200, description: 'Message processed successfully' })
+  async sendPublicMessage(@Body() publicMessageDto: PublicChatMessageDto, @Res() res: Response) {
+    try {
+      const response = await this.publicChatService.processPublicMessage(publicMessageDto.query);
+
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        data: response,
+      });
+    } catch (error) {
+      this.logger.error('Error in public chat:', error);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Failed to process message',
+      });
+    }
   }
 }
