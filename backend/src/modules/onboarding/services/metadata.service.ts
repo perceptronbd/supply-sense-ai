@@ -232,12 +232,21 @@ export class MetadataService {
         const batch = validatedMetadata.slice(i, i + BATCH_SIZE);
         const batchResults = await this.prisma.$transaction(
           batch.map((metadata) =>
-            this.prisma.tableMetadata.create({
-              data: {
+            this.prisma.tableMetadata.upsert({
+              where: {
+                unique_table_metadata: {
+                  dbConnectionId: data.dbConnectionId,
+                  tableName: metadata.tableName,
+                },
+              },
+              create: {
                 ...metadata,
                 dbConnection: {
                   connect: { id: data.dbConnectionId },
                 },
+              },
+              update: {
+                ...metadata,
               },
             })
           )

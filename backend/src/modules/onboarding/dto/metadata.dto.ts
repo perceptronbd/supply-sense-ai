@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
-class TableListDto {
+export class TableListDto {
   @IsString()
   @IsNotEmpty()
   tableName: string;
