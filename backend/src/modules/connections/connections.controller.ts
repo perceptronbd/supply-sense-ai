@@ -1,8 +1,19 @@
 import { AuthenticatedUser, CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
-import { Controller, Get, HttpStatus, Inject, Logger, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Inject,
+  Logger,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { SaveDbConnectionDto } from './connections.dto';
 import { ConnectionsService } from './connections.service';
 
 @ApiTags('connections')
@@ -60,5 +71,29 @@ export class ConnectionsController {
       username: conn.username,
       sslEnabled: conn.sslEnabled,
     }));
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new database connection' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Database connection created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        host: { type: 'string' },
+        port: { type: 'number' },
+        database: { type: 'string' },
+        username: { type: 'string' },
+        sslEnabled: { type: 'boolean' },
+      },
+    },
+  })
+  async createConnection(@Body() dto: SaveDbConnectionDto) {
+    return await this.connectionsService.saveDbConnection(dto);
   }
 }
