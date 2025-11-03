@@ -131,7 +131,7 @@ export function ChatInput({
             size="sm"
             variant="solid"
           >
-            {!isLoading && <Icons.Send className="w-4 h-4" />}
+            {!isLoading && <Icons.Send className="w-4 h-4 -rotate-45" />}
           </Button>
         </div>
       </form>
