@@ -215,7 +215,7 @@ export function RegistrationForm({
           {/* Submit Button */}
           <footer className="flex justify-center">
             <Button type="submit" size="md" color="primary" isLoading={isLoading} className="w-4/5">
-              Submit{' '}
+              Submit
             </Button>
           </footer>
 
