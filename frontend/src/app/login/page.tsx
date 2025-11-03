@@ -185,7 +185,7 @@ export default function LoginPage() {
     if (!validateForm()) {
       addToast({
         title: 'Validation Error',
-        description: 'Please fix the errors in the form before submitting.',
+        description: 'Please fill up the form properly before you click submit',
         color: 'warning',
         variant: 'flat',
       });
