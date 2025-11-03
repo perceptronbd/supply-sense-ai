@@ -8,6 +8,7 @@ import {
 } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import type { UsageRecord } from '@supplysense/prisma-client';
+import { PUBLIC_COMPANY_ID } from '@/modules/chat/chat.controller';
 
 /**
  * Interface defining parameters for token price calculation
@@ -131,6 +132,11 @@ export class TokenAndCredit {
   }
   // this will be used for chat only
   async canContinueForChat(companyId: string) {
+    // Skip credit check for public messages (public company ID)
+    if (companyId === PUBLIC_COMPANY_ID) {
+      return true;
+    }
+
     const hasAvailableCredit = await this.isAvailableChatCredit(companyId);
     if (!hasAvailableCredit) {
       this.logger.error('Insufficient credit for generating descriptions');
