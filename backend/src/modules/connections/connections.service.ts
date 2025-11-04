@@ -9,8 +9,8 @@ import {
   testConnection,
   withDbConnection,
 } from '@supplysense/utils/server';
-import type { SaveDbConnectionDto } from '../onboarding/dto/db-connect.dto';
 import type { DbCredentials, SaveConnectionResult } from '../onboarding/types/db-connection.type';
+import type { SaveDbConnectionDto } from './connections.dto';
 
 @Injectable()
 export class ConnectionsService {
