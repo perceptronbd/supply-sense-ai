@@ -96,10 +96,6 @@ export async function determineUpdateFrequency(
 
       const frequency = response.text as TMetadataUpdateFrequency;
 
-      console.debug(`Received frequency response for ${tableName}: ${frequency}`, {
-        usage: response.usage,
-      });
-
       // Validate the response
       return METADATA_UPDATE_FREQUENCIES.includes(frequency) ? frequency : 'daily';
     } catch (error) {
