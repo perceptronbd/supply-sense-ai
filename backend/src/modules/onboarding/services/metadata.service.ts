@@ -265,7 +265,7 @@ export class MetadataService {
    * @param companyId - The ID of the company to delete
    * @param dbConnectionId - The ID of the database connection to delete
    */
-  private async cleanupOnError(companyId: string, dbConnectionId: string): Promise<void> {
+  async cleanupOnError(companyId: string, dbConnectionId: string): Promise<void> {
     try {
       this.logger.log(
         `Starting cleanup for failed operation. Company ID: ${companyId}, DB Connection ID: ${dbConnectionId}`

@@ -169,14 +169,7 @@ export const useTableRelationships = ({
           companyId,
           dbConnectionId,
           // Transform the relationships into the format expected by the API
-          relationships: relationTables.map((item) => ({
-            tableName: item.tableName,
-            columnName: item.columnName,
-            refTable: item.refTable,
-            refColumn: item.refColumn,
-            description: item.description,
-            isConfirmed: item.isConfirmed,
-          })),
+          relationships: relationTables,
         };
 
         // Use the handleAsyncOperation utility for consistent error handling
@@ -218,6 +211,7 @@ export const useTableRelationships = ({
           refColumn: item.refColumn,
           description: item.description || '',
           isConfirmed: true, // Default to confirmed
+          actionVariant: 'yes', // Default to yes
         }))
       );
     }

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import {
   decryptPassword,
@@ -15,6 +15,7 @@ import type { SaveDbConnectionDto } from './connections.dto';
 @Injectable()
 export class ConnectionsService {
   private readonly encryptionKey: string;
+  private readonly logger = new Logger(ConnectionsService.name);
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
@@ -153,7 +154,7 @@ export class ConnectionsService {
       where: { companyId, id: dbConnectionId },
     });
     if (!connection) {
-      throw new Error('Database connection not found');
+      throw new BadRequestException('Database connection not found');
     }
     // Return connection details with decrypted password
     return {
@@ -226,5 +227,21 @@ export class ConnectionsService {
       }
       return data;
     });
+  }
+  async checkExistingDbConnection(dbConnectionId: string) {
+    try {
+      this.logger.log(`Checking existing connection for connection ${dbConnectionId}`);
+
+      const connection = await this.prisma.dbConnection.findUnique({
+        where: { id: dbConnectionId },
+      });
+
+      if (!connection) {
+        throw new BadRequestException('Database connection not found');
+      }
+    } catch (error) {
+      console.error('Failed to check existing connection:', error);
+      throw new Error('Failed to check existing connection');
+    }
   }
 }

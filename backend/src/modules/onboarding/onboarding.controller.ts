@@ -55,7 +55,14 @@ export class OnboardingController {
   @Post('/:companyId/capture-metadata')
   @HttpCode(HttpStatus.OK)
   async captureMetadata(@Body() dto: CaptureMetadataDto) {
-    return await this.metadataService.captureMetadata(dto);
+    try {
+      await this.onboardingService.saveSelectedTables(dto.companyId, dto);
+      return await this.metadataService.captureMetadata(dto);
+    } catch (error) {
+      console.error('Failed to capture metadata:', error);
+      await this.metadataService.cleanupOnError(dto.companyId, dto.dbConnectionId);
+      throw error;
+    }
   }
 
   @Post('/:companyId/save-metadata')
@@ -105,5 +112,14 @@ export class OnboardingController {
     });
 
     return metadata;
+  }
+
+  @Get('/selected-tables/:dbConnectionId')
+  @HttpCode(HttpStatus.OK)
+  async getSelectedTables(
+    @Param('companyId') companyId: string,
+    @Param('dbConnectionId') dbConnectionId: string
+  ) {
+    return this.onboardingService.getSelectedTables(companyId, dbConnectionId);
   }
 }

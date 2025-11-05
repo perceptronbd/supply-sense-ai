@@ -4,6 +4,7 @@ import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from '@supplysense/utils/server';
 import { ConnectionsService } from '../../connections/connections.service';
 import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
+import type { CaptureMetadataDto } from '../dto/metadata.dto';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
 import type { UpdateConnectionsDto } from '../dto/update-connections.dto';
 import { SchemaBuilderService } from './schema-builder.service';
@@ -45,6 +46,58 @@ export class OnboardingService {
     // Otherwise, use the first connection by default
     const firstConnection = connections[0];
     return this.connectionsService.getTablesForConnection(firstConnection);
+  }
+
+  /**
+   * Save selected tables for a company's database connection
+   */
+  async saveSelectedTables(companyId: string, data: CaptureMetadataDto) {
+    // Validate if the database connection exists
+    await this.connectionsService.checkExistingDbConnection(data.dbConnectionId);
+
+    // Prepare the tables data with proper formatting
+    const tablesData = data.tables.map((table) => ({
+      tableName: table.tableName,
+      displayName: table.displayName,
+    }));
+
+    // Use upsert to either create a new record or update existing one
+    return this.prisma.onboardingSelectedTable.upsert({
+      where: {
+        dbConnectionId_companyId: {
+          dbConnectionId: data.dbConnectionId,
+          companyId,
+        },
+      },
+      update: {
+        tables: tablesData,
+      },
+      create: {
+        dbConnectionId: data.dbConnectionId,
+        companyId,
+        tables: tablesData,
+      },
+    });
+  }
+
+  /**
+   * Get selected tables for a company's database connection
+   */
+  async getSelectedTables(companyId: string, dbConnectionId: string) {
+    const result = await this.prisma.onboardingSelectedTable.findUnique({
+      where: {
+        dbConnectionId_companyId: {
+          dbConnectionId,
+          companyId,
+        },
+      },
+      select: {
+        tables: true,
+      },
+    });
+
+    // Return the tables array or empty array if no record exists
+    return result?.tables || [];
   }
 
   /**

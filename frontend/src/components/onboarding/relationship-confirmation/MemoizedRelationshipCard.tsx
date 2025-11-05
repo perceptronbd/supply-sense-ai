@@ -36,6 +36,7 @@ const MemoizedRelationshipCard = memo(
             columnName: table.columnName,
             description: table.description,
             isConfirmed: value === 'yes' || value === 'confirmed',
+            actionVariant: value as TActionButtonVariants,
           });
           return;
         }
@@ -47,6 +48,7 @@ const MemoizedRelationshipCard = memo(
           columnName: table.columnName,
           description: table.description,
           isConfirmed: false,
+          actionVariant: 'no',
         });
       },
       [

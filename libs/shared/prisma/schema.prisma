@@ -17,6 +17,8 @@ datasource db {
 // CORE SYSTEM MODELS - Multi-Tenant SaaS Architecture
 // ============================================================================
 
+
+
 // Company - Top-level tenant for complete data isolation
 model Company {
   id              String  @id @default(uuid())
@@ -27,6 +29,9 @@ model Company {
   contactEmail    String  @unique
   isActive        Boolean @default(true)
   industry        String? // Added industry field
+  
+  // Relations
+  onboardingSelectedTables OnboardingSelectedTable[]
 
   // Company settings
   defaultCurrency String @default("USD")
@@ -225,6 +230,7 @@ model DbConnection {
   TableMetadata  TableMetadata[]
   SchemaCache    SchemaCache?
   sessions       Session[]
+  onboardingSelectedTables OnboardingSelectedTable[]
 
   @@unique([companyId, username], name: "unique_db_connection")
   @@index([companyId, id], name: "idx_db_connections_company_id")
@@ -239,7 +245,7 @@ model TableRelations {
   refTable    String // Referenced table name
   refColumn   String // Referenced column name
   isConfirmed Boolean @default(false) // Whether this relation has been confirmed by the user
-
+  actionVariant String? // The action button variant that was clicked (e.g., 'yes', 'no', 'maybe')
   dbConnectionId String
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
@@ -479,4 +485,21 @@ model ApiLogs {
   updatedAt   DateTime @updatedAt
 
   @@map("api_logs")
+}
+
+// Stores user-selected tables for each company and database connection
+model OnboardingSelectedTable {
+  id             String      @id @default(uuid())
+  dbConnectionId String
+  dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
+  companyId      String
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tables         Json       @default("[]") // Array of { tableName: string, displayName?: string }
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([dbConnectionId, companyId])
+  @@index([dbConnectionId])
+  @@index([companyId])
+  @@map("onboarding_selected_tables")
 }
