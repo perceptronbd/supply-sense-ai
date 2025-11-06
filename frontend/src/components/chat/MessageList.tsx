@@ -62,7 +62,7 @@ export function MessageList({
 
   return (
     <section
-      className="w-full h-full p-5 mb-20 overflow-y-auto"
+      className="w-full h-full p-5 mb-40 overflow-y-auto"
       role="log"
       aria-label="Chat messages"
     >
