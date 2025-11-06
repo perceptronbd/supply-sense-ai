@@ -130,11 +130,11 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           </header>
 
           {/* Navigation - visible even when collapsed */}
-          <nav className={cn('px-4 py-6', !expanded && 'py-4')}>
+          <nav className={cn('px-4 py-6', !expanded && 'py-0')}>
             <ul
               className={cn(
                 'space-y-1',
-                !expanded && 'flex flex-col items-center justify-center gap-4 mt-4'
+                !expanded && 'flex flex-col items-center justify-center mt-4'
               )}
             >
               {navigation.map((item) => (
