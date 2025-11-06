@@ -1,3 +1,4 @@
+import type { TActionButtonVariants } from '@supplysense/constant';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
@@ -48,6 +49,10 @@ export class TableRelationshipDto {
   @IsBoolean()
   @IsOptional()
   isConfirmed?: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  actionVariant: TActionButtonVariants;
 
   @IsString()
   @IsOptional()

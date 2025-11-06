@@ -56,7 +56,9 @@ export class OnboardingController {
   @HttpCode(HttpStatus.OK)
   async captureMetadata(@Body() dto: CaptureMetadataDto) {
     try {
+      // Save selected tables
       await this.onboardingService.saveSelectedTables(dto.companyId, dto);
+      // Capture metadata
       return await this.metadataService.captureMetadata(dto);
     } catch (error) {
       console.error('Failed to capture metadata:', error);
@@ -104,6 +106,12 @@ export class OnboardingController {
   ) {
     // Update business context
     await this.onboardingService.updateBusinessContext(dbConnectionId, dto);
+    // Save selected tables
+    await this.onboardingService.saveSelectedTables(dto.companyId, {
+      dbConnectionId,
+      companyId: dto.companyId,
+      tables: dto.tables,
+    });
     // Capture metadata
     const metadata = await this.metadataService.captureMetadata({
       companyId: dto.companyId,
@@ -114,11 +122,11 @@ export class OnboardingController {
     return metadata;
   }
 
-  @Get('/selected-tables/:dbConnectionId')
+  @Get('/selected-tables')
   @HttpCode(HttpStatus.OK)
   async getSelectedTables(
-    @Param('companyId') companyId: string,
-    @Param('dbConnectionId') dbConnectionId: string
+    @Query('companyId') companyId: string,
+    @Query('dbConnectionId') dbConnectionId: string
   ) {
     return this.onboardingService.getSelectedTables(companyId, dbConnectionId);
   }

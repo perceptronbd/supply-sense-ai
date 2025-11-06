@@ -84,6 +84,18 @@ export class OnboardingService {
    * Get selected tables for a company's database connection
    */
   async getSelectedTables(companyId: string, dbConnectionId: string) {
+    const company = await this.prisma.company.findUnique({
+      where: {
+        id: companyId,
+      },
+    });
+
+    if (!company) {
+      throw new BadRequestException('Company not found');
+    }
+
+    await this.connectionsService.checkExistingDbConnection(dbConnectionId);
+
     const result = await this.prisma.onboardingSelectedTable.findUnique({
       where: {
         dbConnectionId_companyId: {
@@ -96,8 +108,12 @@ export class OnboardingService {
       },
     });
 
+    if (!result) {
+      throw new BadRequestException('Selected tables not found for this company and connection');
+    }
+
     // Return the tables array or empty array if no record exists
-    return result?.tables || [];
+    return result.tables;
   }
 
   /**
@@ -278,6 +294,7 @@ export class OnboardingService {
               refTable: relationship.refTable,
               refColumn: relationship.refColumn,
               isConfirmed: relationship.isConfirmed || false,
+              actionVariant: relationship.actionVariant,
             },
             create: {
               dbConnectionId: data.dbConnectionId,
@@ -286,6 +303,7 @@ export class OnboardingService {
               refTable: relationship.refTable,
               refColumn: relationship.refColumn,
               isConfirmed: relationship.isConfirmed || false,
+              actionVariant: relationship.actionVariant,
             },
           })
         )

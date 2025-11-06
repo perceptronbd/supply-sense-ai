@@ -7,11 +7,13 @@ import type {
   IUpsertTableRelationshipsPayload,
   TCaptureMetadataResponse,
   TDbConnectionResponse,
+  TGetSelectedTablesResponse,
   TGetTablesResponse,
   TRelationshipTablesResponse,
 } from '@/components/onboarding/types';
 import type { IUpdateBusinessContextPayload } from '@/components/onboarding/types/update-business-context';
 import { baseApi } from './baseApi';
+import { TAG_TYPES } from './tagTypes';
 
 export const onboardingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -75,6 +77,7 @@ export const onboardingApi = baseApi.injectEndpoints({
         params: { userId },
       }),
     }),
+
     updateBusinessContext: builder.mutation<
       TCaptureMetadataResponse,
       IUpdateBusinessContextPayload
@@ -84,6 +87,16 @@ export const onboardingApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: payload,
       }),
+      invalidatesTags: [TAG_TYPES.GET_SELECTED_ONBOARDING_TABLES],
+    }),
+
+    getSelectedTables: builder.query<TGetSelectedTablesResponse, IGetTablesDto>({
+      query: ({ dbConnectionId, companyId }) => ({
+        url: `/onboarding/selected-tables`,
+        method: 'GET',
+        params: { dbConnectionId, companyId },
+      }),
+      providesTags: [TAG_TYPES.GET_SELECTED_ONBOARDING_TABLES],
     }),
   }),
   overrideExisting: false,
@@ -98,4 +111,5 @@ export const {
   useUpsertTableRelationshipsMutation,
   useGetSampleQuestionsQuery,
   useUpdateBusinessContextMutation,
+  useGetSelectedTablesQuery,
 } = onboardingApi;

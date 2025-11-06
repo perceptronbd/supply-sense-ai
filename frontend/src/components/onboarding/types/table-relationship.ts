@@ -1,5 +1,5 @@
+import type { TActionButtonVariants } from '@supplysense/constant';
 import type { ApiResponse } from '@supplysense/types';
-import type { TActionButtonVariants } from '../relationship-confirmation/ActionButton';
 
 export interface IRelationshipTables {
   tableName: string;
