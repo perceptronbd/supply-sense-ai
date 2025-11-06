@@ -3,13 +3,13 @@
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { useState } from 'react';
 import { Icons } from '../icons';
-import ChatBoxModal from '../ui/ChatBoxModal';
 import { FullLogo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
   const [message, setMessage] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  //WARN: Unused hook
+  const [_isModalOpen, _setIsModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,19 +25,19 @@ const Banner = () => {
 
   return (
     <SectionWrapper>
-      <h1 className="font-brand text-4xl lg:text-6xl font-medium lg:font-bold lg:text-foreground text-secondary text-center mx-auto">
+      <h1 className="mx-auto text-4xl font-medium text-center font-brand lg:text-6xl lg:font-bold lg:text-foreground text-secondary">
         <span className="text-primary">Know </span>Your Operations.
         <br /> <span className="text-primary">Ask </span> Anything. <br />
         <span className="text-primary">Get </span>
         Instant Answers
       </h1>
-      <p className="mt-4 mx-auto text-center text-content2-foreground px-6">
+      <p className="px-6 mx-auto mt-4 text-center text-content2-foreground">
         Stop searching. Start asking. Real-time answers from your integrated systems.
       </p>
 
-      <div className="flex flex-col justify-center items-center">
+      <div className="flex flex-col items-center justify-center">
         <Button
-          className="mt-10 mb-3 mx-auto"
+          className="mx-auto mt-10 mb-3"
           variant="solid"
           color="primary"
           radius="md"
@@ -46,7 +46,7 @@ const Banner = () => {
         >
           Try For Free
         </Button>
-        <p className="italic text-sm bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-secondary-700 to-secondary-400 text-center mb-20">
+        <p className="mb-20 text-sm italic text-center text-transparent bg-clip-text bg-gradient-to-r from-secondary-400 via-secondary-700 to-secondary-400">
           Only limited time - No credit cards required
         </p>
       </div>
@@ -59,10 +59,10 @@ const Banner = () => {
           }}
           className="card-blur-effect tilted-cylinder-glow"
         >
-          <CardHeader className="flex justify-between items-center px-6 py-4 relative">
+          <CardHeader className="relative flex items-center justify-between px-6 py-4">
             <FullLogo className="w-40 text-default" />
           </CardHeader>
-          <CardBody className="px-6 pb-6 relative z-10">
+          <CardBody className="relative z-10 px-6 pb-6">
             {/* Glow effect - positioned inside the card header */}
 
             <form onSubmit={handleSubmit} className="relative">
@@ -88,7 +88,7 @@ const Banner = () => {
                 color="primary"
                 variant="light"
                 size="sm"
-                className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
+                className="absolute w-10 h-10 mr-2 -translate-y-1/2 right-2 top-1/2"
               >
                 <Icons.SendIcon className="w-7 h-7" />
               </Button>

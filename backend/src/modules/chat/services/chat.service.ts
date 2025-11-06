@@ -1,13 +1,14 @@
-import { RuntimeContext } from '@mastra/core/runtime-context';
 import type { MastraModelOutput } from '@mastra/core/stream';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import type { IChatFormattedResult } from '@supplysense/types';
+import { createRuntimeContext } from '@supplysense/utils/server';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { MessageType } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
+import { extractWorkflowResult } from '../utils/chat-utils';
 import { MessageService } from './message.service';
 import { SessionService } from './session.service';
 
@@ -22,17 +23,6 @@ interface IProcessUserMessage {
 
 type AgentGenerateResult = Awaited<ReturnType<MastraModelOutput['getFullOutput']>>;
 
-type AgentToolResultPayload = AgentGenerateResult['toolResults'][number]['payload'];
-
-const VALID_VISUALIZATION_TYPES = new Set<IChatFormattedResult['visualizationType']>([
-  'table',
-  'bar',
-  'line',
-  'area',
-  'radar',
-  'text',
-]);
-
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -44,7 +34,7 @@ export class ChatService {
     private readonly mcpClientService: McpClientService,
     @Inject(PrismaService)
     private readonly prismaService: PrismaService,
-    @Inject(TokenAndCredit)
+    @Inject(forwardRef(() => TokenAndCredit))
     private readonly tokenAndCredit: TokenAndCredit
   ) {
     this.logger.log('ChatService constructor called - using MCP for all AI queries');
@@ -89,7 +79,7 @@ export class ChatService {
       this.logger.log('userId:', userId);
       this.logger.log('Agent:', agent);
 
-      const runtimeContext = this.createRuntimeContext(dbConnectionId);
+      const runtimeContext = createRuntimeContext({ dbConnectionId });
 
       const aiResponse = (await agent.generate(
         [
@@ -106,7 +96,7 @@ export class ChatService {
           runtimeContext,
         }
       )) as AgentGenerateResult;
-      const workflowResult = this.extractWorkflowResult(aiResponse);
+      const workflowResult = extractWorkflowResult(aiResponse);
 
       await this.recordTokenUsage({
         usage: aiResponse.totalUsage,
@@ -189,96 +179,6 @@ export class ChatService {
         `Database connection not found for company ${companyId}: ${dbConnectionId}`
       );
     }
-  }
-
-  private createRuntimeContext(dbConnectionId: string) {
-    const runtimeContext = new RuntimeContext<{ dbConnectionId: string }>();
-    runtimeContext.set('dbConnectionId', dbConnectionId);
-    return runtimeContext;
-  }
-
-  private extractWorkflowResult(aiResponse: AgentGenerateResult): IChatFormattedResult {
-    const defaultResult: IChatFormattedResult = {
-      visualizationType: 'text',
-      formattedData: null,
-      summary: aiResponse.text,
-    };
-
-    const workflowToolPayload = this.getWorkflowToolPayload(aiResponse);
-    const nestedResults = this.getWorkflowNestedResults(workflowToolPayload);
-
-    if (!nestedResults) {
-      return defaultResult;
-    }
-
-    const conversational = nestedResults['conversational-response'];
-    if (this.isChatFormattedResult(conversational)) {
-      return conversational;
-    }
-
-    const analytical = nestedResults['analytical-sub-workflow'];
-    if (this.isChatFormattedResult(analytical)) {
-      return analytical;
-    }
-
-    const reversedEntries = [...Object.entries(nestedResults)].reverse();
-    for (const [, value] of reversedEntries) {
-      if (this.isChatFormattedResult(value)) {
-        return value;
-      }
-    }
-
-    return defaultResult;
-  }
-
-  private getWorkflowToolPayload(
-    aiResponse: AgentGenerateResult
-  ): AgentToolResultPayload | undefined {
-    return aiResponse.toolResults.find(
-      (toolResult) => toolResult.payload.toolName === 'chatWorkflow'
-    )?.payload;
-  }
-
-  private getWorkflowNestedResults(
-    payload: AgentToolResultPayload | undefined
-  ): Record<string, unknown> | undefined {
-    if (!payload) {
-      return undefined;
-    }
-
-    const { result } = payload;
-    if (!result || typeof result !== 'object' || Array.isArray(result)) {
-      return undefined;
-    }
-
-    if ('result' in result) {
-      const nestedResult = (result as { result?: unknown }).result;
-      if (nestedResult && typeof nestedResult === 'object' && !Array.isArray(nestedResult)) {
-        return nestedResult as Record<string, unknown>;
-      }
-    }
-
-    return undefined;
-  }
-
-  private isChatFormattedResult(value: unknown): value is IChatFormattedResult {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return false;
-    }
-
-    const candidate = value as Partial<IChatFormattedResult>;
-
-    const { visualizationType, formattedData, summary } = candidate;
-
-    if (!visualizationType || !VALID_VISUALIZATION_TYPES.has(visualizationType)) {
-      return false;
-    }
-
-    if (formattedData !== null && !Array.isArray(formattedData)) {
-      return false;
-    }
-
-    return typeof summary === 'string';
   }
 
   private async recordTokenUsage({

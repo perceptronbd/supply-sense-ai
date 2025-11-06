@@ -37,6 +37,7 @@
     "db:seed": "cd libs/shared/prisma && npx tsx src/lib/seeds/index.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "lint:fix:unsafe": "biome check --write --unsafe",
     "format": "biome format --write .",
     "format:check": "biome format ."
   },

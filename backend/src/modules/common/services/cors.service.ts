@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Response } from 'express';
 
 @Injectable()
 export class CorsService implements OnModuleInit {
@@ -92,7 +93,7 @@ export class CorsService implements OnModuleInit {
    * Get the allowed origin for CORS headers (specific origin or undefined)
    */
   getAllowedOrigin(origin: string | undefined): string | undefined {
-    return this.isOriginAllowed(origin) ? this.normalizeOrigin(origin!) : undefined;
+    return this.isOriginAllowed(origin) ? this.normalizeOrigin(origin) : undefined;
   }
 
   /**
@@ -105,7 +106,7 @@ export class CorsService implements OnModuleInit {
   /**
    * Handle CORS headers for a response
    */
-  setCorsHeaders(res: any, origin: string | undefined): void {
+  setCorsHeaders(res: Response, origin: string | undefined): void {
     const allowedOrigin = this.getAllowedOrigin(origin);
 
     if (allowedOrigin) {
@@ -120,7 +121,7 @@ export class CorsService implements OnModuleInit {
    * Handle OPTIONS preflight request
    */
   handleOptionsPreflight(
-    res: any,
+    res: Response,
     origin: string | undefined,
     methods: string[] = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   ): void {

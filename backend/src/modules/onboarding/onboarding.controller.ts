@@ -12,8 +12,8 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import type { SaveDbConnectionDto } from '../connections/connections.dto';
 import { ConnectionsService } from '../connections/connections.service';
-import { SaveDbConnectionDto } from './dto/db-connect.dto';
 import type { BatchSaveMetadataDto, CaptureMetadataDto } from './dto/metadata.dto';
 import type { UpsertRelationshipsDto } from './dto/table-relationship.dto';
 import type { UpdateConnectionsDto } from './dto/update-connections.dto';

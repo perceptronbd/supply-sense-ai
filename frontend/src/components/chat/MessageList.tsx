@@ -24,22 +24,34 @@ export function MessageList({
   if (!sessionId) {
     return (
       <section
-        className="md:flex justify-center items-center mt-8 md:mt-12"
+        className="items-center justify-center mt-8 md:flex md:mt-12"
         aria-label="Chat welcome message"
       >
-        <div className="px-8 w-full text-center">
+        <div className="w-full px-8 text-center">
           {/* Personalized Greeting */}
           <header className="mb-12">
             <Text variant="display" color="default" weight="bold" className="mb-4" as="h1">
               Hi,{' '}
-              <Text variant="display" color="secondary" weight="bold" className="mb-4" as="span">
+              <Text
+                variant="display"
+                color="secondary"
+                weight="bold"
+                className="mb-4 -tracking-tighter"
+                as="span"
+              >
                 {' '}
                 {user?.firstName && user.lastName
                   ? `${user?.firstName}  ${user?.lastName}`
                   : 'there'}
               </Text>
             </Text>
-            <Text variant="headerMedium" color="default" weight="bold" className="mb-6" as="h2">
+            <Text
+              variant="headerMedium"
+              color="default"
+              weight="bold"
+              className="mb-6 -tracking-tighter"
+              as="h2"
+            >
               What can I help you with?
             </Text>
           </header>
@@ -50,11 +62,11 @@ export function MessageList({
 
   return (
     <section
-      className="overflow-y-auto p-5 mb-20  w-full h-full"
+      className="w-full h-full p-5 mb-20 overflow-y-auto"
       role="log"
       aria-label="Chat messages"
     >
-      <div className="mx-auto max-w-4xl">
+      <div className="max-w-4xl mx-auto">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
         ))}

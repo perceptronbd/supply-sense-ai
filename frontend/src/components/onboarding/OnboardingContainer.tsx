@@ -26,7 +26,20 @@ const OnboardingContainer = () => {
         </div>
       )}
       {/* progress step */}
-      {currentStep <= 4 && <ProgressStep currentStep={currentStep} />}
+      {currentStep <= 4 && (
+        <ProgressStep
+          currentStep={currentStep}
+          steps={[
+            'Database Connection',
+            'Table Discovery & Selection',
+            'Metadata Capture',
+            'Relationship Confirmation',
+          ]}
+          stepClassNames={{
+            container: 'max-lg:hidden',
+          }}
+        />
+      )}
       {/* Final step - onboarding complete */}
       {currentStep === 5 && <OnboardingFinishing />}
     </section>

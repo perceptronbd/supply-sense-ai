@@ -7,7 +7,8 @@ import {
   DropdownTrigger,
   Textarea,
 } from '@heroui/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from '@/store/hooks';
@@ -20,9 +21,10 @@ export function ChatInput({
   message,
   setMessage,
 }: Readonly<ChatInputProps>) {
-  const [selectedConnection, setSelectedConnection] = useState('Select Connection');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { sessionId } = useAppSelector((state) => state.chat);
+  const { databaseConnections, selectDbConnection, selectedDbConnectionId } =
+    useDatabaseConnections();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +54,10 @@ export function ChatInput({
     }
   }, [message]);
 
-  const connections = ['Connection 1', 'Connection 2', 'Connection 3'];
+  // Get the title of the selected connection
+  const selectedConnection =
+    databaseConnections?.find((conn) => conn.id === selectedDbConnectionId)?.title ||
+    'Select Connection';
 
   return (
     <section
@@ -101,12 +106,18 @@ export function ChatInput({
                   {selectedConnection}
                 </Button>
               </DropdownTrigger>
+
               <DropdownMenu
                 aria-label="Connection options"
-                onAction={(key) => setSelectedConnection(key as string)}
+                onAction={(key) => selectDbConnection(key as string)}
               >
-                {connections.map((connection) => (
-                  <DropdownItem key={connection}>{connection}</DropdownItem>
+                {(databaseConnections || []).map((connection) => (
+                  <DropdownItem
+                    isReadOnly={connection.id === selectedDbConnectionId}
+                    key={connection.id}
+                  >
+                    {connection.title}
+                  </DropdownItem>
                 ))}
               </DropdownMenu>
             </Dropdown>
@@ -131,7 +142,7 @@ export function ChatInput({
             size="sm"
             variant="solid"
           >
-            {!isLoading && <Icons.Send className="w-4 h-4" />}
+            {!isLoading && <Icons.Send className="w-4 h-4 -rotate-45" />}
           </Button>
         </div>
       </form>

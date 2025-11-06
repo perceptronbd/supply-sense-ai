@@ -10,6 +10,7 @@ import type {
   TGetTablesResponse,
   TRelationshipTablesResponse,
 } from '@/components/onboarding/types';
+import type { IUpdateBusinessContextPayload } from '@/components/onboarding/types/update-business-context';
 import { baseApi } from './baseApi';
 
 export const onboardingApi = baseApi.injectEndpoints({
@@ -74,6 +75,16 @@ export const onboardingApi = baseApi.injectEndpoints({
         params: { userId },
       }),
     }),
+    updateBusinessContext: builder.mutation<
+      TCaptureMetadataResponse,
+      IUpdateBusinessContextPayload
+    >({
+      query: ({ dbConnectionId, ...payload }) => ({
+        url: `/onboarding/update-business-context/${dbConnectionId}`,
+        method: 'PATCH',
+        body: payload,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -86,4 +97,5 @@ export const {
   useGetTableRelationshipsQuery,
   useUpsertTableRelationshipsMutation,
   useGetSampleQuestionsQuery,
+  useUpdateBusinessContextMutation,
 } = onboardingApi;

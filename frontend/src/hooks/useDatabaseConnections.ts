@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { DatabaseConnection } from 'types/db-connection.type';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
 import { useGetDatabaseConnectionsQuery } from '@/store/api/dbConnectionApi';
-
-interface DatabaseConnection {
-  id: string;
-  name?: string;
-  // Add other properties as needed
-}
 
 export interface UseDatabaseConnectionsReturn {
   databaseConnections: DatabaseConnection[] | undefined;
