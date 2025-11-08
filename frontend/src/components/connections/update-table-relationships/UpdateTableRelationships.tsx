@@ -24,8 +24,9 @@ const UpdateTableRelationships = ({ dbConnectionId }: IProps) => {
     companyId,
     dbConnectionId,
     userId,
+    ifFetchSavedRelationships: true,
   });
-
+  //TODO:  dekhte hbe ifFetchSavedRelationships ta thik moto kaj kore kina and saveed relation gula render korte hbe
   // Wrap handleConfirmRelationships to include the onboarding step update
   const handleConfirm = async () => {
     await handleConfirmRelationships(() => {

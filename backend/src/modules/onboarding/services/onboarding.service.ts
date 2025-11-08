@@ -279,43 +279,40 @@ export class OnboardingService {
         throw new Error(`Failed to update user onboarding status: ${updateError.message}`);
       }
 
-      // For each relationship, create or update in the database
-      const results = await this.prisma.$transaction(
-        data.relationships.map((relationship) =>
-          this.prisma.tableRelations.upsert({
-            where: {
-              unique_table_relation: {
-                dbConnectionId: data.dbConnectionId,
-                tableName: relationship.tableName,
-                columnName: relationship.columnName,
-              },
-            },
-            update: {
-              refTable: relationship.refTable,
-              refColumn: relationship.refColumn,
-              isConfirmed: relationship.isConfirmed || false,
-              actionVariant: relationship.actionVariant,
-            },
-            create: {
-              dbConnectionId: data.dbConnectionId,
-              tableName: relationship.tableName,
-              columnName: relationship.columnName,
-              refTable: relationship.refTable,
-              refColumn: relationship.refColumn,
-              isConfirmed: relationship.isConfirmed || false,
-              actionVariant: relationship.actionVariant,
-            },
-          })
-        )
-      );
+      // Create or update a single record with all relationships as a JSON array
+      const relationshipsData = data.relationships.map((relationship) => ({
+        tableName: relationship.tableName,
+        columnName: relationship.columnName,
+        refTable: relationship.refTable,
+        refColumn: relationship.refColumn,
+        isConfirmed: relationship.isConfirmed || false,
+        actionVariant: relationship.actionVariant,
+        description: relationship.description || '',
+      }));
+
+      // Upsert the relationships as a single JSON array
+      const result = await this.prisma.tableRelations.upsert({
+        where: {
+          dbConnectionId: data.dbConnectionId,
+        },
+        update: {
+          relationships: relationshipsData,
+        },
+        create: {
+          dbConnectionId: data.dbConnectionId,
+          relationships: relationshipsData,
+        },
+      });
+
+      this.logger.debug('Table relationships saved successfully:', result);
 
       // After relationships are saved successfully, build and cache the schema
       await this.schemaBuilderService.buildAndCacheSchema(data.companyId, data.dbConnectionId);
 
       return {
         success: true,
-        count: results.length,
-        message: `Successfully saved ${results.length} table relationships and updated schema cache`,
+        count: relationshipsData.length,
+        message: `Successfully saved ${relationshipsData.length} table relationships and updated schema cache`,
       };
     } catch (error) {
       this.logger.error('Failed to save table relationships:', error);

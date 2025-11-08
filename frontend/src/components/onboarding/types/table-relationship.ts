@@ -18,3 +18,11 @@ export interface IUpsertTableRelationshipsPayload {
   companyId: string;
   dbConnectionId: string;
 }
+
+export interface IGetSavedTableRelationships {
+  id: string;
+  dbConnectionId: string;
+  relationships: IRelationshipTables[];
+}
+
+export type TGetSavedTableRelationshipsResponse = ApiResponse<IGetSavedTableRelationships>;

@@ -1,10 +1,14 @@
 import { handleAsyncOperation } from '@supplysense/utils';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
-import { IRelationshipTables } from '@/components/onboarding/types/table-relationship';
+import {
+  IRelationshipTables,
+  type TGetSavedTableRelationshipsResponse,
+} from '@/components/onboarding/types/table-relationship';
 import {
   useGetTableRelationshipsQuery,
   useUpsertTableRelationshipsMutation,
 } from '@/store/api/onboardingApi';
+import { useGetSavedTableRelationshipsQuery } from '@/store/api/table-relationshipApi';
 
 /**
  * Custom hook for managing table relationships in the application.
@@ -22,6 +26,7 @@ type UseTableRelationshipsProps = {
   companyId: string;
   dbConnectionId: string;
   userId: string;
+  ifFetchSavedRelationships?: boolean;
 };
 
 /**
@@ -57,10 +62,10 @@ export const useTableRelationships = ({
   companyId,
   dbConnectionId,
   userId,
+  ifFetchSavedRelationships,
 }: UseTableRelationshipsProps): UseTableRelationshipsResult => {
   // State to track the user's selected/confirmed relationships
   const [relationTables, setRelationTables] = useState<IRelationshipTables[]>([]);
-
   // React 18 transition for non-blocking state updates
   // This allows high-priority updates to interrupt lower-priority updates
   const [_, startTransition] = useTransition();
@@ -83,14 +88,31 @@ export const useTableRelationships = ({
       },
       {
         // Only run the query if we have both companyId and dbConnectionId
-        skip: !(companyId && dbConnectionId),
+        skip: !(companyId && dbConnectionId && !ifFetchSavedRelationships),
       }
     );
 
+  const {
+    data: savedTableRelationshipsData = {
+      data: [] as unknown as TGetSavedTableRelationshipsResponse['data'],
+    },
+    isLoading: isSavedRelationshipsLoading,
+  } = useGetSavedTableRelationshipsQuery(
+    {
+      dbConnectionId,
+    },
+    {
+      // Only run the query if we have both companyId and dbConnectionId
+      skip: !(dbConnectionId && ifFetchSavedRelationships),
+    }
+  );
   // Create a consistent data structure for the rest of the component
   // This ensures we always have a data array, even if the query hasn't returned yet
-  const tableRelationships = { data: tableRelationshipsData.data || [] };
-
+  const tableRelationships = {
+    data: ifFetchSavedRelationships
+      ? savedTableRelationshipsData?.data?.relationships || []
+      : tableRelationshipsData.data || [],
+  };
   /**
    * Create a lookup map for O(1) access to relationships by table.column
    * This is more efficient than using Array.find() for lookups
@@ -210,15 +232,16 @@ export const useTableRelationships = ({
           refTable: item.refTable,
           refColumn: item.refColumn,
           description: item.description || '',
-          isConfirmed: true, // Default to confirmed
-          actionVariant: 'yes', // Default to yes
+          isConfirmed: item.isConfirmed ?? true, // Use the value from API or default to true
+          actionVariant: item.actionVariant || 'yes', // Use the value from API or default to 'yes'
         }))
       );
     }
   }, [tableRelationships.data, relationTables.length]);
 
   // Combine loading states to determine if the component is in a loading state
-  const isLoading = isRelationshipsLoading || tableRelationships.data.length === 0;
+  const isLoading =
+    isRelationshipsLoading || isSavedRelationshipsLoading || tableRelationships.data.length === 0;
 
   return {
     tableRelationships,

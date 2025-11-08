@@ -240,17 +240,10 @@ model DbConnection {
 
 model TableRelations {
   id          String  @id @default(uuid())
-  tableName   String
-  columnName  String
-  refTable    String // Referenced table name
-  refColumn   String // Referenced column name
-  isConfirmed Boolean @default(false) // Whether this relation has been confirmed by the user
-  actionVariant String? // The action button variant that was clicked (e.g., 'yes', 'no', 'maybe')
-  dbConnectionId String
+  relationships Json @default("[]") // Array of relationships [{ tableName: string, columnName: string, refTable: string, refColumn: string, description: string, isConfirmed: boolean, actionVariant: string }]
+  dbConnectionId String @unique
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
-  @@unique([dbConnectionId, tableName, columnName], name: "unique_table_relation")
-  @@index([tableName, columnName], name: "idx_table_relations_table_column")
   @@index([dbConnectionId, id], name: "idx_table_relations_db_connection")
   @@map("table_relations")
 }

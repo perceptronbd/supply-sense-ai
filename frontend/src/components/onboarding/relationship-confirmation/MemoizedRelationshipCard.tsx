@@ -1,6 +1,6 @@
+import { ACTION_BUTTON_VARIANTS, type TActionButtonVariants } from '@supplysense/constant';
 import { memo, useCallback } from 'react';
 import type { IRelationshipTables } from '../types/table-relationship';
-import { ACTION_BUTTON_VARIANTS, TActionButtonVariants } from './ActionButton';
 import RelationshipCard from './RelationshipCard';
 
 interface IMemorizedProps {
@@ -69,6 +69,7 @@ const MemoizedRelationshipCard = memo(
         rightSelectedKey={rightSelectedKey}
         onRightSelectChange={handleChange}
         description={table.description}
+        actionVariant={table.actionVariant}
       />
     );
   }

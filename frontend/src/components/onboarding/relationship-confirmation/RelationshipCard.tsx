@@ -1,9 +1,9 @@
 'use client';
 import { Card, Select, SelectItem } from '@heroui/react';
+import type { TActionButtonVariants } from '@supplysense/constant';
 import React, { useState } from 'react';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
-import { TActionButtonVariants } from './ActionButton';
 import RelationshipActionButtons from './RelationshipActionButtons';
 
 interface IProps {
@@ -13,6 +13,7 @@ interface IProps {
   leftSelectedKey: string;
   rightSelectedKey: string;
   onRightSelectChange: (value: string) => void;
+  actionVariant: TActionButtonVariants;
 }
 
 const RelationshipCard = ({
@@ -22,8 +23,9 @@ const RelationshipCard = ({
   leftSelectedKey,
   rightSelectedKey,
   onRightSelectChange,
+  actionVariant,
 }: IProps) => {
-  const [buttonClicked, setButtonClicked] = useState<TActionButtonVariants | null>(null);
+  const [buttonClicked, setButtonClicked] = useState<TActionButtonVariants | null>(actionVariant);
 
   const [isOpen, setIsOpen] = useState(false);
 

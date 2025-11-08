@@ -1,5 +1,6 @@
+import { TActionButtonVariants } from '@supplysense/constant';
 import React, { useMemo } from 'react';
-import ActionButton, { TActionButtonVariants } from './ActionButton';
+import ActionButton from './ActionButton';
 
 interface Props {
   buttonClicked: TActionButtonVariants | null; // Currently clicked button variant
