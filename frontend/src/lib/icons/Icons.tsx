@@ -343,6 +343,61 @@ export const Icons = {
       <path d="M10.5 11V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  NoConnection: (props: IconType) => (
+    <svg
+      {...props}
+      width="288"
+      height="288"
+      viewBox="0 0 288 288"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g opacity="0.2">
+        <path
+          d="M228 60L264 24"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 264L60 228"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M75.5999 243.6C78.2755 246.285 81.4548 248.415 84.9555 249.869C88.4562 251.322 92.2094 252.071 95.9999 252.071C99.7904 252.071 103.544 251.322 107.044 249.869C110.545 248.415 113.724 246.285 116.4 243.6L144 216L71.9999 144L44.3999 171.6C41.715 174.276 39.5846 177.455 38.131 180.956C36.6775 184.456 35.9292 188.21 35.9292 192C35.9292 195.79 36.6775 199.544 38.131 203.044C39.5846 206.545 41.715 209.724 44.3999 212.4L75.5999 243.6Z"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M90 162L120 132"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M126 198L156 168"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M144 72.0004L216 144L243.6 116.4C246.285 113.725 248.415 110.545 249.869 107.045C251.322 103.544 252.071 99.7909 252.071 96.0004C252.071 92.2099 251.322 88.4567 249.869 84.956C248.415 81.4553 246.285 78.276 243.6 75.6004L212.4 44.4004C209.724 41.7155 206.545 39.5851 203.044 38.1315C199.544 36.6779 195.79 35.9297 192 35.9297C188.21 35.9297 184.456 36.6779 180.956 38.1315C177.455 39.5851 174.276 41.7155 171.6 44.4004L144 72.0004Z"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    </svg>
+  ),
   Send: (props: IconType) => (
     <svg
       {...props}
