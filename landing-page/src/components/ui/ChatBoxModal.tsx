@@ -13,6 +13,7 @@ import {
   ScrollShadow,
 } from '@heroui/react';
 import { FormEvent, useState } from 'react';
+import { sendPublicMessage } from '../../app/actions/chatActions';
 import { Icons } from '../icons';
 import { FullLogo, Logo } from './Logo';
 
@@ -31,19 +32,12 @@ interface ChatBoxModalProps {
 
 const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      content: "Hello! I'm your Supply Sense AI assistant. How can I help you today?",
-      sender: 'ai',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -56,28 +50,34 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
     setMessage('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the server action
+      const result = await sendPublicMessage(message);
+
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: 'I understand your question. Let me help you with that supply chain query.',
+        content: result.message,
+        sender: 'ai',
+        timestamp: new Date(result.timestamp),
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      // Handle error
+      console.error('Error in handleSubmit:', error);
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: 'Sorry, I am unable to process your request. Please try again.',
         sender: 'ai',
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleClearChat = () => {
-    setMessages([
-      {
-        id: '1',
-        content: "Hello! I'm your Supply Sense AI assistant. How can I help you today?",
-        sender: 'ai',
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages([]);
     setMessage('');
   };
 
@@ -195,14 +195,20 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
 
             {/* Input Footer */}
             <ModalFooter className="p-4 relative z-10">
-              <Form onSubmit={handleSubmit} className="w-full border-none relative">
+              <Form
+                aria-label="Chat Form"
+                onSubmit={handleSubmit}
+                className="w-full border-none relative"
+              >
                 <Input
+                  aria-label="Type your message here..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ask anything about your business"
                   radius="md"
                   variant="flat"
                   size="lg"
+                  disabled={isLoading}
                   classNames={{
                     input:
                       'border-none placeholder:text-content4 placeholder:text-sm w-[90%] focus:outline-none focus:ring-0',
@@ -217,6 +223,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   color="primary"
                   size="sm"
                   className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
+                  disabled={isLoading}
                 >
                   <Icons.SendIcon className="w-7 h-7" />
                 </Button>

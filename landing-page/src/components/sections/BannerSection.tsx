@@ -3,22 +3,23 @@
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { useState } from 'react';
 import { Icons } from '../icons';
+import ChatBoxModal from '../ui/ChatBoxModal';
 import { FullLogo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
   const [message, setMessage] = useState('');
-  //WARN: Unused hook
-  const [_isModalOpen, _setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Message:', message);
-    setMessage('');
+    if (message.trim()) {
+      setIsModalOpen(true);
+    }
   };
 
   //navigate to login page
-  const handleInputClick = () => {
+  const _handleInputClick = () => {
     const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
     window.open(loginUrl, '_blank', 'noopener,noreferrer');
   };
@@ -67,8 +68,9 @@ const Banner = () => {
 
             <form onSubmit={handleSubmit} className="relative">
               <Input
-                onClick={handleInputClick}
-                // onClick={() => setIsModalOpen(true)}
+                aria-label="Ask anything about your business"
+                // onClick={handleInputClick}
+                onClick={() => setIsModalOpen(true)}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask anything about your business"
@@ -97,13 +99,12 @@ const Banner = () => {
         </Card>
       </div>
 
-      {/* NOTE: disabled this feature for now */}
       {/* Chat Modal */}
-      {/* <ChatBoxModal
+      <ChatBoxModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onOpenChange={setIsModalOpen}
-      /> */}
+      />
     </SectionWrapper>
   );
 };

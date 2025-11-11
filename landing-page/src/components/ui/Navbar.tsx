@@ -11,7 +11,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.substring(1);
+      const hash = globalThis.location.hash.substring(1);
       if (hash) {
         const element = document.getElementById(hash);
         if (element) {
@@ -24,8 +24,8 @@ const Navbar = () => {
     handleHashChange();
 
     // Handle hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    globalThis.addEventListener('hashchange', handleHashChange);
+    return () => globalThis.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Close mobile menu when Button is clicked

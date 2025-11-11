@@ -1,7 +1,7 @@
 import PricingMobileTables from '../ui/PricingMobileTables';
 import PricingTable from '../ui/PricingTable';
-import ProgressBar from '../ui/ProgressBar';
 import SectionWrapper from '../ui/SectionWrapper';
+import SliderComponent from '../ui/SliderComponent';
 
 const SECTION_ID = 'pricing';
 
@@ -26,7 +26,7 @@ const PricingSection = () => {
           Get as many or as little credits you want
         </p>
 
-        <ProgressBar value={10000} className="mb-8" />
+        <SliderComponent />
 
         <p className="text-xs italic text-center font-medium text-transparent bg-clip-text bg-gradient-to-r from-primary-100 to-primary-400">
           Credits are used based on the complexity of your request. Each action will consume at
