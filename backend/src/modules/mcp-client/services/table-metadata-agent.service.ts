@@ -35,7 +35,7 @@ export class TableMetadataAgentService {
 
       const run = await workflow.createRunAsync();
 
-      this.logger.log('starting workflow to generate metadata for tables', {
+      this.logger.debug('starting workflow to generate metadata for tables', {
         runId: run.runId,
         inputData: input,
       });
@@ -46,7 +46,7 @@ export class TableMetadataAgentService {
         inputData: input,
       });
 
-      this.logger.log('✅ Table metadata generated successfully for all tables', {
+      this.logger.debug('✅ Table metadata generated successfully for all tables', {
         result,
       });
 

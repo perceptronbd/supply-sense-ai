@@ -32,10 +32,14 @@ export class McpClientService implements OnModuleInit {
     try {
       this.logger.log('Initializing MCP client connection to Mastra server...');
 
+      const baseUrl = process.env.MASTRA_SERVER_URL || 'http://localhost:4111';
       this.mastraClient = new MastraClient({
-        baseUrl: process.env.MASTRA_SERVER_URL || 'http://localhost:4111',
+        baseUrl,
       });
 
+      // MastraClient is constructed and ready to use for HTTP calls; mark as connected
+      this.isConnected = true;
+      this.logger.log(`MCP client initialized (baseUrl=${baseUrl})`);
       return this.mastraClient;
     } catch (error) {
       this.logger.error('❌ Failed to initialize MCP client and agent:', error);

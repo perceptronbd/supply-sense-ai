@@ -3,14 +3,20 @@ import path from 'node:path';
 
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
-import { chatAgent } from './agents/chat/chat-agent';
-import { formattingAgent } from './agents/chat/formatting-agent';
-import { postgreSQLGenerationAgent } from './agents/chat/postgresql-generation-agent';
-import { queryAnalysisAgent } from './agents/chat/query-analysis-agent';
-import { columnExampleAgent } from './agents/onboarding/column-example-agent';
-import { generatePurposeAgent } from './agents/onboarding/generate-purpose-agent';
-import { sampleQuestionsAgent } from './agents/onboarding/sample-questions-agent';
-import { updateFrequencyAgent } from './agents/onboarding/update-frequency-agent';
+import {
+  chatAgent,
+  chatTitleAgent,
+  formattingAgent,
+  postgreSQLGenerationAgent,
+  queryAnalysisAgent,
+} from './agents/chat';
+import {
+  columnExampleAgent,
+  generatePurposeAgent,
+  sampleQuestionsAgent,
+  tableDescriptionAgent,
+  updateFrequencyAgent,
+} from './agents/onboarding';
 import { mastraLogger } from './logger';
 import { queryPostgreSQLdbWorkflow } from './workflows/query-postgreSQL-db-workflow';
 import { tableMetadataWorkflow } from './workflows/table-metadata-workflow';
@@ -35,6 +41,8 @@ export const mastra = new Mastra({
     updateFrequencyAgent,
     chatAgent,
     columnExampleAgent,
+    tableDescriptionAgent,
+    chatTitleAgent,
   },
   workflows: {
     tableMetadataWorkflow,
