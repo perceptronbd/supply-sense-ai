@@ -14,6 +14,7 @@ import './markdown.css';
 import { CHART_TYPES_VALUES, type TChartType } from '@supplysense/constant';
 import { useState } from 'react';
 import { Icons } from '@/lib/icons/Icons';
+import { cn } from '@/lib/utils';
 import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { RenderChart } from './RenderChart';
 import { RenderTable } from './RenderTable';
@@ -88,15 +89,45 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
       {/* Message content */}
       <div className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col flex-1`}>
         {isUser ? (
-          <Card shadow="none" className="bg-default-300 text-primary-foreground w-fit max-w-md">
-            <CardBody className="overflow-x-clip p-3 min-w-0">
-              {isUser && (
-                <Text variant="bodySmall" color="inverse" className="whitespace-pre-wrap">
-                  {message.content}
-                </Text>
+          <div className="group relative flex flex-col items-end">
+            <Card
+              shadow="none"
+              className={cn(
+                'bg-default-300 text-primary-foreground w-fit max-w-md transition-colors duration-200',
+                'group-hover:bg-default-100 group-hover:text-default-700'
               )}
-            </CardBody>
-          </Card>
+            >
+              <CardBody className="overflow-x-clip p-3 min-w-0">
+                {isUser && (
+                  <Text
+                    variant="bodySmall"
+                    color="inverse"
+                    className={cn(
+                      'whitespace-pre-wrap transition-colors duration-200',
+                      'group-hover:text-default-700'
+                    )}
+                  >
+                    {message.content}
+                  </Text>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Copy button on hover */}
+            <Button
+              isIconOnly
+              variant="light"
+              size="sm"
+              aria-label={copied ? 'Copied' : 'Copy message'}
+              onPress={copyToClipboard}
+              className={cn(
+                'opacity-0 mt-1 transition-all duration-200',
+                'group-hover:opacity-100 group-hover:text-default-700'
+              )}
+            >
+              {copied ? <Icons.Check /> : <Icons.Copy />}
+            </Button>
+          </div>
         ) : (
           <article className="overflow-x-auto chat-markdown w-full text-foreground ">
             {blockMatches.map((blockMatch, index) => {
