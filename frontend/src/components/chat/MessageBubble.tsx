@@ -1,19 +1,20 @@
 'use client';
 
-import { Avatar, Card, CardBody } from '@heroui/react';
+import { Button, Card, CardBody } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
-import { format } from 'date-fns';
-import { UserIcon } from '@/components/icons';
+import { format, isToday, isValid, isYesterday } from 'date-fns';
 import { LogoIcon } from '@/components/icons/LogoIcon';
-import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
 import './markdown.css';
 import { CHART_TYPES_VALUES, type TChartType } from '@supplysense/constant';
+import { useState } from 'react';
+import { Icons } from '@/lib/icons/Icons';
+import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { RenderChart } from './RenderChart';
 import { RenderTable } from './RenderTable';
 
@@ -24,6 +25,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubbleProps) {
   const isUser = message.type === 'user';
+  const [copied, setCopied] = useState(false);
 
   // Use llm-ui for AI message rendering
   const { blockMatches } = useLLMOutput({
@@ -43,23 +45,33 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
     isStreamFinished: true, // Message is complete
   });
 
-  // Safe date formatting with fallback
-  const getFormattedTime = (dateString: string | undefined) => {
+  // Format timestamp for assistant messages (e.g., "Sun at 12:30 AM")
+  const getFormattedTime = (dateString?: string) => {
     if (!dateString) return 'now';
-
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'now';
     try {
-      const date = new Date(dateString);
-      if (Number.isNaN(date.getTime())) {
-        return 'now';
-      }
-      return format(date, 'HH:mm');
-    } catch (_error) {
-      console.warn('Invalid date format:', dateString);
+      if (isToday(date)) return format(date, "'Today at' h:mm a");
+      if (isYesterday(date)) return format(date, "'Yesterday at' h:mm a");
+      return format(date, "EEE 'at' h:mm a");
+    } catch {
       return 'now';
     }
   };
 
   const timestamp = getFormattedTime(message.createdAt);
+
+  // Copy message to clipboard
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy message: ', err);
+    }
+  };
 
   return (
     <article
@@ -67,65 +79,22 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
       aria-label={`${isUser ? 'User' : 'AI Assistant'} message at ${timestamp}`}
     >
       {/* Avatar */}
-      <div className="flex-shrink-0">
-        <Avatar
-          icon={
-            isUser ? (
-              <UserIcon className="w-5 h-5" />
-            ) : (
-              <LogoIcon size={14} className="text-primary" />
-            )
-          }
-          classNames={{
-            base: 'w-8 h-8 min-w-8',
-            icon: isUser ? 'text-primary-foreground' : 'text-secondary-foreground',
-          }}
-          color={isUser ? 'primary' : 'default'}
-          size="sm"
-        />
-      </div>{' '}
+      {!isUser && (
+        <div className="flex-shrink-0">
+          <LogoIcon size={36} className="text-primary" />
+        </div>
+      )}
+
       {/* Message content */}
       <div className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col flex-1`}>
         {isUser ? (
-          <Card className="bg-primary text-primary-foreground w-fit max-w-md">
+          <Card shadow="none" className="bg-default-300 text-primary-foreground w-fit max-w-md">
             <CardBody className="overflow-x-clip p-3 min-w-0">
               {isUser && (
-                <Text variant="bodyMedium" color="inverse" className="whitespace-pre-wrap">
+                <Text variant="bodySmall" color="inverse" className="whitespace-pre-wrap">
                   {message.content}
                 </Text>
               )}
-              {/* {!isUser &&
-            message.metadata &&
-            message.metadata.suggestions &&
-            Array.isArray(message.metadata.suggestions) ? (
-              <section
-                className="p-3 mt-3 border bg-primary/5 border-primary/20 rounded-medium"
-                aria-label="Suggested follow-up questions"
-              >
-                <div className="flex gap-2 items-center mb-2">
-                  <LogoIcon size={14} className="text-primary" />
-                  <Text variant="bodySmall" color="primary" weight="medium" as="h4">
-                    Suggested follow-up questions:
-                  </Text>
-                </div>
-                <ul className="space-y-1">
-                  {message.metadata.suggestions.map((suggestion: string, index: number) => (
-                    <li key={`suggestion-${index}-${suggestion.slice(0, 20)}`}>
-                      <Button
-as ShadcnButton                        variant="light"
-                        size="sm"
-                        className="justify-start p-2 w-full h-auto text-left text-tiny text-primary/80 hover:text-primary hover:bg-primary/10"
-                        onPress={() => {
-                          onSuggestionClick?.(suggestion);
-                        }}
-                      >
-                        {suggestion}
-                      </Button>as ShadcnButton
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null} */}
             </CardBody>
           </Card>
         ) : (
@@ -163,13 +132,41 @@ as ShadcnButton                        variant="light"
           </article>
         )}
 
-        <Text
-          variant="bodyXSmall"
-          className={`mt-1 text-default-400 ${isUser ? 'text-right' : 'text-left'}`}
-          as="time"
-        >
-          {timestamp}
-        </Text>
+        {/* Action buttons and timestamp for assistant messages */}
+        {!isUser && (
+          <div className="flex items-center justify-between w-full mt-2 gap-2">
+            {/* Action buttons */}
+            <div className="flex items-center gap-1">
+              <Button
+                isIconOnly
+                variant="light"
+                size="sm"
+                aria-label={copied ? 'Copied' : 'Copy message'}
+                onPress={copyToClipboard}
+              >
+                {copied ? <Icons.Check /> : <Icons.Copy />}
+              </Button>
+              <Button isIconOnly variant="light" size="sm" aria-label="Like message">
+                <Icons.ThumbsUp />
+              </Button>
+              <Button isIconOnly variant="light" size="sm" aria-label="Dislike message">
+                <Icons.ThumbsDown />
+              </Button>
+              <Button isIconOnly variant="light" size="sm" aria-label="Regenerate message">
+                <Icons.RefreshCw />
+              </Button>
+            </div>
+
+            {/* Timestamp */}
+            <Text
+              variant="bodyXSmall"
+              className="text-default-500 text-right flex-shrink-0"
+              as="time"
+            >
+              {timestamp}
+            </Text>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -179,7 +176,7 @@ as ShadcnButton                        variant="light"
 export function LoadingMessage() {
   return (
     <article className="flex gap-3 mb-4" aria-label="AI is processing your request">
-      <DrawingLogo size={24} variant="primary" speed="fast" showFill={true} />
+      <BlinkingLogo floating={false} size={36} />
       <Text variant="bodyMedium" color="muted" as="span">
         AI is thinking...
       </Text>
