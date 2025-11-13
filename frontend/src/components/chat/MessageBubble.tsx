@@ -1,23 +1,22 @@
 'use client';
 
-import { Button, Card, CardBody } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { codeBlockLookBack, findCompleteCodeBlock, findPartialCodeBlock } from '@llm-ui/code';
 import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
 import { format, isToday, isValid, isYesterday } from 'date-fns';
+import { useEffect, useRef, useState } from 'react';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { Text } from '@/components/ui/Text';
-import type { ChatMessageResponse } from '@/store/api/chatApi';
-import LLMCodeBlockComponent from './LLMCodeBlockComponent';
-import LLMMarkdownComponent from './LLMMarkdownComponent';
-import './markdown.css';
-import { CHART_TYPES_VALUES, type TChartType } from '@supplysense/constant';
-import { useState } from 'react';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
+import type { ChatMessageResponse } from '@/store/api/chatApi';
 import BlinkingLogo from '../ui/animations/BlinkingLogo';
-import { RenderChart } from './RenderChart';
-import { RenderTable } from './RenderTable';
+import { AssistantMessage } from './AssistantMessage';
+import LLMCodeBlockComponent from './LLMCodeBlockComponent';
+import LLMMarkdownComponent from './LLMMarkdownComponent';
+import { UserMessage } from './UserMessage';
+import './markdown.css';
 
 interface MessageBubbleProps {
   message: ChatMessageResponse;
@@ -27,6 +26,7 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubbleProps) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use llm-ui for AI message rendering
   const { blockMatches } = useLLMOutput({
@@ -67,16 +67,26 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
     try {
       await navigator.clipboard.writeText(message.content);
       setCopied(true);
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopied(false), 2000);
+
+      timeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy message: ', err);
+      console.error('Failed to copy message:', err);
     }
   };
 
+  // Cleanup timeout on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   return (
     <article
-      className={`flex gap-3 w-full overflow-x-clip ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-4`}
+      className={cn(
+        'flex gap-3 w-full overflow-x-clip mb-4',
+        isUser ? 'flex-row-reverse' : 'flex-row'
+      )}
       aria-label={`${isUser ? 'User' : 'AI Assistant'} message at ${timestamp}`}
     >
       {/* Avatar */}
@@ -87,80 +97,11 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
       )}
 
       {/* Message content */}
-      <div className={` ${isUser ? 'items-end' : 'items-start'} flex flex-col flex-1`}>
+      <div className={cn(isUser ? 'items-end' : 'items-start', 'flex flex-col flex-1')}>
         {isUser ? (
-          <div className="group relative flex flex-col items-end">
-            <Card
-              shadow="none"
-              className={cn(
-                'bg-default-300 text-primary-foreground w-fit max-w-md transition-colors duration-200',
-                'group-hover:bg-default-100 group-hover:text-default-700'
-              )}
-            >
-              <CardBody className="overflow-x-clip p-3 min-w-0">
-                {isUser && (
-                  <Text
-                    variant="bodySmall"
-                    color="inverse"
-                    className={cn(
-                      'whitespace-pre-wrap transition-colors duration-200',
-                      'group-hover:text-default-700'
-                    )}
-                  >
-                    {message.content}
-                  </Text>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Copy button on hover */}
-            <Button
-              isIconOnly
-              variant="light"
-              size="sm"
-              aria-label={copied ? 'Copied' : 'Copy message'}
-              onPress={copyToClipboard}
-              className={cn(
-                'opacity-0 mt-1 transition-all duration-200',
-                'group-hover:opacity-100 group-hover:text-default-700'
-              )}
-            >
-              {copied ? <Icons.Check /> : <Icons.Copy />}
-            </Button>
-          </div>
+          <UserMessage content={message.content} copied={copied} onCopy={copyToClipboard} />
         ) : (
-          <article className="overflow-x-auto chat-markdown w-full text-foreground ">
-            {blockMatches.map((blockMatch, index) => {
-              const Component = blockMatch.block.component;
-              return (
-                <Component
-                  key={`block-${index}-${blockMatch.output.slice(0, 20).replace(/\s/g, '')}`}
-                  blockMatch={blockMatch}
-                />
-              );
-            })}
-            {/* <RenderChart data={chartData} chartType="area" /> */}
-            {message.structuredData?.visualizationType === 'table' && (
-              <RenderTable
-                data={message.structuredData?.formattedData as Record<string, string>[]}
-                className="mt-4"
-              />
-            )}
-            {message.structuredData?.visualizationType &&
-              CHART_TYPES_VALUES.includes(
-                message.structuredData?.visualizationType as TChartType
-              ) && (
-                <RenderChart
-                  data={message.structuredData?.formattedData as Record<string, string>[]}
-                  chartType={message.structuredData?.visualizationType as TChartType}
-                  // chartType='radar'
-                />
-              )}
-            {message.structuredData?.visualizationType === 'text' &&
-              typeof message.structuredData?.formattedData === 'string' && (
-                <p>{message.structuredData?.formattedData as string}</p>
-              )}
-          </article>
+          <AssistantMessage blockMatches={blockMatches} message={message} />
         )}
 
         {/* Action buttons and timestamp for assistant messages */}
