@@ -32,12 +32,15 @@ export function SampleQuestions({
 
   // Get 5 random questions
   const questions = useMemo(() => {
-    return getRandomElements(data?.data || [], 5);
+    return getRandomElements(data?.data || [], 4);
   }, [data?.data]);
 
   return (
     <section
-      className={cn('w-full px-10 pb-4 sm:pb-5 lg:pb-6', className)}
+      className={cn(
+        'w-full px-10 pb-4 sm:pb-5 lg:pb-6 overflow-y-visible sm:overflow-y-auto no-scrollbar',
+        className
+      )}
       aria-label="Sample questions"
     >
       <Text variant="bodyBase" color="muted">
