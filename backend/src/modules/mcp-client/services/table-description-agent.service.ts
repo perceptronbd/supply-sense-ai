@@ -1,10 +1,9 @@
-import { Agent } from '@mastra/core/agent';
+import { MastraClient } from '@mastra/client-js';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { AI_MODEL_NAMES } from '@supplysense/constant';
-import { GetOpenRouter } from '@supplysense/utils';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { buildTableDescriptionPrompt } from '@/modules/onboarding/helpers/build-description-prompt';
 import { McpClientService } from './mcp-client.service';
+
+type TAgent = Awaited<ReturnType<MastraClient['getAgent']>>;
 
 export interface GenerateDescriptionInput {
   tableName: string;
@@ -21,8 +20,7 @@ export interface GenerateDescriptionInput {
 @Injectable()
 export class TableDescriptionAgentService {
   private readonly logger = new Logger(TableDescriptionAgentService.name);
-  private descriptionAgent: Agent | null = null;
-  private readonly openRouter = new GetOpenRouter();
+  private descriptionAgent: TAgent | null = null;
 
   constructor(
     @Inject(forwardRef(() => McpClientService))
@@ -47,43 +45,12 @@ export class TableDescriptionAgentService {
         );
       }
 
-      const mcpClient = this.mcpClientService.getMcpClient();
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
       if (!mcpClient || !this.mcpClientService.isClientConnected()) {
         throw new Error('MCP client not available or not connected');
       }
 
-      // Get tools from MCP client
-      const tools = await mcpClient.getTools();
-
-      this.descriptionAgent = new Agent({
-        name: 'TableDescriptionAgent',
-        description:
-          'AI assistant specialized in generating user-friendly table relationship descriptions',
-        instructions: `You are a business analyst who explains database relationships in simple, user-friendly terms. 
-    Your task is to generate descriptions that help business users understand what the data relationships mean for their work and AI analysis.
-
-    Guidelines:
-    1. Focus on the business meaning and practical implications
-    2. Explain how this relationship helps with data analysis, reporting, or AI insights
-    3. Use simple, everyday business language - avoid technical jargon
-    4. Start with what the relationship means, then explain why it's useful
-    5. Keep descriptions conversational and helpful (2-3 sentences max)
-    6. Think about how this helps users group, filter, or analyze their data
-
-    Format:
-    - Start with "This means..." or "This shows..." 
-    - Explain the business relationship in simple terms
-    - Add how this helps with analysis: "This helps the AI..." or "Confirming this allows..."
-    - Keep it under 200 characters total
-    - Use present tense and active voice
-
-    Examples:
-    - "This means every order belongs to a customer. Confirming this helps the AI group orders by customer for better insights."
-    - "This shows products are organized into categories. This allows the AI to analyze sales trends by product type."
-    - "This means purchases are linked to specific suppliers. This helps track which vendors provide which products."`,
-        model: this.openRouter.getModel(AI_MODEL_NAMES.DEEPSEEK),
-        tools,
-      });
+      this.descriptionAgent = await mcpClient.getAgent('tableDescriptionAgent');
 
       this.logger.log('✅ Table description agent initialized successfully');
     } catch (error) {
@@ -112,19 +79,11 @@ export class TableDescriptionAgentService {
 
       this.logger.debug(`Generating descriptions for ${inputs.length} relationships`);
 
-      // Check API key before initializing
-      if (!process.env.OPENROUTER_API_KEY) {
-        this.logger.error('OPENROUTER_API_KEY is not configured');
-        throw new Error('OpenRouter API key is not configured');
-      }
-
       await this.initializeDescriptionAgent();
 
       if (!this.descriptionAgent) {
         throw new Error('Table description agent not initialized');
       }
-
-      const { systemPrompt } = buildTableDescriptionPrompt(inputs);
 
       this.logger.debug('Sending batch prompt to agent for multiple relationships');
 
@@ -134,16 +93,11 @@ export class TableDescriptionAgentService {
         throw new BadRequestException('Insufficient credit');
       }
 
-      const response = await this.descriptionAgent.generate([
-        {
-          role: 'system',
-          content: systemPrompt,
+      const response = await this.descriptionAgent.generate([], {
+        runtimeContext: {
+          inputs,
         },
-        {
-          role: 'user',
-          content: JSON.stringify(inputs, null, 2),
-        },
-      ]);
+      });
 
       this.logger.debug('Received batch response from agent:', {
         hasText: !!response?.text,
@@ -210,7 +164,7 @@ export class TableDescriptionAgentService {
           outputTokens: response.usage.outputTokens,
           isDeductCredit: true, //NOTE:THIS WILL BE REMOVE AFTER TESTING
           metadata: {
-            question: systemPrompt,
+            question: JSON.stringify(inputs),
             answer: JSON.stringify(descriptions),
           },
         });

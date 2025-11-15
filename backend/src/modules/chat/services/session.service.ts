@@ -1,9 +1,10 @@
-import { Agent } from '@mastra/core/agent';
+import { MastraClient } from '@mastra/client-js';
+import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
 import type { Session } from '@supplysense/prisma-client';
-import { initializeTitleAgent } from '../helpers/agent.helper';
-import { generateTitleAgentSystemPrompt } from '../helpers/prompt.helper';
+
+type TAgent = Awaited<ReturnType<MastraClient['getAgent']>>;
 
 @Injectable()
 export class SessionService implements OnModuleDestroy {
@@ -13,11 +14,13 @@ export class SessionService implements OnModuleDestroy {
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
   private readonly MAX_CACHE_SIZE = 10000; // Prevent unlimited memory growth
   private readonly cleanupInterval: NodeJS.Timeout;
-  private titleAgent: Agent | null = null;
+  private titleAgent: TAgent | null = null;
 
   constructor(
     @Inject(PrismaService)
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    @Inject(McpClientService)
+    private readonly mcpClientService: McpClientService
   ) {
     // Set up periodic cache cleanup (every 10 minutes)
     this.cleanupInterval = setInterval(
@@ -72,6 +75,7 @@ export class SessionService implements OnModuleDestroy {
       throw new Error(`Failed to create chat session: ${error.message}`);
     }
   }
+
   async getSession(sessionId: string, userId: string): Promise<Session | null> {
     try {
       this.logger.log(`Fetching session ${sessionId} for user ${userId}`);
@@ -210,6 +214,7 @@ export class SessionService implements OnModuleDestroy {
       throw new Error(`Failed to update session: ${error.message}`);
     }
   }
+
   async deleteSession(sessionId: string, userId: string): Promise<void> {
     try {
       this.logger.log(`Deleting session ${sessionId} for user ${userId}`);
@@ -243,6 +248,7 @@ export class SessionService implements OnModuleDestroy {
       throw new Error(`Failed to delete session: ${error.message}`);
     }
   }
+
   async updateLastActivity(sessionId: string): Promise<void> {
     try {
       this.logger.log(`Updating last activity for session ${sessionId}`);
@@ -355,8 +361,9 @@ export class SessionService implements OnModuleDestroy {
     }
 
     try {
+      const mcpClient = await this.mcpClientService.initializeMcpClient();
       // Use the helper function to initialize the title agent
-      this.titleAgent = await initializeTitleAgent();
+      this.titleAgent = await mcpClient.getAgent('chatTitleAgent');
     } catch (error) {
       this.logger.error('Failed to initialize title agent:', error);
       throw error;
@@ -378,15 +385,16 @@ export class SessionService implements OnModuleDestroy {
       const agentResponse = await this.titleAgent.generate(
         [
           {
-            role: 'system',
-            content: generateTitleAgentSystemPrompt(),
-          },
-          {
             role: 'user',
-            content: `Generate a title for this conversation:\nUser: ${userQuestion}\nAI: ${aiResponse}`,
+            content: `Generate a title for this conversation`,
           },
         ],
-        {}
+        {
+          runtimeContext: {
+            userQuestion,
+            aiResponse,
+          },
+        }
       );
 
       // Extract the title text and clean it up
