@@ -5,6 +5,7 @@ import { PrismaModule } from '@supplysense/prisma';
 import { ChatModule } from '@/modules/chat/chat.module';
 import { OnboardingModule } from '@/modules/onboarding/onboarding.module';
 import { TableMetadataModule } from '@/modules/table-metadata/table-metadata.module';
+import { TableRelationshipModule } from '@/modules/table-relationship/table-relationship.module';
 import { AiModule } from '../modules/ai/ai.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { ConnectionsModule } from '../modules/connections/connections.module';
@@ -28,6 +29,7 @@ import { AppService } from './app.service';
     UserModule,
     OnboardingModule,
     TableMetadataModule,
+    TableRelationshipModule,
   ],
   controllers: [AppController],
   providers: [AppService, Reflector],

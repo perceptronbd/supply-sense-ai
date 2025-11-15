@@ -10,12 +10,16 @@ import {
 } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { handleAsyncOperation } from '@supplysense/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import z from 'zod';
 import type { ITableDiscoverySelection } from '@/components/onboarding/types';
 import { Icons } from '@/lib/icons/Icons';
-import { useGetTablesQuery, useUpdateBusinessContextMutation } from '@/store/api/onboardingApi';
+import {
+  useGetSelectedTablesQuery,
+  useGetTablesQuery,
+  useUpdateBusinessContextMutation,
+} from '@/store/api/onboardingApi';
 import { useOnboardingStore } from '@/store/hooks/useOnboardingStore';
 import { ConnectionsTitleAndButtons } from '../connections-title-and-buttons/ConnectionsTitleAndButtons';
 
@@ -55,16 +59,27 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
   const { saveGeneratedMetadata, setUpdateCurrentStep, updateCurrentStep } = useOnboardingStore();
 
   // Fetch tables based on companyId and dbConnectionId
-  const { data: tableResponse = { data: { tables: [] } }, isLoading } = useGetTablesQuery(
-    {
-      companyId,
-      dbConnectionId,
-    },
-    {
-      skip: !(companyId && dbConnectionId),
-    }
-  );
-
+  const { data: tableResponse = { data: { tables: [] } }, isLoading: isLoadingTables } =
+    useGetTablesQuery(
+      {
+        companyId,
+        dbConnectionId,
+      },
+      {
+        skip: !(companyId && dbConnectionId),
+      }
+    );
+  // Fetch tables based on companyId and dbConnectionId
+  const { data: selectedTablesResponse = { data: [] }, isLoading: isLoadingSelectedTables } =
+    useGetSelectedTablesQuery(
+      {
+        companyId,
+        dbConnectionId,
+      },
+      {
+        skip: !(companyId && dbConnectionId),
+      }
+    );
   const [updateBusinessContextMutation, { isLoading: isUpdatingBusinessContext }] =
     useUpdateBusinessContextMutation();
 
@@ -177,6 +192,7 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
           });
         },
         onError(error) {
+          console.log('🚀 > error:', error);
           addToast({
             title: (error as Error)?.message || 'An error occurred',
             color: 'danger',
@@ -188,10 +204,24 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
     );
   };
 
-  console.log('generatedMetadata.length', generatedMetadata.length);
-
   const isButtonDisabled =
-    isLoading || isSubmitting || isUpdatingBusinessContext || generatedMetadata.length === 0;
+    isLoadingTables ||
+    isLoadingSelectedTables ||
+    isSubmitting ||
+    isUpdatingBusinessContext ||
+    generatedMetadata.length === 0;
+
+  useEffect(() => {
+    if (tableResponse.data.tables.length > 0 && selectedTablesResponse.data.length > 0) {
+      const selectedTables = tableResponse.data.tables.filter((table) => {
+        return selectedTablesResponse.data.some(
+          (selectedTable) => selectedTable.tableName === table.tableName
+        );
+      });
+      setSelectedTables(selectedTables);
+      setValues(new Set(selectedTables.map((table) => table.tableName)) as SharedSelection);
+    }
+  }, [tableResponse, selectedTablesResponse]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -263,7 +293,7 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
               selectionMode="multiple"
               selectedKeys={values}
               onSelectionChange={handleSelectChange}
-              isLoading={isLoading}
+              isLoading={isLoadingTables || isLoadingSelectedTables}
             >
               <SelectSection showDivider>
                 <SelectItem

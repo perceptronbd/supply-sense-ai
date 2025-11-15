@@ -4,6 +4,7 @@ import type { IDatabaseClient } from '@supplysense/types';
 import { closeAllConnections, withDbConnection } from '@supplysense/utils/server';
 import { ConnectionsService } from '../../connections/connections.service';
 import { TableDescriptionAgentService } from '../../mcp-client/services/table-description-agent.service';
+import type { CaptureMetadataDto } from '../dto/metadata.dto';
 import type { TableRelationshipDto } from '../dto/table-relationship.dto';
 import type { UpdateConnectionsDto } from '../dto/update-connections.dto';
 import { SchemaBuilderService } from './schema-builder.service';
@@ -45,6 +46,74 @@ export class OnboardingService {
     // Otherwise, use the first connection by default
     const firstConnection = connections[0];
     return this.connectionsService.getTablesForConnection(firstConnection);
+  }
+
+  /**
+   * Save selected tables for a company's database connection
+   */
+  async saveSelectedTables(companyId: string, data: CaptureMetadataDto) {
+    // Validate if the database connection exists
+    await this.connectionsService.checkExistingDbConnection(data.dbConnectionId);
+
+    // Prepare the tables data with proper formatting
+    const tablesData = data.tables.map((table) => ({
+      tableName: table.tableName,
+      displayName: table.displayName,
+    }));
+
+    // Use upsert to either create a new record or update existing one
+    return this.prisma.onboardingSelectedTable.upsert({
+      where: {
+        dbConnectionId_companyId: {
+          dbConnectionId: data.dbConnectionId,
+          companyId,
+        },
+      },
+      update: {
+        tables: tablesData,
+      },
+      create: {
+        dbConnectionId: data.dbConnectionId,
+        companyId,
+        tables: tablesData,
+      },
+    });
+  }
+
+  /**
+   * Get selected tables for a company's database connection
+   */
+  async getSelectedTables(companyId: string, dbConnectionId: string) {
+    const company = await this.prisma.company.findUnique({
+      where: {
+        id: companyId,
+      },
+    });
+
+    if (!company) {
+      throw new BadRequestException('Company not found');
+    }
+
+    await this.connectionsService.checkExistingDbConnection(dbConnectionId);
+
+    const result = await this.prisma.onboardingSelectedTable.findUnique({
+      where: {
+        dbConnectionId_companyId: {
+          dbConnectionId,
+          companyId,
+        },
+      },
+      select: {
+        tables: true,
+      },
+    });
+
+    if (!result) {
+      throw new BadRequestException('Selected tables not found for this company and connection');
+    }
+
+    // Return the tables array or empty array if no record exists
+    return result.tables;
   }
 
   /**
@@ -210,41 +279,40 @@ export class OnboardingService {
         throw new Error(`Failed to update user onboarding status: ${updateError.message}`);
       }
 
-      // For each relationship, create or update in the database
-      const results = await this.prisma.$transaction(
-        data.relationships.map((relationship) =>
-          this.prisma.tableRelations.upsert({
-            where: {
-              unique_table_relation: {
-                dbConnectionId: data.dbConnectionId,
-                tableName: relationship.tableName,
-                columnName: relationship.columnName,
-              },
-            },
-            update: {
-              refTable: relationship.refTable,
-              refColumn: relationship.refColumn,
-              isConfirmed: relationship.isConfirmed || false,
-            },
-            create: {
-              dbConnectionId: data.dbConnectionId,
-              tableName: relationship.tableName,
-              columnName: relationship.columnName,
-              refTable: relationship.refTable,
-              refColumn: relationship.refColumn,
-              isConfirmed: relationship.isConfirmed || false,
-            },
-          })
-        )
-      );
+      // Create or update a single record with all relationships as a JSON array
+      const relationshipsData = data.relationships.map((relationship) => ({
+        tableName: relationship.tableName,
+        columnName: relationship.columnName,
+        refTable: relationship.refTable,
+        refColumn: relationship.refColumn,
+        isConfirmed: relationship.isConfirmed || false,
+        actionVariant: relationship.actionVariant,
+        description: relationship.description || '',
+      }));
+
+      // Upsert the relationships as a single JSON array
+      const result = await this.prisma.tableRelations.upsert({
+        where: {
+          dbConnectionId: data.dbConnectionId,
+        },
+        update: {
+          relationships: relationshipsData,
+        },
+        create: {
+          dbConnectionId: data.dbConnectionId,
+          relationships: relationshipsData,
+        },
+      });
+
+      this.logger.debug('Table relationships saved successfully:', result);
 
       // After relationships are saved successfully, build and cache the schema
       await this.schemaBuilderService.buildAndCacheSchema(data.companyId, data.dbConnectionId);
 
       return {
         success: true,
-        count: results.length,
-        message: `Successfully saved ${results.length} table relationships and updated schema cache`,
+        count: relationshipsData.length,
+        message: `Successfully saved ${relationshipsData.length} table relationships and updated schema cache`,
       };
     } catch (error) {
       this.logger.error('Failed to save table relationships:', error);

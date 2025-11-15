@@ -2,7 +2,7 @@ import type { ApiResponse } from '@supplysense/types';
 
 export interface IGetTablesDto {
   companyId: string;
-  dbConnectionId?: string;
+  dbConnectionId: string;
 }
 
 export interface ITableDiscoverySelection {
@@ -14,3 +14,5 @@ export interface ITableDiscoverySelection {
 }
 
 export type TGetTablesResponse = ApiResponse<ITableDiscoverySelection>;
+
+export type TGetSelectedTablesResponse = ApiResponse<ITableDiscoverySelection['tables']>;

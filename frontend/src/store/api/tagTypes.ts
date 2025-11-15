@@ -24,6 +24,9 @@ export const TAG_TYPES = {
 
   // Database Connection
   DATABASE_CONNECTION: 'DatabaseConnection',
+  // Tables
+  GET_SELECTED_ONBOARDING_TABLES: 'GetSelectedOnboardingTables',
+  GET_TABLE_RELATIONSHIPS: 'GetTableRelationships',
 } as const;
 
 export const TAG_TYPES_LIST = Object.values(TAG_TYPES);

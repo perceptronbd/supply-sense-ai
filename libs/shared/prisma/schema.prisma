@@ -17,6 +17,8 @@ datasource db {
 // CORE SYSTEM MODELS - Multi-Tenant SaaS Architecture
 // ============================================================================
 
+
+
 // Company - Top-level tenant for complete data isolation
 model Company {
   id              String  @id @default(uuid())
@@ -27,6 +29,9 @@ model Company {
   contactEmail    String  @unique
   isActive        Boolean @default(true)
   industry        String? // Added industry field
+  
+  // Relations
+  onboardingSelectedTables OnboardingSelectedTable[]
 
   // Company settings
   defaultCurrency String @default("USD")
@@ -225,6 +230,7 @@ model DbConnection {
   TableMetadata  TableMetadata[]
   SchemaCache    SchemaCache?
   sessions       Session[]
+  onboardingSelectedTables OnboardingSelectedTable[]
 
   @@unique([companyId, username], name: "unique_db_connection")
   @@index([companyId, id], name: "idx_db_connections_company_id")
@@ -234,17 +240,10 @@ model DbConnection {
 
 model TableRelations {
   id          String  @id @default(uuid())
-  tableName   String
-  columnName  String
-  refTable    String // Referenced table name
-  refColumn   String // Referenced column name
-  isConfirmed Boolean @default(false) // Whether this relation has been confirmed by the user
-
-  dbConnectionId String
+  relationships Json @default("[]") // Array of relationships [{ tableName: string, columnName: string, refTable: string, refColumn: string, description: string, isConfirmed: boolean, actionVariant: string }]
+  dbConnectionId String @unique
   dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
 
-  @@unique([dbConnectionId, tableName, columnName], name: "unique_table_relation")
-  @@index([tableName, columnName], name: "idx_table_relations_table_column")
   @@index([dbConnectionId, id], name: "idx_table_relations_db_connection")
   @@map("table_relations")
 }
@@ -479,4 +478,21 @@ model ApiLogs {
   updatedAt   DateTime @updatedAt
 
   @@map("api_logs")
+}
+
+// Stores user-selected tables for each company and database connection
+model OnboardingSelectedTable {
+  id             String      @id @default(uuid())
+  dbConnectionId String
+  dbConnection   DbConnection @relation(fields: [dbConnectionId], references: [id], onDelete: Cascade)
+  companyId      String
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tables         Json       @default("[]") // Array of { tableName: string, displayName?: string }
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([dbConnectionId, companyId])
+  @@index([dbConnectionId])
+  @@index([companyId])
+  @@map("onboarding_selected_tables")
 }

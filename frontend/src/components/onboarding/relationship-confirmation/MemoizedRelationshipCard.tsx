@@ -1,6 +1,6 @@
+import { ACTION_BUTTON_VARIANTS, type TActionButtonVariants } from '@supplysense/constant';
 import { memo, useCallback } from 'react';
 import type { IRelationshipTables } from '../types/table-relationship';
-import { ACTION_BUTTON_VARIANTS, TActionButtonVariants } from './ActionButton';
 import RelationshipCard from './RelationshipCard';
 
 interface IMemorizedProps {
@@ -36,6 +36,7 @@ const MemoizedRelationshipCard = memo(
             columnName: table.columnName,
             description: table.description,
             isConfirmed: value === 'yes' || value === 'confirmed',
+            actionVariant: value as TActionButtonVariants,
           });
           return;
         }
@@ -47,6 +48,7 @@ const MemoizedRelationshipCard = memo(
           columnName: table.columnName,
           description: table.description,
           isConfirmed: false,
+          actionVariant: 'no',
         });
       },
       [
@@ -67,6 +69,7 @@ const MemoizedRelationshipCard = memo(
         rightSelectedKey={rightSelectedKey}
         onRightSelectChange={handleChange}
         description={table.description}
+        actionVariant={table.actionVariant}
       />
     );
   }

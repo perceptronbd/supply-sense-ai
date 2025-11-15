@@ -99,8 +99,32 @@ const DbConnectionForm = () => {
             placeholder: 'Enter a title for your connection',
           })}
 
+          {/* About Your Business */}
+          <Controller
+            name="aboutYourBusiness"
+            control={control}
+            render={({ field }) => (
+              <Textarea
+                {...field}
+                label="About Your Business"
+                color="primary"
+                variant="faded"
+                radius="lg"
+                size="lg"
+                placeholder="Provide a brief detail of the kind of business this database is used for."
+                isInvalid={!!errors.aboutYourBusiness}
+                errorMessage={errors.aboutYourBusiness?.message}
+                className="my-5"
+                classNames={{
+                  input: ' focus:outline-none focus:ring-0',
+                }}
+              />
+            )}
+          />
+
+          <div className="h-px w-full bg-[#F2F2F226] my-5" />
           {/* Main fields grid */}
-          <div className="grid grid-cols-2 gap-x-5 gap-y-4 mt-5">
+          <div className="grid grid-cols-2 mt-5 gap-x-5 gap-y-4">
             {renderInput({
               name: 'credential.host',
               label: 'Host',
@@ -149,32 +173,9 @@ const DbConnectionForm = () => {
             />
           </div>
 
-          <div className="h-px w-full bg-[#F2F2F226] my-5" />
-
-          {/* About Your Business */}
-          <Controller
-            name="aboutYourBusiness"
-            control={control}
-            render={({ field }) => (
-              <Textarea
-                {...field}
-                label="About Your Business"
-                color="primary"
-                variant="faded"
-                radius="lg"
-                size="lg"
-                placeholder="Provide a brief detail of the kind of business this database is used for."
-                isInvalid={!!errors.aboutYourBusiness}
-                errorMessage={errors.aboutYourBusiness?.message}
-                classNames={{
-                  input: ' focus:outline-none focus:ring-0',
-                }}
-              />
-            )}
-          />
           <div className="flex items-center gap-3 my-5">
             <div className="h-px flex-1 bg-[#F2F2F226]" />
-            <Text className="text-sm text-gray-500 px-2">OR</Text>
+            <Text className="px-2 text-sm text-gray-500">OR</Text>
             <div className="h-px flex-1 bg-[#F2F2F226]" />
           </div>
 
@@ -185,7 +186,7 @@ const DbConnectionForm = () => {
           })}
 
           {error && (
-            <Text variant="bodyXSmall" className="text-danger mt-2 text-xs">
+            <Text variant="bodyXSmall" className="mt-2 text-xs text-danger">
               {error}
             </Text>
           )}

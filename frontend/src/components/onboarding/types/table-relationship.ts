@@ -1,3 +1,4 @@
+import type { TActionButtonVariants } from '@supplysense/constant';
 import type { ApiResponse } from '@supplysense/types';
 
 export interface IRelationshipTables {
@@ -7,6 +8,7 @@ export interface IRelationshipTables {
   refColumn: string;
   description: string;
   isConfirmed: boolean;
+  actionVariant: TActionButtonVariants; // The action button variant that was clicked
 }
 
 export type TRelationshipTablesResponse = ApiResponse<IRelationshipTables[]>;
@@ -16,3 +18,11 @@ export interface IUpsertTableRelationshipsPayload {
   companyId: string;
   dbConnectionId: string;
 }
+
+export interface IGetSavedTableRelationships {
+  id: string;
+  dbConnectionId: string;
+  relationships: IRelationshipTables[];
+}
+
+export type TGetSavedTableRelationshipsResponse = ApiResponse<IGetSavedTableRelationships>;

@@ -76,7 +76,7 @@ export class ColumnExampleAgentService {
         inputs,
       });
 
-      this.logger.debug('Prompt for generate examples for column:', prompt);
+      this.logger.debug('Prompt for generate examples for column:', runtimeContext);
 
       // Use the specialized agent to generate examples with retry logic
       const response = await this.exampleAgent.generate(

@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import type { JsonValue } from '@prisma/client/runtime/library';
 import { PrismaService } from '@supplysense/prisma';
 import { SchemaCache } from '@supplysense/prisma-client';
 import { withDbConnection } from '@supplysense/utils/server';
@@ -35,14 +36,21 @@ interface TableMetadataRecord {
   purpose: string;
 }
 
-interface TableRelationRecord {
+type TRelationship = {
   tableName: string;
   columnName: string;
   refTable: string;
   refColumn: string;
+  description: string;
   isConfirmed: boolean;
-}
+  actionVariant: string;
+};
 
+type TableRelationRecord = {
+  id: string;
+  dbConnectionId: string;
+  relationships: JsonValue;
+};
 @Injectable()
 export class SchemaBuilderService {
   private readonly logger = new Logger(SchemaBuilderService.name);
@@ -272,13 +280,28 @@ export class SchemaBuilderService {
     tableName: string,
     tableRelations: TableRelationRecord[]
   ): TableSchema['relationships'] {
-    return tableRelations
-      .filter((relation) => relation.tableName === tableName && relation.isConfirmed)
-      .map((relation) => ({
-        column: relation.columnName,
-        refTable: relation.refTable,
-        refColumn: relation.refColumn,
-      }));
+    return tableRelations.flatMap((record) => {
+      // Parse the relationships JSON if it's a string
+      const relationships =
+        typeof record.relationships === 'string'
+          ? JSON.parse(record.relationships)
+          : record.relationships;
+
+      // Ensure relationships is an array
+      const relations = Array.isArray(relationships) ? relationships : [];
+
+      return relations
+        .filter(
+          (relation: TRelationship) =>
+            relation.tableName === tableName &&
+            (relation.isConfirmed === undefined || relation.isConfirmed)
+        )
+        .map((relation: TRelationship) => ({
+          column: relation.columnName,
+          refTable: relation.refTable,
+          refColumn: relation.refColumn,
+        }));
+    });
   }
 
   private sanitizeSampleData(

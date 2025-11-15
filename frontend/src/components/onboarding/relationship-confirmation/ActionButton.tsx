@@ -1,17 +1,7 @@
+import type { TActionButtonVariants } from '@supplysense/constant';
 import { Button, type ButtonProps } from '@/components/ui/Button';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
-
-export const ACTION_BUTTON_VARIANTS = [
-  'yes',
-  'no',
-  'not-sure',
-  'uncertain',
-  'confirmed',
-  'edit',
-] as const;
-
-export type TActionButtonVariants = (typeof ACTION_BUTTON_VARIANTS)[number];
 
 type TVariantStyles =
   | 'flat'
