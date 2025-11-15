@@ -26,7 +26,7 @@ export default function ChatPage() {
   const errorState = useMemo(() => {
     if (connectionsError) {
       return (
-        <div className="flex flex-1 justify-center items-center p-8">
+        <div className="flex flex-1 justify-center items-center p-8 rounded-xl bg-content2">
           <div className="max-w-4xl text-center">
             <Text variant="titleLarge" color="danger" className="mb-4" as="h1">
               Database Connection Error
@@ -41,12 +41,12 @@ export default function ChatPage() {
 
     if (databaseConnections?.length === 0) {
       return (
-        <div className="flex flex-1 justify-center items-center p-8">
+        <div className="flex flex-1 justify-center items-center p-8 rounded-xl bg-content2">
           <div className="max-w-4xl text-center">
-            <Text variant="titleLarge" color="default" className="mb-4" as="h1">
+            <Text variant="headerMedium" color="primary" className="mb-4">
               No Database Connections
             </Text>
-            <Text variant="bodyLarge" color="muted" as="p">
+            <Text variant="bodyLarge" as="p">
               Please set up a database connection in the onboarding section before using the chat.
             </Text>
           </div>
@@ -60,28 +60,32 @@ export default function ChatPage() {
   // Show loading state while connections are being fetched
   if (isLoadingConnections) {
     return (
-      <main className="w-full h-[calc(100vh-40px)]">
-        <div className="flex overflow-hidden relative h-full text-foreground">
+      <div className="w-full h-full bg-background lg:flex gap-2">
+        <div className="flex overflow-hidden relative h-full rounded-xl bg-content2 flex-1 w-full">
           <LoadingOverlay
             isVisible={true}
             message="Loading database connections..."
             opacity="light"
           />
         </div>
-      </main>
+      </div>
     );
   }
 
   // Show error states
   if (errorState) {
     return (
-      <main className="w-full h-[calc(100vh-40px)] grid place-items-center">{errorState}</main>
+      <div className="w-full h-full bg-background lg:flex gap-2">
+        <div className="relative h-full rounded-xl bg-content2 flex-1 w-full grid place-items-center">
+          {errorState}
+        </div>
+      </div>
     );
   }
 
   // Main chat interface - only render when we have a database connection
   return (
-    <main className="w-full h-full bg-background lg:flex gap-2">
+    <div className="w-full h-full bg-background lg:flex gap-2">
       <div className="relative h-full text-foreground rounded-xl bg-content2 flex-1 w-full">
         {/* Loading overlay during session creation */}
         <LoadingOverlay
@@ -98,6 +102,6 @@ export default function ChatPage() {
           />
         </section>
       </div>
-    </main>
+    </div>
   );
 }

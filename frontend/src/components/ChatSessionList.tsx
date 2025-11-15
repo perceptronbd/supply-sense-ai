@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setSessionId } from '@/store/slices/chatSlice';
@@ -17,10 +18,12 @@ interface ChatSessionListProps {
 
 export function ChatSessionList({ sessions, isLoading, onClose }: Readonly<ChatSessionListProps>) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { sessionId } = useAppSelector((state) => state.chat);
 
   const handleSessionSelect = (sessionId: string) => {
     dispatch(setSessionId(sessionId));
+    router.push('/chat');
   };
 
   const sessionContent = (() => {

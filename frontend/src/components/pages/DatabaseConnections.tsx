@@ -21,6 +21,7 @@ import { Text } from '@/components/ui/Text';
 import { useDatabaseConnections } from '@/hooks/useDatabaseConnections';
 import { Icons } from '@/lib/icons/Icons';
 import { DatabaseConnectionsMobile } from '../connections/mobileView/DatabaseConnectionsMobile';
+import { NoConnectionsState } from '../connections/NoConnections/NoConnectionsState';
 
 const columns = [
   { key: 'title', label: 'NAME' },
@@ -129,6 +130,16 @@ export function DatabaseConnections() {
         return null;
     }
   };
+
+  // Check if there are no connections (and not loading or error)
+  const hasNoConnections =
+    !isLoadingConnections &&
+    !connectionsError &&
+    (!databaseConnections || databaseConnections.length === 0);
+
+  if (hasNoConnections) {
+    return <NoConnectionsState />;
+  }
 
   return (
     <main className="w-full h-full bg-background lg:flex gap-2">

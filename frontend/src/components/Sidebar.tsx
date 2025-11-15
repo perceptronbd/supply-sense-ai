@@ -104,7 +104,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           {/* Header with Logo and Toggle */}
           <header className="flex items-center h-16 px-6 gap-4">
             {expanded && <LogoWithName width={203} height={32} />}
-            <div className="flex-1" />
+            {expanded && <div className="flex-1" />}
 
             {/* Desktop ToggleSession button */}
             <Button
@@ -129,38 +129,46 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             </Button>
           </header>
 
-          {/* chat list e click korle sidebar close hobe */}
-
-          {/* Navigation */}
-          {expanded && (
-            <nav className="px-4 py-6">
-              <ul className="space-y-1">
-                {navigation.map((item) => (
-                  <li key={item.name}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (item.onClick) {
-                          item.onClick();
-                        } else if (item.href) {
-                          router.push(item.href);
-                          onClose();
-                        }
-                      }}
-                      className="w-full flex items-center px-3 py-2 text-left font-medium group"
+          {/* Navigation - visible even when collapsed */}
+          <nav className={cn('px-4 py-6', !expanded && 'py-0')}>
+            <ul
+              className={cn(
+                'space-y-1',
+                !expanded && 'flex flex-col items-center justify-center mt-4'
+              )}
+            >
+              {navigation.map((item) => (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (item.onClick) {
+                        item.onClick();
+                      } else if (item.href) {
+                        router.push(item.href);
+                        onClose();
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center text-left font-medium group ',
+                      expanded
+                        ? 'w-full px-3 py-2'
+                        : 'flex flex-col justify-center items-center p-3 rounded-xl hover:bg-default-100'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        expanded ? 'mr-3' : '',
+                        (item.name === 'New Chat' && isActive(ROUTE_PATHS.CHAT)) ||
+                          (item.href && isActive(item.href))
+                          ? 'text-primary-500'
+                          : 'text-default-500 group-hover:text-default-foreground'
+                      )}
                     >
-                      <span
-                        className={cn(
-                          'mr-3',
-                          (item.name === 'New Chat' && isActive(ROUTE_PATHS.CHAT)) ||
-                            (item.href && isActive(item.href))
-                            ? 'text-primary-500'
-                            : 'text-default-500 group-hover:text-default-foreground'
-                        )}
-                      >
-                        {item.icon}
-                      </span>
+                      {item.icon}
+                    </span>
 
+                    {expanded && (
                       <Text
                         variant="bodySmall"
                         weight="medium"
@@ -175,12 +183,12 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                       >
                         {item.name}
                       </Text>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
           {/* Chats Section */}
           {expanded && (

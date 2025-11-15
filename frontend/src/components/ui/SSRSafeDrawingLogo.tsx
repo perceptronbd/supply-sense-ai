@@ -1,9 +1,9 @@
-export const SSRSafeDrawingLogo = () => {
+export const SSRSafeDrawingLogo = ({ width = 204, height = 169, className = '' }) => {
   return (
-    <div>
+    <div className={className}>
       <svg
-        width="204"
-        height="169"
+        width={width}
+        height={height}
         viewBox="0 0 204 169"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -46,7 +46,6 @@ export const SSRSafeDrawingLogo = () => {
               stroke: #26262A;
               stroke-width: 4px;
               stroke-linecap: round;
-              /* creates a gap for a spinner arc; tuned for r≈12 */
               stroke-dasharray: 30 60;
             }
           `}

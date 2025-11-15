@@ -70,7 +70,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
           <PersistGate
             loading={
               <main className="flex items-center justify-center min-h-screen bg-black">
-                <SSRSafeDrawingLogo />
+                <SSRSafeDrawingLogo width={154} height={119} />
               </main>
             }
             persistor={persistor}
