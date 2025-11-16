@@ -1,6 +1,4 @@
 export {
-  InlineLoading,
-  type InlineLoadingProps,
   Loading,
   LoadingOverlay,
   type LoadingOverlayProps,

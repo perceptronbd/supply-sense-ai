@@ -1,9 +1,23 @@
-export const SSRSafeDrawingLogo = ({ width = 204, height = 169, className = '' }) => {
+interface SSRSafeDrawingLogoProps {
+  size?: number;
+  className?: string;
+}
+
+export const SSRSafeDrawingLogo = ({ size = 204, className = '' }: SSRSafeDrawingLogoProps) => {
+  // Original dimensions of the logo
+  const originalWidth = 204;
+  const originalHeight = 169;
+  const ratio = originalHeight / originalWidth; // ≈ 0.828
+
+  // if size is provided, compute width & height
+  const finalWidth = size;
+  const finalHeight = Math.round(size * ratio);
+
   return (
     <div className={className}>
       <svg
-        width={width}
-        height={height}
+        width={finalWidth}
+        height={finalHeight}
         viewBox="0 0 204 169"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

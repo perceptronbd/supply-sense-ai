@@ -7,7 +7,7 @@ interface ChatApiResponse {
     timestamp: string;
     data: {
       visualizationType: string;
-      formattedData: any;
+      formattedData: Array<{ [key: string]: unknown }> | string | null;
       summary: string;
     };
   };

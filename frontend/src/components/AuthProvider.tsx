@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRoutes } from '@/hooks/useRoutes';
 import { validateToken } from '@/store/slices/authSlice';
 import type { RootState } from '@/store/store';
-import { DrawingLogo } from './ui/DrawingLogo';
+import { SSRSafeDrawingLogo } from './ui/SSRSafeDrawingLogo';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -18,8 +18,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     useRoutes();
   const [isMounted, setIsMounted] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const mountLogoId = useId();
-  const navLogoId = useId();
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,7 +58,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   if (!isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} id={mountLogoId} />
+        <SSRSafeDrawingLogo size={144} />
       </div>
     );
   }
@@ -69,7 +67,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   if (isNavigating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <DrawingLogo size={60} variant="primary" speed="fast" showFill={true} id={navLogoId} />
+        <SSRSafeDrawingLogo size={144} />
       </div>
     );
   }
