@@ -79,7 +79,8 @@ export const LoginForm = ({
           />
         </fieldset>
 
-        <p className="text-left">
+        {/* TODO: will add forgot password link */}
+        {/* <p className="text-left">
           <Text variant="bodySmall" className="text-default-600" as="span">
             Forgot Password?{' '}
           </Text>
@@ -89,7 +90,7 @@ export const LoginForm = ({
           >
             Click here
           </Link>
-        </p>
+        </p> */}
 
         <Button
           type="submit"

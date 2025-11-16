@@ -1,5 +1,5 @@
-import { DrawingLogo } from '@/components/ui/DrawingLogo';
 import { Text } from '@/components/ui/Text';
+import { SSRSafeDrawingLogo } from './SSRSafeDrawingLogo';
 
 export interface LoadingProps {
   /** Size of the loading spinner */
@@ -21,11 +21,9 @@ export interface LoadingProps {
  * Follows HeroUI design patterns and semantic color tokens
  */
 export const Loading = ({
-  size = 60,
   message = 'Loading...',
   showMessage = true,
   className = '',
-  variant = 'primary',
   orientation = 'vertical',
 }: LoadingProps) => {
   const isVertical = orientation === 'vertical';
@@ -38,7 +36,7 @@ export const Loading = ({
         ${className}
       `}
     >
-      <DrawingLogo size={size} variant={variant} speed="fast" showFill={true} />
+      <SSRSafeDrawingLogo size={108} />
       {showMessage && (
         <Text variant="bodySmall" color="muted" as="span" className="select-none">
           {message}
@@ -85,32 +83,5 @@ export const LoadingOverlay = ({
         <Loading size={size} message={message} {...props} />
       </div>
     </div>
-  );
-};
-
-/**
- * Inline loading spinner for buttons and small spaces
- */
-export interface InlineLoadingProps extends Omit<LoadingProps, 'orientation' | 'showMessage'> {
-  /** Whether to show the spinner */
-  isLoading?: boolean;
-}
-
-export const InlineLoading = ({
-  isLoading = true,
-  size = 24,
-  variant = 'primary',
-  className = '',
-}: InlineLoadingProps) => {
-  if (!isLoading) return null;
-
-  return (
-    <DrawingLogo
-      size={size}
-      variant={variant}
-      speed="fast"
-      showFill={true}
-      className={`inline-block ${className}`}
-    />
   );
 };
