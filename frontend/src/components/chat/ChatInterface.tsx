@@ -19,6 +19,7 @@ export function ChatInterface({
 }: Readonly<ChatInterfaceProps>) {
   const { sessionId } = useAppSelector((state) => state.chat);
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState<boolean>(false);
 
   const {
     messages,
@@ -47,10 +48,12 @@ export function ChatInterface({
         try {
           currentSessionId = (await handleCreateSession()) || '';
           if (!currentSessionId) {
+            setIsError(true);
             addErrorMessage('', 'Failed to create session. Please try again.');
             return;
           }
         } catch (error) {
+          setIsError(true);
           console.error('Failed to create session:', error);
           addErrorMessage('', 'Failed to create session. Please try again.');
           return;
@@ -58,6 +61,7 @@ export function ChatInterface({
       }
 
       if (!dbConnectionId) {
+        setIsError(true);
         addErrorMessage(
           currentSessionId,
           'No database connection available. Please check your setup.'
@@ -80,15 +84,23 @@ export function ChatInterface({
         })
           .then((response) => {
             const res = response as {
+              data: { data?: ChatMessageResponse };
               error?: { data?: { statusCode?: number; message?: string } };
             };
+
+            if (res.data?.data) {
+              setIsError(false);
+            }
+
             if (res?.error?.data?.statusCode === 429) {
+              setIsError(true);
               addErrorMessage(
                 currentSessionId,
                 res.error.data?.message ||
                   'Rate limit exceeded. Please wait before sending more messages.'
               );
             } else if (res?.error) {
+              setIsError(true);
               addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
             }
             removeTempMessage(tempId);
@@ -98,6 +110,7 @@ export function ChatInterface({
             refetchMessages();
           });
       } catch (error) {
+        setIsError(true);
         console.error('Failed to send message:', error);
         addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
         removeTempMessage(tempId);
@@ -155,6 +168,7 @@ export function ChatInterface({
       <MessageList
         messages={messages as unknown as ChatMessageResponse[]}
         isLoading={isLoadingMessages || isSendingMessage}
+        isError={isError}
         onSuggestionClick={handleSuggestionClick}
       />
 

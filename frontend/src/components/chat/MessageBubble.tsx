@@ -6,7 +6,7 @@ import { markdownLookBack } from '@llm-ui/markdown';
 import { useLLMOutput } from '@llm-ui/react';
 import { format, isToday, isValid, isYesterday } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { LogoIcon } from '@/components/icons/LogoIcon';
+import { MascotAwake, MascotError2 } from '@/components/icons/Mascot';
 import { Text } from '@/components/ui/Text';
 import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
@@ -21,12 +21,15 @@ import './markdown.css';
 interface MessageBubbleProps {
   message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
+  isError?: boolean;
 }
 
-export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubbleProps) {
+export function MessageBubble({ message, onSuggestionClick: _, isError }: MessageBubbleProps) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  console.log('Error', isError);
 
   // Use llm-ui for AI message rendering
   const { blockMatches } = useLLMOutput({
@@ -92,7 +95,11 @@ export function MessageBubble({ message, onSuggestionClick: _ }: MessageBubblePr
       {/* Avatar */}
       {!isUser && (
         <div className="flex-shrink-0">
-          <LogoIcon size={36} className="text-primary" />
+          {isError ? (
+            <MascotError2 size={36} className="text-primary" />
+          ) : (
+            <MascotAwake size={36} className="text-primary" />
+          )}
         </div>
       )}
 
