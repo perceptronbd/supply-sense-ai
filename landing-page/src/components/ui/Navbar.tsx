@@ -46,10 +46,10 @@ const Navbar = () => {
       name: 'Pricing',
       href: '#pricing',
     },
-    {
-      name: 'Q&A',
-      href: '#qna',
-    },
+    // {
+    //   name: 'Q&A',
+    //   href: '#qna',
+    // },
     {
       name: 'Contact',
       href: '#contact',
@@ -58,12 +58,11 @@ const Navbar = () => {
 
   return (
     <div className="mx-2">
-      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 lg:bg-primary/20 border-1 border-primary/20 rounded-full mx-auto mt-5 py-1 lg:p-1">
-        <FullLogo className="text-primary h-5 w-40 ml-4 lg:ml-0" />
+      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto mt-5 py-1 lg:p-1">
+        <FullLogo width={173} height={27} />
 
         {/* Desktop menu */}
-
-        <div className="hidden lg:flex gap-6 justify-center items-center">
+        <div className="hidden lg:flex items-center ">
           {navLinks.map((link) => (
             <Button
               key={link.name}
@@ -71,30 +70,19 @@ const Navbar = () => {
               radius="md"
               variant="light"
               color="secondary"
-              className="text-base font-normal hover:bg-primary/10 transition-all duration-200"
+              className="text-base font-normal hover:bg-primary/10 transition-all duration-200 mx-4"
             >
               <Link href={link.href}>{link.name}</Link>
             </Button>
           ))}
-        </div>
 
-        <div className="hidden lg:flex gap-4 items-center">
           <Button
             size="sm"
-            radius="full"
-            variant="light"
             color="primary"
-            className="text-base font-normal hover:bg-primary/10 transition-all duration-200"
+            radius="full"
+            className="hover:scale-105 transition-transform duration-300 ml-6"
           >
             <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
-          </Button>
-          <Button
-            size="sm"
-            color="primary"
-            radius="full"
-            className="hover:scale-105 transition-transform duration-300"
-          >
-            Try for free
           </Button>
         </div>
 
@@ -169,23 +157,12 @@ const Navbar = () => {
               <Button
                 fullWidth
                 size="md"
-                radius="lg"
-                variant="light"
-                color="primary"
-                className="text-base font-normal hover:bg-primary/10 transition-all duration-200"
-                onPress={handleLinkClick}
-              >
-                <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
-              </Button>
-              <Button
-                fullWidth
-                size="md"
                 color="primary"
                 radius="lg"
                 className="hover:scale-105 transition-transform duration-200"
                 onPress={handleLinkClick}
               >
-                Try for free
+                <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
               </Button>
             </div>
           </div>
