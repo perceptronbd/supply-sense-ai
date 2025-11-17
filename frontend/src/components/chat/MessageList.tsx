@@ -9,6 +9,7 @@ import type { MessageListProps } from './types';
 
 export function MessageList({
   messages,
+  isError,
   isLoading = false,
   onSuggestionClick,
 }: Readonly<MessageListProps>) {
@@ -68,7 +69,12 @@ export function MessageList({
     >
       <div className="max-w-4xl mx-auto">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
+          <MessageBubble
+            key={message.id}
+            message={message}
+            onSuggestionClick={onSuggestionClick}
+            isError={isError}
+          />
         ))}
         {isLoading && <LoadingMessage />}
         <div ref={messagesEndRef} />
