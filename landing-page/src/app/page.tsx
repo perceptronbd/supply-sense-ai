@@ -11,7 +11,7 @@ import Navbar from '../components/ui/Navbar';
 
 const LandingPage = () => {
   return (
-    <div className="relative overflow-hidden">
+    <div id="/" className="relative overflow-hidden">
       {/* Navbar */}
       <Navbar />
 
