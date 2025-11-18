@@ -10,7 +10,9 @@ const Footer = () => {
       <div className="flex justify-center flex-col lg:flex-row gap-y-12 lg:justify-between items-start mb-12">
         {/* first column */}
         <div className="mx-auto lg:mx-0 flex-1 w-full">
-          <FullLogo className="text-primary w-56 mb-5 mx-auto xl:mx-0" />
+          <Link href="/">
+            <FullLogo className="text-primary w-56 mb-5 mx-auto xl:mx-0" />
+          </Link>
 
           <p className="text-content1-foreground mb-6 lg:mb-10 text-center xl:text-start max-w-72 mx-auto xl:mx-0">
             Making operational data accessible through natural language.
