@@ -13,6 +13,7 @@ export interface ChatInputProps {
 export interface MessageListProps {
   messages: ChatMessageResponse[];
   isLoading?: boolean;
+  isError?: boolean;
   onSuggestionClick?: (suggestion: string) => void;
 }
 
