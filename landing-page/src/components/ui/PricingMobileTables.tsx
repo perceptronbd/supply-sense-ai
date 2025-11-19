@@ -52,7 +52,7 @@ const PricingMobileTables = () => {
           <TableColumn align="center">
             <h3 className="font-bold text-content1-foreground text-lg">
               Starter <br />
-              <span className="text-primary text-2xl font-brand">$9.99</span>
+              <span className="text-primary text-2xl font-brand">TBA </span>
               <span className="text-lg font-medium">/Month</span>
             </h3>
           </TableColumn>
@@ -95,7 +95,7 @@ const PricingMobileTables = () => {
           <TableColumn align="center">
             <h3 className="font-bold text-content1-foreground text-lg">
               Business <br />
-              <span className="text-primary text-2xl font-brand">$99.99</span>
+              <span className="text-primary text-2xl font-brand">TBA </span>
               <span className="text-lg font-medium">/Month</span>
             </h3>
           </TableColumn>

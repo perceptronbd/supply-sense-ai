@@ -32,14 +32,14 @@ export default function PricingTable() {
         <TableColumn align="center">
           <h3 className="font-bold text-content1-foreground text-2xl">
             Starter <br />
-            <span className="text-primary text-3xl font-brand">$9.99</span>
+            <span className="text-primary text-3xl font-brand">TBA </span>
             <span className="text-lg font-medium">/Month</span>
           </h3>
         </TableColumn>
         <TableColumn align="center">
           <h3 className="font-bold text-content1-foreground text-2xl">
             Business <br />
-            <span className="text-primary text-3xl font-brand">$99.99</span>
+            <span className="text-primary text-3xl font-brand">TBA </span>
             <span className="text-lg font-medium">/Month</span>
           </h3>
         </TableColumn>

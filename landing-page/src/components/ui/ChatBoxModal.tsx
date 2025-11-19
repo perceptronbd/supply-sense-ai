@@ -15,7 +15,8 @@ import {
 import { FormEvent, useState } from 'react';
 import { sendPublicMessage } from '../../app/actions/chatActions';
 import { Icons } from '../icons';
-import { FullLogo, Logo } from './Logo';
+import { LoadingMessage } from './LoadingMessage';
+import { MascotAwake } from './Logo';
 
 interface ChatMessage {
   id: string;
@@ -97,15 +98,13 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
         {() => (
           <>
             {/* Header */}
-            <ModalHeader className="flex items-center justify-between p-4">
-              <FullLogo className="w-40 text-default" />
+            <ModalHeader>
               <Button
                 onPress={() => handleClearChat()}
-                variant="light"
+                variant="flat"
                 color="default"
                 radius="md"
                 size="sm"
-                className="text-sm text-default mr-5"
               >
                 Clear Chat
               </Button>
@@ -123,16 +122,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                       }`}
                     >
                       {/* ai message */}
-                      {msg.sender === 'ai' && (
-                        <Avatar
-                          icon={<Logo className="w-5 text-primary" />}
-                          classNames={{
-                            base: 'bg-background',
-                            icon: 'text-primary',
-                          }}
-                          size="sm"
-                        />
-                      )}
+                      {msg.sender === 'ai' && <MascotAwake size={36} className="text-primary" />}
                       <div
                         className={`max-w-[80%] rounded-2xl px-4 ${
                           msg.sender === 'user'
@@ -170,25 +160,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   ))}
 
                   {/* Loading indicator */}
-                  {isLoading && (
-                    <div className="flex gap-3 justify-start">
-                      <Avatar
-                        icon={<Logo className="w-5 text-primary" />}
-                        classNames={{
-                          base: 'bg-background',
-                          icon: 'text-primary',
-                        }}
-                        size="sm"
-                      />
-                      <div className="bg-inherit rounded-2xl px-4 py-3">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-content1-foreground rounded-full animate-bounce delay-200" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {isLoading && <LoadingMessage />}
                 </div>
               </ScrollShadow>
             </ModalBody>

@@ -1,10 +1,9 @@
 'use client';
 
-import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
+import { Button, Input } from '@heroui/react';
 import { useState } from 'react';
 import { Icons } from '../icons';
 import ChatBoxModal from '../ui/ChatBoxModal';
-import { FullLogo } from '../ui/Logo';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const Banner = () => {
@@ -54,49 +53,35 @@ const Banner = () => {
 
       {/* chat box */}
       <div>
-        <Card
-          classNames={{
-            base: 'bg-default-200',
-          }}
-          className="card-blur-effect tilted-cylinder-glow"
-        >
-          <CardHeader className="relative flex items-center justify-between px-6 py-4">
-            <FullLogo className="w-40 text-default" />
-          </CardHeader>
-          <CardBody className="relative z-10 px-6 pb-6">
-            {/* Glow effect - positioned inside the card header */}
-
-            <form onSubmit={handleSubmit} className="relative">
-              <Input
-                aria-label="Ask anything about your business"
-                // onClick={handleInputClick}
-                onClick={() => setIsModalOpen(true)}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask anything about your business"
-                radius="md"
-                variant="flat"
-                size="lg"
-                classNames={{
-                  input:
-                    'placeholder:text-content3 placeholder:text-sm focus:outline-none focus:ring-0',
-                  inputWrapper: 'bg-content1 py-8 card-blur-effect-alt',
-                }}
-              />
-              <Button
-                type="submit"
-                radius="md"
-                isIconOnly
-                color="primary"
-                variant="light"
-                size="sm"
-                className="absolute w-10 h-10 mr-2 -translate-y-1/2 right-2 top-1/2"
-              >
-                <Icons.SendIcon className="w-7 h-7" />
-              </Button>
-            </form>
-          </CardBody>
-        </Card>
+        <form onSubmit={handleSubmit} className="relative">
+          <Input
+            aria-label="Ask anything about your business"
+            // onClick={handleInputClick}
+            onClick={() => setIsModalOpen(true)}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Ask anything about your business"
+            radius="md"
+            variant="flat"
+            size="lg"
+            classNames={{
+              input:
+                'placeholder:text-content3 placeholder:text-sm focus:outline-none focus:ring-0',
+              inputWrapper: 'bg-content1 py-8 card-blur-effect-alt',
+            }}
+          />
+          <Button
+            type="submit"
+            radius="md"
+            isIconOnly
+            color="primary"
+            variant="light"
+            size="sm"
+            className="absolute w-10 h-10 mr-2 -translate-y-1/2 right-2 top-1/2"
+          >
+            <Icons.SendIcon className="w-7 h-7" />
+          </Button>
+        </form>
       </div>
 
       {/* Chat Modal */}
