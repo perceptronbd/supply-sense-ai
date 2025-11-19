@@ -100,7 +100,7 @@ const Features = () => {
                       zIndex: -1,
                       transform: 'translate(-100px, -100px)',
                       background:
-                        'radial-gradient(circle at 30% 30%, rgba(232,74,46,0.14), rgba(70, 22, 14, 0.30))',
+                        'radial-gradient(circle at 30% 30%, rgba(232,74,46,0.30), rgba(70, 22, 14, 0.20))',
                       transition: 'background 200ms ease, opacity 200ms ease, transform 300ms ease',
                       pointerEvents: 'none',
                     }}
