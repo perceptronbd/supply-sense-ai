@@ -20,6 +20,7 @@
       "@supplysense/prisma": ["libs/shared/prisma/src/index.ts"],
       "@supplysense/prisma-client": ["libs/shared/prisma/generated"],
       "@supplysense/types": ["libs/shared/src/index.ts"],
+      "@supplysense/ui": ["libs/shared/ui/src/index.ts"],
       "@supplysense/utils": ["libs/shared/utils/src/index.ts"],
       "@supplysense/utils/server": ["libs/shared/utils/src/server.ts"]
     },

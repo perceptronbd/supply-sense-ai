@@ -31,4 +31,10 @@ export class TableMetadataController {
   async getSampleQuestions(@Param() params: GetTableMetadataDto) {
     return await this.tableMetadataService.getSampleQuestions(params.dbConnectionId);
   }
+
+  @Get('/public-sample-questions')
+  @HttpCode(HttpStatus.OK)
+  async getPublicSampleQuestions() {
+    return await this.tableMetadataService.getPublicSampleQuestions();
+  }
 }

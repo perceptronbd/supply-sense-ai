@@ -1,3 +1,4 @@
+import { TestComponent } from '@supplysense/ui';
 import Banner from '../components/sections/BannerSection';
 import BuiltSection from '../components/sections/BuiltSection';
 import ContactSection from '../components/sections/ContactSection';
@@ -14,7 +15,7 @@ const LandingPage = () => {
     <div id="/" className="relative overflow-hidden">
       {/* Navbar */}
       <Navbar />
-
+      <TestComponent />
       {/* Banner */}
       <Banner />
 
