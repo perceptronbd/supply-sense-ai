@@ -10,9 +10,8 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  ScrollShadow,
 } from '@heroui/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, memo, useCallback, useEffect, useRef, useState } from 'react';
 import { sendPublicMessage } from '../../app/actions/chatActions';
 import { Icons } from '../icons';
 import { LoadingMessage } from './LoadingMessage';
@@ -31,56 +30,114 @@ interface ChatBoxModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Memoized message bubble to avoid full list rerenders
+const MessageBubble = memo(({ msg }: { msg: ChatMessage }) => {
+  return (
+    <div className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+      {msg.sender === 'ai' && <MascotAwake size={36} className="text-primary" />}
+
+      <div
+        className={`max-w-[80%] rounded-2xl px-4 ${
+          msg.sender === 'user'
+            ? 'bg-gradient-to-l from-default-300 to-default-400 py-3'
+            : 'bg-inherit'
+        }`}
+      >
+        <p className="text-sm leading-relaxed">{msg.content}</p>
+        <p className="text-xs mt-1 opacity-70 text-content1-foreground">
+          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      </div>
+
+      {msg.sender === 'user' && (
+        <Avatar
+          icon={<Icons.User className="w-4 h-4" />}
+          size="sm"
+          classNames={{
+            base: 'bg-primary-100 flex-shrink-0',
+            icon: 'text-primary-600',
+          }}
+        />
+      )}
+    </div>
+  );
+});
+MessageBubble.displayName = 'MessageBubble';
+
+// main component
 const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date(),
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <>
+  useEffect(() => {
+    const scrollToEnd = () => {
+      if (messagesContainerRef.current) {
+        const scrollElement = messagesContainerRef.current;
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setMessage('');
-    setIsLoading(true);
+    scrollToEnd();
+    const timer = setTimeout(scrollToEnd, 10);
 
-    try {
-      // Call the server action
-      const result = await sendPublicMessage(message);
+    return () => clearTimeout(timer);
+  }, [messages]);
 
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: result.message,
-        sender: 'ai',
-        timestamp: new Date(result.timestamp),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      // Handle error
-      console.error('Error in handleSubmit:', error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I am unable to process your request. Please try again.',
-        sender: 'ai',
+  // Handle form submission
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      if (!message.trim() || isLoading) return;
+
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content: message,
+        sender: 'user',
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleClearChat = () => {
+      setMessages((prev) => [...prev, userMessage]);
+      setMessage('');
+      setIsLoading(true);
+
+      try {
+        // Call the server action
+        const result = await sendPublicMessage(userMessage.content);
+
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content: result.message,
+          sender: 'ai',
+          timestamp: new Date(result.timestamp),
+        };
+
+        setMessages((prev) => [...prev, aiMessage]);
+      } catch (error) {
+        // Handle error
+        console.error('Error in handleSubmit:', error);
+        const errorMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content: 'Sorry, I am unable to process your request. Please try again.',
+          sender: 'ai',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [message, isLoading]
+  );
+
+  // Handle chat clearing
+  const handleClearChat = useCallback(() => {
     setMessages([]);
     setMessage('');
-  };
+  }, []);
 
   return (
     <Modal
@@ -100,7 +157,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
             {/* Header */}
             <ModalHeader>
               <Button
-                onPress={() => handleClearChat()}
+                onPress={handleClearChat}
                 variant="flat"
                 color="default"
                 radius="md"
@@ -112,57 +169,17 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
 
             {/* Chat Messages */}
             <ModalBody className="flex flex-col h-[500px] relative z-10">
-              <ScrollShadow className="flex-1 px-4 py-2">
+              <div className="flex-1 px-4 py-2 overflow-y-auto" ref={messagesContainerRef}>
                 <div className="space-y-4">
                   {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex gap-3 ${
-                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      {/* ai message */}
-                      {msg.sender === 'ai' && <MascotAwake size={36} className="text-primary" />}
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 ${
-                          msg.sender === 'user'
-                            ? 'bg-gradient-to-l from-default-300 to-default-400 py-3'
-                            : 'bg-inherit'
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                        <p
-                          className={`text-xs mt-1 opacity-70 ${
-                            msg.sender === 'user'
-                              ? 'text-content1-foreground'
-                              : 'text-content1-foreground'
-                          }`}
-                        >
-                          {msg.timestamp.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-
-                      {/* user message */}
-                      {msg.sender === 'user' && (
-                        <Avatar
-                          icon={<Icons.User className="w-4 h-4" />}
-                          size="sm"
-                          classNames={{
-                            base: 'bg-primary-100 flex-shrink-0',
-                            icon: 'text-primary-600',
-                          }}
-                        />
-                      )}
-                    </div>
+                    <MessageBubble key={msg.id} msg={msg} />
                   ))}
 
-                  {/* Loading indicator */}
                   {isLoading && <LoadingMessage />}
+
+                  <div ref={messagesEndRef} />
                 </div>
-              </ScrollShadow>
+              </div>
             </ModalBody>
 
             {/* Input Footer */}
@@ -187,6 +204,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                     inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
                   }}
                 />
+
                 <Button
                   type="submit"
                   radius="md"
