@@ -58,4 +58,3 @@ libs/shared/prisma/generated/**
 
 # Ignore Kiro project steering files
 .kiro/
-
