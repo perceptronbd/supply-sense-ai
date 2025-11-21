@@ -1,7 +1,7 @@
 'use client';
 
-import useGradientIcons from 'landing-page/src/components/icons/useGradientIcons';
 import { useEffect } from 'react';
+import useGradientIcons from '../icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 
 const SECTION_ID = 'features';
