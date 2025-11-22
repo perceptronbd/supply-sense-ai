@@ -79,7 +79,7 @@ const Banner = () => {
             size="sm"
             className="absolute w-10 h-10 mr-2 -translate-y-1/2 right-2 top-1/2"
           >
-            <Icons.SendIcon className="w-7 h-7 text-primary-500" />
+            <Icons.SendIcon className="w-7 h-7 text-primary" />
           </Button>
         </form>
       </div>
