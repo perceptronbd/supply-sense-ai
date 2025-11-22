@@ -134,15 +134,16 @@ export function ChatInput({
 
           <Button
             type="submit"
-            color="secondary"
+            color="default"
             isIconOnly
             isLoading={isLoading}
             disabled={!message.trim() || disabled}
             aria-label="Send message"
             size="sm"
+            radius="sm"
             variant="solid"
           >
-            {!isLoading && <Icons.Send className="w-4 h-4 -rotate-45" />}
+            {!isLoading && <Icons.Send className="w-5 h-5 text-default-600" />}
           </Button>
         </div>
       </form>
