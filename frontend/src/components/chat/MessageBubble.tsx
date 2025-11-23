@@ -24,12 +24,14 @@ interface MessageBubbleProps {
   isError?: boolean;
 }
 
-export function MessageBubble({ message, onSuggestionClick: _, isError }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  onSuggestionClick: _,
+  isError,
+}: Readonly<MessageBubbleProps>) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  console.log('Error', isError);
 
   // Use llm-ui for AI message rendering
   const { blockMatches } = useLLMOutput({

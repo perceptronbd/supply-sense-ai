@@ -14,7 +14,6 @@ const LandingPage = () => {
     <div id="/" className="relative overflow-hidden">
       {/* Navbar */}
       <Navbar />
-
       {/* Banner */}
       <Banner />
 

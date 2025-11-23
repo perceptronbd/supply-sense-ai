@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Avatar,
   Button,
   Form,
   Input,
@@ -10,13 +9,13 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  ScrollShadow,
 } from '@heroui/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { sendPublicMessage } from '../../app/actions/chatActions';
-import { Icons } from '../icons';
+import { Icons as SendIcons } from '../icons';
+import AIMessage from './AIMessage';
 import { LoadingMessage } from './LoadingMessage';
-import { MascotAwake } from './Logo';
+import UserMessage from './UserMessage';
 
 interface ChatMessage {
   id: string;
@@ -31,56 +30,120 @@ interface ChatBoxModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// main chat component
 const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+  const timeoutRefs = useRef<Record<string, NodeJS.Timeout>>({});
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date(),
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <>
+  useEffect(() => {
+    const scrollToEnd = () => {
+      if (messagesContainerRef.current) {
+        const scrollElement = messagesContainerRef.current;
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setMessage('');
-    setIsLoading(true);
+    scrollToEnd();
+    const timer = setTimeout(scrollToEnd, 10);
 
-    try {
-      // Call the server action
-      const result = await sendPublicMessage(message);
+    return () => clearTimeout(timer);
+  }, [messages]);
 
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: result.message,
-        sender: 'ai',
-        timestamp: new Date(result.timestamp),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      // Handle error
-      console.error('Error in handleSubmit:', error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I am unable to process your request. Please try again.',
-        sender: 'ai',
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      for (const timeout of Object.values(timeoutRefs.current)) {
+        clearTimeout(timeout);
+      }
+    };
+  }, []);
+
+  // Handle form submission
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      if (!message.trim() || isLoading) return;
+
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content: message,
+        sender: 'user',
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleClearChat = () => {
+      setMessages((prev) => [...prev, userMessage]);
+      setMessage('');
+      setIsLoading(true);
+
+      try {
+        // Call the server action
+        const result = await sendPublicMessage(userMessage.content);
+
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content: result.message,
+          sender: 'ai',
+          timestamp: new Date(result.timestamp),
+        };
+
+        setMessages((prev) => [...prev, aiMessage]);
+      } catch (error) {
+        // Handle error
+        console.error('Error in handleSubmit:', error);
+        const errorMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content: 'Sorry, I am unable to process your request. Please try again.',
+          sender: 'ai',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [message, isLoading]
+  );
+
+  // Handle chat clearing
+  const handleClearChat = useCallback(() => {
     setMessages([]);
     setMessage('');
-  };
+    setCopied({});
+
+    // Clear all timeouts
+    for (const timeout of Object.values(timeoutRefs.current)) {
+      clearTimeout(timeout);
+    }
+    timeoutRefs.current = {};
+  }, []);
+
+  // Handle copy Message
+  const handleCopyMessage = useCallback(async (id: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+
+      // Set copied true for this specific message
+      setCopied((prev) => ({ ...prev, [id]: true }));
+
+      // Clear previous timeout if exists
+      if (timeoutRefs.current[id]) {
+        clearTimeout(timeoutRefs.current[id]);
+      }
+
+      // Create a new timeout to reset copied state
+      timeoutRefs.current[id] = setTimeout(() => {
+        setCopied((prev) => ({ ...prev, [id]: false }));
+        delete timeoutRefs.current[id];
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }, []);
 
   return (
     <Modal
@@ -100,7 +163,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
             {/* Header */}
             <ModalHeader>
               <Button
-                onPress={() => handleClearChat()}
+                onPress={handleClearChat}
                 variant="flat"
                 color="default"
                 radius="md"
@@ -112,57 +175,31 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
 
             {/* Chat Messages */}
             <ModalBody className="flex flex-col h-[500px] relative z-10">
-              <ScrollShadow className="flex-1 px-4 py-2">
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex gap-3 ${
-                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      {/* ai message */}
-                      {msg.sender === 'ai' && <MascotAwake size={36} className="text-primary" />}
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 ${
-                          msg.sender === 'user'
-                            ? 'bg-gradient-to-l from-default-300 to-default-400 py-3'
-                            : 'bg-inherit'
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                        <p
-                          className={`text-xs mt-1 opacity-70 ${
-                            msg.sender === 'user'
-                              ? 'text-content1-foreground'
-                              : 'text-content1-foreground'
-                          }`}
-                        >
-                          {msg.timestamp.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-
-                      {/* user message */}
-                      {msg.sender === 'user' && (
-                        <Avatar
-                          icon={<Icons.User className="w-4 h-4" />}
-                          size="sm"
-                          classNames={{
-                            base: 'bg-primary-100 flex-shrink-0',
-                            icon: 'text-primary-600',
-                          }}
-                        />
-                      )}
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 px-4 py-3 overflow-y-auto space-y-4"
+              >
+                {messages.map((msg) =>
+                  msg.sender === 'user' ? (
+                    <div key={msg.id} className="flex justify-end">
+                      <UserMessage
+                        content={msg.content}
+                        onCopy={() => handleCopyMessage(msg.id, msg.content)}
+                        copied={!!copied[msg.id]}
+                      />
                     </div>
-                  ))}
+                  ) : (
+                    <AIMessage
+                      key={msg.id}
+                      msg={msg}
+                      onCopy={() => handleCopyMessage(msg.id, msg.content)}
+                      copied={!!copied[msg.id]}
+                    />
+                  )
+                )}
 
-                  {/* Loading indicator */}
-                  {isLoading && <LoadingMessage />}
-                </div>
-              </ScrollShadow>
+                {isLoading && <LoadingMessage />}
+              </div>
             </ModalBody>
 
             {/* Input Footer */}
@@ -183,10 +220,11 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   disabled={isLoading}
                   classNames={{
                     input:
-                      'border-none placeholder:text-content4 placeholder:text-sm w-[90%] focus:outline-none focus:ring-0',
+                      'border-none placeholder:text-content4 placeholder:text-sm  w-[90%] focus:outline-none focus:ring-0',
                     inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
                   }}
                 />
+
                 <Button
                   type="submit"
                   radius="md"
@@ -194,10 +232,10 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
                   variant="light"
                   color="primary"
                   size="sm"
-                  className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
                   disabled={isLoading}
+                  className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
                 >
-                  <Icons.SendIcon className="w-7 h-7" />
+                  <SendIcons.SendIcon className="w-7 h-7" />
                 </Button>
               </Form>
             </ModalFooter>
