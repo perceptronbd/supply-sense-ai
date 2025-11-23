@@ -4,8 +4,6 @@ import { useEffect } from 'react';
 import useGradientIcons from '../icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 
-const SECTION_ID = 'features';
-
 const Features = () => {
   const { Settings, DangerCircle, Clock } = useGradientIcons();
 
@@ -62,7 +60,7 @@ const Features = () => {
   }, []);
 
   return (
-    <SectionWrapper id={SECTION_ID} size="large">
+    <SectionWrapper size="large">
       <div className="flex flex-col justify-center items-center lg:flex-row lg:justify-around gap-5">
         {/* text part - first column */}
         <div className="flex-1">
