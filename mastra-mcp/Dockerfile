@@ -1,6 +1,6 @@
 # Multi-stage build for Mastra MCP server
-FROM node:20-alpine AS base
 
+FROM node:20-alpine AS base
 WORKDIR /app
 
 # Install pnpm globally for workspace commands
@@ -28,6 +28,17 @@ RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
 # Build the Mastra MCP bundle using Nx target
 RUN pnpm exec nx run mastra-mcp:build
 
+# WORKAROUND for Mastra telemetry bug:
+# Inject a minimal telemetry-config.mjs so that
+# instrumentation.mjs can import { telemetry } without crashing.
+RUN cat <<'EOF' > mastra-mcp/.mastra/output/telemetry-config.mjs
+export const telemetry = {
+  enabled: false,
+  serviceName: "mastra-mcp",
+  disableLocalExport: false,
+};
+EOF
+
 # Install production dependencies for the build output
 FROM base AS prod-deps
 WORKDIR /app
@@ -37,7 +48,6 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Runtime image
 FROM node:20-alpine AS runner
-
 WORKDIR /app
 
 # Install tini for proper signal handling
@@ -61,9 +71,10 @@ COPY --from=builder --chown=mastra:nodejs /app/libs/shared/prisma/generated ./li
 RUN mkdir -p storage && chown -R mastra:nodejs /app
 
 USER mastra
-
 EXPOSE 3005
 
 # Use tini to manage signals when running the Mastra MCP server
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "--import=./instrumentation.mjs", "--import=@opentelemetry/instrumentation/hook.mjs", "./index.mjs"]
+
+# Start Mastra MCP with instrumentation (telemetry-config is now valid)
+CMD ["node", "--import=./instrumentation.mjs", "./index.mjs"]
