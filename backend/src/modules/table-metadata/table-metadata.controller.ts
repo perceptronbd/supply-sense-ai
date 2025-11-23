@@ -20,6 +20,12 @@ export class TableMetadataController {
     private readonly tableMetadataService: TableMetadataService
   ) {}
 
+  @Get('/public-sample-questions')
+  @HttpCode(HttpStatus.OK)
+  async getPublicSampleQuestions() {
+    return await this.tableMetadataService.getPublicSampleQuestions();
+  }
+
   @Get('/:dbConnectionId')
   @HttpCode(HttpStatus.OK)
   async getTableMetadata(@Param() params: GetTableMetadataDto) {
@@ -30,11 +36,5 @@ export class TableMetadataController {
   @HttpCode(HttpStatus.OK)
   async getSampleQuestions(@Param() params: GetTableMetadataDto) {
     return await this.tableMetadataService.getSampleQuestions(params.dbConnectionId);
-  }
-
-  @Get('/public-sample-questions')
-  @HttpCode(HttpStatus.OK)
-  async getPublicSampleQuestions() {
-    return await this.tableMetadataService.getPublicSampleQuestions();
   }
 }

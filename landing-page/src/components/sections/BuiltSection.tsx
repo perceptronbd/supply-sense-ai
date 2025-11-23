@@ -6,6 +6,8 @@ import useGradientIcons from '../icons/useGradientIcons';
 import SectionWrapper from '../ui/SectionWrapper';
 import TableBox from '../ui/TableBox';
 
+const SECTION_ID = 'features';
+
 const BuiltSection = () => {
   const { CheckCircle, Message, Search, Document } = useGradientIcons();
   const ref = useRef(null);
@@ -15,7 +17,7 @@ const BuiltSection = () => {
   });
 
   return (
-    <SectionWrapper size="large">
+    <SectionWrapper id={SECTION_ID} size="large">
       <div
         ref={ref}
         className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background"

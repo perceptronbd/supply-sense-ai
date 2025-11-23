@@ -15,6 +15,7 @@ import { sendPublicMessage } from '../../app/actions/chatActions';
 import { Icons as SendIcons } from '../icons';
 import AIMessage from './AIMessage';
 import { LoadingMessage } from './LoadingMessage';
+import { PublicSampleQuestions } from './PublicSampleQuestions';
 import UserMessage from './UserMessage';
 
 interface ChatMessage {
@@ -152,6 +153,7 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
       size="2xl"
       closeButton={false}
       scrollBehavior="inside"
+      placement="center"
       classNames={{
         base: 'max-h-[90vh] bg-default-200 relative card-blur-effect tilted-cylinder-glow',
         body: 'p-0',
@@ -204,40 +206,49 @@ const ChatBoxModal = ({ isOpen, onOpenChange }: ChatBoxModalProps) => {
 
             {/* Input Footer */}
             <ModalFooter className="p-4 relative z-10">
-              <Form
-                aria-label="Chat Form"
-                onSubmit={handleSubmit}
-                className="w-full border-none relative"
-              >
-                <Input
-                  aria-label="Type your message here..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask anything about your business"
-                  radius="md"
-                  variant="flat"
-                  size="lg"
-                  disabled={isLoading}
-                  classNames={{
-                    input:
-                      'border-none placeholder:text-content4 placeholder:text-sm  w-[90%] focus:outline-none focus:ring-0',
-                    inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
-                  }}
-                />
-
-                <Button
-                  type="submit"
-                  radius="md"
-                  isIconOnly
-                  variant="light"
-                  color="primary"
-                  size="sm"
-                  disabled={isLoading}
-                  className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
+              <div className="flex flex-col w-full gap-3">
+                <Form
+                  aria-label="Chat Form"
+                  onSubmit={handleSubmit}
+                  className="w-full border-none relative"
                 >
-                  <SendIcons.SendIcon className="w-7 h-7" />
-                </Button>
-              </Form>
+                  <Input
+                    aria-label="Type your message here..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Ask anything about your business"
+                    radius="md"
+                    variant="flat"
+                    size="lg"
+                    disabled={isLoading}
+                    classNames={{
+                      input:
+                        'border-none placeholder:text-content4 placeholder:text-sm w-[90%] focus:outline-none focus:ring-0',
+                      inputWrapper: 'bg-content1 rounded-xl py-8 card-blur-effect-alt',
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    radius="md"
+                    isIconOnly
+                    variant="light"
+                    color="primary"
+                    size="sm"
+                    disabled={isLoading}
+                    className="w-10 h-10 absolute right-2 top-1/2 -translate-y-1/2 mr-2"
+                  >
+                    <SendIcons.SendIcon className="w-7 h-7" />
+                  </Button>
+                </Form>
+
+                {/* Sample Questions */}
+                {messages.length === 0 && (
+                  <div className="max-h-[160px] overflow-y-auto sm:max-h-none sm:overflow-visible">
+                    <PublicSampleQuestions onQuestionClick={(q) => setMessage(q)} />
+                  </div>
+                )}
+              </div>
             </ModalFooter>
           </>
         )}
