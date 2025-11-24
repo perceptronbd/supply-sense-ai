@@ -39,6 +39,25 @@ export const telemetry = {
 };
 EOF
 
+# POLYFILL for ES modules __dirname issue:
+# Add __dirname and __filename polyfill to instrumentation.mjs
+# This is needed because Prisma's query engine needs __dirname to locate itself
+RUN node -e "\
+const fs = require('fs'); \
+const path = 'mastra-mcp/.mastra/output/instrumentation.mjs'; \
+let content = fs.readFileSync(path, 'utf8'); \
+const polyfill = \`import { fileURLToPath } from 'url';\nimport { dirname } from 'path';\n\n\`; \
+const globalThisLine = 'globalThis.___MASTRA_TELEMETRY___ = true;'; \
+const __dirnamePolyfill = \`const __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nglobalThis.__dirname = __dirname;\nglobalThis.__filename = __filename;\n\`; \
+if (!content.includes('globalThis.__dirname')) { \
+  const lines = content.split('\\n'); \
+  const globalThisIdx = lines.findIndex(l => l.includes(globalThisLine)); \
+  lines.splice(0, 0, polyfill.trim()); \
+  lines.splice(lines.findIndex(l => l.includes(globalThisLine)), 0, __dirnamePolyfill.trim()); \
+  fs.writeFileSync(path, lines.join('\\n')); \
+} \
+"
+
 # Install production dependencies for the build output
 FROM base AS prod-deps
 WORKDIR /app
