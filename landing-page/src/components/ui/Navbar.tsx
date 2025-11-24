@@ -57,8 +57,8 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="mx-2">
-      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto mt-5 py-1 lg:p-1">
+    <div className="mx-2 bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-50">
+      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto h-full">
         <Link href="/">
           <FullLogo width={173} height={27} />
         </Link>
