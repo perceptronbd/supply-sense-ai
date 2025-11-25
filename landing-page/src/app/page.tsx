@@ -18,9 +18,7 @@ const LandingPage = () => {
       <Banner />
 
       {/* Glow Effects */}
-      <div>
-        <GlowEffects />
-      </div>
+      <GlowEffects />
 
       {/* Data section */}
       <Features />
