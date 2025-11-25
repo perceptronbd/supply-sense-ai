@@ -1,10 +1,10 @@
 import { Button } from '@heroui/react';
 import Link from 'next/link';
-import { LoginFormData, loginSchema } from '@/app/login/page';
 import { Text } from '@/components/ui/Text';
 import { ValidatedInput } from '@/components/ui/ValidatedInput';
 import { ROUTE_PATHS } from '@/config/routes';
 import { useGetCompanyId } from '@/hooks/useGetCompanyId';
+import { LoginFormData, loginSchema } from '@/lib/schemas/login.schema';
 
 interface LoginFormProps {
   formData: LoginFormData;
@@ -86,7 +86,7 @@ export const LoginForm = ({
           </Text>
           <Link
             href={ROUTE_PATHS.FORGOT_PASSWORD || '#'}
-            className="text-sm text-secondary hover:text-primary underline transition-colors"
+            className="text-sm underline transition-colors text-secondary hover:text-primary"
           >
             Click here
           </Link>
@@ -112,14 +112,14 @@ export const LoginForm = ({
         </Text>
         <Link
           href={ROUTE_PATHS.REGISTER}
-          className="text-secondary hover:text-primary underline transition-colors"
+          className="underline transition-colors text-secondary hover:text-primary"
         >
           Register your company
         </Link>
         {userId && (
           <Link
             href={ROUTE_PATHS.ONBOARDING}
-            className="text-secondary hover:text-primary inline-flex items-center justify-center w-full underline transition-colors"
+            className="inline-flex items-center justify-center w-full underline transition-colors text-secondary hover:text-primary"
           >
             Complete onboarding
           </Link>

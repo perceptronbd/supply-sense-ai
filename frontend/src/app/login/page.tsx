@@ -4,15 +4,12 @@ import { addToast } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { z } from 'zod';
 import { LoginLayout } from '@/components/pages/LoginLayout';
 import { ROUTE_PATHS } from '@/config/routes';
-import { loginSchema } from '@/lib/schemas/login.schema';
+import { LoginFormData, loginSchema } from '@/lib/schemas/login.schema';
 import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useLoginMutation } from '@/store/api/authApi';
 import { clearRegistrationCredentials, setCredentials } from '@/store/slices/authSlice';
-
-export type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
