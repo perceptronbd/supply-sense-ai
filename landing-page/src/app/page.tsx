@@ -11,14 +11,16 @@ import Navbar from '../components/ui/Navbar';
 
 const LandingPage = () => {
   return (
-    <div id="/" className="relative h-screen overflow-x-hidden overflow-y-auto">
+    <div id="/" className="relative container h-screen overflow-x-hidden overflow-y-auto">
       {/* Navbar */}
       <Navbar />
       {/* Banner */}
       <Banner />
 
       {/* Glow Effects */}
-      <GlowEffects />
+      <div>
+        <GlowEffects />
+      </div>
 
       {/* Data section */}
       <Features />
