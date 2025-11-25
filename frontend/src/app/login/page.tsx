@@ -7,18 +7,10 @@ import { useDispatch } from 'react-redux';
 import { z } from 'zod';
 import { LoginLayout } from '@/components/pages/LoginLayout';
 import { ROUTE_PATHS } from '@/config/routes';
+import { loginSchema } from '@/lib/schemas/login.schema';
 import { getToastErrorMessage } from '@/lib/utils/api-response';
 import { useLoginMutation } from '@/store/api/authApi';
 import { clearRegistrationCredentials, setCredentials } from '@/store/slices/authSlice';
-
-// Login form validation schema
-export const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(1, 'Password is required')
-    .min(6, 'Password must be at least 6 characters'),
-});
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
