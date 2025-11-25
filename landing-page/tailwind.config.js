@@ -55,6 +55,10 @@ module.exports = {
         },
       },
     },
+    container: {
+      center: true,
+      padding: '2rem',
+    },
   },
   darkMode: 'class',
   plugins: [

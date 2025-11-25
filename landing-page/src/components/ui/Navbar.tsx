@@ -57,8 +57,8 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="mx-2">
-      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto mt-5 py-1 lg:p-1">
+    <div className="bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-40">
+      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto h-full">
         <Link href="/">
           <FullLogo width={173} height={27} />
         </Link>
@@ -109,7 +109,7 @@ const Navbar = () => {
 
         {/* Mobile dropdown menu */}
         <div
-          className={`absolute top-full left-0 right-0 lg:hidden mt-2 mx-2 backdrop-blur-2xl border-1 border-primary/20 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ease-in-out z-10 ${
+          className={`absolute top-full left-0 right-0 lg:hidden mt-2 mx-2 bg-background backdrop-blur-2xl border-1 border-primary/30 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ease-in-out z-10 ${
             isMobileMenuOpen
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 -translate-y-4 pointer-events-none'

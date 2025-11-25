@@ -60,7 +60,7 @@ const Features = () => {
   }, []);
 
   return (
-    <SectionWrapper size="large">
+    <SectionWrapper size="medium">
       <div className="flex flex-col justify-center items-center lg:flex-row lg:justify-around gap-5">
         {/* text part - first column */}
         <div className="flex-1">
