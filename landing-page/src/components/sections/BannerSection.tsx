@@ -18,7 +18,7 @@ const Banner = () => {
   };
 
   //navigate to login page
-  const _handleInputClick = () => {
+  const handleInputClick = () => {
     const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
     window.open(loginUrl, '_blank', 'noopener,noreferrer');
   };
@@ -43,6 +43,7 @@ const Banner = () => {
           radius="md"
           size="lg"
           endContent={<Icons.ArrowRight />}
+          onPress={() => handleInputClick()}
         >
           Try For Free
         </Button>
