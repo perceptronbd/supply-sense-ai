@@ -9,6 +9,7 @@ import {
   testConnection,
   withDbConnection,
 } from '@supplysense/utils/server';
+import { appConfig } from '@/config/app.config';
 import type { DbCredentials, SaveConnectionResult } from '../onboarding/types/db-connection.type';
 import type { SaveDbConnectionDto } from './connections.dto';
 
@@ -18,7 +19,7 @@ export class ConnectionsService {
   private readonly logger = new Logger(ConnectionsService.name);
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
-    this.encryptionKey = process.env.DB_ENCRYPTION_KEY;
+    this.encryptionKey = appConfig.dbEncryptionKey;
     if (!this.encryptionKey) {
       throw new Error('DB_ENCRYPTION_KEY environment variable is not set');
     }

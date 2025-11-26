@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '@supplysense/prisma';
+import { appConfig } from '@/config/app.config';
 
 @Injectable()
 export class TableMetadataService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  private readonly PUBLIC_DB_CONNECTION_ID = process.env.PUBLIC_DB_CONNECTION_ID;
+  private readonly PUBLIC_DB_CONNECTION_ID = appConfig.publicDbConnectionId;
 
   async getTableMetadata(dbConnectionId: string) {
     return await this.prisma.tableMetadata.findMany({

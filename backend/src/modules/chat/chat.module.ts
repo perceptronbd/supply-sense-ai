@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '@supplysense/prisma';
+import { appConfig } from '@/config/app.config';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './services/chat.service';
@@ -20,7 +21,7 @@ import { SessionService } from './services/session.service';
     McpClientModule,
     CommonModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
+      secret: appConfig.jwtSecret,
       signOptions: { expiresIn: '24h' },
     }),
   ],
