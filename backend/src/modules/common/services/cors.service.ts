@@ -43,6 +43,7 @@ export class CorsService implements OnModuleInit {
 
   /**
    * Normalize an origin URL to its canonical form
+   * Origins should only include protocol and host (no pathname, no trailing slash)
    */
   private normalizeOrigin(origin: string): string {
     try {
@@ -54,13 +55,9 @@ export class CorsService implements OnModuleInit {
         throw new Error(`Unsupported protocol: ${url.protocol}`);
       }
 
-      // Remove trailing slash from pathname if present
-      let normalized = `${url.protocol}//${url.host}${url.pathname}`;
-      if (normalized.endsWith('/')) {
-        normalized = normalized.slice(0, -1);
-      }
-
-      return normalized;
+      // CORS origins should only include protocol and host
+      // Do NOT include pathname or trailing slashes
+      return `${url.protocol}//${url.host}`;
     } catch (error) {
       this.logger.error(`Failed to normalize origin "${origin}": ${error.message}`);
       return origin; // Return as-is if normalization fails
