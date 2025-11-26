@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Response } from 'express';
+import { appConfig } from '@/config/app.config';
 
 @Injectable()
 export class CorsService implements OnModuleInit {
@@ -14,7 +15,7 @@ export class CorsService implements OnModuleInit {
    * Initialize allowed origins from environment variable
    */
   private initializeAllowedOrigins(): void {
-    const frontendUrls = (process.env.FRONTEND_URLS ?? '').trim();
+    const frontendUrls = (appConfig.frontendUrls ?? '').trim();
 
     if (!frontendUrls) {
       this.logger.warn('FRONTEND_URLS environment variable is not set or empty');

@@ -6,6 +6,7 @@ export interface AppConfig {
 
   // Database settings
   databaseUrl: string;
+  publicDbConnectionId: string;
 
   // JWT settings
   jwtSecret: string;
@@ -21,6 +22,18 @@ export interface AppConfig {
 
   // Mastra Client settings
   mastraServerUrl: string;
+
+  // Security & Encryption settings
+  dbEncryptionKey: string;
+
+  // Frontend settings
+  frontendUrls: string;
+
+  // API Keys
+  openrouterApiKey: string;
+
+  // Rate limiting
+  rateLimitConfig: string;
 }
 
 export const appConfig: AppConfig = {
@@ -31,6 +44,7 @@ export const appConfig: AppConfig = {
 
   // Database settings
   databaseUrl: process.env.DATABASE_URL || '',
+  publicDbConnectionId: process.env.PUBLIC_DB_CONNECTION_ID || '',
 
   // JWT settings
   jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
@@ -46,6 +60,20 @@ export const appConfig: AppConfig = {
 
   // Mastra Client settings
   mastraServerUrl: process.env.MASTRA_SERVER_URL || 'http://localhost:4111',
+
+  // Security & Encryption settings
+  dbEncryptionKey: process.env.DB_ENCRYPTION_KEY || '',
+
+  // Frontend settings
+  frontendUrls: process.env.FRONTEND_URLS || 'http://localhost:3000,http://localhost:3001',
+
+  // API Keys
+  openrouterApiKey: process.env.OPENROUTER_API_KEY || '',
+
+  // Rate limiting
+  rateLimitConfig:
+    process.env.RATE_LIMIT_CONFIG ||
+    '[{"name":"minute","window":"1m","maxRequests":5},{"name":"hour","window":"1h","maxRequests":30},{"name":"day","window":"1d","maxRequests":200}]',
 };
 
 // Validation function to ensure required environment variables are set
