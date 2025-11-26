@@ -17,7 +17,11 @@ const BuiltSection = () => {
   });
 
   return (
-    <SectionWrapper id={SECTION_ID} size="large">
+    <SectionWrapper
+      id={SECTION_ID}
+      size="large"
+      className="snap-center lg:min-h-screen flex flex-col justify-center"
+    >
       <div
         ref={ref}
         className="flex flex-col xl:flex-row items-start justify-center gap-20 bg-background"

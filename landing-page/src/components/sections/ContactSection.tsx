@@ -8,7 +8,7 @@ const ContactSection = () => {
     <SectionWrapper
       id={SECTION_ID}
       size="medium"
-      className="xl:flex justify-between gap-10 space-y-10 items-center"
+      className="xl:flex justify-between gap-10 space-y-10 items-center snap-center md:min-h-screen pt-24 md:pt-36"
     >
       <div className="max-w-xl mx-auto xl:mx-0">
         <h1 className="font-brand text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto xl:text-start xl:mx-0 mb-6 max-w-md">

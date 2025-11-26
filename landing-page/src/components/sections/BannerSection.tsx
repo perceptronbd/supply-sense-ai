@@ -24,7 +24,7 @@ const Banner = () => {
   };
 
   return (
-    <SectionWrapper className="lg:min-h-screen lg:flex lg:flex-col lg:justify-center">
+    <SectionWrapper className="md:min-h-screen md:flex md:flex-col md:justify-center snap-center pt-24">
       <h1 className="mx-auto text-4xl font-medium text-center font-brand lg:text-6xl lg:font-bold lg:text-foreground text-secondary">
         <span className="text-primary">Know </span>Your Operations.
         <br /> <span className="text-primary">Ask </span> Anything. <br />

@@ -14,6 +14,7 @@ body {
   font-family: inherit;
   line-height: inherit;
   margin: 0;
+  scroll-behavior: smooth;
   /* Use HeroUI semantic colors for consistent theming */
   background-color: hsl(var(--nextui-background));
   color: hsl(var(--nextui-foreground));
