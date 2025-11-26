@@ -80,10 +80,21 @@ export class CorsService implements OnModuleInit {
    * Check if an origin is allowed
    */
   isOriginAllowed(origin: string | undefined): boolean {
-    if (!origin) return false;
+    if (!origin) {
+      this.logger.debug('[CORS DEBUG] isOriginAllowed: origin is undefined/null');
+      return false;
+    }
 
     const normalizedOrigin = this.normalizeOrigin(origin);
-    return this.allowedOrigins.has(normalizedOrigin);
+    const isAllowed = this.allowedOrigins.has(normalizedOrigin);
+
+    this.logger.debug(`[CORS DEBUG] isOriginAllowed check:`);
+    this.logger.debug(`  - Raw origin: "${origin}"`);
+    this.logger.debug(`  - Normalized: "${normalizedOrigin}"`);
+    this.logger.debug(`  - Is allowed: ${isAllowed}`);
+    this.logger.debug(`  - Allowed set: [${Array.from(this.allowedOrigins).join(', ')}]`);
+
+    return isAllowed;
   }
 
   /**
