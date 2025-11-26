@@ -14,6 +14,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { SSRSafeDrawingLogo } from '@/components/ui/SSRSafeDrawingLogo';
 import WithoutSidebar from '@/components/WithoutSidebar';
 import { cn } from '@/lib/utils';
+import ClarityInit from '@/providers/Clarity-init';
 import { persistor, store } from '@/store/store';
 
 const montserrat = Montserrat({
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
       </head>
       <body suppressHydrationWarning={true} className={'min-h-screen'}>
         {/* Microsoft Clarity Analytics */}
+        <ClarityInit />
 
         <Provider store={store}>
           <PersistGate
