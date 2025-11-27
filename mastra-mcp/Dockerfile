@@ -16,22 +16,27 @@ RUN pnpm install --frozen-lockfile
 # Build the Mastra MCP project
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy workspace root files so pnpm can install workspace packages correctly
 COPY package.json pnpm-lock.yaml* ./
 COPY nx.json tsconfig.base.json ./
 COPY libs ./libs
 COPY mastra-mcp ./mastra-mcp
 
-# Ensure Prisma client is generated for shared usage
+# Install workspace dependencies inside builder to create proper symlinks for workspace packages
+RUN pnpm install --frozen-lockfile
+
+# Ensure Prisma client is generated for shared usage (run from workspace root)
 RUN npx prisma generate --schema=libs/shared/prisma/schema.prisma
 
-# Build the Mastra MCP bundle using Nx target
-RUN pnpm exec nx run mastra-mcp:build
-
+# Build the Mastra MCP bundle by changing to the mastra-mcp directory first
+# Create a symlink to help Mastra find its build directory correctly
+WORKDIR /app/mastra-mcp
+RUN ln -sf /app/mastra-mcp/.mastra /app/.mastra && npx mastra build --dir src/mastra
 # WORKAROUND for Mastra telemetry bug:
 # Inject a minimal telemetry-config.mjs so that
 # instrumentation.mjs can import { telemetry } without crashing.
-RUN cat <<'EOF' > mastra-mcp/.mastra/output/telemetry-config.mjs
+RUN cat <<'EOF' > .mastra/output/telemetry-config.mjs
 export const telemetry = {
   enabled: false,
   serviceName: "mastra-mcp",
@@ -44,7 +49,7 @@ EOF
 # This is needed because Prisma's query engine needs __dirname to locate itself
 RUN node -e "\
 const fs = require('fs'); \
-const path = 'mastra-mcp/.mastra/output/instrumentation.mjs'; \
+const path = '.mastra/output/instrumentation.mjs'; \
 let content = fs.readFileSync(path, 'utf8'); \
 const polyfill = \`import { fileURLToPath } from 'url';\nimport { dirname } from 'path';\n\n\`; \
 const globalThisLine = 'globalThis.___MASTRA_TELEMETRY___ = true;'; \
@@ -57,6 +62,7 @@ if (!content.includes('globalThis.__dirname')) { \
   fs.writeFileSync(path, lines.join('\\n')); \
 } \
 "
+WORKDIR /app
 
 # Install production dependencies for the build output
 FROM base AS prod-deps
