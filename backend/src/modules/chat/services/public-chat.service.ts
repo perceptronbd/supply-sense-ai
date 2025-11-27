@@ -2,6 +2,7 @@ import type { MastraModelOutput } from '@mastra/core/stream';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createRuntimeContext } from '@supplysense/utils/server';
+import { appConfig } from '@/config/app.config';
 import { AIChatResponse } from '../interfaces/chat.interface';
 import { extractWorkflowResult } from '../utils/chat-utils';
 
@@ -19,7 +20,7 @@ export class PublicChatService {
   private readonly logger = new Logger(PublicChatService.name);
   private readonly PUBLIC_SESSION_ID = 'public-session';
   private readonly PUBLIC_USER_ID = 'public-user';
-  private readonly PUBLIC_DB_CONNECTION_ID = process.env.PUBLIC_DB_CONNECTION_ID;
+  private readonly PUBLIC_DB_CONNECTION_ID = appConfig.publicDbConnectionId;
   private readonly MESSAGE_LIMIT = 50;
 
   private messages: Map<string, ChatMessage> = new Map();

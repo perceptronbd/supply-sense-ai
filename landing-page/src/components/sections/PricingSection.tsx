@@ -7,7 +7,7 @@ const SECTION_ID = 'pricing';
 
 const PricingSection = () => {
   return (
-    <SectionWrapper size="medium" id={SECTION_ID} className="">
+    <SectionWrapper size="medium" id={SECTION_ID} className="snap-center">
       {/* heading section */}
       <div className="mb-16">
         <h1 className="max-w-2xl pt-12 font-brand leading-snug text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto mb-6">

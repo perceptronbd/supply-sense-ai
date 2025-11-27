@@ -57,7 +57,10 @@ const QnASection = () => {
     },
   ];
   return (
-    <SectionWrapper id={SECTION_ID} className="mx auto">
+    <SectionWrapper
+      id={SECTION_ID}
+      className="mx auto snap-center min-h-screen flex flex-col items-center justify-center pt-24"
+    >
       <p className="text-content1-foreground text-xs text-center mb-2">
         Frequently asked questions
       </p>

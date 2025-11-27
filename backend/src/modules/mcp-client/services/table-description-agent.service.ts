@@ -1,5 +1,6 @@
 import { MastraClient } from '@mastra/client-js';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { appConfig } from '@/config/app.config';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { McpClientService } from './mcp-client.service';
 
@@ -39,7 +40,7 @@ export class TableDescriptionAgentService {
 
     try {
       // Check for OpenRouter API key first
-      if (!process.env.OPENROUTER_API_KEY) {
+      if (!appConfig.openrouterApiKey) {
         throw new Error(
           'OPENROUTER_API_KEY environment variable is not set. Please add it to your .env file.'
         );

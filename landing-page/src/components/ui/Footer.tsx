@@ -5,7 +5,7 @@ import { FullLogo } from './Logo';
 
 const Footer = () => {
   return (
-    <footer className="container px-4 mx-auto py-12 md:px-20 2xl:px-40">
+    <footer className="container px-4 mx-auto py-16 lg:py-12 md:px-20 2xl:px-40 snap-center">
       {/* first row */}
       <div className="flex justify-center flex-col lg:flex-row gap-y-12 lg:justify-between items-start mb-12">
         {/* first column */}

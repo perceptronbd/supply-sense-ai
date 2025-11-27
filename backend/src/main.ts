@@ -5,6 +5,7 @@
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { appConfig } from '@/config/app.config';
 import { AppModule } from './app/app.module';
 import { CorsService, GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
 
@@ -89,7 +90,7 @@ async function bootstrap() {
     .addTag('manufacturing-list', 'Manufacturing List operations')
     .addTag('formula', 'Formula operations')
     .addBearerAuth()
-    .addServer(`http://localhost:${process.env.PORT || 3000}/`, 'Development server')
+    .addServer(`http://localhost:${appConfig.port}/`, 'Development server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
@@ -135,20 +136,18 @@ async function bootstrap() {
   });
   */
 
-  const port = process.env.PORT || 3004;
-  Logger.log(`⚙️  Environment: ${process.env.NODE_ENV || 'development'}`);
+  const port = appConfig.port;
+  Logger.log(`⚙️  Environment: ${appConfig.nodeEnv}`);
+  Logger.log(`🔗 Frontend CORS URLs: ${appConfig.frontendUrls}`);
   Logger.log(
-    `🔗 Frontend CORS URLs: ${process.env.FRONTEND_URLS || 'http://localhost:3001,http://localhost:3003'}`
+    `🗃️  Database: ${appConfig.databaseUrl ? 'Connected via env var' : 'Using default (ensure DATABASE_URL is set)'}`
   );
   Logger.log(
-    `🗃️  Database: ${process.env.DATABASE_URL ? 'Connected via env var' : 'Using default (ensure DATABASE_URL is set)'}`
+    `🔐 JWT Secret: ${appConfig.jwtSecret ? 'Configured' : 'Using default (change in production)'}`
   );
+  Logger.log(`🤖 AI Model: ${appConfig.geminiModel}`);
   Logger.log(
-    `🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Configured' : 'Using default (change in production)'}`
-  );
-  Logger.log(`🤖 AI Model: ${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`);
-  Logger.log(
-    `🔑 Gemini API: ${process.env.GEMINI_API_KEY ? 'Configured' : 'NOT SET - AI features may not work'}`
+    `🔑 Gemini API: ${appConfig.geminiApiKey ? 'Configured' : 'NOT SET - AI features may not work'}`
   );
   console.log('');
   await app.listen(port, '0.0.0.0');
