@@ -13,7 +13,7 @@ const LandingPage = () => {
   return (
     <div
       id="/"
-      className="relative snap-y snap-mandatory container h-screen overflow-x-hidden overflow-y-auto"
+      className="relative snap-y snap-mandatory  h-screen overflow-x-hidden overflow-y-auto"
     >
       {/* Navbar */}
       <Navbar />
