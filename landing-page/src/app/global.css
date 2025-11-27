@@ -120,3 +120,16 @@ body {
   @apply p-6 rounded-xl border-2 border-focus/30 h-full w-full relative overflow-hidden;
   box-shadow: inset 0 0 8px 2px rgba(232, 74, 46, 0.3);
 }
+
+/* Hide scrollbar while maintaining scroll functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
+}
