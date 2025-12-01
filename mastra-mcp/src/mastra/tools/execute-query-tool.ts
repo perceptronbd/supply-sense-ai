@@ -114,7 +114,16 @@ export const executeQueryTool = createTool({
     });
 
     const agentResponse = await withRetry(
-      () => postgreSQLGenerationAgent.generate([], { runtimeContext }),
+      () =>
+        postgreSQLGenerationAgent.generate(
+          [
+            {
+              role: 'user',
+              content: `Generate SQL query for: ${input.queryAnalysis}`,
+            },
+          ],
+          { runtimeContext }
+        ),
       3,
       1000
     );
