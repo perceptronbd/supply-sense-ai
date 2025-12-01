@@ -1,7 +1,6 @@
 'use client';
 import { Button, Input, Textarea } from '@heroui/react';
 import { Controller, FieldValues, useForm } from 'react-hook-form';
-import { Icons } from '../icons';
 
 export default function ContactForm() {
   const {
@@ -47,7 +46,6 @@ export default function ContactForm() {
                   label="Name"
                   labelPlacement="inside"
                   placeholder="Enter Your Name"
-                  startContent={<Icons.User className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.name}
                   errorMessage={errors.name?.message?.toString()}
                   variant="faded"
@@ -80,7 +78,6 @@ export default function ContactForm() {
                   label="Email"
                   placeholder="Email address"
                   labelPlacement="inside"
-                  startContent={<Icons.Mail className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message?.toString()}
                   variant="faded"
@@ -106,7 +103,6 @@ export default function ContactForm() {
                   label="Company"
                   labelPlacement="inside"
                   placeholder="Company Name"
-                  startContent={<Icons.Building className="h-5 w-5 text-default-500" />}
                   variant="faded"
                   color="primary"
                   classNames={{
@@ -136,7 +132,6 @@ export default function ContactForm() {
                   label="Message"
                   labelPlacement="inside"
                   placeholder="How can we assist you?"
-                  startContent={<Icons.MessageSquare className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.message}
                   errorMessage={errors.message?.message?.toString()}
                   variant="faded"
@@ -154,22 +149,11 @@ export default function ContactForm() {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                type="submit"
-                variant="solid"
-                color="primary"
-                className="flex-1 py-3"
-                startContent={<Icons.SendIcon className="h-5 w-5" />}
-              >
+              <Button type="submit" variant="solid" color="primary" className="flex-1 py-3">
                 Submit
               </Button>
 
-              <Button
-                type="button"
-                variant="bordered"
-                className="flex-1 border-primary py-3 text-primary"
-                startContent={<Icons.Phone className="h-5 w-5 text-primary" />}
-              >
+              <Button type="button" variant="bordered" color="primary" className="flex-1 py-3">
                 Reach out
               </Button>
             </div>
