@@ -53,9 +53,14 @@ export async function formatQueryResults(
   });
 
   // Analyze the query results to determine visualization format
-  const messages = userQuery
-    ? ([{ role: 'user', content: `User Query: ${userQuery}` }] as MessageListInput)
-    : [];
+  const messages: MessageListInput = [
+    {
+      role: 'user',
+      content: userQuery
+        ? `User Query: ${userQuery}`
+        : `Format the results for SQL query: ${sqlQuery}`,
+    },
+  ];
 
   const agentResponse = await formattingAgent.generate(messages, { runtimeContext });
 
