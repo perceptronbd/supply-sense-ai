@@ -19,11 +19,13 @@ export default function ContactForm() {
 
   return (
     <div className="max-w-lg flex-1 mx-auto xl:mx-0">
-      <div className="bg-gradient-to-b from-primary-50 to-primary-200 rounded-xl p-0.5">
-        <div className="bg-gradient-to-r from-default-50 via-primary-200 to-default-100 rounded-xl w-full p-6">
+      <div className="relative overflow-hidden rounded-xl border-1 border-primary-50">
+        <div className="contact-us-glow"></div>
+        <div className="rounded-xl w-full p-6 backdrop-blur-md bg-background/15">
           <h2 className="text-center text-2xl md:text-3xl font-brand font-bold text-content1-foreground mb-8">
             Schedule A Demo
           </h2>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Row 1: Name and Company */}
 
