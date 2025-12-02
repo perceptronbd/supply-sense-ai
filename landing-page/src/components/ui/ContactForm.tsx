@@ -25,7 +25,7 @@ export default function ContactForm() {
             Schedule A Demo
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Row 1: Name and Company */}
 
             {/* Name Field */}
