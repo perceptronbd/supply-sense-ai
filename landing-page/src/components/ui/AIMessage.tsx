@@ -49,7 +49,7 @@ function AIMessageComponent({ msg, onCopy, copied }: Readonly<AIMessageProps>) {
               {copied ? <Icons.Check /> : <Icons.Copy />}
             </Button>
 
-            <Button isIconOnly size="sm" variant="light">
+            {/* <Button isIconOnly size="sm" variant="light">
               <Icons.ThumbsUp />
             </Button>
             <Button isIconOnly size="sm" variant="light">
@@ -57,7 +57,7 @@ function AIMessageComponent({ msg, onCopy, copied }: Readonly<AIMessageProps>) {
             </Button>
             <Button isIconOnly size="sm" variant="light">
               <Icons.RefreshCw />
-            </Button>
+            </Button> */}
           </div>
 
           <span className="text-xs text-default-500 flex-shrink-0">
