@@ -133,6 +133,10 @@ export const executeQueryTool = createTool({
       // Remove markdown code blocks
       .replace(/```sql\s*/gi, '')
       .replace(/```\s*/g, '')
+      // Remove single-line comments (-- ...)
+      .replace(/--.*$/gm, '')
+      // Remove block comments (/* ... */)
+      .replace(/\/\*[\s\S]*?\*\//g, '')
       // Remove any leading/trailing whitespace and newlines
       .replace(/^\s+|\s+$/g, '')
       // Ensure query ends with semicolon if it doesn't already
