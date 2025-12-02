@@ -2,9 +2,22 @@
 import { Slider } from '@heroui/react';
 import { CSSProperties } from 'react';
 
-const SliderComponent = () => {
+interface SliderComponentProps {
+  value: number;
+  onChange: (value: number) => void;
+}
+
+const SliderComponent = ({ value, onChange }: SliderComponentProps) => {
   // Scale markers for display
   const markers = [500, 1000, 5000, 10000, 25000, 50000, 100000];
+
+  const handleChange = (index: number | number[]) => {
+    if (typeof index === 'number') {
+      onChange(markers[index]);
+    }
+  };
+
+  const currentIndex = markers.indexOf(value);
 
   return (
     <div className="max-w-lg mx-auto mb-8">
@@ -13,7 +26,8 @@ const SliderComponent = () => {
         // isDisabled
         minValue={0}
         maxValue={markers.length - 1}
-        defaultValue={3}
+        value={currentIndex !== -1 ? currentIndex : 3}
+        onChange={handleChange}
         color="primary"
         size="md"
         step={1}

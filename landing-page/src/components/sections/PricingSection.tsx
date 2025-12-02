@@ -1,3 +1,5 @@
+'use client';
+import { useState } from 'react';
 import PricingMobileTables from '../ui/PricingMobileTables';
 import PricingTable from '../ui/PricingTable';
 import SectionWrapper from '../ui/SectionWrapper';
@@ -5,7 +7,22 @@ import SliderComponent from '../ui/SliderComponent';
 
 const SECTION_ID = 'pricing';
 
+// Pricing tiers
+const PRICING_TIERS: Record<number, { starter: number; business: number }> = {
+  500: { starter: 5, business: 9 },
+  1000: { starter: 9, business: 19 },
+  5000: { starter: 39, business: 69 },
+  10000: { starter: 69, business: 119 },
+  25000: { starter: 149, business: 249 },
+  50000: { starter: 249, business: 399 },
+  100000: { starter: 399, business: 699 },
+};
+
 const PricingSection = () => {
+  const [selectedCredits, setSelectedCredits] = useState(10000);
+
+  const currentPrices = PRICING_TIERS[selectedCredits] || PRICING_TIERS[10000];
+
   return (
     <SectionWrapper size="medium" id={SECTION_ID} className="snap-center">
       {/* heading section */}
@@ -26,7 +43,7 @@ const PricingSection = () => {
           Get as many or as little credits you want
         </p>
 
-        <SliderComponent />
+        <SliderComponent value={selectedCredits} onChange={setSelectedCredits} />
 
         <p className="text-xs italic text-center font-medium text-transparent bg-clip-text bg-gradient-to-r from-primary-100 to-primary-400">
           Credits are used based on the complexity of your request. Each action will consume at
@@ -38,12 +55,12 @@ const PricingSection = () => {
 
       {/* desktop table */}
       <div className="hidden lg:flex">
-        <PricingTable />
+        <PricingTable prices={currentPrices} />
       </div>
 
       {/* mobile tables */}
       <div className="flex flex-col gap-8 lg:hidden mx-auto">
-        <PricingMobileTables />
+        <PricingMobileTables prices={currentPrices} />
       </div>
     </SectionWrapper>
   );
