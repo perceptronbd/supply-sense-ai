@@ -18,7 +18,6 @@ export const FeatureImage = ({ feature, index, total, scrollYProgress }: Feature
     index === 0 ? [0, 1] : [start - 0.05, start],
     index === 0 ? [1, 1] : [0, 1]
   );
-
   return (
     <motion.div
       style={{ opacity, zIndex: index }}
