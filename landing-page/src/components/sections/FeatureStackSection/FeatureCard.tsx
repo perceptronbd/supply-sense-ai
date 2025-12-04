@@ -21,14 +21,9 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
 
   const [isOpen, setIsOpen] = useState(isFirst);
 
-  useMotionValueEvent(progress, 'change', (latest) => {
-    if (isFirst) {
-      setIsOpen(latest < 0.9);
-    } else if (isLast) {
-      setIsOpen(latest > 0.1);
-    } else {
-      setIsOpen(latest > 0.1 && latest < 0.9);
-    }
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    const activeIndex = Math.min(Math.floor(latest * total), total - 1);
+    setIsOpen(index === activeIndex);
   });
 
   const { CheckCircle, Message, Search, Document } = useGradientIcons();
@@ -43,19 +38,20 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
           : Document;
 
   // Active State Logic
-  const opacityRange = isFirst ? [0, 0.9, 1] : isLast ? [0, 0.1] : [0, 0.1, 0.9, 1];
+  const opacityRange = isFirst ? [0, 0.99, 1] : isLast ? [0, 0.01] : [0, 0.01, 0.99, 1];
   const opacityValues = isFirst ? [1, 1, 0.5] : isLast ? [0.5, 1] : [0.5, 1, 1, 0.5];
   const activeOpacity = useTransform(progress, opacityRange, opacityValues);
 
   const barHeight = useTransform(progress, [0, 1], ['0%', '100%']);
 
   return (
-    <div className="relative">
+    <motion.div layout className="relative">
       <div className="relative overflow-hidden pl-0">
         <div className="flex gap-4 items-start h-full mb-3 relative">
           {/* Progress Bar (Left Border) */}
           <div className="absolute left-0 top-0 h-full w-1 bg-zinc-800/50 rounded-full overflow-hidden">
             <motion.div
+              layout
               style={{ height: barHeight }}
               className="w-full bg-gradient-to-b from-primary-200 via-primary to-primary-200"
             />
@@ -65,6 +61,7 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
             <div className="flex gap-3 items-center mb-2">
               <Icon className="h-8 w-8 shrink-0" />
               <motion.h3
+                layout="position"
                 className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-xl font-medium font-brand"
                 style={{ opacity: activeOpacity }}
               >
@@ -74,6 +71,7 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
 
             <div className="overflow-hidden">
               <motion.div
+                layout
                 initial={false}
                 animate={{
                   height: isOpen ? 'auto' : 0,
@@ -93,6 +91,6 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
