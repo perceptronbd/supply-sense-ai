@@ -9,7 +9,7 @@ interface RightColumnProps {
 
 export const RightColumn = ({ features, scrollYProgress }: RightColumnProps) => {
   return (
-    <div className="flex w-full max-w-xl flex-col justify-center gap-4">
+    <div className="flex w-full max-w-xl flex-col justify-center">
       {features.map((feature, index) => (
         <FeatureCard
           key={feature.id}

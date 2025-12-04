@@ -46,11 +46,11 @@ export const FeatureStackSection = () => {
       </div>
 
       {/* Snap Points */}
-      <div className="absolute inset-0 flex flex-col">
+      {/* <div className="absolute inset-0 flex flex-col">
         {features.map((feature) => (
           <div key={feature.id} className="h-[150vh] w-full snap-start" />
         ))}
-      </div>
+      </div> */}
     </section>
   );
 };

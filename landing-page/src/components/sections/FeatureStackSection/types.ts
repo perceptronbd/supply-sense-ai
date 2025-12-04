@@ -1,7 +1,8 @@
 export interface Feature {
   id: string;
   title: string;
-  description: string;
+  subtitle: string;
+  quote: string;
   image: string;
-  color: string;
+  icon: 'CheckCircle' | 'Message' | 'Search' | 'Document';
 }
