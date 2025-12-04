@@ -31,10 +31,7 @@ export const FeatureStackSection = () => {
   });
 
   return (
-    <section
-      ref={containerRef}
-      className="relative h-[750vh] bg-black snap-start container mx-auto"
-    >
+    <section ref={containerRef} className="relative h-[750vh] snap-start container mx-auto">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <div className="flex h-full flex-col xl:flex-row items-center justify-center gap-10 xl:gap-20">
           {/* Left Column: Image/Animation */}
