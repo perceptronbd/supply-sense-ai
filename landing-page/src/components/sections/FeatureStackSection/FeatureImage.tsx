@@ -23,15 +23,29 @@ export const FeatureImage = ({ feature, index, total, scrollYProgress }: Feature
       style={{ opacity, zIndex: index }}
       className="absolute inset-0 flex items-center justify-center overflow-hidden"
     >
-      {/* Outer glassmorphism container with padding */}
       <div className="relative h-full w-full">
-        <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-          {/* Inner container with colored border/shadow around the image */}
+        {/* Outer glassmorphism */}
+        <div
+          className="relative h-full w-full overflow-hidden rounded-2xl p-6"
+          style={{
+            border: '1px solid rgba(242, 242, 242, 0.15)',
+            boxShadow: `
+          inset -4px -4px 48px 4px rgba(138, 138, 140, 0.08),
+          inset 4px 4px 48px 4px rgba(138, 138, 140, 0.08)
+        `,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            background: 'rgba(0,0,0,0.15)',
+          }}
+        >
+          {/* Inner container */}
           <div
             className="relative h-full w-full overflow-hidden rounded-2xl"
             style={{
-              boxShadow:
-                '2px 2px 4px 0px rgba(232, 74, 46, 0.5), -2px -2px 4px 0px rgba(226, 204, 156, 0.5)',
+              boxShadow: `
+            2px 2px 4px 0px rgba(232, 74, 46, 0.5),
+            -2px -2px 4px 0px rgba(226, 204, 156, 0.5)
+          `,
             }}
           >
             <Image
@@ -42,16 +56,6 @@ export const FeatureImage = ({ feature, index, total, scrollYProgress }: Feature
               removeWrapper
               disableSkeleton={index === 0}
             />
-
-            {/* this is unnecessary */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-              <div className="mb-6 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-zinc-300 backdrop-blur-md">
-                Graphite Agent
-              </div>
-              <h3 className="text-3xl font-bold text-white drop-shadow-lg md:text-4xl lg:text-5xl max-w-lg leading-tight">
-                {feature.title}
-              </h3>
-            </div>
           </div>
         </div>
       </div>
