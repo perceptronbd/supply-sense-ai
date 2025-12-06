@@ -9,7 +9,7 @@ interface LeftColumnProps {
 
 export const LeftColumn = ({ features, scrollYProgress }: LeftColumnProps) => {
   return (
-    <div className="hidden w-full max-w-xl flex-col justify-center xl:flex">
+    <div className="flex w-full max-w-xl flex-col justify-center">
       <div className="relative w-full">
         <div className="relative aspect-[4/3] w-full overflow-hidden ">
           {features.map((feature, index) => (

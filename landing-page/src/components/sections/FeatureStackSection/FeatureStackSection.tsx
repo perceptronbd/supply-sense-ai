@@ -38,8 +38,8 @@ export const FeatureStackSection = () => {
       id={SECTION_ID}
       className="relative h-[750vh] snap-start container mx-auto"
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <div className="flex h-full flex-col xl:flex-row items-center justify-center gap-10 xl:gap-20">
+      <div className="sticky top-0 min-h-screen lg:h-screen w-full overflow-hidden">
+        <div className="flex min-h-full flex-col lg:flex-row items-center px-2 xl:px-0 justify-center gap-6 lg:gap-20 mt-16 lg:mt-0">
           {/* Left Column: Image/Animation */}
           <LeftColumn features={features} scrollYProgress={smoothProgress} />
 
