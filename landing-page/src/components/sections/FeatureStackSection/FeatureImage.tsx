@@ -54,10 +54,10 @@ export const FeatureImage = ({ feature, index, total, scrollYProgress }: Feature
               src={feature.image}
               alt={feature.title}
               as={NextImage}
-              width={800}
-              height={600}
+              fill
+              sizes="(max-width: 1280px) 100vw, 50vw"
               className="h-full w-full object-cover opacity-50"
-              loading={index === 0 ? 'eager' : 'lazy'}
+              priority={index === 0}
               removeWrapper
               disableSkeleton={index === 0}
             />
