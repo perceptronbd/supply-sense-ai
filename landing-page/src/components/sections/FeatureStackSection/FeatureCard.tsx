@@ -49,7 +49,7 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
       <div className="relative overflow-hidden pl-0">
         <div className="flex gap-4 items-start h-full mb-3 relative">
           {/* Progress Bar (Left Border) */}
-          <div className="absolute left-0 top-0 h-full w-1 bg-zinc-800/50 rounded-full overflow-hidden">
+          <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-primary-100/40 via-primary-400/40 to-primary-100/40 rounded-full overflow-hidden">
             <motion.div
               layout
               style={{ height: barHeight }}
