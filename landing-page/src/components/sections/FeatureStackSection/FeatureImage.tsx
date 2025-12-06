@@ -1,5 +1,7 @@
 import { Image } from '@heroui/react';
-import { type MotionValue, motion, useTransform } from 'framer-motion';
+import { type MotionValue, motion, useMotionValueEvent } from 'framer-motion';
+import NextImage from 'next/image';
+import { useState } from 'react';
 import type { Feature } from './types';
 
 interface FeatureImageProps {
@@ -10,17 +12,17 @@ interface FeatureImageProps {
 }
 
 export const FeatureImage = ({ feature, index, total, scrollYProgress }: FeatureImageProps) => {
-  const stepSize = 1 / total;
-  const start = index * stepSize;
+  const [isActive, setIsActive] = useState(index === 0);
 
-  const opacity = useTransform(
-    scrollYProgress,
-    index === 0 ? [0, 1] : [start - 0.05, start],
-    index === 0 ? [1, 1] : [0, 1]
-  );
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    const activeIndex = Math.min(Math.floor(latest * total), total - 1);
+    setIsActive(index === activeIndex);
+  });
   return (
     <motion.div
-      style={{ opacity, zIndex: index }}
+      animate={{ opacity: isActive ? 1 : 0 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      style={{ zIndex: index }}
       className="absolute inset-0 flex items-center justify-center overflow-hidden"
     >
       <div className="relative h-full w-full">
@@ -51,6 +53,9 @@ export const FeatureImage = ({ feature, index, total, scrollYProgress }: Feature
             <Image
               src={feature.image}
               alt={feature.title}
+              as={NextImage}
+              width={800}
+              height={600}
               className="h-full w-full object-cover opacity-50"
               loading={index === 0 ? 'eager' : 'lazy'}
               removeWrapper
