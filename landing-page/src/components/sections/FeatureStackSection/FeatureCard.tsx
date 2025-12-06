@@ -83,7 +83,7 @@ export const FeatureCard = ({ feature, index, total, scrollYProgress }: FeatureC
                 <p className="text-content4-foreground text-start mb-3 text-sm">
                   {feature.subtitle}
                 </p>
-                <p className="text-content4-foreground text-start mb-3 max-w-md italic">
+                <p className="text-content4-foreground text-base text-start mb-3 max-w-md italic">
                   {feature.quote}
                 </p>
               </motion.div>
