@@ -6,6 +6,8 @@ import { features } from './data';
 import { LeftColumn } from './LeftColumn';
 import { RightColumn } from './RightColumn';
 
+const SECTION_ID = 'features';
+
 export const FeatureStackSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
@@ -31,7 +33,11 @@ export const FeatureStackSection = () => {
   });
 
   return (
-    <section ref={containerRef} className="relative h-[750vh] snap-start container mx-auto">
+    <section
+      ref={containerRef}
+      id={SECTION_ID}
+      className="relative h-[750vh] snap-start container mx-auto"
+    >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <div className="flex h-full flex-col xl:flex-row items-center justify-center gap-10 xl:gap-20">
           {/* Left Column: Image/Animation */}
