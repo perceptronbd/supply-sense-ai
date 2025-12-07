@@ -26,10 +26,8 @@ const LandingPage = () => {
       {/* Data section */}
       <Features />
 
+      {/* animated feature section */}
       <FeatureStackSection />
-
-      {/* Built Section */}
-      {/* <BuiltSection /> */}
 
       {/* Use Case Section */}
       <UseCaseSection />

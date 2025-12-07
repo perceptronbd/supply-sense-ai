@@ -93,7 +93,7 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    domains: ["images.unsplash.com"],
+    domains: [],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 31536000, // 1 year
   },
