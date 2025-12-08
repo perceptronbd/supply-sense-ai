@@ -1,5 +1,5 @@
+import { FeatureStackSection } from '@/components/sections/FeatureStackSection';
 import Banner from '../components/sections/BannerSection';
-import BuiltSection from '../components/sections/BuiltSection';
 import ContactSection from '../components/sections/ContactSection';
 import Features from '../components/sections/FeatureSection';
 import PricingSection from '../components/sections/PricingSection';
@@ -26,8 +26,8 @@ const LandingPage = () => {
       {/* Data section */}
       <Features />
 
-      {/* Built Section */}
-      <BuiltSection />
+      {/* animated feature section */}
+      <FeatureStackSection />
 
       {/* Use Case Section */}
       <UseCaseSection />
