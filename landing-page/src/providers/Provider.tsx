@@ -1,6 +1,6 @@
 'use client';
 
-import { HeroUIProvider } from '@heroui/react';
+import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import { ThemeProvider } from 'next-themes';
 
 const Provider = ({ children }: { children: React.ReactNode }) => {
@@ -11,7 +11,10 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
       enableSystem
       themes={['light', 'dark']}
     >
-      <HeroUIProvider>{children}</HeroUIProvider>
+      <HeroUIProvider>
+        {children}
+        <ToastProvider placement="bottom-right" />
+      </HeroUIProvider>
     </ThemeProvider>
   );
 };
