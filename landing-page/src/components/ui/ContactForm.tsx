@@ -6,7 +6,7 @@ export default function ContactForm() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isLoading, isSubmitting },
+    formState: { errors, isSubmitting },
     reset,
   } = useForm();
 
@@ -179,7 +179,13 @@ export default function ContactForm() {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button type="submit" variant="solid" color="primary" className="flex-1 py-3">
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                variant="solid"
+                color="primary"
+                className="flex-1 py-3"
+              >
                 Submit
               </Button>
 
