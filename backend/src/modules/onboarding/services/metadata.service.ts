@@ -66,44 +66,61 @@ export class MetadataService {
     tables: Array<{ tableName: string }>,
     companyId: string
   ) {
-    return withDbConnection(connection, async (client) => {
-      // Extract table names from the tables array
-      const tableNames = tables.map((table) => table.tableName);
+    // Extract table names from the tables array
+    const tableNames = tables.map((table) => table.tableName);
 
-      try {
-        // Get schemas for all tables
-        const tablesWithSchemas = [];
-        for (const tableName of tableNames) {
-          try {
-            const tableSchema = await this.getTableSchema(client, tableName);
-            tablesWithSchemas.push({ tableName, tableSchema });
-          } catch (error) {
-            this.logger.error(`Error getting schema for table ${tableName}:`, error);
-          }
-        }
+    try {
+      // Get schemas for all tables - process in parallel batches to improve performance
+      // This prevents connection timeout issues when processing many tables
+      const tablesWithSchemas = [];
+      const BATCH_SIZE = 5; // Process 5 tables concurrently
 
-        // Send all tables at once to generateTableMetadata
-        const metadataResults = await this.generateTableMetadata(
-          tablesWithSchemas,
-          companyId,
-          connection.businessContext
+      for (let i = 0; i < tableNames.length; i += BATCH_SIZE) {
+        const batch = tableNames.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.allSettled(
+          batch.map(async (tableName) => {
+            try {
+              // Use a separate connection for each table to avoid timeout issues
+              const tableSchema = await withDbConnection(connection, async (client) => {
+                return await this.getTableSchema(client, tableName);
+              });
+              return { tableName, tableSchema };
+            } catch (error) {
+              this.logger.error(`Error getting schema for table ${tableName}:`, error);
+              throw error;
+            }
+          })
         );
 
-        return {
-          dbConnectionId: connection.dbConnectionId,
-          connectionTitle: connection.title || 'Default Connection',
-          generatedMetadata: metadataResults,
-        };
-      } catch (error) {
-        this.logger.error('Error processing tables:', error);
-        return {
-          dbConnectionId: connection.dbConnectionId,
-          connectionTitle: connection.title || 'Default Connection',
-          generatedMetadata: [] as ITableMetadataRecord[],
-          failedTables: tableNames.map((tableName) => ({ tableName, error: error.message })),
-        };
+        // Collect successful results
+        for (const result of batchResults) {
+          if (result.status === 'fulfilled') {
+            tablesWithSchemas.push(result.value);
+          }
+        }
       }
-    });
+
+      // Send all tables at once to generateTableMetadata
+      const metadataResults = await this.generateTableMetadata(
+        tablesWithSchemas,
+        companyId,
+        connection.businessContext
+      );
+
+      return {
+        dbConnectionId: connection.dbConnectionId,
+        connectionTitle: connection.title || 'Default Connection',
+        generatedMetadata: metadataResults,
+      };
+    } catch (error) {
+      this.logger.error('Error processing tables:', error);
+      return {
+        dbConnectionId: connection.dbConnectionId,
+        connectionTitle: connection.title || 'Default Connection',
+        generatedMetadata: [] as ITableMetadataRecord[],
+        failedTables: tableNames.map((tableName) => ({ tableName, error: error.message })),
+      };
+    }
   }
 
   private async getTableSchema(

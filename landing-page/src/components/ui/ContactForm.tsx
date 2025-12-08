@@ -1,19 +1,49 @@
 'use client';
-import { Button, Input, Textarea } from '@heroui/react';
+import { addToast, Button, Input, Textarea } from '@heroui/react';
 import { Controller, FieldValues, useForm } from 'react-hook-form';
 
 export default function ContactForm() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isLoading, isSubmitting },
     reset,
   } = useForm();
 
-  const onSubmit = (data: FieldValues) => {
-    console.log('Form Data:', data);
-    alert('Form submitted successfully!');
-    reset();
+  const onSubmit = async (data: FieldValues) => {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        addToast({
+          title: 'Message Sent',
+          description: 'Your message has been sent successfully!',
+          color: 'success',
+          variant: 'flat',
+        });
+        reset();
+      } else {
+        addToast({
+          title: 'Failed to Send',
+          description: 'Failed to send your message. Please try again.',
+          color: 'danger',
+          variant: 'flat',
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast({
+        title: 'Error',
+        description: 'Something went wrong. Please try again later.',
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
   };
 
   return (
