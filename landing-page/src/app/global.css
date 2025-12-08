@@ -133,3 +133,20 @@ body {
   display: none;
   /* Chrome, Safari and Opera */
 }
+
+/* Contact Us Glow */
+
+.contact-us-glow {
+  position: absolute;
+  width: 404px;
+  height: 430px;
+  left: 60%;
+  top: -50px;
+
+  background: linear-gradient(180deg, #e2cc9c 0%, #e84a2e 100%);
+  border-radius: 9999px;
+  transform: translateX(-50%) rotate(-180deg);
+  filter: blur(90px);
+
+  z-index: -1;
+}
