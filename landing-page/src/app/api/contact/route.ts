@@ -9,6 +9,8 @@ interface ContactFormBody {
   message: string;
 }
 
+const MY_EMAIL = process.env.NEXT_PUBLIC_EMAIL || 'info@perceptron.site';
+
 export async function POST(req: NextRequest) {
   try {
     const body: ContactFormBody = await req.json();
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate API key is available
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_RESEND_API_KEY;
     if (!apiKey) {
       console.error('RESEND_API_KEY is not configured');
       return NextResponse.json(
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     const data = await resend.emails.send({
       from: 'Contact Form <onboarding@resend.dev>', //internal sender (we can replace it with our domain email)
-      to: 'mail.abubokkor@gmail.com',
+      to: MY_EMAIL,
       replyTo: email, //user email
       subject: `Supply Sense Contact Request from ${name}`,
       html: `
