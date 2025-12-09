@@ -1,4 +1,5 @@
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { ROUTE_PATHS } from '@/config/routes';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setSessionId } from '@/store/slices/chatSlice';
@@ -19,7 +20,10 @@ interface ChatSessionListProps {
 export function ChatSessionList({ sessions, isLoading, onClose }: Readonly<ChatSessionListProps>) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const { sessionId } = useAppSelector((state) => state.chat);
+
+  const isChatActive = pathname === ROUTE_PATHS.CHAT || pathname.startsWith(`${ROUTE_PATHS.CHAT}/`);
 
   const handleSessionSelect = (sessionId: string) => {
     dispatch(setSessionId(sessionId));
@@ -60,7 +64,7 @@ export function ChatSessionList({ sessions, isLoading, onClose }: Readonly<ChatS
                 weight="medium"
                 className={cn(
                   'truncate mb-1',
-                  session.id === sessionId
+                  isChatActive && session.id === sessionId
                     ? 'text-primary-primary text-primary-300'
                     : 'text-default-500 group-hover:text-default-foreground'
                 )}
@@ -71,7 +75,7 @@ export function ChatSessionList({ sessions, isLoading, onClose }: Readonly<ChatS
               <Text
                 variant="bodyXSmall"
                 className={cn(
-                  session.id === sessionId
+                  isChatActive && session.id === sessionId
                     ? 'text-primary-300/50'
                     : 'text-default-500 group-hover:text-default-foreground/70'
                 )}
