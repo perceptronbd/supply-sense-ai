@@ -48,6 +48,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Enable standalone output for Docker builds
 ENV DOCKER_BUILD=true
 
+# Add build arguments for environment variables
+ARG NEXT_PUBLIC_BACKEND_API_URL
+ARG NEXT_PUBLIC_FRONTEND_URL
+ENV NEXT_PUBLIC_BACKEND_API_URL=$NEXT_PUBLIC_BACKEND_API_URL
+ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
+
 # Build the landing-page application using nx
 RUN npx nx build landing-page --configuration production
 

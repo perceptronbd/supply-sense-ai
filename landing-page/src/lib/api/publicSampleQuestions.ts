@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 export async function fetchPublicSampleQuestions(): Promise<string[]> {
   try {
     if (!process.env.NEXT_PUBLIC_BACKEND_API_URL) {
