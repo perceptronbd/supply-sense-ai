@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Text } from '@/components/ui/Text';
+import { useChatStream } from '@/hooks/useChatStream';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
@@ -29,9 +30,11 @@ export function ChatInterface({
     refetchMessages,
     addTempMessage,
     removeTempMessage,
+    updateTempMessage,
   } = useMessageManager(sessionId);
 
   const [sendQuery, { isLoading: isSendingMessage }] = useSendQueryMutation();
+  const { streamChat, isStreaming } = useChatStream();
 
   // Handle session title updates when first AI response is received
   useSessionTitleUpdate(sessionId, messages);
@@ -76,39 +79,39 @@ export function ChatInterface({
         userId: 'current-user-id',
       });
       try {
-        // Send message via API
-        sendQuery({
+        // Create assistant temp message
+        const assistantTempId = addTempMessage({
           sessionId: currentSessionId,
-          query: content,
-          dbConnectionId: dbConnectionId,
-        })
-          .then((response) => {
-            const res = response as {
-              data: { data?: ChatMessageResponse };
-              error?: { data?: { statusCode?: number; message?: string } };
-            };
+          content: '',
+          type: 'assistant',
+          contentType: 'text',
+          userId: 'system',
+        });
 
-            if (res.data?.data) {
-              setIsError(false);
-            }
+        let fullContent = '';
 
-            if (res?.error?.data?.statusCode === 429) {
-              setIsError(true);
-              addErrorMessage(
-                currentSessionId,
-                res.error.data?.message ||
-                  'Rate limit exceeded. Please wait before sending more messages.'
-              );
-            } else if (res?.error) {
-              setIsError(true);
-              addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
-            }
+        await streamChat({
+          sessionId: currentSessionId,
+          message: content,
+          dbConnectionId,
+          onChunk: (chunk) => {
+            fullContent += chunk;
+            updateTempMessage(assistantTempId, fullContent);
+          },
+          onComplete: () => {
             removeTempMessage(tempId);
-          })
-          .finally(() => {
-            removeTempMessage(tempId);
+            removeTempMessage(assistantTempId);
             refetchMessages();
-          });
+            setIsError(false);
+          },
+          onError: (error) => {
+            console.error('Streaming error:', error);
+            setIsError(true);
+            addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
+            removeTempMessage(tempId);
+            removeTempMessage(assistantTempId);
+          },
+        });
       } catch (error) {
         setIsError(true);
         console.error('Failed to send message:', error);
@@ -122,9 +125,10 @@ export function ChatInterface({
       handleCreateSession,
       addErrorMessage,
       refetchMessages,
-      sendQuery,
       addTempMessage,
       removeTempMessage,
+      updateTempMessage,
+      streamChat,
     ]
   );
 
@@ -167,7 +171,7 @@ export function ChatInterface({
       {/* Message list with loading and suggestion handling */}
       <MessageList
         messages={messages as unknown as ChatMessageResponse[]}
-        isLoading={isLoadingMessages || isSendingMessage}
+        isLoading={isLoadingMessages || isSendingMessage || isStreaming}
         isError={isError}
         onSuggestionClick={handleSuggestionClick}
       />
@@ -177,7 +181,7 @@ export function ChatInterface({
         message={message}
         setMessage={setMessage}
         onSendMessage={handleSendMessage}
-        isLoading={isSendingMessage}
+        isLoading={isSendingMessage || isStreaming}
         disabled={isLoadingMessages}
       />
 

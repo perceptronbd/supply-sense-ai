@@ -17,13 +17,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto, SendMessageDto } from './dto/chat.dto';
+import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto } from './dto/chat.dto';
 import type { PublicChatMessageDto } from './dto/public-chat.dto';
 import { MultiWindowRateLimitGuard } from './guards/multi-window-rate-limiting.guard';
 import { ChatService } from './services/chat.service';
 import { PublicChatService } from './services/public-chat.service';
 
-export const PUBLIC_COMPANY_ID = '5e5dd669-59de-4d9a-b61c-c8b85718a3fc';
+export const PUBLIC_COMPANY_ID = process.env.PUBLIC_COMPANY_ID || '';
 
 @ApiTags('chat')
 @Controller('chat')
@@ -137,26 +137,55 @@ export class ChatController {
     return res.status(HttpStatus.OK).json(result);
   }
 
-  @Post('messages')
+  /**
+   * Handle chat streaming endpoint
+   * Streams the response from the Mastra agent token by token
+   */
+  @Post('stream')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  // @RequirePermissions(CHAT_PERMISSIONS.SEND_MESSAGE)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Send a message in a chat session' })
-  @ApiResponse({ status: 200, description: 'Message sent successfully' })
-  async sendChatMessage(
-    @Body() sendMessageDto: SendMessageDto,
-    @CurrentUser() user: AuthenticatedUser
-  ) {
-    return this.chatService.processUserMessage({
-      companyId: user.companyId,
-      sessionId: sendMessageDto.sessionId,
-      message: sendMessageDto.content,
-      userId: user.id,
-      userContext: {
-        userPermissions: user.permissions, // Use actual permissions
-      },
-      dbConnectionId: '',
-    });
+  async chat(
+    @Body() body: ChatQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response
+  ): Promise<void> {
+    try {
+      this.logger.log('Received message: ' + body.query);
+
+      // Better streaming headers
+      res.setHeader('Content-Type', 'text/event-stream'); // SSE standard
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*'); // Adjust for prod
+
+      res.status(HttpStatus.OK);
+
+      const textStream = await this.chatService.streamChat({
+        companyId: user.companyId,
+        sessionId: body.sessionId,
+        message: body.query,
+        userId: user.id,
+        userContext: {
+          userPermissions: user.permissions, // Use actual permissions
+          ...body.context, // Include the context from the payload
+        },
+        dbConnectionId: body.dbConnectionId,
+      });
+
+      textStream.pipe(res);
+    } catch (error) {
+      this.logger.error('Error processing chat request:', error);
+      // Only send error response if headers haven't been sent yet
+      if (!res.headersSent && !res.writableEnded) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+      } else {
+        // If headers are sent, we can't send a JSON response.
+        // We might want to end the response if it's not ended.
+        if (!res.writableEnded) {
+          res.end();
+        }
+      }
+    }
   }
 
   @Post('public/message')

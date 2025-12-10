@@ -5,6 +5,8 @@ import { AI_MODEL_NAMES } from '@supplysense/constant';
 import { PrismaService } from '@supplysense/prisma';
 import type { IChatFormattedResult } from '@supplysense/types';
 import { createRuntimeContext } from '@supplysense/utils/server';
+import axios from 'axios';
+import { appConfig } from '@/config/app.config';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
 import { MessageType } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
@@ -210,5 +212,47 @@ export class ChatService {
         structuredData: JSON.stringify(result),
       },
     });
+  }
+
+  /**
+   * Stream chat response from Mastra agent
+   * @param message - User message to send to the agent
+   * @returns Async iterable of text chunks
+   */
+  async streamChat({
+    sessionId,
+    message,
+    userId,
+    dbConnectionId = '',
+    userContext: _,
+    companyId,
+  }: IProcessUserMessage) {
+    try {
+      // Check if the user has sufficient credits to continue with the chat
+      await this.tokenAndCredit.canContinueForChat(companyId);
+
+      // Update the last activity timestamp for the session
+      await this.sessionService.updateLastActivity(sessionId);
+
+      // Save the user's message to the database
+      await this.messageService.createMessage({
+        sessionId,
+        content: message,
+        type: MessageType.USER,
+      });
+
+      await this.ensureDbConnectionExists(dbConnectionId, companyId);
+
+      const response = await axios.post(
+        `${appConfig.mcpBackendServerUrl}/chat`,
+        { message, sessionId, userId, dbConnectionId },
+        { responseType: 'stream' }
+      );
+      console.log('🚀 > ChatService > response:', response);
+      return response.data;
+    } catch (error) {
+      this.logger.error('Error streaming chat response:', error);
+      throw error;
+    }
   }
 }

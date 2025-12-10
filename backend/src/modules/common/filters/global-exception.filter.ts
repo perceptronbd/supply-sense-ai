@@ -92,6 +92,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       details: errorResponse.details,
     });
 
+    // Prevent "Cannot set headers after they are sent" error
+    if (response.headersSent) {
+      this.logger.warn(`Headers already sent for ${request.url}, skipping error response`);
+      return;
+    }
+
     response.status(status).json(errorResponse);
   }
 

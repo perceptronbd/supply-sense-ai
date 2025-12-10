@@ -9,6 +9,7 @@ export interface UseMessageManagerReturn {
   addErrorMessage: (sessionId: string, errorText: string) => void;
   refetchMessages: () => void;
   addTempMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => string;
+  updateTempMessage: (tempId: string, content: string) => void;
   removeTempMessage: (tempId: string) => void;
 }
 
@@ -86,6 +87,22 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     });
   }, []);
 
+  // Update a temporary message
+  const updateTempMessage = useCallback((tempId: string, content: string) => {
+    setTempMessages((prev) => {
+      const message = prev[tempId];
+      if (!message) return prev;
+
+      return {
+        ...prev,
+        [tempId]: {
+          ...message,
+          content,
+        },
+      };
+    });
+  }, []);
+
   const addErrorMessage = useCallback((sessionId: string, errorText: string) => {
     const errorMessage: ChatMessage = {
       id: `error-${Date.now()}`,
@@ -117,6 +134,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     addErrorMessage,
     refetchMessages,
     addTempMessage,
+    updateTempMessage,
     removeTempMessage,
   };
 }

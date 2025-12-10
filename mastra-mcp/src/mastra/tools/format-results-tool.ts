@@ -104,9 +104,9 @@ export const formatResultsTool = createTool({
   inputSchema,
   outputSchema,
   execute: async ({ context: input }): Promise<FormattedResults> => {
-    const { queryResults, sqlQuery } = input;
+    const { queryResults, sqlQuery, userQuery } = input;
 
     // Call the extracted formatting function
-    return await formatQueryResults(queryResults, sqlQuery);
+    return await formatQueryResults(queryResults, sqlQuery, userQuery);
   },
 });
