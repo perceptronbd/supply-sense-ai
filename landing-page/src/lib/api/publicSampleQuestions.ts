@@ -1,5 +1,8 @@
 export async function fetchPublicSampleQuestions(): Promise<string[]> {
   try {
+    if (!process.env.NEXT_PUBLIC_BACKEND_API_URL) {
+      throw new Error('NEXT_PUBLIC_BACKEND_API_URL is not configured');
+    }
     const url = `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/table-metadata/public-sample-questions`;
 
     const res = await fetch(url, {
