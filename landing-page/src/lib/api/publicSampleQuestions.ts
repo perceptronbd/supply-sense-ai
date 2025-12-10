@@ -1,3 +1,4 @@
+'use server';
 export async function fetchPublicSampleQuestions(): Promise<string[]> {
   try {
     if (!process.env.BACKEND_API_URL) {
