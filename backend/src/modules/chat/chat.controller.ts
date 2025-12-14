@@ -12,12 +12,20 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
-import { ChatQueryDto, ChatSessionDto, CreateChatSessionDto } from './dto/chat.dto';
+import { Request, Response } from 'express';
+import {
+  ChatQueryDto,
+  ChatSessionDto,
+  CreateChatSessionDto,
+  CreateMessageDto,
+  type RecordTokenUsageDto,
+  UpdateSessionTitleDto,
+} from './dto/chat.dto';
 import type { PublicChatMessageDto } from './dto/public-chat.dto';
 import { MultiWindowRateLimitGuard } from './guards/multi-window-rate-limiting.guard';
 import { ChatService } from './services/chat.service';
@@ -111,6 +119,41 @@ export class ChatController {
     return this.chatService.getSessionMessages(sessionId, limit, offset);
   }
 
+  @Post('sessions/:sessionId/messages')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new message in a session' })
+  @ApiResponse({ status: 201, description: 'Message created successfully' })
+  async createMessage(
+    @Param('sessionId') sessionId: string,
+    @Body() createMessageDto: CreateMessageDto
+  ) {
+    return this.chatService.createMessage(
+      sessionId,
+      createMessageDto.content,
+      createMessageDto.type,
+      createMessageDto.structuredData
+    );
+  }
+
+  @Post('sessions/:sessionId/title')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update session title' })
+  @ApiResponse({ status: 200, description: 'Title updated successfully' })
+  async updateSessionTitle(
+    @Param('sessionId') sessionId: string,
+    @Body() body: UpdateSessionTitleDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.chatService.updateSessionTitleIfNeeded(
+      sessionId,
+      user.id,
+      body.message,
+      body.summary
+    );
+  }
+
   @Post('query')
   @UseGuards(JwtAuthGuard, PermissionsGuard, MultiWindowRateLimitGuard)
   // Removed: @Throttle({ query: { ttl: 60000, limit: 5 } })
@@ -147,7 +190,8 @@ export class ChatController {
   async chat(
     @Body() body: ChatQueryDto,
     @CurrentUser() user: AuthenticatedUser,
-    @Res() res: Response
+    @Res() res: Response,
+    @Req() req: Request
   ): Promise<void> {
     try {
       this.logger.log('Received message: ' + body.query);
@@ -160,6 +204,8 @@ export class ChatController {
 
       res.status(HttpStatus.OK);
 
+      const token = req.headers['authorization']; // Get token from request
+
       const textStream = await this.chatService.streamChat({
         companyId: user.companyId,
         sessionId: body.sessionId,
@@ -170,6 +216,7 @@ export class ChatController {
           ...body.context, // Include the context from the payload
         },
         dbConnectionId: body.dbConnectionId,
+        authorizationToken: token,
       });
 
       textStream.pipe(res);
@@ -206,5 +253,15 @@ export class ChatController {
         message: 'Failed to process message',
       });
     }
+  }
+
+  @Post('record-token-usage')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Record token usage for a chat interaction' })
+  @ApiResponse({ status: 201, description: 'Token usage recorded successfully' })
+  async recordTokenUsage(@Body() recordTokenDto: RecordTokenUsageDto) {
+    await this.chatService.recordTokenUsage(recordTokenDto);
+    return { success: true, message: 'Token usage recorded successfully' };
   }
 }

@@ -1,4 +1,3 @@
-import type { MastraModelOutput } from '@mastra/core/stream';
 import { McpClientService } from '@modules/mcp-client/services/mcp-client.service';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AI_MODEL_NAMES } from '@supplysense/constant';
@@ -8,7 +7,7 @@ import { createRuntimeContext } from '@supplysense/utils/server';
 import axios from 'axios';
 import { appConfig } from '@/config/app.config';
 import { TokenAndCredit } from '@/modules/common/services/tokenAndCredit.service';
-import { MessageType } from '../dto/chat.dto';
+import { MessageType, type RecordTokenUsageDto } from '../dto/chat.dto';
 import { AIChatResponse, QueryContext } from '../interfaces/chat.interface';
 import { extractWorkflowResult } from '../utils/chat-utils';
 import { MessageService } from './message.service';
@@ -21,9 +20,8 @@ interface IProcessUserMessage {
   userId: string;
   dbConnectionId: string;
   userContext: Partial<QueryContext>;
+  authorizationToken?: string;
 }
-
-type AgentGenerateResult = Awaited<ReturnType<MastraModelOutput['getFullOutput']>>;
 
 @Injectable()
 export class ChatService {
@@ -83,7 +81,7 @@ export class ChatService {
 
       const runtimeContext = createRuntimeContext({ dbConnectionId });
 
-      const aiResponse = (await agent.generate(
+      const aiResponse = await agent.generate(
         [
           {
             role: 'user',
@@ -97,11 +95,15 @@ export class ChatService {
           resourceId: userId,
           runtimeContext,
         }
-      )) as AgentGenerateResult;
+      );
       const workflowResult = extractWorkflowResult(aiResponse);
 
       await this.recordTokenUsage({
-        usage: aiResponse.totalUsage,
+        usage: {
+          inputTokens: aiResponse.totalUsage.inputTokens,
+          outputTokens: aiResponse.totalUsage.outputTokens,
+          totalTokens: aiResponse.totalUsage.totalTokens,
+        },
         companyId,
         message,
         result: workflowResult,
@@ -171,6 +173,29 @@ export class ChatService {
     return this.messageService.getSessionMessages(sessionId, limit, offset);
   }
 
+  async createMessage(
+    sessionId: string,
+    content: string,
+    type: MessageType = MessageType.USER,
+    structuredData?: IChatFormattedResult
+  ) {
+    return this.messageService.createMessage({
+      sessionId,
+      content,
+      type,
+      structuredData,
+    });
+  }
+
+  async updateSessionTitleIfNeeded(
+    sessionId: string,
+    userId: string,
+    message: string,
+    aiResponse: string
+  ) {
+    return this.sessionService.updateSessionTitleIfNeeded(sessionId, userId, message, aiResponse);
+  }
+
   private async ensureDbConnectionExists(dbConnectionId: string, companyId: string): Promise<void> {
     const dbConnectionExist = await this.prismaService.dbConnection.findUnique({
       where: { id: dbConnectionId },
@@ -183,17 +208,12 @@ export class ChatService {
     }
   }
 
-  private async recordTokenUsage({
+  async recordTokenUsage({
     usage,
     companyId,
     message,
     result,
-  }: {
-    usage?: AgentGenerateResult['totalUsage'];
-    companyId: string;
-    message: string;
-    result: IChatFormattedResult;
-  }): Promise<void> {
+  }: RecordTokenUsageDto): Promise<void> {
     const totalPromptTokens = usage?.inputTokens ?? 0;
     const totalCompletionTokens = usage?.outputTokens ?? 0;
 
@@ -226,6 +246,7 @@ export class ChatService {
     dbConnectionId = '',
     userContext: _,
     companyId,
+    authorizationToken,
   }: IProcessUserMessage) {
     try {
       // Check if the user has sufficient credits to continue with the chat
@@ -245,10 +266,9 @@ export class ChatService {
 
       const response = await axios.post(
         `${appConfig.mcpBackendServerUrl}/chat`,
-        { message, sessionId, userId, dbConnectionId },
+        { message, sessionId, userId, dbConnectionId, authorizationToken, companyId },
         { responseType: 'stream' }
       );
-      console.log('🚀 > ChatService > response:', response);
       return response.data;
     } catch (error) {
       this.logger.error('Error streaming chat response:', error);

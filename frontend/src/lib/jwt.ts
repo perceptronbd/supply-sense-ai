@@ -82,7 +82,6 @@ export function getUserFromToken(token: string): {
   companyId: string;
 } | null {
   const payload = decodeJWT(token);
-  console.log('🚀 ~ payload:', payload);
   if (!payload) return null;
 
   return {

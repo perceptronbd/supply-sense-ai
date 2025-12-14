@@ -6,7 +6,6 @@ import { useChatStream } from '@/hooks/useChatStream';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
-import { useSendQueryMutation } from '@/store/api/chatApi';
 import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
@@ -20,6 +19,7 @@ export function ChatInterface({
 }: Readonly<ChatInterfaceProps>) {
   const { sessionId } = useAppSelector((state) => state.chat);
   const [message, setMessage] = useState('');
+  console.log('🚀 > message:', message);
   const [isError, setIsError] = useState<boolean>(false);
 
   const {
@@ -27,13 +27,10 @@ export function ChatInterface({
     isLoadingMessages,
     messagesError,
     addErrorMessage,
-    refetchMessages,
     addTempMessage,
     removeTempMessage,
     updateTempMessage,
   } = useMessageManager(sessionId);
-
-  const [sendQuery, { isLoading: isSendingMessage }] = useSendQueryMutation();
   const { streamChat, isStreaming } = useChatStream();
 
   // Handle session title updates when first AI response is received
@@ -99,9 +96,10 @@ export function ChatInterface({
             updateTempMessage(assistantTempId, fullContent);
           },
           onComplete: () => {
-            removeTempMessage(tempId);
-            removeTempMessage(assistantTempId);
-            refetchMessages();
+            // Keep temp messages until unmount as requested
+            // removeTempMessage(tempId);
+            // removeTempMessage(assistantTempId);
+            // refetchMessages();
             setIsError(false);
           },
           onError: (error) => {
@@ -124,7 +122,6 @@ export function ChatInterface({
       dbConnectionId,
       handleCreateSession,
       addErrorMessage,
-      refetchMessages,
       addTempMessage,
       removeTempMessage,
       updateTempMessage,
@@ -171,7 +168,7 @@ export function ChatInterface({
       {/* Message list with loading and suggestion handling */}
       <MessageList
         messages={messages as unknown as ChatMessageResponse[]}
-        isLoading={isLoadingMessages || isSendingMessage || isStreaming}
+        isLoading={isLoadingMessages || isStreaming}
         isError={isError}
         onSuggestionClick={handleSuggestionClick}
       />
@@ -181,7 +178,7 @@ export function ChatInterface({
         message={message}
         setMessage={setMessage}
         onSendMessage={handleSendMessage}
-        isLoading={isSendingMessage || isStreaming}
+        isLoading={isStreaming}
         disabled={isLoadingMessages}
       />
 

@@ -192,7 +192,6 @@ const UpdateBusinessContext = ({ companyId, dbConnectionId }: IProps) => {
           });
         },
         onError(error) {
-          console.log('🚀 > error:', error);
           addToast({
             title: (error as Error)?.message || 'An error occurred',
             color: 'danger',

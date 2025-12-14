@@ -19,6 +19,7 @@ export interface UseMessageManagerReturn {
  */
 export function useMessageManager(sessionId: string | undefined): UseMessageManagerReturn {
   const [tempMessages, setTempMessages] = useState<Record<string, ChatMessage>>({});
+  console.log('🚀 > tempMessages:', tempMessages);
 
   const {
     data: fetchedMessages,
@@ -29,12 +30,8 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
   // Compute merged messages using useMemo instead of useEffect + useState
   const messages = useMemo(() => {
-    if (!fetchedMessages) {
-      return sessionId ? [] : [];
-    }
-
-    // Merge temp messages with fetched messages
-    const updatedMessages = [...fetchedMessages];
+    // If not fetched yet, start with empty array but allow temp messages to be added
+    const updatedMessages = fetchedMessages ? [...fetchedMessages] : [];
 
     // Add temp messages that don't have a corresponding real message yet
     for (const tempMsg of Object.values(tempMessages)) {
@@ -49,8 +46,9 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     );
 
     return updatedMessages;
-  }, [fetchedMessages, tempMessages, sessionId]);
+  }, [fetchedMessages, tempMessages]);
 
+  console.log('🚀 > messages:', messages);
   // Clear temp messages when session changes
   useEffect(() => {
     if (!sessionId) {
@@ -61,9 +59,10 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
   // Add a temporary message
   const addTempMessage = useCallback(
     (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => {
+      console.log('🚀 > message:', message);
       const tempMessage: ChatMessage = {
         ...message,
-        id: `temp-${Date.now()}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
