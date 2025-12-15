@@ -26,7 +26,7 @@ export const MobileFeatureItem = ({ feature }: MobileFeatureItemProps) => {
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="flex flex-col gap-6 py-8 snap-start"
+      className="flex flex-col gap-6 py-16 snap-center"
     >
       {/* Text Content */}
       <motion.div
