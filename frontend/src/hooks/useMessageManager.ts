@@ -19,8 +19,6 @@ export interface UseMessageManagerReturn {
  */
 export function useMessageManager(sessionId: string | undefined): UseMessageManagerReturn {
   const [tempMessages, setTempMessages] = useState<Record<string, ChatMessage>>({});
-  console.log('🚀 > tempMessages:', tempMessages);
-
   const {
     data: fetchedMessages,
     isLoading: isLoadingMessages,
@@ -47,8 +45,6 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
     return updatedMessages;
   }, [fetchedMessages, tempMessages]);
-
-  console.log('🚀 > messages:', messages);
   // Clear temp messages when session changes
   useEffect(() => {
     if (!sessionId) {
@@ -59,7 +55,6 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
   // Add a temporary message
   const addTempMessage = useCallback(
     (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => {
-      console.log('🚀 > message:', message);
       const tempMessage: ChatMessage = {
         ...message,
         id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
