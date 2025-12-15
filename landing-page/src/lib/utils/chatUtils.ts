@@ -24,7 +24,8 @@ export async function sendPublicChatMessage(message: string): Promise<{
   timestamp: string;
 }> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/chat/public/message`, {
+    const url = `${process.env.BACKEND_API_URL}/chat/public/message`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
