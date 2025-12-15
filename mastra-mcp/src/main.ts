@@ -136,7 +136,6 @@ async function saveMessage({
 
   //@ts-expect-error
   const workflowResult = extractWorkflowResult(result);
-  console.log('Workflow Result:', workflowResult);
 
   // Record token usage
   await recordTokenUsage(

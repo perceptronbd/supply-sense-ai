@@ -16,7 +16,7 @@ import type { ChatInputProps } from './types';
 
 export function ChatInput({
   onSendMessage,
-  isLoading = false,
+  isStreaming = false,
   disabled = false,
   message,
   setMessage,
@@ -28,7 +28,7 @@ export function ChatInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !isLoading && !disabled) {
+    if (message.trim() && !isStreaming && !disabled) {
       onSendMessage(message.trim());
       setMessage('');
       // Reset textarea height
@@ -136,14 +136,14 @@ export function ChatInput({
             type="submit"
             color="default"
             isIconOnly
-            isLoading={isLoading}
+            isLoading={isStreaming}
             disabled={!message.trim() || disabled}
             aria-label="Send message"
             size="sm"
             radius="sm"
             variant="solid"
           >
-            {!isLoading && <Icons.Send className="w-5 h-5 text-default-600" />}
+            {!isStreaming && <Icons.Send className="w-5 h-5 text-default-600" />}
           </Button>
         </div>
       </form>

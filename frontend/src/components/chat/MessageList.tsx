@@ -11,6 +11,7 @@ export function MessageList({
   messages,
   isError,
   isLoading = false,
+  isStreaming = false,
   onSuggestionClick,
 }: Readonly<MessageListProps>) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,15 +69,28 @@ export function MessageList({
       aria-label="Chat messages"
     >
       <div className="max-w-4xl mx-auto">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            onSuggestionClick={onSuggestionClick}
-            isError={isError}
-          />
-        ))}
-        {isLoading && <LoadingMessage />}
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1;
+          const isStreamingEmptyMessage =
+            isStreaming && isLastMessage && message.type === 'assistant' && !message.content;
+
+          if (isStreamingEmptyMessage) return null;
+
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onSuggestionClick={onSuggestionClick}
+              isError={isError}
+              isStreaming={isStreaming}
+            />
+          );
+        })}
+        {isStreaming &&
+          (!messages.length ||
+            messages[messages.length - 1].type === 'user' ||
+            (messages[messages.length - 1].type === 'assistant' &&
+              !messages[messages.length - 1].content)) && <LoadingMessage />}
         <div ref={messagesEndRef} />
       </div>
     </section>

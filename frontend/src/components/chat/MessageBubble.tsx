@@ -22,12 +22,14 @@ interface MessageBubbleProps {
   message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
   isError?: boolean;
+  isStreaming?: boolean;
 }
 
 export function MessageBubble({
   message,
   onSuggestionClick: _,
   isError,
+  isStreaming,
 }: Readonly<MessageBubbleProps>) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
@@ -114,7 +116,7 @@ export function MessageBubble({
         )}
 
         {/* Action buttons and timestamp for assistant messages */}
-        {!isUser && (
+        {!isUser && !isStreaming && (
           <div className="flex items-center justify-between w-full mt-2 gap-2">
             {/* Action buttons */}
             <div className="flex items-center gap-1">

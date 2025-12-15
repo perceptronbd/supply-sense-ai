@@ -19,7 +19,6 @@ export function ChatInterface({
 }: Readonly<ChatInterfaceProps>) {
   const { sessionId } = useAppSelector((state) => state.chat);
   const [message, setMessage] = useState('');
-  console.log('🚀 > message:', message);
   const [isError, setIsError] = useState<boolean>(false);
 
   const {
@@ -96,10 +95,6 @@ export function ChatInterface({
             updateTempMessage(assistantTempId, fullContent);
           },
           onComplete: () => {
-            // Keep temp messages until unmount as requested
-            // removeTempMessage(tempId);
-            // removeTempMessage(assistantTempId);
-            // refetchMessages();
             setIsError(false);
           },
           onError: (error) => {
@@ -168,7 +163,8 @@ export function ChatInterface({
       {/* Message list with loading and suggestion handling */}
       <MessageList
         messages={messages as unknown as ChatMessageResponse[]}
-        isLoading={isLoadingMessages || isStreaming}
+        isLoading={isLoadingMessages}
+        isStreaming={isStreaming}
         isError={isError}
         onSuggestionClick={handleSuggestionClick}
       />
@@ -178,7 +174,7 @@ export function ChatInterface({
         message={message}
         setMessage={setMessage}
         onSendMessage={handleSendMessage}
-        isLoading={isStreaming}
+        isStreaming={isStreaming}
         disabled={isLoadingMessages}
       />
 
