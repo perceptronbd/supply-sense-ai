@@ -6,10 +6,9 @@ import type { Feature } from './types';
 
 interface MobileFeatureItemProps {
   feature: Feature;
-  index: number;
 }
 
-export const MobileFeatureItem = ({ feature, index }: MobileFeatureItemProps) => {
+export const MobileFeatureItem = ({ feature }: MobileFeatureItemProps) => {
   const { CheckCircle, Message, Search, Document } = useGradientIcons();
 
   const Icon =
@@ -27,7 +26,7 @@ export const MobileFeatureItem = ({ feature, index }: MobileFeatureItemProps) =>
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="flex flex-col gap-6 py-8"
+      className="flex flex-col gap-6 py-8 snap-start"
     >
       {/* Text Content */}
       <motion.div

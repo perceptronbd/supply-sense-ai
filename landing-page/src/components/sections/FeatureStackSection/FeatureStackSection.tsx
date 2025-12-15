@@ -37,7 +37,7 @@ export const FeatureStackSection = () => {
     <section
       ref={containerRef}
       id={SECTION_ID}
-      className="relative h-auto lg:h-[750vh] snap-start container mx-auto"
+      className="relative h-auto lg:h-[750vh] lg:snap-start container mx-auto"
     >
       {/* Internal Snap Points for smooth scrolling with snap-mandatory (Desktop Only) */}
       <div className="hidden lg:block">
@@ -52,7 +52,7 @@ export const FeatureStackSection = () => {
       </div>
 
       {/* Main Container */}
-      <div className="relative lg:sticky lg:top-0 min-h-screen lg:h-screen w-full overflow-hidden">
+      <div className="relative lg:sticky lg:top-0 min-h-screen lg:h-screen w-full lg:overflow-hidden">
         {/* Desktop Layout (Split Columns) */}
         <div className="hidden lg:flex min-h-full flex-row items-center px-0 justify-center gap-20">
           {/* Left Column: Image/Animation */}
