@@ -69,17 +69,20 @@ const Footer = () => {
           <div className="flex flex-col items-center xl:items-start gap-4 lg:gap-9">
             <p className="flex gap-2 text-content1-foreground items-center">
               <MapPin size={24} className="flex-shrink-0" />
-              <span>somewhere anywhere</span>
+              <span>Dhaka, Bangladesh</span>
             </p>
 
-            <p className="flex gap-2 text-content1-foreground items-center">
+            <Link
+              href="mailto:info@perceptron.site"
+              className="flex gap-2 text-content1-foreground items-center"
+            >
               <Mailbox size={24} className="flex-shrink-0" />
-              <span>somewhereanywhere@tesla.com</span>
-            </p>
+              <span>info@perceptron.site</span>
+            </Link>
 
             <p className="flex gap-2 text-content1-foreground items-center">
               <Phone size={24} className="flex-shrink-0" />
-              <span>01234567891</span>
+              <span>+8801*****7891</span>
             </p>
           </div>
         </div>
