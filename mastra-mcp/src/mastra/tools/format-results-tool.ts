@@ -43,9 +43,9 @@ export async function formatQueryResults(
   userQuery?: string
 ) {
   const logger = new Logger('formatQueryResults');
-  logger.debug(' queryResults:', queryResults);
-  logger.debug(' sqlQuery:', sqlQuery);
-  logger.debug(' userQuery:', userQuery);
+  logger.debug(' formatQueryResults: queryResults:', queryResults);
+  logger.debug(' formatQueryResults: sqlQuery:', sqlQuery);
+  logger.debug(' formatQueryResults: userQuery:', userQuery);
 
   const runtimeContext = createRuntimeContext({
     queryResults,
@@ -62,7 +62,9 @@ export async function formatQueryResults(
     },
   ];
 
-  const agentResponse = await formattingAgent.generate(messages, { runtimeContext });
+  const agentResponse = await formattingAgent.generate(messages, {
+    runtimeContext,
+  });
 
   let result: FormattedResults;
   try {
@@ -74,7 +76,14 @@ export async function formatQueryResults(
       .replace(/```\s*/g, '')
       .trim();
 
-    result = JSON.parse(cleanedResponse);
+    const parsedResponse = JSON.parse(cleanedResponse);
+
+    // Map 'explanation' to 'summary' if needed (agent returns 'explanation')
+    result = {
+      visualizationType: parsedResponse.visualizationType,
+      formattedData: parsedResponse.formattedData,
+      summary: parsedResponse.summary || parsedResponse.explanation,
+    };
   } catch (error) {
     console.error('error:', error);
     // Fallback to table format if parsing fails

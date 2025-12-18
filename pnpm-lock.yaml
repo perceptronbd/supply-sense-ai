@@ -240,7 +240,7 @@ importers:
         specifier: ^0.7.4
         version: 0.7.4
       zod:
-        specifier: ^3.25.76
+        specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
       '@babel/core':

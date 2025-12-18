@@ -91,6 +91,7 @@ const formatResultsStep = createStep({
       z.record(z.string(), z.unknown()),
       z.array(z.record(z.any())),
       z.string(),
+      z.null(),
     ]),
     summary: z.string(),
   }),

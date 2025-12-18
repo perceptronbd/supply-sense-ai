@@ -21,6 +21,7 @@ export function extractWorkflowResult(aiResponse: AgentGenerateResult): IChatFor
   };
 
   const workflowToolPayload = getWorkflowToolPayload(aiResponse);
+
   const nestedResults = getWorkflowNestedResults(workflowToolPayload);
 
   if (!nestedResults) {
@@ -50,8 +51,14 @@ export function extractWorkflowResult(aiResponse: AgentGenerateResult): IChatFor
 function getWorkflowToolPayload(
   aiResponse: AgentGenerateResult
 ): AgentToolResultPayload | undefined {
-  return aiResponse.toolResults.find((toolResult) => toolResult.payload.toolName === 'chatWorkflow')
-    ?.payload;
+  console.log(
+    'Possible Tool Names:',
+    aiResponse.toolResults.map((t) => t.payload.toolName)
+  );
+
+  return aiResponse.toolResults.find(
+    (toolResult) => toolResult.payload.toolName === 'workflow-queryPostgreSQLdbWorkflow'
+  )?.payload;
 }
 
 function getWorkflowNestedResults(
@@ -80,7 +87,12 @@ function isChatFormattedResult(value: unknown): value is IChatFormattedResult {
     return false;
   }
 
-  if (formattedData !== null && !Array.isArray(formattedData)) {
+  if (
+    formattedData !== null &&
+    !Array.isArray(formattedData) &&
+    typeof formattedData !== 'object' &&
+    typeof formattedData !== 'string'
+  ) {
     return false;
   }
 
