@@ -50,6 +50,7 @@ export async function formatQueryResults(
   const runtimeContext = createRuntimeContext({
     queryResults,
     sqlQuery,
+    userQuery,
   });
 
   // Analyze the query results to determine visualization format
@@ -69,20 +70,44 @@ export async function formatQueryResults(
   let result: FormattedResults;
   try {
     // Parse the agent response as JSON
-    const responseText = agentResponse.text.trim();
+    let responseText = agentResponse.text.trim();
+
     // Remove any markdown code blocks if present
-    const cleanedResponse = responseText
+    responseText = responseText
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
       .trim();
 
-    const parsedResponse = JSON.parse(cleanedResponse);
+    // Handle common JSON parsing issues
+    let parsedResponse = {} as FormattedResults;
+    try {
+      parsedResponse = JSON.parse(responseText);
+    } catch (parseError) {
+      // Try to fix common JSON issues and parse again
+      try {
+        // Handle unescaped quotes in strings
+        const fixedJson = responseText.replace(/([^\\])"(?=[^"]*"?[^\]]*$)/g, '$1\\"');
+        // Handle trailing commas
+        const fixedTrailingCommas = fixedJson.replace(/,\s*([}\]])/g, '$1');
+        parsedResponse = JSON.parse(fixedTrailingCommas);
+      } catch (fixError) {
+        // If still can't parse, try to extract JSON from the response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+        }
+      }
+    }
 
-    // Map 'explanation' to 'summary' if needed (agent returns 'explanation')
+    console.log('🚀 > parsedResponse:', parsedResponse);
+
+    // Ensure required fields exist with fallbacks
     result = {
-      visualizationType: parsedResponse.visualizationType,
-      formattedData: parsedResponse.formattedData,
-      summary: parsedResponse.summary || parsedResponse.explanation,
+      visualizationType: parsedResponse.visualizationType || 'table',
+      formattedData: parsedResponse.formattedData || queryResults,
+      summary: parsedResponse.summary || `Query returned ${queryResults.length} records`,
     };
   } catch (error) {
     console.error('error:', error);

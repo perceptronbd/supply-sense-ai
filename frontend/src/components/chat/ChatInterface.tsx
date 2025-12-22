@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from '@/components/ui/Text';
 import { useChatStream } from '@/hooks/useChatStream';
 import { useMessageManager } from '@/hooks/useMessageManager';
@@ -29,11 +29,19 @@ export function ChatInterface({
     addTempMessage,
     removeTempMessage,
     updateTempMessage,
+    refetchMessages,
   } = useMessageManager(sessionId);
   const { streamChat, isStreaming } = useChatStream();
 
   // Handle session title updates when first AI response is received
   useSessionTitleUpdate(sessionId, messages);
+
+  // Keep a ref to refetchMessages to avoid stale closures in async callbacks
+  const refetchMessagesRef = useRef(refetchMessages);
+
+  useEffect(() => {
+    refetchMessagesRef.current = refetchMessages;
+  }, [refetchMessages]);
 
   // Handle sending messages with improved error handling and session management
   const handleSendMessage = useCallback(
@@ -94,8 +102,11 @@ export function ChatInterface({
             fullContent += chunk;
             updateTempMessage(assistantTempId, fullContent);
           },
-          onComplete: () => {
+          onComplete: async () => {
             setIsError(false);
+            await refetchMessagesRef.current()?.unwrap();
+            removeTempMessage(tempId);
+            removeTempMessage(assistantTempId);
           },
           onError: (error) => {
             console.error('Streaming error:', error);

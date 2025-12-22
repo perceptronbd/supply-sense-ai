@@ -1,3 +1,4 @@
+import { QueryActionCreatorResult } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { useGetSessionMessagesQuery } from '@/store/api/chatApi';
@@ -7,7 +8,7 @@ export interface UseMessageManagerReturn {
   isLoadingMessages: boolean;
   messagesError: unknown;
   addErrorMessage: (sessionId: string, errorText: string) => void;
-  refetchMessages: () => void;
+  refetchMessages: () => QueryActionCreatorResult<any> | undefined;
   addTempMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => string;
   updateTempMessage: (tempId: string, content: string) => void;
   removeTempMessage: (tempId: string) => void;
@@ -117,7 +118,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
   const refetchMessages = useCallback(() => {
     if (sessionId) {
-      refetch();
+      return refetch();
     }
   }, [sessionId, refetch]);
 
