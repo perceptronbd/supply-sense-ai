@@ -10,7 +10,7 @@ interface RenderTableProps {
 
 export const RenderTable = ({ data, className }: RenderTableProps) => {
   // Handle empty data case
-  if (!data || data.length === 0) {
+  if (!Array.isArray(data) || !data || data.length === 0) {
     return <div>No data available</div>;
   }
 
