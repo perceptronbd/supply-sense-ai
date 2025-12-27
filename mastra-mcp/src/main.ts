@@ -1,8 +1,6 @@
 import { createServer } from 'node:http';
 import type { IChatFormattedResult } from '@supplysense/types';
-import { createRuntimeContext } from '@supplysense/utils/server';
 import { mastra } from './mastra/index.js';
-import { extractWorkflowResult } from './utils/chat-utils.js';
 
 enum MessageType {
   USER = 'user',
@@ -40,59 +38,41 @@ const server = createServer(async (req, res) => {
       try {
         const { message, sessionId, userId, dbConnectionId, authorizationToken, companyId } =
           JSON.parse(body);
-        const agent = mastra.getAgent('chatAgent');
 
-        const runtimeContext = createRuntimeContext({ dbConnectionId });
+        const workflow = mastra.getWorkflow('queryPostgreSQLdbWorkflow');
 
-        let finishedPromiseResolve: (value: void | PromiseLike<void>) => void;
-        const finishedPromise = new Promise<void>((resolve) => {
-          finishedPromiseResolve = resolve;
+        if (!workflow) {
+          throw new Error('Workflow not found');
+        }
+
+        const run = await workflow.createRunAsync();
+
+        const workflowStream = await run.stream({
+          inputData: {
+            dbConnectionId,
+            userQuery: message,
+          },
         });
-
-        // Stream the response
-        const result = await agent.stream(
-          [
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
-          {
-            runId: sessionId,
-            threadId: sessionId,
-            resourceId: userId,
-            runtimeContext,
-            onFinish: async (result) => {
-              try {
-                // Pass message for title generation
-                await saveMessage({
-                  result,
-                  sessionId,
-                  authorizationToken,
-                  companyId,
-                  userMessage: message,
-                  usage: result.usage as unknown as RecordTokenUsageDto['usage'],
-                });
-              } catch (e) {
-                console.error('Error in onFinish:', e);
-              } finally {
-                finishedPromiseResolve();
-              }
-            },
-          }
-        );
 
         res.writeHead(200, {
           'Content-Type': 'text/plain',
           'Transfer-Encoding': 'chunked',
         });
 
-        for await (const chunk of result.textStream) {
-          res.write(chunk);
+        for await (const chunk of workflowStream.fullStream) {
+          res.write(JSON.stringify(chunk));
+          // console.log('CHUNK:', JSON.parse(JSON.stringify(chunk, null, 2)));
+          if (chunk.type === 'workflow-step-result') {
+            await saveMessage({
+              result: chunk.payload.output as IChatFormattedResult,
+              sessionId,
+              authorizationToken,
+              companyId,
+              userMessage: message,
+              usage: chunk.payload.output.usage as unknown as RecordTokenUsageDto['usage'],
+            });
+          }
         }
-
-        // Wait for saveMessage to complete before ending response
-        await finishedPromise;
 
         res.end();
       } catch (error) {
@@ -113,11 +93,11 @@ const server = createServer(async (req, res) => {
 });
 
 interface ISaveMessage {
-  result: unknown;
+  result: IChatFormattedResult;
   sessionId: string;
   authorizationToken: string;
   userMessage: string;
-  usage: { outputTokens: number; inputTokens: number; totalTokens: number };
+  usage: { inputTokens: number; outputTokens: number; totalTokens: number };
   companyId: string;
 }
 
@@ -134,8 +114,9 @@ async function saveMessage({
     Authorization: authorizationToken,
   };
 
-  //@ts-expect-error
-  const workflowResult = extractWorkflowResult(result);
+  // //@ts-expect-error
+  // const workflowResult = extractWorkflowResult(result);
+  const workflowResult = result;
 
   // Record token usage
   await recordTokenUsage(

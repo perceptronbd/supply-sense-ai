@@ -13,6 +13,13 @@ const inputSchema = z.object({
 
 const outputSchema = z.object({
   queryAnalysis: z.string(),
+  usage: z
+    .object({
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      totalTokens: z.number(),
+    })
+    .optional(),
 });
 
 type QueryAnalysisOutput = z.infer<typeof outputSchema>;
@@ -122,8 +129,26 @@ export const queryAnalysisTool = createTool({
       abortSignal,
       runtimeContext: agentRuntimeContext,
     });
+    console.log('queryAnalysisTool usage', agentResponse.usage);
+    // Fallback token estimation if provider doesn't return usage
+    const estimateTokens = (text: string) => Math.ceil((text?.length ?? 0) / 4);
+    const estimatedUsage = !agentResponse.usage
+      ? {
+          inputTokens: estimateTokens(userQuery ?? ''),
+          outputTokens: estimateTokens(agentResponse.text ?? ''),
+          totalTokens: estimateTokens(userQuery ?? '') + estimateTokens(agentResponse.text ?? ''),
+        }
+      : undefined;
+
     const result = {
       queryAnalysis: agentResponse.text.trim(),
+      usage: agentResponse.usage
+        ? {
+            inputTokens: agentResponse.usage.inputTokens ?? 0,
+            outputTokens: agentResponse.usage.outputTokens ?? 0,
+            totalTokens: agentResponse.usage.totalTokens ?? 0,
+          }
+        : estimatedUsage,
     };
 
     // return agent response
