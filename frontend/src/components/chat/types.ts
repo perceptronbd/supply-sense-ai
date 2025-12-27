@@ -16,6 +16,16 @@ export interface MessageListProps {
   isStreaming?: boolean;
   isError?: boolean;
   onSuggestionClick?: (suggestion: string) => void;
+  reasoningSteps?: Array<{
+    id: string;
+    name: string;
+    status: 'running' | 'success' | 'error';
+    sqlQuery?: string;
+    summary?: string;
+    visualizationType?: string;
+    rows?: number;
+  }>;
+  workflowStatus?: 'running' | 'success' | 'error';
 }
 
 export interface ChatInterfaceProps {

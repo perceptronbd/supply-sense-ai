@@ -13,6 +13,8 @@ export function MessageList({
   isLoading = false,
   isStreaming = false,
   onSuggestionClick,
+  reasoningSteps,
+  workflowStatus,
 }: Readonly<MessageListProps>) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useSelector((state: RootState) => state.auth);
@@ -70,12 +72,6 @@ export function MessageList({
     >
       <div className="max-w-4xl mx-auto">
         {messages.map((message, index) => {
-          const isLastMessage = index === messages.length - 1;
-          const isStreamingEmptyMessage =
-            isStreaming && isLastMessage && message.type === 'assistant' && !message.content;
-
-          if (isStreamingEmptyMessage) return null;
-
           return (
             <MessageBubble
               key={message.id}
@@ -83,14 +79,15 @@ export function MessageList({
               onSuggestionClick={onSuggestionClick}
               isError={isError}
               isStreaming={isStreaming}
+              reasoningSteps={reasoningSteps}
+              workflowStatus={workflowStatus}
+              isLast={index === messages.length - 1}
             />
           );
         })}
-        {isStreaming &&
-          (!messages.length ||
-            messages[messages.length - 1].type === 'user' ||
-            (messages[messages.length - 1].type === 'assistant' &&
-              !messages[messages.length - 1].content)) && <LoadingMessage />}
+        {isStreaming && (!messages.length || messages[messages.length - 1].type === 'user') && (
+          <LoadingMessage />
+        )}
         <div ref={messagesEndRef} />
       </div>
     </section>

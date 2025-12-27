@@ -15,6 +15,7 @@ import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { AssistantMessage } from './AssistantMessage';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
+import { ReasoningCard } from './ReasoningCard';
 import { UserMessage } from './UserMessage';
 import './markdown.css';
 
@@ -23,6 +24,17 @@ interface MessageBubbleProps {
   onSuggestionClick?: (suggestion: string) => void;
   isError?: boolean;
   isStreaming?: boolean;
+  reasoningSteps?: Array<{
+    id: string;
+    name: string;
+    status: 'running' | 'success' | 'error';
+    sqlQuery?: string;
+    summary?: string;
+    visualizationType?: string;
+    rows?: number;
+  }>;
+  workflowStatus?: 'running' | 'success' | 'error';
+  isLast?: boolean;
 }
 
 export function MessageBubble({
@@ -30,6 +42,9 @@ export function MessageBubble({
   onSuggestionClick: _,
   isError,
   isStreaming,
+  reasoningSteps,
+  workflowStatus,
+  isLast,
 }: Readonly<MessageBubbleProps>) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
@@ -111,6 +126,8 @@ export function MessageBubble({
       <div className={cn(isUser ? 'items-end' : 'items-start', 'flex flex-col flex-1')}>
         {isUser ? (
           <UserMessage content={message.content} copied={copied} onCopy={copyToClipboard} />
+        ) : isStreaming && isLast ? (
+          <ReasoningCard steps={reasoningSteps ?? []} status={workflowStatus ?? 'running'} />
         ) : (
           <AssistantMessage blockMatches={blockMatches} message={message} />
         )}

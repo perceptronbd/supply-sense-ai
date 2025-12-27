@@ -8,7 +8,9 @@ import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
 import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
+import { handleWorkflowChunk } from './helper/handleWorkflowChunk';
 import { MessageList } from './MessageList';
+import type { ReasoningStep } from './ReasoningPanel';
 import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
@@ -32,6 +34,13 @@ export function ChatInterface({
     refetchMessages,
   } = useMessageManager(sessionId);
   const { streamChat, isStreaming } = useChatStream();
+
+  // Reasoning UI state
+  const [reasoningCollapsed, setReasoningCollapsed] = useState(true);
+  const [workflowStatus, setWorkflowStatus] = useState<'running' | 'success' | 'error' | undefined>(
+    undefined
+  );
+  const [steps, setSteps] = useState<Record<string, ReasoningStep>>({});
 
   // Handle session title updates when first AI response is received
   useSessionTitleUpdate(sessionId, messages);
@@ -99,6 +108,17 @@ export function ChatInterface({
           message: content,
           dbConnectionId,
           onChunk: (chunk) => {
+            const handled = handleWorkflowChunk(
+              chunk,
+              reasoningCollapsed,
+              setReasoningCollapsed,
+              setSteps,
+              setWorkflowStatus
+            );
+
+            if (handled) return; // don't append JSON to message
+
+            // Always append to fullContent to ensure we capture everything
             fullContent += chunk;
             updateTempMessage(assistantTempId, fullContent);
           },
@@ -107,6 +127,9 @@ export function ChatInterface({
             await refetchMessagesRef.current()?.unwrap();
             removeTempMessage(tempId);
             removeTempMessage(assistantTempId);
+            setWorkflowStatus(undefined);
+            setSteps({});
+            setReasoningCollapsed(true);
           },
           onError: (error) => {
             console.error('Streaming error:', error);
@@ -114,6 +137,7 @@ export function ChatInterface({
             addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
             removeTempMessage(tempId);
             removeTempMessage(assistantTempId);
+            setWorkflowStatus('error');
           },
         });
       } catch (error) {
@@ -132,6 +156,7 @@ export function ChatInterface({
       removeTempMessage,
       updateTempMessage,
       streamChat,
+      reasoningCollapsed,
     ]
   );
 
@@ -178,6 +203,8 @@ export function ChatInterface({
         isStreaming={isStreaming}
         isError={isError}
         onSuggestionClick={handleSuggestionClick}
+        reasoningSteps={Object.values(steps)}
+        workflowStatus={workflowStatus}
       />
 
       {/* Chat input with send message handling */}
@@ -188,6 +215,8 @@ export function ChatInterface({
         isStreaming={isStreaming}
         disabled={isLoadingMessages}
       />
+
+      {/* Inline reasoning is rendered inside MessageBubble via ReasoningCard while streaming */}
 
       {!sessionId && (
         <SampleQuestions
