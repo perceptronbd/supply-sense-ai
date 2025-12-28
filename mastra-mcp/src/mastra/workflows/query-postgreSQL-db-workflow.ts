@@ -49,6 +49,9 @@ const queryAnalysisStep = createStep({
   inputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
+    runId: z.string(),
+    threadId: z.string(),
+    resourceId: z.string(),
   }),
   outputSchema: z.object({
     dbConnectionId: z.string(),
@@ -57,7 +60,7 @@ const queryAnalysisStep = createStep({
     usage,
   }),
   execute: async ({ inputData }) => {
-    const { dbConnectionId, userQuery } = inputData;
+    const { dbConnectionId, userQuery, runId, threadId, resourceId } = inputData;
 
     const result = await queryAnalysisTool.execute({
       context: {
@@ -65,6 +68,9 @@ const queryAnalysisStep = createStep({
         userQuery,
       },
       runtimeContext: undefined,
+      runId,
+      threadId,
+      resourceId,
     });
 
     return {
@@ -186,6 +192,9 @@ export const queryPostgreSQLdbWorkflow = createWorkflow({
   inputSchema: z.object({
     dbConnectionId: z.string().describe('Database connection ID'),
     userQuery: z.string().describe("The user's natural language query"),
+    runId: z.string(),
+    threadId: z.string(),
+    resourceId: z.string(),
   }),
   outputSchema: z.object({
     visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),

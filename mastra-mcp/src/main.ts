@@ -51,6 +51,9 @@ const server = createServer(async (req, res) => {
           inputData: {
             dbConnectionId,
             userQuery: message,
+            runId: sessionId,
+            threadId: sessionId,
+            resourceId: userId,
           },
         });
 
