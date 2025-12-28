@@ -27,9 +27,9 @@ const Step = ({ label, step, currentStep, isLast, classNames }: StepProps) => {
       {step > 1 && (
         <div
           className={cn(
-            'h-px w-20 absolute top-1/2 left-0 z-10 -translate-x-0.5 -translate-y-4',
+            'h-px w-1/2 absolute top-1/2 left-0 z-10 -translate-x-0.5 -translate-y-4',
             classNames?.connector || '',
-            isComplete ? 'bg-primary' : 'bg-default-500'
+            isActive ? 'bg-primary' : 'bg-default-500'
           )}
         />
       )}

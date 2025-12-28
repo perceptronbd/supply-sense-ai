@@ -1,0 +1,70 @@
+'use client';
+
+import { useScroll, useSpring } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { features } from './data';
+import { LeftColumn } from './LeftColumn';
+import { MobileFeaturesList } from './MobileFeaturesList';
+import { RightColumn } from './RightColumn';
+
+const SECTION_ID = 'features';
+
+export const FeatureStackSection = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const container = document.getElementById('/');
+    if (container) {
+      setScrollContainer(container);
+    }
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    container: scrollContainer ? { current: scrollContainer } : undefined,
+    offset: ['start start', 'end end'],
+  });
+
+  // Add spring smoothing to the scroll progress
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 50,
+    damping: 20,
+    restDelta: 0.001,
+  });
+
+  return (
+    <section
+      ref={containerRef}
+      id={SECTION_ID}
+      className="relative h-auto lg:h-[750vh] lg:snap-start container mx-auto"
+    >
+      {/* Internal Snap Points for smooth scrolling with snap-mandatory (Desktop Only) */}
+      <div className="hidden lg:block">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: <>
+            key={i}
+            className="absolute w-full h-screen snap-start pointer-events-none"
+            style={{ top: `${i * 100}vh` }}
+          />
+        ))}
+      </div>
+
+      {/* Main Container */}
+      <div className="relative lg:sticky lg:top-0 min-h-screen lg:h-screen w-full lg:overflow-hidden">
+        {/* Desktop Layout (Split Columns) */}
+        <div className="hidden lg:flex min-h-full flex-row items-center px-0 justify-center gap-20">
+          {/* Left Column: Image/Animation */}
+          <LeftColumn features={features} scrollYProgress={smoothProgress} />
+
+          {/* Right Column: Feature Cards */}
+          <RightColumn features={features} scrollYProgress={smoothProgress} />
+        </div>
+
+        {/* Mobile/Tablet Layout (Flex Col) */}
+        <MobileFeaturesList features={features} />
+      </div>
+    </section>
+  );
+};

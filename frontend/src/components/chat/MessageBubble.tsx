@@ -146,7 +146,7 @@ export function MessageBubble({
               >
                 {copied ? <Icons.Check /> : <Icons.Copy />}
               </Button>
-              <Button isIconOnly variant="light" size="sm" aria-label="Like message">
+              {/* <Button isIconOnly variant="light" size="sm" aria-label="Like message">
                 <Icons.ThumbsUp />
               </Button>
               <Button isIconOnly variant="light" size="sm" aria-label="Dislike message">
@@ -154,7 +154,7 @@ export function MessageBubble({
               </Button>
               <Button isIconOnly variant="light" size="sm" aria-label="Regenerate message">
                 <Icons.RefreshCw />
-              </Button>
+              </Button> */}
             </div>
 
             {/* Timestamp */}

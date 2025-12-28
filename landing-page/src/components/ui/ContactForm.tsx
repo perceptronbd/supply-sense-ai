@@ -1,30 +1,68 @@
 'use client';
-import { Button, Input, Textarea } from '@heroui/react';
+import { addToast, Button, Input, Textarea } from '@heroui/react';
 import { Controller, FieldValues, useForm } from 'react-hook-form';
-import { Icons } from '../icons';
 
 export default function ContactForm() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     reset,
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      company: '',
+      message: '',
+    },
+  });
 
-  const onSubmit = (data: FieldValues) => {
-    console.log('Form Data:', data);
-    alert('Form submitted successfully!');
-    reset();
+  const onSubmit = async (data: FieldValues) => {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        addToast({
+          title: 'Message Sent',
+          description: 'Your message has been sent successfully!',
+          color: 'success',
+          variant: 'flat',
+        });
+        reset();
+      } else {
+        addToast({
+          title: 'Failed to Send',
+          description: 'Failed to send your message. Please try again.',
+          color: 'danger',
+          variant: 'flat',
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast({
+        title: 'Error',
+        description: 'Something went wrong. Please try again later.',
+        color: 'danger',
+        variant: 'flat',
+      });
+    }
   };
 
   return (
     <div className="max-w-lg flex-1 mx-auto xl:mx-0">
-      <div className="bg-gradient-to-b from-primary-50 to-primary-200 rounded-xl p-0.5">
-        <div className="bg-gradient-to-r from-default-50 via-primary-200 to-default-100 rounded-xl w-full p-6">
+      <div className="relative overflow-hidden rounded-xl border-1 border-primary-50">
+        <div className="contact-us-glow"></div>
+        <div className="rounded-xl w-full p-6 backdrop-blur-md bg-background/15">
           <h2 className="text-center text-2xl md:text-3xl font-brand font-bold text-content1-foreground mb-8">
             Schedule A Demo
           </h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Row 1: Name and Company */}
 
             {/* Name Field */}
@@ -45,7 +83,6 @@ export default function ContactForm() {
                   label="Name"
                   labelPlacement="inside"
                   placeholder="Enter Your Name"
-                  startContent={<Icons.User className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.name}
                   errorMessage={errors.name?.message?.toString()}
                   variant="faded"
@@ -78,7 +115,6 @@ export default function ContactForm() {
                   label="Email"
                   placeholder="Email address"
                   labelPlacement="inside"
-                  startContent={<Icons.Mail className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message?.toString()}
                   variant="faded"
@@ -104,7 +140,6 @@ export default function ContactForm() {
                   label="Company"
                   labelPlacement="inside"
                   placeholder="Company Name"
-                  startContent={<Icons.Building className="h-5 w-5 text-default-500" />}
                   variant="faded"
                   color="primary"
                   classNames={{
@@ -134,7 +169,6 @@ export default function ContactForm() {
                   label="Message"
                   labelPlacement="inside"
                   placeholder="How can we assist you?"
-                  startContent={<Icons.MessageSquare className="h-5 w-5 text-default-500" />}
                   isInvalid={!!errors.message}
                   errorMessage={errors.message?.message?.toString()}
                   variant="faded"
@@ -154,20 +188,15 @@ export default function ContactForm() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button
                 type="submit"
+                isLoading={isSubmitting}
                 variant="solid"
                 color="primary"
                 className="flex-1 py-3"
-                startContent={<Icons.SendIcon className="h-5 w-5" />}
               >
                 Submit
               </Button>
 
-              <Button
-                type="button"
-                variant="bordered"
-                className="flex-1 border-primary py-3 text-primary"
-                startContent={<Icons.Phone className="h-5 w-5 text-primary" />}
-              >
+              <Button type="button" variant="bordered" color="primary" className="flex-1 py-3">
                 Reach out
               </Button>
             </div>
