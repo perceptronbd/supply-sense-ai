@@ -6,6 +6,7 @@ export interface AppConfig {
 
   // Database settings
   databaseUrl: string;
+  publicDbConnectionId: string;
 
   // JWT settings
   jwtSecret: string;
@@ -18,6 +19,24 @@ export interface AppConfig {
   mcpServerUrl: string;
   mcpServerEndpoint: string;
   mcpServerTimeout: number;
+
+  // Mastra Client settings
+  mastraServerUrl: string;
+
+  // MCP Backend Server settings
+  mcpBackendServerUrl: string;
+
+  // Security & Encryption settings
+  dbEncryptionKey: string;
+
+  // Frontend settings
+  frontendUrls: string;
+
+  // API Keys
+  openrouterApiKey: string;
+
+  // Rate limiting
+  rateLimitConfig: string;
 }
 
 export const appConfig: AppConfig = {
@@ -28,6 +47,7 @@ export const appConfig: AppConfig = {
 
   // Database settings
   databaseUrl: process.env.DATABASE_URL || '',
+  publicDbConnectionId: process.env.PUBLIC_DB_CONNECTION_ID || '',
 
   // JWT settings
   jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
@@ -40,6 +60,26 @@ export const appConfig: AppConfig = {
   mcpServerUrl: process.env.MCP_SERVER_URL || 'http://localhost:3002',
   mcpServerEndpoint: process.env.MCP_SERVER_ENDPOINT || '/mcp',
   mcpServerTimeout: Number.parseInt(process.env.MCP_SERVER_TIMEOUT || '120000', 10), // 2 minutes for complex table analysis
+
+  // Mastra Client settings
+  mastraServerUrl: process.env.MASTRA_SERVER_URL || 'http://localhost:4111',
+
+  // MCP Server settings
+  mcpBackendServerUrl: process.env.MCP_BACKEND_SERVER_URL || 'http://localhost:8080',
+
+  // Security & Encryption settings
+  dbEncryptionKey: process.env.DB_ENCRYPTION_KEY || '',
+
+  // Frontend settings
+  frontendUrls: process.env.FRONTEND_URLS || 'http://localhost:3000,http://localhost:3001',
+
+  // API Keys
+  openrouterApiKey: process.env.OPENROUTER_API_KEY || '',
+
+  // Rate limiting
+  rateLimitConfig:
+    process.env.RATE_LIMIT_CONFIG ||
+    '[{"name":"minute","window":"1m","maxRequests":5},{"name":"hour","window":"1h","maxRequests":30},{"name":"day","window":"1d","maxRequests":200}]',
 };
 
 // Validation function to ensure required environment variables are set

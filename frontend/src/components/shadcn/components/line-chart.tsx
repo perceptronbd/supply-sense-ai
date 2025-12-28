@@ -2,16 +2,21 @@
 
 import { Card, CardBody } from '@heroui/react';
 import React from 'react';
-import { CartesianGrid, DotProps, Line, LineChart, XAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip } from './chart';
 import { CustomTooltipContent } from './custom-tooltip-content';
 
-const CustomizedDot = ({
-  cx,
-  cy,
-  stroke,
-  ..._rest
-}: React.SVGProps<SVGCircleElement> & { cx?: number; cy?: number; stroke?: string }) => {
+interface CustomDotProps {
+  cx?: number;
+  cy?: number;
+  stroke?: string;
+  payload?: unknown;
+  value?: unknown;
+  index?: number;
+}
+
+const CustomizedDot = ({ cx, cy, stroke }: CustomDotProps) => {
+  if (cx === undefined || cy === undefined) return null;
   return (
     <g>
       {/* Main dot */}
@@ -54,18 +59,13 @@ export function DottedMultiLineChart({
   const uniqueId = React.useId();
   const glowFilterId = `${uniqueId}-rainbow-line-glow`;
 
+  const renderDot = (props: CustomDotProps): React.ReactElement | null => {
+    const { cx, cy, stroke } = props;
+    return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
+  };
+
   const defaultLineProps = {
     type: 'bump' as const,
-    dot: showDots
-      ? (props: DotProps) => {
-          const { cx, cy, stroke } = props;
-          return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
-        }
-      : false,
-    activeDot: (props: DotProps) => {
-      const { cx, cy, stroke } = props;
-      return <CustomizedDot cx={cx} cy={cy} stroke={stroke as string} />;
-    },
     strokeWidth: 2,
     filter: `url(#${glowFilterId})`,
   };
@@ -100,6 +100,8 @@ export function DottedMultiLineChart({
                 key={key}
                 dataKey={key}
                 {...defaultLineProps}
+                dot={showDots ? (renderDot as never) : false}
+                activeDot={renderDot as never}
                 stroke={`var(--color-${key})`}
                 strokeDasharray={dashedLines.includes(key) ? '4 4' : undefined}
               />

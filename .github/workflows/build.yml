@@ -1,0 +1,282 @@
+name: Build Applications
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  # Determine which apps have changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      landing: ${{ steps.filter.outputs.landing }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      mastra-mcp: ${{ steps.filter.outputs.mastra-mcp }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            landing:
+              - 'landing-page/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'nx.json'
+              - 'tsconfig.base.json'
+            frontend:
+              - 'frontend/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'nx.json'
+              - 'tsconfig.base.json'
+            backend:
+              - 'backend/**'
+              - 'libs/shared/prisma/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'nx.json'
+              - 'tsconfig.base.json'
+            mastra-mcp:
+              - 'mastra-mcp/**'
+              - 'libs/shared/prisma/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'nx.json'
+              - 'tsconfig.base.json'
+            shared:
+              - 'libs/**'
+
+  # Build Landing Page
+  build-landing:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.landing == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Landing Page
+        run: pnpm run landing:build
+
+      - name: Upload landing build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing-page-build
+          path: dist/landing-page
+          retention-days: 7
+
+  # Build Frontend
+  build-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create frontend .env.local
+        run: |
+          echo "NEXT_PUBLIC_API_URL=http://localhost:3004" > frontend/.env.local
+
+      - name: Build Frontend
+        run: pnpm run frontend:build
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: dist/frontend
+          retention-days: 7
+
+  # Build Backend
+  build-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm run db:generate
+
+      - name: Build Backend
+        run: pnpm run backend:build
+
+      - name: Upload backend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: dist/backend
+          retention-days: 7
+
+  # Build Mastra MCP
+  build-mastra-mcp:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mastra-mcp == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm run db:generate
+
+      - name: Build Mastra MCP
+        run: pnpm run mastra:build
+
+      - name: Upload mastra-mcp build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mastra-mcp-build
+          path: mastra-mcp/.mastra
+          retention-days: 7
+
+  # Summary job that runs after all builds
+  build-summary:
+    needs: [detect-changes, build-landing, build-frontend, build-backend, build-mastra-mcp]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Application | Changed | Build Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------------|---------|--------------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Landing Page
+          if [ "${{ needs.detect-changes.outputs.landing }}" == "true" ] || [ "${{ needs.detect-changes.outputs.shared }}" == "true" ]; then
+            if [ "${{ needs.build-landing.result }}" == "success" ]; then
+              echo "| Landing Page | ✅ Yes | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ needs.build-landing.result }}" == "failure" ]; then
+              echo "| Landing Page | ✅ Yes | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Landing Page | ✅ Yes | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| Landing Page | ⬜ No | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Frontend
+          if [ "${{ needs.detect-changes.outputs.frontend }}" == "true" ] || [ "${{ needs.detect-changes.outputs.shared }}" == "true" ]; then
+            if [ "${{ needs.build-frontend.result }}" == "success" ]; then
+              echo "| Frontend | ✅ Yes | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ needs.build-frontend.result }}" == "failure" ]; then
+              echo "| Frontend | ✅ Yes | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Frontend | ✅ Yes | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| Frontend | ⬜ No | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Backend
+          if [ "${{ needs.detect-changes.outputs.backend }}" == "true" ] || [ "${{ needs.detect-changes.outputs.shared }}" == "true" ]; then
+            if [ "${{ needs.build-backend.result }}" == "success" ]; then
+              echo "| Backend | ✅ Yes | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ needs.build-backend.result }}" == "failure" ]; then
+              echo "| Backend | ✅ Yes | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Backend | ✅ Yes | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| Backend | ⬜ No | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Mastra MCP
+          if [ "${{ needs.detect-changes.outputs.mastra-mcp }}" == "true" ] || [ "${{ needs.detect-changes.outputs.shared }}" == "true" ]; then
+            if [ "${{ needs.build-mastra-mcp.result }}" == "success" ]; then
+              echo "| Mastra MCP | ✅ Yes | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ needs.build-mastra-mcp.result }}" == "failure" ]; then
+              echo "| Mastra MCP | ✅ Yes | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Mastra MCP | ✅ Yes | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| Mastra MCP | ⬜ No | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi

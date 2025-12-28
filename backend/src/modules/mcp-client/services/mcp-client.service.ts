@@ -1,5 +1,6 @@
 import { MastraClient } from '@mastra/client-js';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { appConfig } from '../../../config/app.config';
 
 /**
  * Service for managing MCP (Model Context Protocol) client connections
@@ -32,7 +33,7 @@ export class McpClientService implements OnModuleInit {
     try {
       this.logger.log('Initializing MCP client connection to Mastra server...');
 
-      const baseUrl = process.env.MASTRA_SERVER_URL || 'http://localhost:4111';
+      const baseUrl = appConfig.mastraServerUrl;
       this.mastraClient = new MastraClient({
         baseUrl,
       });

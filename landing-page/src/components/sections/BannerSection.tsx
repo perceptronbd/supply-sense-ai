@@ -18,13 +18,13 @@ const Banner = () => {
   };
 
   //navigate to login page
-  const _handleInputClick = () => {
+  const handleInputClick = () => {
     const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
     window.open(loginUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <SectionWrapper className="min-h-screen flex flex-col justify-center">
+    <SectionWrapper className="md:min-h-screen md:flex md:flex-col md:justify-center snap-center pt-24">
       <h1 className="mx-auto text-4xl font-medium text-center font-brand lg:text-6xl lg:font-bold lg:text-foreground text-secondary">
         <span className="text-primary">Know </span>Your Operations.
         <br /> <span className="text-primary">Ask </span> Anything. <br />
@@ -43,6 +43,7 @@ const Banner = () => {
           radius="md"
           size="lg"
           endContent={<Icons.ArrowRight />}
+          onPress={() => handleInputClick()}
         >
           Try For Free
         </Button>

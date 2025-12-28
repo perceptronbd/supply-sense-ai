@@ -1,14 +1,16 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from '@/components/ui/Text';
+import { useChatStream } from '@/hooks/useChatStream';
 import { useMessageManager } from '@/hooks/useMessageManager';
 import { useSessionTitleUpdate } from '@/hooks/useSessionTitleUpdate';
 import type { ChatMessageResponse } from '@/store/api/chatApi';
-import { useSendQueryMutation } from '@/store/api/chatApi';
 import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
+import { handleWorkflowChunk } from './helper/handleWorkflowChunk';
 import { MessageList } from './MessageList';
+import type { ReasoningStep } from './ReasoningCard';
 import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
@@ -26,15 +28,29 @@ export function ChatInterface({
     isLoadingMessages,
     messagesError,
     addErrorMessage,
-    refetchMessages,
     addTempMessage,
     removeTempMessage,
+    updateTempMessage,
+    refetchMessages,
   } = useMessageManager(sessionId);
+  const { streamChat, isStreaming } = useChatStream();
 
-  const [sendQuery, { isLoading: isSendingMessage }] = useSendQueryMutation();
+  // Reasoning UI state
+  const [reasoningCollapsed, setReasoningCollapsed] = useState(true);
+  const [workflowStatus, setWorkflowStatus] = useState<'running' | 'success' | 'error' | undefined>(
+    undefined
+  );
+  const [steps, setSteps] = useState<Record<string, ReasoningStep>>({});
 
   // Handle session title updates when first AI response is received
   useSessionTitleUpdate(sessionId, messages);
+
+  // Keep a ref to refetchMessages to avoid stale closures in async callbacks
+  const refetchMessagesRef = useRef(refetchMessages);
+
+  useEffect(() => {
+    refetchMessagesRef.current = refetchMessages;
+  }, [refetchMessages]);
 
   // Handle sending messages with improved error handling and session management
   const handleSendMessage = useCallback(
@@ -76,39 +92,54 @@ export function ChatInterface({
         userId: 'current-user-id',
       });
       try {
-        // Send message via API
-        sendQuery({
+        // Create assistant temp message
+        const assistantTempId = addTempMessage({
           sessionId: currentSessionId,
-          query: content,
-          dbConnectionId: dbConnectionId,
-        })
-          .then((response) => {
-            const res = response as {
-              data: { data?: ChatMessageResponse };
-              error?: { data?: { statusCode?: number; message?: string } };
-            };
+          content: '',
+          type: 'assistant',
+          contentType: 'text',
+          userId: 'system',
+        });
 
-            if (res.data?.data) {
-              setIsError(false);
-            }
+        let fullContent = '';
 
-            if (res?.error?.data?.statusCode === 429) {
-              setIsError(true);
-              addErrorMessage(
-                currentSessionId,
-                res.error.data?.message ||
-                  'Rate limit exceeded. Please wait before sending more messages.'
-              );
-            } else if (res?.error) {
-              setIsError(true);
-              addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
-            }
+        await streamChat({
+          sessionId: currentSessionId,
+          message: content,
+          dbConnectionId,
+          onChunk: (chunk) => {
+            const handled = handleWorkflowChunk(
+              chunk,
+              reasoningCollapsed,
+              setReasoningCollapsed,
+              setSteps,
+              setWorkflowStatus
+            );
+
+            if (handled) return; // don't append JSON to message
+
+            // Always append to fullContent to ensure we capture everything
+            fullContent += chunk;
+            updateTempMessage(assistantTempId, fullContent);
+          },
+          onComplete: async () => {
+            setIsError(false);
+            await refetchMessagesRef.current()?.unwrap();
             removeTempMessage(tempId);
-          })
-          .finally(() => {
+            removeTempMessage(assistantTempId);
+            setWorkflowStatus(undefined);
+            setSteps({});
+            setReasoningCollapsed(true);
+          },
+          onError: (error) => {
+            console.error('Streaming error:', error);
+            setIsError(true);
+            addErrorMessage(currentSessionId, 'Failed to send message. Please try again.');
             removeTempMessage(tempId);
-            refetchMessages();
-          });
+            removeTempMessage(assistantTempId);
+            setWorkflowStatus('error');
+          },
+        });
       } catch (error) {
         setIsError(true);
         console.error('Failed to send message:', error);
@@ -121,10 +152,11 @@ export function ChatInterface({
       dbConnectionId,
       handleCreateSession,
       addErrorMessage,
-      refetchMessages,
-      sendQuery,
       addTempMessage,
       removeTempMessage,
+      updateTempMessage,
+      streamChat,
+      reasoningCollapsed,
     ]
   );
 
@@ -167,9 +199,12 @@ export function ChatInterface({
       {/* Message list with loading and suggestion handling */}
       <MessageList
         messages={messages as unknown as ChatMessageResponse[]}
-        isLoading={isLoadingMessages || isSendingMessage}
+        isLoading={isLoadingMessages}
+        isStreaming={isStreaming}
         isError={isError}
         onSuggestionClick={handleSuggestionClick}
+        reasoningSteps={Object.values(steps)}
+        workflowStatus={workflowStatus}
       />
 
       {/* Chat input with send message handling */}
@@ -177,9 +212,11 @@ export function ChatInterface({
         message={message}
         setMessage={setMessage}
         onSendMessage={handleSendMessage}
-        isLoading={isSendingMessage}
+        isStreaming={isStreaming}
         disabled={isLoadingMessages}
       />
+
+      {/* Inline reasoning is rendered inside MessageBubble via ReasoningCard while streaming */}
 
       {!sessionId && (
         <SampleQuestions

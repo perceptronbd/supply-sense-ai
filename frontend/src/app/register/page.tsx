@@ -74,7 +74,6 @@ export default function RegisterPage() {
       void confirmPassword;
 
       const result = await register(registrationData).unwrap();
-      console.log('🚀 > handleSubmit > result:', result);
       dispatch(
         setRegistrationCredentials({
           company: result.company,

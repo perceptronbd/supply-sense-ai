@@ -8,14 +8,15 @@
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/.mastra"],
       "options": {
-        "command": "mastra build --root . --dir src/mastra",
+        "command": "mastra build --root mastra-mcp --dir src/mastra",
         "cwd": "mastra-mcp"
       }
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "mastra dev",
+        "commands": ["mastra dev", "npx tsx watch -r dotenv/config src/main.ts"],
+        "parallel": true,
         "cwd": "mastra-mcp"
       }
     }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { IChatFormattedResult } from '@supplysense/types';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export enum MessageType {
@@ -59,6 +60,39 @@ export class SendMessageDto {
   @IsUUID()
   @IsOptional()
   parentMessageId?: string;
+}
+
+export class CreateMessageDto {
+  @ApiProperty({ description: 'Message content' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4000)
+  content: string;
+
+  @ApiProperty({
+    description: 'Message type',
+    enum: MessageType,
+    default: MessageType.USER,
+  })
+  @IsEnum(MessageType)
+  @IsOptional()
+  type?: MessageType = MessageType.USER;
+
+  @ApiProperty({ description: 'Structured Data', required: false })
+  @IsOptional()
+  structuredData?: IChatFormattedResult;
+}
+
+export class UpdateSessionTitleDto {
+  @ApiProperty({ description: 'User message' })
+  @IsString()
+  @IsNotEmpty()
+  message: string;
+
+  @ApiProperty({ description: 'AI Summary/Response' })
+  @IsString()
+  @IsNotEmpty()
+  summary: string;
 }
 
 export class ChatMessageDto {
@@ -145,4 +179,11 @@ export class ChatQueryDto {
   @IsString({ message: 'Database connection ID must be a string' })
   @IsNotEmpty({ message: 'Database connection ID is required' })
   dbConnectionId: string;
+}
+
+export interface RecordTokenUsageDto {
+  usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+  companyId: string;
+  message: string;
+  result: IChatFormattedResult;
 }

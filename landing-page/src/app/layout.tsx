@@ -2,6 +2,7 @@ import Provider from '../providers/Provider';
 import './global.css';
 import { Montserrat } from 'next/font/google';
 import localFont from 'next/font/local';
+import ClarityInit from '../providers/Clarity-init';
 
 const clashDisplay = localFont({
   src: './../../public/fonts/ClashDisplay-Variable.ttf',
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${clashDisplay.variable} ${montserrat.variable} font-primary`}
         suppressHydrationWarning
       >
+        <ClarityInit />
         <Provider>{children}</Provider>
       </body>
     </html>

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Response } from 'express';
+import { appConfig } from '@/config/app.config';
 
 @Injectable()
 export class CorsService implements OnModuleInit {
@@ -14,7 +15,7 @@ export class CorsService implements OnModuleInit {
    * Initialize allowed origins from environment variable
    */
   private initializeAllowedOrigins(): void {
-    const frontendUrls = (process.env.FRONTEND_URLS ?? '').trim();
+    const frontendUrls = (appConfig.frontendUrls ?? '').trim();
 
     if (!frontendUrls) {
       this.logger.warn('FRONTEND_URLS environment variable is not set or empty');
@@ -43,6 +44,7 @@ export class CorsService implements OnModuleInit {
 
   /**
    * Normalize an origin URL to its canonical form
+   * Origins should only include protocol and host (no pathname, no trailing slash)
    */
   private normalizeOrigin(origin: string): string {
     try {
@@ -54,13 +56,9 @@ export class CorsService implements OnModuleInit {
         throw new Error(`Unsupported protocol: ${url.protocol}`);
       }
 
-      // Remove trailing slash from pathname if present
-      let normalized = `${url.protocol}//${url.host}${url.pathname}`;
-      if (normalized.endsWith('/')) {
-        normalized = normalized.slice(0, -1);
-      }
-
-      return normalized;
+      // CORS origins should only include protocol and host
+      // Do NOT include pathname or trailing slashes
+      return `${url.protocol}//${url.host}`;
     } catch (error) {
       this.logger.error(`Failed to normalize origin "${origin}": ${error.message}`);
       return origin; // Return as-is if normalization fails
@@ -83,10 +81,21 @@ export class CorsService implements OnModuleInit {
    * Check if an origin is allowed
    */
   isOriginAllowed(origin: string | undefined): boolean {
-    if (!origin) return false;
+    if (!origin) {
+      this.logger.debug('[CORS DEBUG] isOriginAllowed: origin is undefined/null');
+      return false;
+    }
 
     const normalizedOrigin = this.normalizeOrigin(origin);
-    return this.allowedOrigins.has(normalizedOrigin);
+    const isAllowed = this.allowedOrigins.has(normalizedOrigin);
+
+    this.logger.debug(`[CORS DEBUG] isOriginAllowed check:`);
+    this.logger.debug(`  - Raw origin: "${origin}"`);
+    this.logger.debug(`  - Normalized: "${normalizedOrigin}"`);
+    this.logger.debug(`  - Is allowed: ${isAllowed}`);
+    this.logger.debug(`  - Allowed set: [${Array.from(this.allowedOrigins).join(', ')}]`);
+
+    return isAllowed;
   }
 
   /**

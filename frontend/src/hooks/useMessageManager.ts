@@ -1,3 +1,4 @@
+import { QueryActionCreatorResult } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatMessage } from '@/store/api/chatApi';
 import { useGetSessionMessagesQuery } from '@/store/api/chatApi';
@@ -7,8 +8,9 @@ export interface UseMessageManagerReturn {
   isLoadingMessages: boolean;
   messagesError: unknown;
   addErrorMessage: (sessionId: string, errorText: string) => void;
-  refetchMessages: () => void;
+  refetchMessages: () => QueryActionCreatorResult<any> | undefined;
   addTempMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => string;
+  updateTempMessage: (tempId: string, content: string) => void;
   removeTempMessage: (tempId: string) => void;
 }
 
@@ -18,7 +20,6 @@ export interface UseMessageManagerReturn {
  */
 export function useMessageManager(sessionId: string | undefined): UseMessageManagerReturn {
   const [tempMessages, setTempMessages] = useState<Record<string, ChatMessage>>({});
-
   const {
     data: fetchedMessages,
     isLoading: isLoadingMessages,
@@ -28,12 +29,8 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
   // Compute merged messages using useMemo instead of useEffect + useState
   const messages = useMemo(() => {
-    if (!fetchedMessages) {
-      return sessionId ? [] : [];
-    }
-
-    // Merge temp messages with fetched messages
-    const updatedMessages = [...fetchedMessages];
+    // If not fetched yet, start with empty array but allow temp messages to be added
+    const updatedMessages = fetchedMessages ? [...fetchedMessages] : [];
 
     // Add temp messages that don't have a corresponding real message yet
     for (const tempMsg of Object.values(tempMessages)) {
@@ -48,8 +45,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     );
 
     return updatedMessages;
-  }, [fetchedMessages, tempMessages, sessionId]);
-
+  }, [fetchedMessages, tempMessages]);
   // Clear temp messages when session changes
   useEffect(() => {
     if (!sessionId) {
@@ -62,7 +58,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     (message: Omit<ChatMessage, 'id' | 'createdAt' | 'updatedAt'>) => {
       const tempMessage: ChatMessage = {
         ...message,
-        id: `temp-${Date.now()}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -86,6 +82,22 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     });
   }, []);
 
+  // Update a temporary message
+  const updateTempMessage = useCallback((tempId: string, content: string) => {
+    setTempMessages((prev) => {
+      const message = prev[tempId];
+      if (!message) return prev;
+
+      return {
+        ...prev,
+        [tempId]: {
+          ...message,
+          content,
+        },
+      };
+    });
+  }, []);
+
   const addErrorMessage = useCallback((sessionId: string, errorText: string) => {
     const errorMessage: ChatMessage = {
       id: `error-${Date.now()}`,
@@ -106,7 +118,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
   const refetchMessages = useCallback(() => {
     if (sessionId) {
-      refetch();
+      return refetch();
     }
   }, [sessionId, refetch]);
 
@@ -117,6 +129,7 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     addErrorMessage,
     refetchMessages,
     addTempMessage,
+    updateTempMessage,
     removeTempMessage,
   };
 }

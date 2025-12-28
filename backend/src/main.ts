@@ -5,6 +5,7 @@
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { appConfig } from '@/config/app.config';
 import { AppModule } from './app/app.module';
 import { CorsService, GlobalExceptionFilter, ResponseInterceptor } from './modules/common';
 
@@ -17,20 +18,37 @@ async function bootstrap() {
   app.enableCors({
     origin: (
       origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
+      callback: (err: Error | null, allow?: boolean | string) => void
     ) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      Logger.debug(`[CORS DEBUG] Incoming origin: ${origin}`);
 
-      if (corsService.isOriginAllowed(origin)) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        Logger.debug('[CORS DEBUG] No origin provided, allowing request');
         return callback(null, true);
       }
 
-      return callback(new Error('Not allowed by CORS'));
+      // Check if origin is allowed
+      const isAllowed = corsService.isOriginAllowed(origin);
+      Logger.debug(`[CORS DEBUG] Origin "${origin}" allowed: ${isAllowed}`);
+      Logger.debug(`[CORS DEBUG] Allowed origins: ${corsService.getAllowedOrigins().join(', ')}`);
+
+      if (isAllowed) {
+        // CRITICAL: Return the origin string, not just true
+        // This tells NestJS to set Access-Control-Allow-Origin to this specific origin
+        Logger.debug(`[CORS DEBUG] Returning origin string to callback: ${origin}`);
+        return callback(null, origin);
+      }
+
+      // Log rejected origins for debugging
+      Logger.warn(`[CORS DEBUG] REJECTED origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'), false);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control'],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   const globalPrefix = 'api';
@@ -72,7 +90,7 @@ async function bootstrap() {
     .addTag('manufacturing-list', 'Manufacturing List operations')
     .addTag('formula', 'Formula operations')
     .addBearerAuth()
-    .addServer(`http://localhost:${process.env.PORT || 3000}/`, 'Development server')
+    .addServer(`http://localhost:${appConfig.port}/`, 'Development server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
@@ -118,20 +136,18 @@ async function bootstrap() {
   });
   */
 
-  const port = process.env.PORT || 3004;
-  Logger.log(`⚙️  Environment: ${process.env.NODE_ENV || 'development'}`);
+  const port = appConfig.port;
+  Logger.log(`⚙️  Environment: ${appConfig.nodeEnv}`);
+  Logger.log(`🔗 Frontend CORS URLs: ${appConfig.frontendUrls}`);
   Logger.log(
-    `🔗 Frontend CORS URLs: ${process.env.FRONTEND_URLS || 'http://localhost:3001,http://localhost:3003'}`
+    `🗃️  Database: ${appConfig.databaseUrl ? 'Connected via env var' : 'Using default (ensure DATABASE_URL is set)'}`
   );
   Logger.log(
-    `🗃️  Database: ${process.env.DATABASE_URL ? 'Connected via env var' : 'Using default (ensure DATABASE_URL is set)'}`
+    `🔐 JWT Secret: ${appConfig.jwtSecret ? 'Configured' : 'Using default (change in production)'}`
   );
+  Logger.log(`🤖 AI Model: ${appConfig.geminiModel}`);
   Logger.log(
-    `🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Configured' : 'Using default (change in production)'}`
-  );
-  Logger.log(`🤖 AI Model: ${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`);
-  Logger.log(
-    `🔑 Gemini API: ${process.env.GEMINI_API_KEY ? 'Configured' : 'NOT SET - AI features may not work'}`
+    `🔑 Gemini API: ${appConfig.geminiApiKey ? 'Configured' : 'NOT SET - AI features may not work'}`
   );
   console.log('');
   await app.listen(port, '0.0.0.0');

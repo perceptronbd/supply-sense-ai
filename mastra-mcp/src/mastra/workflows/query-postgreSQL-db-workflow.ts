@@ -4,6 +4,44 @@ import { executeQueryTool } from '../tools/execute-query-tool';
 import { formatResultsTool } from '../tools/format-results-tool';
 import { queryAnalysisTool } from '../tools/query-analysis-tools';
 
+const usage = z
+  .object({
+    inputTokens: z.number(),
+    outputTokens: z.number(),
+    totalTokens: z.number(),
+  })
+  .optional();
+
+// Helper to sum usage objects safely
+function sumUsage(
+  a?: { inputTokens: number; outputTokens: number; totalTokens: number },
+  b?: { inputTokens: number; outputTokens: number; totalTokens: number }
+): { inputTokens: number; outputTokens: number; totalTokens: number } | undefined {
+  if (!a && !b) return undefined;
+  const aIn = a?.inputTokens ?? 0;
+  const aOut = a?.outputTokens ?? 0;
+  const aTot = a?.totalTokens ?? 0;
+  const bIn = b?.inputTokens ?? 0;
+  const bOut = b?.outputTokens ?? 0;
+  const bTot = b?.totalTokens ?? 0;
+  return {
+    inputTokens: aIn + bIn,
+    outputTokens: aOut + bOut,
+    totalTokens: aTot + bTot,
+  };
+}
+
+type Usage = { inputTokens: number; outputTokens: number; totalTokens: number };
+
+function normalizeUsage(u?: Partial<Usage> | undefined): Usage | undefined {
+  if (!u) return undefined;
+  return {
+    inputTokens: u.inputTokens ?? 0,
+    outputTokens: u.outputTokens ?? 0,
+    totalTokens: u.totalTokens ?? 0,
+  };
+}
+
 // Query Analysis (primary workflow path)
 const queryAnalysisStep = createStep({
   id: 'query-analysis',
@@ -11,14 +49,18 @@ const queryAnalysisStep = createStep({
   inputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
+    runId: z.string(),
+    threadId: z.string(),
+    resourceId: z.string(),
   }),
   outputSchema: z.object({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
+    usage,
   }),
   execute: async ({ inputData }) => {
-    const { dbConnectionId, userQuery } = inputData;
+    const { dbConnectionId, userQuery, runId, threadId, resourceId } = inputData;
 
     const result = await queryAnalysisTool.execute({
       context: {
@@ -26,12 +68,16 @@ const queryAnalysisStep = createStep({
         userQuery,
       },
       runtimeContext: undefined,
+      runId,
+      threadId,
+      resourceId,
     });
 
     return {
       dbConnectionId,
       userQuery,
       queryAnalysis: result.queryAnalysis,
+      usage: result.usage,
     };
   },
 });
@@ -44,6 +90,7 @@ const executeQueryStep = createStep({
     dbConnectionId: z.string(),
     userQuery: z.string(),
     queryAnalysis: z.string(),
+    usage,
   }),
   outputSchema: z.object({
     dbConnectionId: z.string(),
@@ -51,6 +98,7 @@ const executeQueryStep = createStep({
     queryAnalysis: z.string(),
     sqlQuery: z.string(),
     queryResults: z.array(z.record(z.any())),
+    usage,
   }),
   execute: async ({ inputData }) => {
     const { dbConnectionId, userQuery, queryAnalysis } = inputData;
@@ -70,6 +118,16 @@ const executeQueryStep = createStep({
       queryAnalysis,
       sqlQuery: result.sqlQuery,
       queryResults: result.queryResults,
+      usage: sumUsage(
+        normalizeUsage(
+          (
+            inputData as {
+              usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
+            }
+          ).usage
+        ),
+        normalizeUsage(result.usage as unknown as Partial<Usage> | undefined)
+      ),
     };
   },
 });
@@ -84,6 +142,7 @@ const formatResultsStep = createStep({
     queryAnalysis: z.string(),
     sqlQuery: z.string(),
     queryResults: z.array(z.record(z.any())),
+    usage,
   }),
   outputSchema: z.object({
     visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),
@@ -91,8 +150,10 @@ const formatResultsStep = createStep({
       z.record(z.string(), z.unknown()),
       z.array(z.record(z.any())),
       z.string(),
+      z.null(),
     ]),
     summary: z.string(),
+    usage,
   }),
   execute: async ({ inputData }) => {
     const { userQuery, sqlQuery, queryResults } = inputData;
@@ -110,6 +171,16 @@ const formatResultsStep = createStep({
       visualizationType: result.visualizationType,
       formattedData: result.formattedData,
       summary: result.summary,
+      usage: sumUsage(
+        normalizeUsage(
+          (
+            inputData as {
+              usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
+            }
+          ).usage
+        ),
+        normalizeUsage(result.usage as unknown as Partial<Usage> | undefined)
+      ),
     };
   },
 });
@@ -121,6 +192,9 @@ export const queryPostgreSQLdbWorkflow = createWorkflow({
   inputSchema: z.object({
     dbConnectionId: z.string().describe('Database connection ID'),
     userQuery: z.string().describe("The user's natural language query"),
+    runId: z.string(),
+    threadId: z.string(),
+    resourceId: z.string(),
   }),
   outputSchema: z.object({
     visualizationType: z.enum(['table', 'bar', 'line', 'area', 'radar', 'text']),
@@ -131,6 +205,7 @@ export const queryPostgreSQLdbWorkflow = createWorkflow({
       z.null(),
     ]),
     summary: z.string(),
+    usage,
   }),
 })
   .then(queryAnalysisStep)

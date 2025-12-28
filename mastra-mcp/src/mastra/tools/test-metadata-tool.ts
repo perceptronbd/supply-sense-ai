@@ -21,8 +21,6 @@ export const testMetadataTool = createTool({
     if (!question || typeof question !== 'string') {
       return { answer: 'No question provided.' };
     }
-    console.log('🚀 ~ question:', question);
-
     try {
       // Very basic math parser for demo purposes
       // Only supports +, -, *, /
@@ -48,7 +46,6 @@ export const testMetadataTool = createTool({
           default:
             return { answer: 'Unknown operation' };
         }
-        console.log('🚀 ~ result:', result);
         return { answer: result.toString() };
       }
       // Handle square

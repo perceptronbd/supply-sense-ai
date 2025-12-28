@@ -67,7 +67,6 @@ coverage/
 
 # Frontend specific (when building backend)
 frontend-e2e/
-landing-page/
 landing-page-e2e/
 
 # Backend specific (when building frontend)

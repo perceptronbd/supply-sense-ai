@@ -11,7 +11,10 @@ import Navbar from '../components/ui/Navbar';
 
 const LandingPage = () => {
   return (
-    <div id="/" className="relative overflow-hidden">
+    <div
+      id="/"
+      className="relative snap-y snap-mandatory  h-screen overflow-x-hidden overflow-y-auto"
+    >
       {/* Navbar */}
       <Navbar />
       {/* Banner */}

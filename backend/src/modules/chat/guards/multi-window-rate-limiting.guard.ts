@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '@supplysense/prisma';
+import { appConfig } from '@/config/app.config';
 
 /**
  * Describes a single fixed window limiter.
@@ -77,7 +78,7 @@ interface RateLimitEnvConfig {
  */
 function getRateLimits(): RateLimitWindow[] {
   try {
-    const envLimits = process.env.RATE_LIMIT_CONFIG;
+    const envLimits = appConfig.rateLimitConfig;
     // If not configured, use defaults
     if (!envLimits) return DEFAULT_RATE_LIMITS;
 
