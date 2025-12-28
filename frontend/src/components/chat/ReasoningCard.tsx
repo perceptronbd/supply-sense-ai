@@ -2,16 +2,20 @@
 
 import { Text } from '@/components/ui/Text';
 
+export type ReasoningStep = {
+  id: string;
+  name: string;
+  status: 'running' | 'success' | 'error';
+  startedAt?: number;
+  endedAt?: number;
+  sqlQuery?: string;
+  summary?: string;
+  visualizationType?: string;
+  rows?: number;
+};
+
 type ReasoningCardProps = {
-  steps: Array<{
-    id: string;
-    name: string;
-    status: 'running' | 'success' | 'error';
-    sqlQuery?: string;
-    summary?: string;
-    visualizationType?: string;
-    rows?: number;
-  }>;
+  steps: ReasoningStep[];
   status: 'running' | 'success' | 'error';
 };
 

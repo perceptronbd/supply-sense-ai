@@ -10,7 +10,7 @@ import { useAppSelector } from '@/store/hooks';
 import { ChatInput } from './ChatInput';
 import { handleWorkflowChunk } from './helper/handleWorkflowChunk';
 import { MessageList } from './MessageList';
-import type { ReasoningStep } from './ReasoningPanel';
+import type { ReasoningStep } from './ReasoningCard';
 import { SampleQuestions } from './SampleQuestions';
 import type { ChatInterfaceProps } from './types';
 
