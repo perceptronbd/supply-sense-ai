@@ -15,7 +15,7 @@ const GlowEffects = ({ className = '' }) => {
         className={`absolute -top-3 right-16 w-12 h-[20vh]
         md:right-28 md:w-40 md:h-[54vh] 
         xl:right-72 xl:w-60 xl:h-[90vh]
-        bg-gradient-to-b ${intensity.light} transform rotate-[27deg] origin-top-right z-50`}
+        bg-gradient-to-b ${intensity.light} transform rotate-[27deg] origin-top-right z-0`}
       />
 
       {/* Glow 2 - Edge right glow */}
@@ -23,7 +23,7 @@ const GlowEffects = ({ className = '' }) => {
         className={`absolute -top-3 right-1 w-8 h-[36vh]
     md:right-0 md:w-12 md:h-[85vh] 
     xl:right-32 xl:w-28 xl:h-[130vh]
-    bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right z-50`}
+    bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right z-0`}
       />
 
       {/* Glow 3 - Far right glow (hidden on very small screens) */}
@@ -31,7 +31,7 @@ const GlowEffects = ({ className = '' }) => {
         className={`absolute -top-3 -right-16 w-8 h-[52vh] 
     md:-right-32 md:w-12 md:h-[90vh] 
     xl:-right-28 xl:w-40 xl:h-[155vh]
-    bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right z-50`}
+    bg-gradient-to-b ${intensity.strong} transform rotate-[27deg] origin-top-right z-0`}
       />
 
       {/* Glow 4 - Extreme right glow (only visible on larger screens) */}
@@ -39,7 +39,7 @@ const GlowEffects = ({ className = '' }) => {
         className={`absolute -top-3 -right-32 w-8 h-[64vh]
     md:-right-64 md:w-12 md:h-[90vh] 
     xl:-right-72 xl:w-28 xl:h-[170vh]
-    bg-gradient-to-b ${intensity.normal} transform rotate-[27deg] origin-top-right z-50`}
+    bg-gradient-to-b ${intensity.normal} transform rotate-[27deg] origin-top-right z-0`}
       />
     </div>
   );

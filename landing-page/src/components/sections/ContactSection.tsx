@@ -8,20 +8,23 @@ const ContactSection = () => {
     <SectionWrapper
       id={SECTION_ID}
       size="medium"
-      className="xl:flex justify-between gap-10 space-y-10 items-center snap-center md:min-h-screen pt-24 md:pt-36"
+      className="xl:flex justify-between gap-16 space-y-12 xl:space-y-0 items-center snap-center min-h-screen py-24 md:py-32 relative overflow-hidden"
     >
-      <div className="max-w-xl mx-auto xl:mx-0">
-        <h1 className="font-brand text-3xl md:text-4xl font-bold text-content1-foreground text-center mx-auto xl:text-start xl:mx-0 mb-6 max-w-md">
-          Ready to explore it for Your Team?
+      <div className="max-w-xl mx-auto xl:mx-0 relative z-10">
+        <h1 className="font-brand text-4xl md:text-5xl lg:text-6xl font-bold text-content1-foreground text-center xl:text-start leading-tight mb-8 drop-shadow-sm">
+          Ready to empower <br className="hidden md:block" />
+          <span className="text-primary">Your Team?</span>
         </h1>
-        <p className="text-content1-foreground mx-auto text-center xl:text-start xl:mx-0 mb-12 max-w-md pr-5">
-          Let’s show you how Supply Sense works for operations leads, distributors, and
-          manufacturers.
+        <p className="text-lg md:text-xl text-content1-foreground/80 text-center xl:text-start leading-relaxed max-w-lg mx-auto xl:mx-0">
+          Experience how Supply Sense transforms operations for leads, distributors, and
+          manufacturers with intelligent insights.
         </p>
       </div>
 
       {/* submit form */}
-      <ContactForm />
+      <div className="w-full max-w-lg mx-auto xl:mx-0 relative z-10">
+        <ContactForm />
+      </div>
     </SectionWrapper>
   );
 };

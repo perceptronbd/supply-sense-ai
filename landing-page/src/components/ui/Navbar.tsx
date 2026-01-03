@@ -8,24 +8,47 @@ import { FullLogo } from './Logo';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
+    const handleScroll = () => {
+      const sections = document.querySelectorAll('section[id]');
+      const scrollPosition = window.scrollY + 100; // Offset for navbar height
+
+      let currentSection = '';
+      sections.forEach((section) => {
+        const sectionTop = (section as HTMLElement).offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+          currentSection = section.id;
+        }
+      });
+      setActiveSection(currentSection);
+    };
+
     const handleHashChange = () => {
       const hash = globalThis.location.hash.substring(1);
       if (hash) {
         const element = document.getElementById(hash);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' });
+          setActiveSection(hash);
         }
       }
     };
 
-    // Handle initial load
+    // Initial checks
     handleHashChange();
+    handleScroll();
 
-    // Handle hash changes
+    // Event listeners
     globalThis.addEventListener('hashchange', handleHashChange);
-    return () => globalThis.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      globalThis.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Close mobile menu when Button is clicked
@@ -57,26 +80,35 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-40 pl-2 lg:pr-2 snap-start">
-      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto h-full">
+    <div className="bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-50 pl-2 lg:pr-2 snap-start border-b border-white/5">
+      <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto h-full px-4">
         <Link href="/">
           <FullLogo width={173} height={27} />
         </Link>
 
         {/* Desktop menu */}
-        <div className="hidden lg:flex items-center ">
-          {navLinks.map((link) => (
-            <Button
-              key={link.name}
-              size="sm"
-              radius="md"
-              variant="light"
-              color="secondary"
-              className="text-base font-normal hover:bg-primary/10 transition-all duration-200 mx-4"
-            >
-              <Link href={link.href}>{link.name}</Link>
-            </Button>
-          ))}
+        <div className="hidden lg:flex items-center gap-1">
+          {navLinks.map((link) => {
+            const isActive = activeSection === link.href.substring(1);
+            return (
+              <Button
+                key={link.name}
+                size="sm"
+                radius="full"
+                variant={isActive ? 'flat' : 'light'}
+                color={isActive ? 'primary' : 'default'}
+                className={`text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-default/40'
+                }`}
+                as={Link}
+                href={link.href}
+              >
+                {link.name}
+              </Button>
+            );
+          })}
 
           <Button
             size="sm"

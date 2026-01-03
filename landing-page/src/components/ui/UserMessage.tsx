@@ -12,15 +12,8 @@ interface UserMessageProps {
 
 function UserMessageComponent({ content, onCopy, copied }: Readonly<UserMessageProps>) {
   return (
-    <div className="group relative flex flex-col items-end">
-      <div
-        className="
-            bg-default-300 text-primary-foreground 
-            rounded-xl px-4 py-3 max-w-md w-fit 
-            transition-colors duration-200 
-            group-hover:bg-default-100 group-hover:text-default-700
-          "
-      >
+    <div className="flex relative flex-col items-end group">
+      <div className="px-4 py-3 max-w-md rounded-xl transition-colors duration-200 bg-default-300 text-primary-foreground w-fit group-hover:bg-default-100 group-hover:text-default-700">
         <p className="text-sm whitespace-pre-wrap">{content}</p>
       </div>
 
@@ -30,10 +23,7 @@ function UserMessageComponent({ content, onCopy, copied }: Readonly<UserMessageP
         size="sm"
         variant="light"
         onPress={onCopy}
-        className="
-            opacity-0 mt-1 transition-all duration-200 
-            group-hover:opacity-100
-          "
+        className="mt-1 opacity-0 transition-all duration-200 group-hover:opacity-100"
       >
         {copied ? <Icons.Check /> : <Icons.Copy />}
       </Button>

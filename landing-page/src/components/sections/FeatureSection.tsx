@@ -62,46 +62,48 @@ const Features = () => {
   return (
     <SectionWrapper
       size="medium"
-      className="snap-center min-h-screen flex flex-col justify-center pt-24 md:pt-28"
+      className="snap-center min-h-screen flex flex-col justify-center pt-24 md:pt-32"
     >
-      <div className="flex flex-col justify-center items-center lg:flex-row lg:justify-around gap-5">
+      <div className="flex flex-col justify-center items-center lg:flex-row lg:justify-around gap-12 lg:gap-20">
         {/* text part - first column */}
-        <div className="flex-1">
-          <h1 className="font-brand text-3xl lg:text-4xl font-medium lg:font-bold text-content1-foreground text-center mx-auto xl:mx-0 xl:text-start max-w-md">
-            You've Got Data. But Getting Answers Is Still a Pain.
+        <div className="flex-1 max-w-xl">
+          <h1 className="font-brand text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 text-center mx-auto xl:mx-0 xl:text-start leading-tight mb-8">
+            You've Got Data. <br />
+            But Getting Answers <br />
+            <span className="text-primary-500">Is Still a Pain.</span>
           </h1>
 
-          <p className="mt-6 text-lg text-content1-foreground text-center mx-auto xl:text-start xl:mx-0 max-w-md">
-            If finding out what’s happening in your supply chain means: Logging into multiple
-            systems, Calling someone from IT, Hunting through spreadsheets, Then you’re already
-            wasting time and missing context.
+          <p className="mt-6 text-xl text-content1-foreground/80 leading-relaxed text-center mx-auto xl:text-start xl:mx-0">
+            If finding out what’s happening in your supply chain means logging into multiple
+            systems, calling IT, or hunting through spreadsheets, then you’re already losing
+            valuable time.
           </p>
         </div>
 
         {/* card part - second column */}
-        <div className="flex flex-col gap-6 mb-16 flex-1">
+        <div className="flex flex-col gap-8 mb-16 flex-1 w-full max-w-xl">
           {challenges.map((challenge, idx) => (
             <div
               key={challenge.title}
               className={`relative w-full flex ${idx % 2 === 0 ? 'justify-start' : 'justify-end'}`}
             >
-              <div className="max-w-md relative p-0.5 rounded-xl">
-                <div className="sales-card group relative flex flex-col items-center xl:items-start justify-start p-6 gap-4 overflow-hidden rounded-xl border-2 border-primary-200 shadow-lg backdrop-blur-md transition-shadow hover:shadow-2xl">
+              <div className="max-w-md w-full relative p-[1px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent">
+                <div className="sales-card group relative flex flex-col items-center xl:items-start justify-start p-8 gap-5 overflow-hidden rounded-2xl bg-background/40 backdrop-blur-xl border border-white/5 shadow-xl transition-all duration-500 hover:shadow-primary/20 hover:-translate-y-1">
                   {/* glow blob + fake position anchor (hidden) */}
                   <div
-                    className="relative blob pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-100"
+                    className="relative blob pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-60"
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      width: 220,
-                      height: 220,
+                      width: 250,
+                      height: 250,
                       borderRadius: '50%',
-                      filter: 'blur(48px)',
+                      filter: 'blur(60px)',
                       zIndex: -1,
                       transform: 'translate(-100px, -100px)',
                       background:
-                        'radial-gradient(circle at 30% 30%, rgba(232,74,46,0.30), rgba(70, 22, 14, 0.20))',
+                        'radial-gradient(circle at 50% 50%, rgba(232,74,46,0.40), rgba(70, 22, 14, 0.10))',
                       transition: 'background 200ms ease, opacity 200ms ease, transform 300ms ease',
                       pointerEvents: 'none',
                     }}
@@ -112,8 +114,8 @@ const Features = () => {
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      width: 220,
-                      height: 220,
+                      width: 250,
+                      height: 250,
                       borderRadius: '50%',
                       zIndex: -1,
                       pointerEvents: 'none',
@@ -121,14 +123,16 @@ const Features = () => {
                     }}
                   />
 
-                  <div className="flex gap-3 items-center justify-start">
-                    <challenge.icon className="w-7 h-7" />
-                    <h3 className="text-xl font-medium leading-tight font-brand bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800">
+                  <div className="flex gap-4 items-center justify-start w-full">
+                    <div className="p-3 rounded-xl bg-primary/10 text-primary">
+                      <challenge.icon className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-bold font-brand text-foreground">
                       {challenge.title}
                     </h3>
                   </div>
 
-                  <p className="text-sm text-content4-foreground leading-relaxed text-center xl:text-start">
+                  <p className="text-base text-content1-foreground/70 leading-relaxed text-center xl:text-start">
                     {challenge.description}
                   </p>
                 </div>

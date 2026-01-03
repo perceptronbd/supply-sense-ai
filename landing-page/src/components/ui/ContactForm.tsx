@@ -1,6 +1,17 @@
 'use client';
 import { addToast, Button, Input, Textarea } from '@heroui/react';
-import { Controller, FieldValues, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+const contactSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  company: z.string().optional(),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function ContactForm() {
   const {
@@ -8,7 +19,8 @@ export default function ContactForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm({
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       name: '',
       email: '',
@@ -17,7 +29,7 @@ export default function ContactForm() {
     },
   });
 
-  const onSubmit = async (data: FieldValues) => {
+  const onSubmit = async (data: ContactFormData) => {
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
@@ -54,11 +66,11 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="max-w-lg flex-1 mx-auto xl:mx-0">
-      <div className="relative overflow-hidden rounded-xl border-1 border-primary-50">
+    <div className="flex-1 mx-auto max-w-lg xl:mx-0">
+      <div className="overflow-hidden relative rounded-xl border-1 border-primary-50">
         <div className="contact-us-glow"></div>
-        <div className="rounded-xl w-full p-6 backdrop-blur-md bg-background/15">
-          <h2 className="text-center text-2xl md:text-3xl font-brand font-bold text-content1-foreground mb-8">
+        <div className="p-6 w-full rounded-xl backdrop-blur-md bg-background/15">
+          <h2 className="mb-8 text-2xl font-bold text-center md:text-3xl font-brand text-content1-foreground">
             Schedule A Demo
           </h2>
 
@@ -69,13 +81,6 @@ export default function ContactForm() {
             <Controller
               name="name"
               control={control}
-              rules={{
-                required: 'Name is required',
-                minLength: {
-                  value: 2,
-                  message: 'Name must be at least 2 characters',
-                },
-              }}
               render={({ field }) => (
                 <Input
                   {...field}
@@ -84,7 +89,7 @@ export default function ContactForm() {
                   labelPlacement="inside"
                   placeholder="Enter Your Name"
                   isInvalid={!!errors.name}
-                  errorMessage={errors.name?.message?.toString()}
+                  errorMessage={errors.name?.message}
                   variant="faded"
                   color="primary"
                   classNames={{
@@ -101,13 +106,6 @@ export default function ContactForm() {
             <Controller
               name="email"
               control={control}
-              rules={{
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
-                },
-              }}
               render={({ field }) => (
                 <Input
                   {...field}
@@ -116,7 +114,7 @@ export default function ContactForm() {
                   placeholder="Email address"
                   labelPlacement="inside"
                   isInvalid={!!errors.email}
-                  errorMessage={errors.email?.message?.toString()}
+                  errorMessage={errors.email?.message}
                   variant="faded"
                   color="primary"
                   classNames={{
@@ -136,10 +134,11 @@ export default function ContactForm() {
               render={({ field }) => (
                 <Input
                   {...field}
+                  value={field.value ?? ''}
                   type="text"
                   label="Company"
                   labelPlacement="inside"
-                  placeholder="Company Name"
+                  placeholder="Company Name (Optional)"
                   variant="faded"
                   color="primary"
                   classNames={{
@@ -156,13 +155,6 @@ export default function ContactForm() {
             <Controller
               name="message"
               control={control}
-              rules={{
-                required: 'Message is required',
-                minLength: {
-                  value: 10,
-                  message: 'Message must be at least 10 characters',
-                },
-              }}
               render={({ field }) => (
                 <Textarea
                   {...field}
@@ -170,7 +162,7 @@ export default function ContactForm() {
                   labelPlacement="inside"
                   placeholder="How can we assist you?"
                   isInvalid={!!errors.message}
-                  errorMessage={errors.message?.message?.toString()}
+                  errorMessage={errors.message?.message}
                   variant="faded"
                   color="primary"
                   minRows={4}
@@ -185,19 +177,15 @@ export default function ContactForm() {
             />
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex pt-4">
               <Button
                 type="submit"
                 isLoading={isSubmitting}
                 variant="solid"
                 color="primary"
-                className="flex-1 py-3"
+                className="py-3 w-full font-semibold shadow-lg transition-shadow text-medium hover:shadow-primary/25"
               >
-                Submit
-              </Button>
-
-              <Button type="button" variant="bordered" color="primary" className="flex-1 py-3">
-                Reach out
+                Submit Request
               </Button>
             </div>
           </form>

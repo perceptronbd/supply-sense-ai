@@ -1,4 +1,7 @@
-'use server';
+import { z } from 'zod';
+
+const QuestionsSchema = z.array(z.string());
+
 export async function fetchPublicSampleQuestions(): Promise<string[]> {
   try {
     if (!process.env.BACKEND_API_URL) {
@@ -18,7 +21,14 @@ export async function fetchPublicSampleQuestions(): Promise<string[]> {
 
     const json = await res.json();
 
-    return json?.data || [];
+    const parsed = QuestionsSchema.safeParse(json?.data);
+
+    if (!parsed.success) {
+      console.error('Invalid sample questions format:', parsed.error);
+      return [];
+    }
+
+    return parsed.data;
   } catch (err) {
     console.error('Error fetching public sample questions:', err);
     return [];
