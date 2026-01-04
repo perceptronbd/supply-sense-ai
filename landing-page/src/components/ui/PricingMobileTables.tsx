@@ -19,7 +19,14 @@ const ValueCell = ({ value }: { value: ReactNode | string }) => {
   return <div className="flex flex-1 justify-center items-center">{value}</div>;
 };
 
-const PricingMobileTables = () => {
+interface PricingMobileTablesProps {
+  prices: {
+    starter: number;
+    business: number;
+  };
+}
+
+const PricingMobileTables = ({ prices }: PricingMobileTablesProps) => {
   const [view1, setView1] = useState(false);
   const [view2, setView2] = useState(false);
   const [view3, setView3] = useState(false);
@@ -52,7 +59,7 @@ const PricingMobileTables = () => {
           <TableColumn align="center">
             <h3 className="font-bold text-content1-foreground text-lg">
               Starter <br />
-              <span className="text-primary text-2xl font-brand">TBA </span>
+              <span className="text-primary text-2xl font-brand">${prices.starter} </span>
               <span className="text-lg font-medium">/Month</span>
             </h3>
           </TableColumn>
@@ -95,7 +102,7 @@ const PricingMobileTables = () => {
           <TableColumn align="center">
             <h3 className="font-bold text-content1-foreground text-lg">
               Business <br />
-              <span className="text-primary text-2xl font-brand">TBA </span>
+              <span className="text-primary text-2xl font-brand">${prices.business} </span>
               <span className="text-lg font-medium">/Month</span>
             </h3>
           </TableColumn>

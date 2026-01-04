@@ -11,7 +11,14 @@ const ValueCell = ({ value }: { value: ReactNode | string }) => {
   return <div className="flex justify-center items-center">{value}</div>;
 };
 
-export default function PricingTable() {
+interface PricingTableProps {
+  prices: {
+    starter: number;
+    business: number;
+  };
+}
+
+export default function PricingTable({ prices }: PricingTableProps) {
   return (
     <Table
       aria-label="Pricing Table"
@@ -26,24 +33,24 @@ export default function PricingTable() {
     >
       {/* table header */}
       <TableHeader>
-        <TableColumn>
+        <TableColumn width="40%">
           <h2 className="font-brand font-bold text-content1-foreground text-3xl">Features</h2>
         </TableColumn>
-        <TableColumn align="center">
+        <TableColumn align="center" width="20%">
           <h3 className="font-bold text-content1-foreground text-2xl">
             Starter <br />
-            <span className="text-primary text-3xl font-brand">TBA </span>
+            <span className="text-primary text-3xl font-brand">${prices.starter} </span>
             <span className="text-lg font-medium">/Month</span>
           </h3>
         </TableColumn>
-        <TableColumn align="center">
+        <TableColumn align="center" width="20%">
           <h3 className="font-bold text-content1-foreground text-2xl">
             Business <br />
-            <span className="text-primary text-3xl font-brand">TBA </span>
+            <span className="text-primary text-3xl font-brand">${prices.business} </span>
             <span className="text-lg font-medium">/Month</span>
           </h3>
         </TableColumn>
-        <TableColumn align="center">
+        <TableColumn align="center" width="20%">
           <h3 className="font-bold text-content1-foreground text-2xl">
             Enterprise <br />
             <span className="text-primary text-3xl font-brand">Custom</span>
