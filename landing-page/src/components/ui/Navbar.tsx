@@ -110,14 +110,16 @@ const Navbar = () => {
             );
           })}
 
-          <Button
-            size="sm"
-            color="primary"
-            radius="full"
-            className="hover:scale-105 transition-transform duration-300 ml-6"
-          >
-            <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
-          </Button>
+          <a target="blank" href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>
+            <Button
+              size="sm"
+              color="primary"
+              radius="full"
+              className="hover:scale-105 transition-transform duration-300 ml-6"
+            >
+              Login
+            </Button>
+          </a>
         </div>
 
         {/* Mobile menu button */}
