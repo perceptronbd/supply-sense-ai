@@ -17,11 +17,10 @@ const Banner = () => {
     }
   };
 
-  //navigate to login page
-  const goToLogin = () => {
-    const base = process.env.NEXT_PUBLIC_FRONTEND_URL || '';
-    const loginUrl = `${base.replace(/\/+$/, '')}/login`;
-    window.open(loginUrl, '_blank', 'noopener,noreferrer');
+  const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
+
+  const handleTryForFree = () => {
+    window.open(loginUrl, '_blank');
   };
 
   return (
@@ -44,7 +43,7 @@ const Banner = () => {
           radius="md"
           size="lg"
           endContent={<Icons.ArrowRight />}
-          onPress={() => goToLogin()}
+          onPress={handleTryForFree}
         >
           Try For Free
         </Button>
