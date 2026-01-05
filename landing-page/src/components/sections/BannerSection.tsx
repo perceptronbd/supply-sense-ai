@@ -17,7 +17,11 @@ const Banner = () => {
     }
   };
 
-  const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
+  // Use hardcoded URL in production, env variable in development
+  const loginUrl =
+    process.env.NODE_ENV === 'production'
+      ? 'https://supplysense-app.perceptronbd.com/login'
+      : `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
 
   const handleTryForFree = () => {
     window.open(loginUrl, '_blank');
