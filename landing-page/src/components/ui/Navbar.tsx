@@ -79,6 +79,8 @@ const Navbar = () => {
     },
   ];
 
+  const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
+
   return (
     <div className="bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-50 pl-2 lg:pr-2 snap-start border-b border-white/5">
       <nav className="relative max-w-6xl flex justify-between flex-row items-center z-5 mx-auto h-full px-4">
@@ -110,7 +112,7 @@ const Navbar = () => {
             );
           })}
 
-          <a target="blank" href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>
+          <a target="blank" href={loginUrl}>
             <Button
               size="sm"
               color="primary"
@@ -190,16 +192,18 @@ const Navbar = () => {
               }`}
               style={{ transitionDelay: `${navLinks.length * 50 + 100}ms` }}
             >
-              <Button
-                fullWidth
-                size="md"
-                color="primary"
-                radius="lg"
-                className="hover:scale-105 transition-transform duration-200"
-                onPress={handleLinkClick}
-              >
-                <Link href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}>Login</Link>
-              </Button>
+              <a target="_blank" href={loginUrl}>
+                <Button
+                  fullWidth
+                  size="md"
+                  color="primary"
+                  radius="lg"
+                  className="hover:scale-105 transition-transform duration-200"
+                  onPress={handleLinkClick}
+                >
+                  Login
+                </Button>
+              </a>
             </div>
           </div>
         </div>
