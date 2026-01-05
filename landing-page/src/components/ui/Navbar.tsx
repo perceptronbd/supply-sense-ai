@@ -79,7 +79,11 @@ const Navbar = () => {
     },
   ];
 
-  const loginUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
+  // Use hardcoded URL in production, env variable in development
+  const loginUrl =
+    process.env.NODE_ENV === 'production'
+      ? 'https://supplysense-app.perceptronbd.com/login'
+      : `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`;
 
   return (
     <div className="bg-background/60 backdrop-blur-sm h-16 sticky top-0 z-50 pl-2 lg:pr-2 snap-start border-b border-white/5">
