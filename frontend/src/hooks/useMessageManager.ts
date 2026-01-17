@@ -29,12 +29,24 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
 
   // Compute merged messages using useMemo instead of useEffect + useState
   const messages = useMemo(() => {
+    if (!sessionId) {
+      return [];
+    }
+
     // If not fetched yet, start with empty array but allow temp messages to be added
-    const updatedMessages = fetchedMessages ? [...fetchedMessages] : [];
+    // IMPORTANT: Filter fetched messages to only include messages from the current session
+    // This prevents showing cached messages from previous sessions
+    const updatedMessages = fetchedMessages
+      ? fetchedMessages.filter((msg) => msg.sessionId === sessionId)
+      : [];
 
     // Add temp messages that don't have a corresponding real message yet
+    // Also filter temp messages to only include messages from the current session
     for (const tempMsg of Object.values(tempMessages)) {
-      if (!updatedMessages.some((msg) => msg.id === tempMsg.id)) {
+      if (
+        tempMsg.sessionId === sessionId &&
+        !updatedMessages.some((msg) => msg.id === tempMsg.id)
+      ) {
         updatedMessages.push(tempMsg);
       }
     }
@@ -45,12 +57,10 @@ export function useMessageManager(sessionId: string | undefined): UseMessageMana
     );
 
     return updatedMessages;
-  }, [fetchedMessages, tempMessages]);
+  }, [fetchedMessages, tempMessages, sessionId]);
   // Clear temp messages when session changes
   useEffect(() => {
-    if (!sessionId) {
-      setTempMessages({});
-    }
+    setTempMessages({});
   }, [sessionId]);
 
   // Add a temporary message

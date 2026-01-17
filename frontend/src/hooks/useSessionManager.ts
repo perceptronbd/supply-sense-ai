@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useCreateSessionMutation } from '@/store/api/chatApi';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setSessionId } from '@/store/slices/chatSlice';
+import { clearSessions, setSessionId } from '@/store/slices/chatSlice';
 
 export interface UseSessionManagerReturn {
   activeSessionId: string;
@@ -42,7 +42,7 @@ export function useSessionManager(
       return newSession.id;
     } catch (error) {
       console.error('Failed to create chat session:', error);
-      dispatch(setSessionId(''));
+      dispatch(clearSessions());
       throw error;
     }
   }, [selectedDbConnectionId, createSession, isCreatingSession, sessionId, dispatch]);
@@ -55,7 +55,7 @@ export function useSessionManager(
   );
 
   const clearSession = useCallback(() => {
-    dispatch(setSessionId(''));
+    dispatch(clearSessions());
   }, [dispatch]);
 
   return {

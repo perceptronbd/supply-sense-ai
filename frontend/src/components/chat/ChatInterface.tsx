@@ -52,6 +52,16 @@ export function ChatInterface({
     refetchMessagesRef.current = refetchMessages;
   }, [refetchMessages]);
 
+  useEffect(() => {
+    if (!sessionId) {
+      setMessage('');
+      setIsError(false);
+      setSteps({});
+      setWorkflowStatus(undefined);
+      setReasoningCollapsed(true);
+    }
+  }, [sessionId]);
+
   // Handle sending messages with improved error handling and session management
   const handleSendMessage = useCallback(
     async (content: string) => {
