@@ -48,6 +48,13 @@ const inputSchema = z.object({
 const outputSchema = z.object({
   sqlQuery: z.string(),
   queryResults: z.array(z.record(z.any())),
+  usage: z
+    .object({
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      totalTokens: z.number(),
+    })
+    .optional(),
 });
 
 const prisma = new PrismaClient();
@@ -128,6 +135,8 @@ export const executeQueryTool = createTool({
       1000
     );
 
+    console.log('executeQueryTool usage', agentResponse.usage);
+
     let sqlQuery = agentResponse.text
       .trim()
       // Remove markdown code blocks
@@ -167,10 +176,29 @@ export const executeQueryTool = createTool({
       handleSqlExecutionError(error, sqlQuery, parsedSchema);
     }
 
+    // Fallback token estimation if provider doesn't return usage
+    const estimateTokens = (text: string) => Math.ceil((text?.length ?? 0) / 4);
+    const estimatedUsage = !agentResponse.usage
+      ? {
+          inputTokens: estimateTokens(`Generate SQL query for: ${input.queryAnalysis}`),
+          outputTokens: estimateTokens(agentResponse.text ?? ''),
+          totalTokens:
+            estimateTokens(`Generate SQL query for: ${input.queryAnalysis}`) +
+            estimateTokens(agentResponse.text ?? ''),
+        }
+      : undefined;
+
     // Return raw query results without formatting
     return {
       sqlQuery,
       queryResults: queryResults as Record<string, unknown>[],
+      usage: agentResponse.usage
+        ? {
+            inputTokens: agentResponse.usage.inputTokens ?? 0,
+            outputTokens: agentResponse.usage.outputTokens ?? 0,
+            totalTokens: agentResponse.usage.totalTokens ?? 0,
+          }
+        : estimatedUsage,
     };
   },
 });

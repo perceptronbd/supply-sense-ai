@@ -15,6 +15,11 @@ type FormattedResults = {
   visualizationType: 'table' | 'bar' | 'line' | 'area' | 'radar' | 'text';
   formattedData: FormattedData;
   summary: string;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
 };
 
 const inputSchema = z.object({
@@ -34,6 +39,13 @@ const outputSchema = z.object({
     z.string(),
   ]),
   summary: z.string(),
+  usage: z
+    .object({
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      totalTokens: z.number(),
+    })
+    .optional(),
 });
 
 // Export the formatting logic so it can be called directly
@@ -43,13 +55,14 @@ export async function formatQueryResults(
   userQuery?: string
 ) {
   const logger = new Logger('formatQueryResults');
-  logger.debug(' queryResults:', queryResults);
-  logger.debug(' sqlQuery:', sqlQuery);
-  logger.debug(' userQuery:', userQuery);
+  logger.debug(' formatQueryResults: queryResults:', queryResults);
+  logger.debug(' formatQueryResults: sqlQuery:', sqlQuery);
+  logger.debug(' formatQueryResults: userQuery:', userQuery);
 
   const runtimeContext = createRuntimeContext({
     queryResults,
     sqlQuery,
+    userQuery,
   });
 
   // Analyze the query results to determine visualization format
@@ -62,19 +75,76 @@ export async function formatQueryResults(
     },
   ];
 
-  const agentResponse = await formattingAgent.generate(messages, { runtimeContext });
+  const agentResponse = await formattingAgent.generate(messages, {
+    runtimeContext,
+  });
 
+  console.log('formatQueryResults usage', agentResponse.usage);
+  // Fallback token estimation if provider doesn't return usage
+  const estimateTokens = (text: string) => Math.ceil((text?.length ?? 0) / 4);
+  const promptText = userQuery
+    ? `User Query: ${userQuery}`
+    : `Format the results for SQL query: ${sqlQuery}`;
+  const estimatedUsage = !agentResponse.usage
+    ? {
+        inputTokens: estimateTokens(promptText),
+        outputTokens: estimateTokens(agentResponse.text ?? ''),
+        totalTokens: estimateTokens(promptText) + estimateTokens(agentResponse.text ?? ''),
+      }
+    : undefined;
   let result: FormattedResults;
   try {
     // Parse the agent response as JSON
-    const responseText = agentResponse.text.trim();
+    let responseText = agentResponse.text.trim();
+
     // Remove any markdown code blocks if present
-    const cleanedResponse = responseText
+    responseText = responseText
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
       .trim();
 
-    result = JSON.parse(cleanedResponse);
+    // Handle common JSON parsing issues
+    let parsedResponse = {} as FormattedResults;
+    try {
+      parsedResponse = JSON.parse(responseText);
+    } catch {
+      // Try to fix common JSON issues and parse again
+      try {
+        // Handle unescaped quotes in strings
+        const fixedJson = responseText.replace(/([^\\])"(?=[^"]*"?[^\]]*$)/g, '$1\\"');
+        // Handle trailing commas
+        const fixedTrailingCommas = fixedJson.replace(/,\s*([}\]])/g, '$1');
+        parsedResponse = JSON.parse(fixedTrailingCommas);
+      } catch {
+        // If still can't parse, try to extract JSON from the response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+          try {
+            parsedResponse = JSON.parse(responseText.replace(/\\/g, '\\\\'));
+          } catch (e) {
+            throw new Error(`Failed to parse JSON response: ${e.message}`);
+          }
+        }
+      }
+    }
+
+    console.log('🚀 > parsedResponse:', parsedResponse);
+
+    // Ensure required fields exist with fallbacks
+    result = {
+      visualizationType: parsedResponse.visualizationType || 'table',
+      formattedData: parsedResponse.formattedData || queryResults,
+      summary: parsedResponse.summary || `Query returned ${queryResults.length} records`,
+      usage: agentResponse.usage
+        ? {
+            inputTokens: agentResponse.usage.inputTokens ?? 0,
+            outputTokens: agentResponse.usage.outputTokens ?? 0,
+            totalTokens: agentResponse.usage.totalTokens ?? 0,
+          }
+        : estimatedUsage,
+    };
   } catch (error) {
     console.error('error:', error);
     // Fallback to table format if parsing fails
@@ -82,6 +152,13 @@ export async function formatQueryResults(
       visualizationType: 'table',
       formattedData: queryResults, // Return the raw query results as-is
       summary: `Query returned ${queryResults.length} records`,
+      usage: agentResponse.usage
+        ? {
+            inputTokens: agentResponse.usage.inputTokens ?? 0,
+            outputTokens: agentResponse.usage.outputTokens ?? 0,
+            totalTokens: agentResponse.usage.totalTokens ?? 0,
+          }
+        : estimatedUsage,
     };
   }
 
@@ -92,6 +169,13 @@ export async function formatQueryResults(
       visualizationType: 'table' as const,
       formattedData: queryResults, // Return the raw query results as-is
       summary: `Query returned ${queryResults.length} records`,
+      usage: agentResponse.usage
+        ? {
+            inputTokens: agentResponse.usage.inputTokens ?? 0,
+            outputTokens: agentResponse.usage.outputTokens ?? 0,
+            totalTokens: agentResponse.usage.totalTokens ?? 0,
+          }
+        : estimatedUsage,
     };
   }
 
@@ -104,9 +188,9 @@ export const formatResultsTool = createTool({
   inputSchema,
   outputSchema,
   execute: async ({ context: input }): Promise<FormattedResults> => {
-    const { queryResults, sqlQuery } = input;
+    const { queryResults, sqlQuery, userQuery } = input;
 
     // Call the extracted formatting function
-    return await formatQueryResults(queryResults, sqlQuery);
+    return await formatQueryResults(queryResults, sqlQuery, userQuery);
   },
 });

@@ -12,7 +12,7 @@ import { Icons } from '@/lib/icons/Icons';
 import { cn } from '@/lib/utils';
 import { useGetSessionsQuery } from '@/store/api/chatApi';
 import { logout } from '@/store/slices/authSlice';
-import { setSessionId } from '@/store/slices/chatSlice';
+import { clearSessions } from '@/store/slices/chatSlice';
 import type { RootState } from '@/store/store';
 import { ChatSessionList } from './ChatSessionList';
 import { LogoWithName } from './ui/LogoWithName';
@@ -48,7 +48,7 @@ export default function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
 
   // Handle new chat button click
   const handleNewChat = async () => {
-    dispatch(setSessionId(''));
+    dispatch(clearSessions());
     router.push(ROUTE_PATHS.CHAT);
     onClose();
   };

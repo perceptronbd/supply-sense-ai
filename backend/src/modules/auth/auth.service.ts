@@ -73,7 +73,6 @@ export class AuthService {
     password: string
   ): Promise<{ access_token: string; user: UserResponseDto }> {
     const user = await this.validateUser(email, password);
-    console.log('🚀 > AuthService > user:', user);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }

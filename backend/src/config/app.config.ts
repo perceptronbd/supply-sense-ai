@@ -23,6 +23,9 @@ export interface AppConfig {
   // Mastra Client settings
   mastraServerUrl: string;
 
+  // MCP Backend Server settings
+  mcpBackendServerUrl: string;
+
   // Security & Encryption settings
   dbEncryptionKey: string;
 
@@ -60,6 +63,9 @@ export const appConfig: AppConfig = {
 
   // Mastra Client settings
   mastraServerUrl: process.env.MASTRA_SERVER_URL || 'http://localhost:4111',
+
+  // MCP Server settings
+  mcpBackendServerUrl: process.env.MCP_BACKEND_SERVER_URL || 'http://localhost:8080',
 
   // Security & Encryption settings
   dbEncryptionKey: process.env.DB_ENCRYPTION_KEY || '',

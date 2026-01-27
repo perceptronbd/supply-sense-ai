@@ -13,6 +13,7 @@ const openrouter = new GetOpenRouter();
 type RuntimeContextData = RuntimeContext<{
   queryResults: Record<string, unknown>[];
   sqlQuery: string;
+  userQuery: string;
 }>;
 
 export const formattingAgent = new Agent({
@@ -22,6 +23,8 @@ export const formattingAgent = new Agent({
     const context = runtimeContext as RuntimeContextData;
     const queryResults = context.get('queryResults') as Record<string, unknown>[];
     const sqlQuery = context.get('sqlQuery') as string;
+    const userQuery = context.get('userQuery') as string;
+    console.log('🚀 > formattingAgent userQuery:', userQuery);
 
     return `
     ${FORMATTING_INSTRUCTION}
@@ -29,6 +32,7 @@ export const formattingAgent = new Agent({
     ##Current Context
     - Query Results: ${JSON.stringify(queryResults)}
     - SQL Query: ${sqlQuery}
+    - User Query: ${userQuery}
     
     `;
   },

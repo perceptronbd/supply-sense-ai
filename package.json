@@ -136,7 +136,7 @@
     "@llm-ui/markdown": "^0.13.3",
     "@llm-ui/react": "^0.13.3",
     "@mastra/client-js": "^0.16.14",
-    "@mastra/core": "^0.24.5",
+    "@mastra/core": "^0.24.6",
     "@mastra/libsql": "^0.16.2",
     "@mastra/loggers": "^0.10.19",
     "@mastra/memory": "^0.15.11",

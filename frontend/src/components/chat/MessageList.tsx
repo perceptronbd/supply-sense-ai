@@ -11,7 +11,10 @@ export function MessageList({
   messages,
   isError,
   isLoading = false,
+  isStreaming = false,
   onSuggestionClick,
+  reasoningSteps,
+  workflowStatus,
 }: Readonly<MessageListProps>) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useSelector((state: RootState) => state.auth);
@@ -68,15 +71,23 @@ export function MessageList({
       aria-label="Chat messages"
     >
       <div className="max-w-4xl mx-auto">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            onSuggestionClick={onSuggestionClick}
-            isError={isError}
-          />
-        ))}
-        {isLoading && <LoadingMessage />}
+        {messages.map((message, index) => {
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onSuggestionClick={onSuggestionClick}
+              isError={isError}
+              isStreaming={isStreaming}
+              reasoningSteps={reasoningSteps}
+              workflowStatus={workflowStatus}
+              isLast={index === messages.length - 1}
+            />
+          );
+        })}
+        {isStreaming && (!messages.length || messages[messages.length - 1].type === 'user') && (
+          <LoadingMessage />
+        )}
         <div ref={messagesEndRef} />
       </div>
     </section>

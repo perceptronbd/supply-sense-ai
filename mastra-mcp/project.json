@@ -15,7 +15,8 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "mastra dev",
+        "commands": ["mastra dev", "npx tsx watch -r dotenv/config src/main.ts"],
+        "parallel": true,
         "cwd": "mastra-mcp"
       }
     }

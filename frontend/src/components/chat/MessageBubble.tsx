@@ -15,6 +15,7 @@ import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { AssistantMessage } from './AssistantMessage';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
+import { ReasoningCard, type ReasoningStep } from './ReasoningCard';
 import { UserMessage } from './UserMessage';
 import './markdown.css';
 
@@ -22,12 +23,28 @@ interface MessageBubbleProps {
   message: ChatMessageResponse;
   onSuggestionClick?: (suggestion: string) => void;
   isError?: boolean;
+  isStreaming?: boolean;
+  reasoningSteps?: Array<{
+    id: string;
+    name: string;
+    status: 'running' | 'success' | 'error';
+    sqlQuery?: string;
+    summary?: string;
+    visualizationType?: string;
+    rows?: number;
+  }>;
+  workflowStatus?: 'running' | 'success' | 'error';
+  isLast?: boolean;
 }
 
 export function MessageBubble({
   message,
   onSuggestionClick: _,
   isError,
+  isStreaming,
+  reasoningSteps,
+  workflowStatus,
+  isLast,
 }: Readonly<MessageBubbleProps>) {
   const isUser = message.type === 'user';
   const [copied, setCopied] = useState(false);
@@ -48,7 +65,7 @@ export function MessageBubble({
         lookBack: codeBlockLookBack(),
       },
     ],
-    isStreamFinished: true, // Message is complete
+    isStreamFinished: !isStreaming || !isLast,
   });
 
   // Format timestamp for assistant messages (e.g., "Sun at 12:30 AM")
@@ -110,11 +127,18 @@ export function MessageBubble({
         {isUser ? (
           <UserMessage content={message.content} copied={copied} onCopy={copyToClipboard} />
         ) : (
-          <AssistantMessage blockMatches={blockMatches} message={message} />
+          <MessageContent
+            message={message}
+            isStreaming={!!isStreaming}
+            isLast={!!isLast}
+            reasoningSteps={reasoningSteps}
+            workflowStatus={workflowStatus}
+            blockMatches={blockMatches}
+          />
         )}
 
         {/* Action buttons and timestamp for assistant messages */}
-        {!isUser && (
+        {!isUser && !isStreaming && (
           <div className="flex items-center justify-between w-full mt-2 gap-2">
             {/* Action buttons */}
             <div className="flex items-center gap-1">
@@ -150,6 +174,35 @@ export function MessageBubble({
         )}
       </div>
     </article>
+  );
+}
+
+// Helper component to render message content logic
+function MessageContent({
+  message,
+  isStreaming,
+  isLast,
+  reasoningSteps,
+  workflowStatus,
+  blockMatches,
+}: {
+  message: ChatMessageResponse;
+  isStreaming: boolean;
+  isLast: boolean;
+  reasoningSteps?: ReasoningStep[];
+  workflowStatus?: 'running' | 'success' | 'error';
+  blockMatches: ReturnType<typeof useLLMOutput>['blockMatches'];
+}) {
+  const showReasoning = isStreaming && isLast && (reasoningSteps?.length ?? 0) > 0;
+  const showResult = !isStreaming || !isLast || (reasoningSteps?.length ?? 0) === 0;
+
+  return (
+    <>
+      {showReasoning && (
+        <ReasoningCard steps={reasoningSteps ?? []} status={workflowStatus ?? 'running'} />
+      )}
+      {showResult && <AssistantMessage blockMatches={blockMatches} message={message} />}
+    </>
   );
 }
 
