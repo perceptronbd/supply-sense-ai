@@ -1,4 +1,4 @@
-import type { ReasoningStep } from '../ReasoningPanel';
+import type { ReasoningStep } from '../ReasoningCard';
 
 export function handleWorkflowChunk(
   chunk: string,
@@ -11,6 +11,9 @@ export function handleWorkflowChunk(
     // Try to parse the chunk as JSON
     const parsedChunk = JSON.parse(chunk);
     console.log('Workflow event:', parsedChunk);
+
+    // If it's valid JSON, we consider it handled (so it doesn't show up in the text UI)
+    // Even if it doesn't match a specific workflow type below.
 
     // Open reasoning panel on first event
     if (reasoningCollapsed) setReasoningCollapsed(false);
@@ -28,10 +31,7 @@ export function handleWorkflowChunk(
           startedAt: p?.startedAt,
         },
       }));
-      return true; // handled JSON
-    }
-
-    if (parsedChunk?.type === 'workflow-step-result') {
+    } else if (parsedChunk?.type === 'workflow-step-result') {
       const p = parsedChunk.payload;
       const id: string = p?.id || p?.stepCallId || p?.stepName || String(Date.now());
       const output = p?.output || {};
@@ -56,17 +56,13 @@ export function handleWorkflowChunk(
           },
         };
       });
-      return true; // handled JSON
-    }
-
-    if (parsedChunk?.type === 'workflow-finish') {
+    } else if (parsedChunk?.type === 'workflow-finish') {
       setWorkflowStatus('success');
-      return true; // handled JSON
     }
-  } catch (error) {
-    // If parsing fails, log the raw chunk for debugging
-    console.log('Raw chunk (non-JSON):', chunk);
-  }
 
-  return false; // not a workflow JSON chunk
+    return true; // Any valid JSON is handled and should not be appended to text
+  } catch (_error) {
+    // If parsing fails, it's regular text content
+    return false;
+  }
 }

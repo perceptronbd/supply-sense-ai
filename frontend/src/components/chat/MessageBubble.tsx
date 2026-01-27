@@ -15,7 +15,7 @@ import BlinkingLogo from '../ui/animations/BlinkingLogo';
 import { AssistantMessage } from './AssistantMessage';
 import LLMCodeBlockComponent from './LLMCodeBlockComponent';
 import LLMMarkdownComponent from './LLMMarkdownComponent';
-import { ReasoningCard } from './ReasoningCard';
+import { ReasoningCard, type ReasoningStep } from './ReasoningCard';
 import { UserMessage } from './UserMessage';
 import './markdown.css';
 
@@ -65,7 +65,7 @@ export function MessageBubble({
         lookBack: codeBlockLookBack(),
       },
     ],
-    isStreamFinished: true, // Message is complete
+    isStreamFinished: !isStreaming || !isLast,
   });
 
   // Format timestamp for assistant messages (e.g., "Sun at 12:30 AM")
@@ -126,10 +126,15 @@ export function MessageBubble({
       <div className={cn(isUser ? 'items-end' : 'items-start', 'flex flex-col flex-1')}>
         {isUser ? (
           <UserMessage content={message.content} copied={copied} onCopy={copyToClipboard} />
-        ) : isStreaming && isLast ? (
-          <ReasoningCard steps={reasoningSteps ?? []} status={workflowStatus ?? 'running'} />
         ) : (
-          <AssistantMessage blockMatches={blockMatches} message={message} />
+          <MessageContent
+            message={message}
+            isStreaming={!!isStreaming}
+            isLast={!!isLast}
+            reasoningSteps={reasoningSteps}
+            workflowStatus={workflowStatus}
+            blockMatches={blockMatches}
+          />
         )}
 
         {/* Action buttons and timestamp for assistant messages */}
@@ -169,6 +174,35 @@ export function MessageBubble({
         )}
       </div>
     </article>
+  );
+}
+
+// Helper component to render message content logic
+function MessageContent({
+  message,
+  isStreaming,
+  isLast,
+  reasoningSteps,
+  workflowStatus,
+  blockMatches,
+}: {
+  message: ChatMessageResponse;
+  isStreaming: boolean;
+  isLast: boolean;
+  reasoningSteps?: ReasoningStep[];
+  workflowStatus?: 'running' | 'success' | 'error';
+  blockMatches: ReturnType<typeof useLLMOutput>['blockMatches'];
+}) {
+  const showReasoning = isStreaming && isLast && (reasoningSteps?.length ?? 0) > 0;
+  const showResult = !isStreaming || !isLast || (reasoningSteps?.length ?? 0) === 0;
+
+  return (
+    <>
+      {showReasoning && (
+        <ReasoningCard steps={reasoningSteps ?? []} status={workflowStatus ?? 'running'} />
+      )}
+      {showResult && <AssistantMessage blockMatches={blockMatches} message={message} />}
+    </>
   );
 }
 

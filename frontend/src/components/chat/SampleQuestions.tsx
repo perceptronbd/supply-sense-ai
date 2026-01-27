@@ -65,9 +65,9 @@ export function SampleQuestions({
 
         {!isLoading &&
           !isError &&
-          questions.map((text) => (
+          questions.map((text, idx) => (
             <Button
-              key={text}
+              key={`${idx}-${text}`}
               variant="flat"
               radius="md"
               size="md"
