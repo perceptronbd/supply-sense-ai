@@ -25,6 +25,7 @@ interface Company {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   company: Company | null;
@@ -33,6 +34,7 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   token: null,
+  refreshToken: null,
   company: null,
   isAuthenticated: false,
   isLoading: false,
@@ -42,7 +44,7 @@ const initialState: AuthState = {
 const persistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['user', 'token', 'isAuthenticated', 'company'], // Only persist these fields
+  whitelist: ['user', 'token', 'refreshToken', 'isAuthenticated', 'company'], // Only persist these fields
 };
 
 const authSlice = createSlice({
@@ -51,11 +53,17 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ user: User; access_token: string; company?: Company }>
+      action: PayloadAction<{
+        user: User;
+        access_token: string;
+        refresh_token: string;
+        company?: Company;
+      }>
     ) => {
-      const { user, access_token, company } = action.payload;
+      const { user, access_token, refresh_token, company } = action.payload;
       state.user = user;
       state.token = access_token;
+      state.refreshToken = refresh_token;
       state.isAuthenticated = true;
       if (company) {
         state.company = company;
@@ -81,6 +89,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.refreshToken = null;
       state.company = null;
       state.isAuthenticated = false;
     },
@@ -92,10 +101,14 @@ const authSlice = createSlice({
       if (state.token) {
         // Check if token is expired
         if (isTokenExpired(state.token)) {
-          // Token is expired, clear auth state
-          state.user = null;
-          state.token = null;
-          state.isAuthenticated = false;
+          // Access token is expired, but we might have a refresh token
+          // For now, we'll let the baseApi handle the refresh flow
+          // If we wanted to be proactive, we could check refreshToken here
+          if (!state.refreshToken) {
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+          }
         } else if (!state.user) {
           // Token exists but user data is missing, try to restore from token
           const userFromToken = getUserFromToken(state.token);
@@ -105,6 +118,7 @@ const authSlice = createSlice({
           } else {
             // Invalid token, clear auth state
             state.token = null;
+            state.refreshToken = null;
             state.isAuthenticated = false;
           }
         }

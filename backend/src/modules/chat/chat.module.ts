@@ -22,7 +22,7 @@ import { SessionService } from './services/session.service';
     CommonModule,
     JwtModule.register({
       secret: appConfig.jwtSecret,
-      signOptions: { expiresIn: '24h' },
+      signOptions: { expiresIn: appConfig.jwtExpiresIn },
     }),
   ],
   controllers: [ChatController],

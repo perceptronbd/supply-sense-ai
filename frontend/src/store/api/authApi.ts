@@ -35,6 +35,7 @@ interface LoginResponse {
     companyId: string;
   };
   access_token: string;
+  refresh_token: string;
 }
 
 interface RegistrationResponse {
@@ -54,6 +55,7 @@ interface RegistrationResponse {
     isSuperAdmin: boolean;
   };
   access_token: string;
+  refresh_token: string;
 }
 
 export const authApi = createApi({
@@ -136,7 +138,15 @@ export const authApi = createApi({
         transformApiResponse(response),
       providesTags: [TAG_TYPES.AUTH],
     }),
+    refresh: builder.mutation<LoginResponse, string>({
+      query: (refreshToken) => ({
+        url: '/refresh',
+        method: 'POST',
+        body: { refresh_token: refreshToken },
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRegisterMutation, useGetProfileQuery } = authApi;
+export const { useLoginMutation, useRegisterMutation, useGetProfileQuery, useRefreshMutation } =
+  authApi;

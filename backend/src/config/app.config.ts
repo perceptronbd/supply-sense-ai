@@ -1,3 +1,5 @@
+import type { SignOptions } from 'jsonwebtoken';
+
 export interface AppConfig {
   // Server settings
   port: number;
@@ -10,6 +12,7 @@ export interface AppConfig {
 
   // JWT settings
   jwtSecret: string;
+  jwtExpiresIn: SignOptions['expiresIn'];
 
   // Gemini AI settings
   geminiApiKey: string;
@@ -34,6 +37,9 @@ export interface AppConfig {
 
   // Rate limiting
   rateLimitConfig: string;
+
+  // Refresh token settings
+  jwtRefreshExpiresIn: string;
 }
 
 export const appConfig: AppConfig = {
@@ -48,6 +54,10 @@ export const appConfig: AppConfig = {
 
   // JWT settings
   jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+  jwtExpiresIn: (process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '15m') as SignOptions['expiresIn'],
+
+  // Refresh token settings
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '7d',
 
   // Gemini AI settings
   geminiApiKey: process.env.GEMINI_API_KEY || '',

@@ -12,7 +12,7 @@ import { BillingCycle, SubscriptionStatus } from '@supplysense/prisma-client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../../../libs/shared/prisma/src/lib/prisma.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
-import { UserResponseDto } from './dto/auth-response.dto';
+import { AuthResponseDto, UserResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RegistrationResponseDto } from './dto/registration-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -68,10 +68,7 @@ export class AuthService {
     @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
-  async login(
-    email: string,
-    password: string
-  ): Promise<{ access_token: string; user: UserResponseDto }> {
+  async login(email: string, password: string): Promise<AuthResponseDto> {
     const user = await this.validateUser(email, password);
     console.log('🚀 > AuthService > user:', user);
     if (!user) {
@@ -92,8 +89,12 @@ export class AuthService {
       isSuperAdmin: false, // Will be set based on user data
     };
 
+    const access_token = this.jwtService.sign(payload);
+    const refresh_token = await this.generateRefreshToken(user.id);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
+      refresh_token,
       user,
     };
   }
@@ -259,6 +260,7 @@ export class AuthService {
         isCompleteOnboarding: result.user.isCompleteOnboarding,
       },
       access_token,
+      refresh_token: await this.generateRefreshToken(result.user.id),
     };
   }
 
@@ -277,9 +279,84 @@ export class AuthService {
       companyId: user.companyId,
       roles: user.roles,
       permissions: user.permissions,
-      isSuperAdmin: false, // Will be set based on user data
+      isSuperAdmin: user.isSuperAdmin,
     };
     return this.jwtService.sign(payload);
+  }
+
+  /**
+   * Generate a new refresh token and store it in the database
+   */
+  async generateRefreshToken(userId: string): Promise<string> {
+    const token = randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+
+    await this.prisma.refreshToken.create({
+      data: {
+        token,
+        userId,
+        expiresAt,
+      },
+    });
+
+    return token;
+  }
+
+  /**
+   * Refresh access token using a valid refresh token
+   */
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    const tokenRecord = await this.prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!tokenRecord || tokenRecord.isRevoked || tokenRecord.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // Optional: Revoke the old token (Token Rotation)
+    await this.prisma.refreshToken.update({
+      where: { id: tokenRecord.id },
+      data: { isRevoked: true },
+    });
+
+    const user = await this.getUserById(tokenRecord.userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      username: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      companyId: user.companyId,
+      roles: user.roles,
+      permissions: user.permissions,
+      isSuperAdmin: user.isSuperAdmin,
+    };
+
+    const access_token = this.jwtService.sign(payload);
+    const new_refresh_token = await this.generateRefreshToken(user.id);
+
+    return {
+      access_token,
+      refresh_token: new_refresh_token,
+    };
+  }
+
+  /**
+   * Revoke all refresh tokens for a user (on logout or security breach)
+   */
+  async revokeRefreshTokens(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, isRevoked: false },
+      data: { isRevoked: true },
+    });
   }
 
   async validateUser(email: string, password: string): Promise<UserResponseDto | null> {

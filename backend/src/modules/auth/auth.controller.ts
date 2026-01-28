@@ -56,4 +56,24 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto): Promise<RegistrationResponseDto> {
     return this.authService.register(registerDto);
   }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description: 'Exchange a valid refresh token for a new access token and refresh token',
+  })
+  async refresh(@Body('refresh_token') refreshToken: string) {
+    return this.authService.refreshAccessToken(refreshToken);
+  }
+
+  @Post('revoke')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Revoke refresh tokens',
+    description: 'Revoke all refresh tokens for a user (logout)',
+  })
+  async revoke(@Body('userId') userId: string) {
+    return this.authService.revokeRefreshTokens(userId);
+  }
 }
